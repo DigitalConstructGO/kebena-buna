@@ -1,7 +1,12 @@
 <script lang="ts">
 	import type { FooterContent } from '#lib/content/museum.js';
+	import { localizeHref } from '#lib/paraglide/runtime.js';
 
 	let { content }: { content: FooterContent } = $props();
+
+	// section links (#farms) live on the home page; from /history they must lead back there
+	const home = $derived(localizeHref('/'));
+	const to = (href: string) => (href.length > 1 && href.startsWith('#') ? home + href : href);
 </script>
 
 <footer class="footer">
@@ -16,7 +21,7 @@
 				<ul>
 					{#each col.links as l (l.label)}
 						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- links come from content -->
-						<li><a href={l.href}>{l.label}</a></li>
+						<li><a href={to(l.href)}>{l.label}</a></li>
 					{/each}
 				</ul>
 			</nav>

@@ -24,7 +24,9 @@ export default defineConfig({
 		paraglideVitePlugin({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide',
-			emitTsDeclarations: true
+			emitTsDeclarations: true,
+			// the language lives in the URL (/am/history), so every page can be prerendered per language
+			strategy: ['url', 'cookie', 'baseLocale']
 		})
 	],
 	test: {

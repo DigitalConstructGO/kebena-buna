@@ -11,7 +11,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/history/forest.jpg",
+					"src": "/history/forest.webp",
 					"alt": "The wild coffee forest of Jimma: coffee shrubs with red cherries under tall trees in the morning mist",
 					"illustration": true
 				}
@@ -24,7 +24,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/harvest-start.jpg",
+					"src": "/hero/harvest-start.webp",
 					"alt": "Ripe red coffee cherries on the branch",
 					"illustration": false
 				}
@@ -37,7 +37,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/halls/hall-02.jpg",
+					"src": "/halls/hall-02.webp",
 					"alt": "A coffee tree heavy with red cherries on a hillside in the Jimma highlands",
 					"illustration": false
 				}
@@ -50,7 +50,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/goatherd.jpg",
+					"src": "/history/goatherd.webp",
 					"alt": "a goatherd watches his goats eat red coffee cherries in the highland forest",
 					"illustration": true
 				}
@@ -63,7 +63,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/monastery.jpg",
+					"src": "/history/monastery.webp",
 					"alt": "coffee cherries roasting in a fire on a monastery floor at night",
 					"illustration": true
 				}
@@ -76,7 +76,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/cup-start.jpg",
+					"src": "/hero/cup-start.webp",
 					"alt": "A cup of freshly brewed coffee",
 					"illustration": false
 				}
@@ -89,7 +89,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/history/yemen.jpg",
+					"src": "/history/yemen.webp",
 					"alt": "sacks of coffee on the quay of an old Red Sea harbour, with dhows behind",
 					"illustration": true
 				}
@@ -102,7 +102,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/halls/drying-beds.jpg",
+					"src": "/halls/drying-beds.webp",
 					"alt": "Raised drying beds of coffee on a green hillside in Jimma",
 					"illustration": false
 				}
@@ -115,7 +115,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/footprints.jpg",
+					"src": "/history/footprints.webp",
 					"alt": "small hollows like goat hoof prints in a mossy basalt rock",
 					"illustration": true
 				}
@@ -128,7 +128,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/museum.jpg",
+					"src": "/hero/museum.webp",
 					"alt": "The Kebena coffee museum in Jimma, shaped like a coffee cup",
 					"illustration": false
 				}
@@ -147,7 +147,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/history/forest.jpg",
+					"src": "/history/forest.webp",
 					"alt": "The wild coffee forest of Jimma: coffee shrubs with red cherries under tall trees in the morning mist",
 					"illustration": true
 				}
@@ -160,7 +160,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/harvest-start.jpg",
+					"src": "/hero/harvest-start.webp",
 					"alt": "Ripe red coffee cherries on the branch",
 					"illustration": false
 				}
@@ -173,7 +173,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/halls/hall-02.jpg",
+					"src": "/halls/hall-02.webp",
 					"alt": "A coffee tree heavy with red cherries on a hillside in the Jimma highlands",
 					"illustration": false
 				}
@@ -187,7 +187,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/goatherd.jpg",
+					"src": "/history/goatherd.webp",
 					"alt": "a goatherd watches his goats eat red coffee cherries in the highland forest",
 					"illustration": true
 				}
@@ -201,7 +201,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/monastery.jpg",
+					"src": "/history/monastery.webp",
 					"alt": "coffee cherries roasting in a fire on a monastery floor at night",
 					"illustration": true
 				}
@@ -214,7 +214,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/cup-start.jpg",
+					"src": "/hero/cup-start.webp",
 					"alt": "A cup of freshly brewed coffee",
 					"illustration": false
 				}
@@ -227,7 +227,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/history/yemen.jpg",
+					"src": "/history/yemen.webp",
 					"alt": "sacks of coffee on the quay of an old Red Sea harbour, with dhows behind",
 					"illustration": true
 				}
@@ -240,7 +240,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/halls/drying-beds.jpg",
+					"src": "/halls/drying-beds.webp",
 					"alt": "Raised drying beds of coffee on a green hillside in Jimma",
 					"illustration": false
 				}
@@ -253,7 +253,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/footprints.jpg",
+					"src": "/history/footprints.webp",
 					"alt": "small hollows like goat hoof prints in a mossy basalt rock",
 					"illustration": true
 				}
@@ -267,7 +267,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/museum.jpg",
+					"src": "/hero/museum.webp",
 					"alt": "The Kebena coffee museum in Jimma, shaped like a coffee cup",
 					"illustration": false
 				}
@@ -286,7 +286,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/history/forest.jpg",
+					"src": "/history/forest.webp",
 					"alt": "The wild coffee forest of Jimma: coffee shrubs with red cherries under tall trees in the morning mist",
 					"illustration": true
 				}
@@ -299,7 +299,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/harvest-start.jpg",
+					"src": "/hero/harvest-start.webp",
 					"alt": "Ripe red coffee cherries on the branch",
 					"illustration": false
 				}
@@ -312,7 +312,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/halls/hall-02.jpg",
+					"src": "/halls/hall-02.webp",
 					"alt": "A coffee tree heavy with red cherries on a hillside in the Jimma highlands",
 					"illustration": false
 				}
@@ -325,7 +325,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/goatherd.jpg",
+					"src": "/history/goatherd.webp",
 					"alt": "a goatherd watches his goats eat red coffee cherries in the highland forest",
 					"illustration": true
 				}
@@ -338,7 +338,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/monastery.jpg",
+					"src": "/history/monastery.webp",
 					"alt": "coffee cherries roasting in a fire on a monastery floor at night",
 					"illustration": true
 				}
@@ -351,7 +351,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/cup-start.jpg",
+					"src": "/hero/cup-start.webp",
 					"alt": "A cup of freshly brewed coffee",
 					"illustration": false
 				}
@@ -364,7 +364,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/history/yemen.jpg",
+					"src": "/history/yemen.webp",
 					"alt": "sacks of coffee on the quay of an old Red Sea harbour, with dhows behind",
 					"illustration": true
 				}
@@ -377,7 +377,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/halls/drying-beds.jpg",
+					"src": "/halls/drying-beds.webp",
 					"alt": "Raised drying beds of coffee on a green hillside in Jimma",
 					"illustration": false
 				}
@@ -390,7 +390,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/footprints.jpg",
+					"src": "/history/footprints.webp",
 					"alt": "small hollows like goat hoof prints in a mossy basalt rock",
 					"illustration": true
 				}
@@ -403,7 +403,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/museum.jpg",
+					"src": "/hero/museum.webp",
 					"alt": "The Kebena coffee museum in Jimma, shaped like a coffee cup",
 					"illustration": false
 				}
@@ -422,7 +422,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/history/forest.jpg",
+					"src": "/history/forest.webp",
 					"alt": "The wild coffee forest of Jimma: coffee shrubs with red cherries under tall trees in the morning mist",
 					"illustration": true
 				}
@@ -435,7 +435,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/harvest-start.jpg",
+					"src": "/hero/harvest-start.webp",
 					"alt": "Ripe red coffee cherries on the branch",
 					"illustration": false
 				}
@@ -448,7 +448,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/halls/hall-02.jpg",
+					"src": "/halls/hall-02.webp",
 					"alt": "A coffee tree heavy with red cherries on a hillside in the Jimma highlands",
 					"illustration": false
 				}
@@ -461,7 +461,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/goatherd.jpg",
+					"src": "/history/goatherd.webp",
 					"alt": "a goatherd watches his goats eat red coffee cherries in the highland forest",
 					"illustration": true
 				}
@@ -474,7 +474,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/monastery.jpg",
+					"src": "/history/monastery.webp",
 					"alt": "coffee cherries roasting in a fire on a monastery floor at night",
 					"illustration": true
 				}
@@ -487,7 +487,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/cup-start.jpg",
+					"src": "/hero/cup-start.webp",
 					"alt": "A cup of freshly brewed coffee",
 					"illustration": false
 				}
@@ -500,7 +500,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/history/yemen.jpg",
+					"src": "/history/yemen.webp",
 					"alt": "sacks of coffee on the quay of an old Red Sea harbour, with dhows behind",
 					"illustration": true
 				}
@@ -513,7 +513,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/halls/drying-beds.jpg",
+					"src": "/halls/drying-beds.webp",
 					"alt": "Raised drying beds of coffee on a green hillside in Jimma",
 					"illustration": false
 				}
@@ -526,7 +526,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/footprints.jpg",
+					"src": "/history/footprints.webp",
 					"alt": "small hollows like goat hoof prints in a mossy basalt rock",
 					"illustration": true
 				}
@@ -539,7 +539,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/museum.jpg",
+					"src": "/hero/museum.webp",
 					"alt": "The Kebena coffee museum in Jimma, shaped like a coffee cup",
 					"illustration": false
 				}
@@ -558,7 +558,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/history/forest.jpg",
+					"src": "/history/forest.webp",
 					"alt": "The wild coffee forest of Jimma: coffee shrubs with red cherries under tall trees in the morning mist",
 					"illustration": true
 				}
@@ -571,7 +571,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/harvest-start.jpg",
+					"src": "/hero/harvest-start.webp",
 					"alt": "Ripe red coffee cherries on the branch",
 					"illustration": false
 				}
@@ -584,7 +584,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/halls/hall-02.jpg",
+					"src": "/halls/hall-02.webp",
 					"alt": "A coffee tree heavy with red cherries on a hillside in the Jimma highlands",
 					"illustration": false
 				}
@@ -597,7 +597,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/goatherd.jpg",
+					"src": "/history/goatherd.webp",
 					"alt": "a goatherd watches his goats eat red coffee cherries in the highland forest",
 					"illustration": true
 				}
@@ -610,7 +610,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/monastery.jpg",
+					"src": "/history/monastery.webp",
 					"alt": "coffee cherries roasting in a fire on a monastery floor at night",
 					"illustration": true
 				}
@@ -623,7 +623,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/cup-start.jpg",
+					"src": "/hero/cup-start.webp",
 					"alt": "A cup of freshly brewed coffee",
 					"illustration": false
 				}
@@ -636,7 +636,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/history/yemen.jpg",
+					"src": "/history/yemen.webp",
 					"alt": "sacks of coffee on the quay of an old Red Sea harbour, with dhows behind",
 					"illustration": true
 				}
@@ -649,7 +649,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/halls/drying-beds.jpg",
+					"src": "/halls/drying-beds.webp",
 					"alt": "Raised drying beds of coffee on a green hillside in Jimma",
 					"illustration": false
 				}
@@ -662,7 +662,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/footprints.jpg",
+					"src": "/history/footprints.webp",
 					"alt": "small hollows like goat hoof prints in a mossy basalt rock",
 					"illustration": true
 				}
@@ -675,7 +675,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/museum.jpg",
+					"src": "/hero/museum.webp",
 					"alt": "The Kebena coffee museum in Jimma, shaped like a coffee cup",
 					"illustration": false
 				}
@@ -694,7 +694,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/history/forest.jpg",
+					"src": "/history/forest.webp",
 					"alt": "The wild coffee forest of Jimma: coffee shrubs with red cherries under tall trees in the morning mist",
 					"illustration": true
 				}
@@ -707,7 +707,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/harvest-start.jpg",
+					"src": "/hero/harvest-start.webp",
 					"alt": "Ripe red coffee cherries on the branch",
 					"illustration": false
 				}
@@ -720,7 +720,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/halls/hall-02.jpg",
+					"src": "/halls/hall-02.webp",
 					"alt": "A coffee tree heavy with red cherries on a hillside in the Jimma highlands",
 					"illustration": false
 				}
@@ -733,7 +733,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/goatherd.jpg",
+					"src": "/history/goatherd.webp",
 					"alt": "a goatherd watches his goats eat red coffee cherries in the highland forest",
 					"illustration": true
 				}
@@ -746,7 +746,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/monastery.jpg",
+					"src": "/history/monastery.webp",
 					"alt": "coffee cherries roasting in a fire on a monastery floor at night",
 					"illustration": true
 				}
@@ -759,7 +759,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/cup-start.jpg",
+					"src": "/hero/cup-start.webp",
 					"alt": "A cup of freshly brewed coffee",
 					"illustration": false
 				}
@@ -772,7 +772,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/history/yemen.jpg",
+					"src": "/history/yemen.webp",
 					"alt": "sacks of coffee on the quay of an old Red Sea harbour, with dhows behind",
 					"illustration": true
 				}
@@ -785,7 +785,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/halls/drying-beds.jpg",
+					"src": "/halls/drying-beds.webp",
 					"alt": "Raised drying beds of coffee on a green hillside in Jimma",
 					"illustration": false
 				}
@@ -798,7 +798,7 @@
 				],
 				"tradition": true,
 				"image": {
-					"src": "/history/footprints.jpg",
+					"src": "/history/footprints.webp",
 					"alt": "small hollows like goat hoof prints in a mossy basalt rock",
 					"illustration": true
 				}
@@ -812,7 +812,7 @@
 				],
 				"tradition": false,
 				"image": {
-					"src": "/hero/museum.jpg",
+					"src": "/hero/museum.webp",
 					"alt": "The Kebena coffee museum in Jimma, shaped like a coffee cup",
 					"illustration": false
 				}

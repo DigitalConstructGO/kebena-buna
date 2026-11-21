@@ -290,7 +290,13 @@
 					</svg>
 				</button>
 				<div class="now" aria-live="polite">
-					{#if !broken[halls[active].id]}<img class="thumb" src={halls[active].photo} alt="" />{/if}
+					{#if !broken[halls[active].id]}<img
+							class="thumb"
+							src={halls[active].photo}
+							alt=""
+							loading="lazy"
+							decoding="async"
+						/>{/if}
 					<p class="now-text">
 						<span class="now-title">Hall {pad(active + 1)} · {halls[active].title}</span>
 						{#if halls[active].tagline}<span class="now-sub">{halls[active].tagline}</span>{/if}

@@ -164,7 +164,7 @@ const entrance: EntranceContent = {
 		'This site is our museum. Walk the four halls, from the seed in the highland soil to the coffee in your cup.'
 	],
 	photo: {
-		src: '/halls/drying-beds.jpg',
+		src: '/halls/drying-beds.webp',
 		alt: 'Raised drying beds of coffee on a green hillside in Jimma, with workers turning the beans',
 		width: 844,
 		height: 649
@@ -188,8 +188,8 @@ const halls: HallsContent = {
 			title: 'Origin',
 			text: 'Jimma, the birthplace of coffee, and the highlands around it.',
 			tagline: 'Where coffee was first found',
-			href: '#origin',
-			photo: '/halls/drying-beds.jpg'
+			href: '#entrance',
+			photo: '/halls/drying-beds.webp'
 		},
 		{
 			id: 'farms',
@@ -197,7 +197,7 @@ const halls: HallsContent = {
 			text: 'Our Gera and Djimmah estates on rich volcanic soil.',
 			tagline: 'Gera and Djimmah estates',
 			href: '#farms',
-			photo: '/halls/hall-02.jpg'
+			photo: '/halls/hall-02.webp'
 		},
 		{
 			id: 'collection',
@@ -205,7 +205,7 @@ const halls: HallsContent = {
 			text: 'Specialty, certified and commercial lots.',
 			tagline: 'The lots on display this season',
 			href: '#collection',
-			photo: '/halls/hall-04.jpg'
+			photo: '/halls/hall-04.webp'
 		},
 		{
 			id: 'people',
@@ -213,7 +213,7 @@ const halls: HallsContent = {
 			text: '10,000 farmers and the families behind them.',
 			tagline: 'Out-growers, staff and families',
 			href: '#people',
-			photo: '/halls/hall-05.jpg'
+			photo: '/halls/hall-05.webp'
 		}
 	]
 };
@@ -229,7 +229,7 @@ const journey: JourneyContent = {
 			accent: 'red',
 			text: 'Cherries ripen unevenly, so pickers come back to the same trees again and again, taking only the ripe ones.',
 			photo: {
-				src: '/journey/harvest.jpg',
+				src: '/journey/harvest.webp',
 				alt: 'A hand picking ripe red coffee cherries into a woven basket'
 			}
 		},
@@ -239,7 +239,7 @@ const journey: JourneyContent = {
 			accent: 'sun',
 			text: 'The cherries are spread on raised beds and turned by hand for two to three weeks, until they are dark and dry.',
 			photo: {
-				src: '/journey/drying.jpg',
+				src: '/journey/drying.webp',
 				alt: 'Red coffee cherries drying on a raised bed above green hills'
 			}
 		},
@@ -249,7 +249,7 @@ const journey: JourneyContent = {
 			accent: 'by hand',
 			text: 'The dry husk comes off to free the green bean inside. Every bean is checked, and the broken ones are set aside.',
 			photo: {
-				src: '/journey/sorting.jpg',
+				src: '/journey/sorting.webp',
 				alt: 'Hands sorting green coffee beans from husks in a woven tray'
 			}
 		},
@@ -259,7 +259,7 @@ const journey: JourneyContent = {
 			accent: 'charcoal',
 			text: 'Green beans crackle in a flat pan over the coals, and the fragrant smoke is carried around the room for the guests.',
 			photo: {
-				src: '/journey/roasting.jpg',
+				src: '/journey/roasting.webp',
 				alt: 'Dark roasted coffee beans in an iron pan over glowing charcoal'
 			}
 		},
@@ -269,7 +269,7 @@ const journey: JourneyContent = {
 			accent: 'mukecha',
 			text: 'The warm beans are crushed in a wooden mortar, just enough for the pot about to be brewed.',
 			photo: {
-				src: '/journey/grinding.jpg',
+				src: '/journey/grinding.webp',
 				alt: 'Roasted coffee beans and fresh grounds in a carved wooden mortar'
 			}
 		},
@@ -279,7 +279,7 @@ const journey: JourneyContent = {
 			accent: 'jebena',
 			text: 'The grounds go into the clay pot with water and come to the boil over the coals, then rest so they settle.',
 			photo: {
-				src: '/journey/jebena.jpg',
+				src: '/journey/jebena.webp',
 				alt: 'A black clay jebena on a small charcoal stove in the grass'
 			}
 		},
@@ -289,7 +289,7 @@ const journey: JourneyContent = {
 			accent: 'height',
 			text: 'The jebena is lifted high and tipped in one thin, steady stream, cup after cup. Abol, then tona, then baraka.',
 			photo: {
-				src: '/journey/cup.jpg',
+				src: '/journey/cup.webp',
 				alt: 'A white coffee cup with a red tulip pattern, steam rising'
 			}
 		}
@@ -431,21 +431,21 @@ const process: ProcessContent = {
 			moisture: 65,
 			title: 'Picking',
 			text: 'Only ripe red cherries are selected by hand.',
-			photo: { src: '/farms/gera.jpg', alt: 'Ripe red cherries on the tree, ready to pick' }
+			photo: { src: '/farms/gera.webp', alt: 'Ripe red cherries on the tree, ready to pick' }
 		},
 		{
 			id: 'washed',
 			moisture: 52,
 			title: 'Washed',
 			text: 'The fruit is removed at a washing station before the beans dry.',
-			photo: { src: '/collection/washed-limmu.jpg', alt: 'Red cherries on a branch before washing' }
+			photo: { src: '/collection/washed-limmu.webp', alt: 'Red cherries on a branch before washing' }
 		},
 		{
 			id: 'sun-dried',
 			moisture: 11.5,
 			title: 'Unwashed and sun-dried',
 			text: 'Whole cherries dry slowly in the sun on raised beds.',
-			photo: { src: '/journey/drying.jpg', alt: 'Cherries drying on raised beds in the highlands' }
+			photo: { src: '/journey/drying.webp', alt: 'Cherries drying on raised beds in the highlands' }
 		},
 		{
 			id: 'dry-milling',
@@ -454,7 +454,7 @@ const process: ProcessContent = {
 			title: 'Dry milling',
 			text: 'Dried coffee is hulled, sorted and graded at our dry mills.',
 			photo: {
-				src: '/journey/sorting.jpg',
+				src: '/journey/sorting.webp',
 				alt: 'Hands sorting hulled green beans in a woven basket'
 			}
 		},
@@ -464,7 +464,7 @@ const process: ProcessContent = {
 			title: 'Export',
 			text: 'Lots leave Addis Ababa fully traceable to their origin.',
 			photo: {
-				src: '/collection/unwashed-nekemte.jpg',
+				src: '/collection/unwashed-nekemte.webp',
 				alt: 'Baskets of coffee cherries lined up for weighing'
 			}
 		}
@@ -485,7 +485,7 @@ const collection: CollectionContent = {
 			id: 'unwashed-djimmah',
 			title: 'Unwashed Djimmah',
 			photo: {
-				src: '/collection/unwashed-djimmah.jpg',
+				src: '/collection/unwashed-djimmah.webp',
 				alt: 'A basket full of red coffee cherries'
 			},
 			specs: [
@@ -498,7 +498,7 @@ const collection: CollectionContent = {
 			id: 'washed-limmu',
 			title: 'Washed Limmu',
 			photo: {
-				src: '/collection/washed-limmu.jpg',
+				src: '/collection/washed-limmu.webp',
 				alt: 'Red cherries and dark leaves on a Limu coffee branch'
 			},
 			specs: [
@@ -511,7 +511,7 @@ const collection: CollectionContent = {
 			id: 'washed-gera',
 			title: 'Washed Gera',
 			photo: {
-				src: '/collection/washed-gera.jpg',
+				src: '/collection/washed-gera.webp',
 				alt: 'Cherries ripening from green to red on a Gera branch'
 			},
 			specs: [
@@ -524,7 +524,7 @@ const collection: CollectionContent = {
 			id: 'unwashed-nekemte',
 			title: 'Unwashed Nekemte',
 			photo: {
-				src: '/collection/unwashed-nekemte.jpg',
+				src: '/collection/unwashed-nekemte.webp',
 				alt: 'Woven baskets of picked cherries from Nekemte'
 			},
 			specs: [
@@ -629,7 +629,7 @@ const people: PeopleContent = {
 	],
 	body: 'We invest in local roads, healthcare and schools. Our operations are certified by RFA and organic standards and follow C.A.F.E. Practices. Through our import arm and our sister company, Care Land General Hospital, we also bring medical equipment to Ethiopia.',
 	photo: {
-		src: '/people/drying-beds.jpg',
+		src: '/people/drying-beds.webp',
 		alt: 'Workers turning coffee on raised drying beds, forest behind them'
 	}
 };
@@ -882,7 +882,7 @@ const worst: MuseumContent = {
 				text: 'Where green coffee becomes the cup.',
 				tagline: 'Roasted in front of you',
 				href: '#roastery',
-				photo: '/halls/hall-03.jpg'
+				photo: '/halls/hall-03.webp'
 			},
 			{
 				id: 'notes',
@@ -890,7 +890,7 @@ const worst: MuseumContent = {
 				text: '',
 				tagline: '',
 				href: '#notes',
-				photo: '/halls/hall-02.jpg'
+				photo: '/halls/hall-02.webp'
 			}
 		]
 	},

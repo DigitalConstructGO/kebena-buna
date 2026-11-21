@@ -149,7 +149,7 @@
 				tl.eventCallback('onUpdate', () => {
 					time = tl!.time();
 					// fetch the closing museum still once the story is under way, well before it is shown
-					if (!museumSrc && time > NURSERY.start) museumSrc = '/hero/museum.webp';
+					if (!museumSrc && time > MUSEUM - 6) museumSrc = '/hero/museum.webp';
 					syncMedia(!tl!.paused());
 					if (time < CLEAR) rain.start();
 					else rain.stop();

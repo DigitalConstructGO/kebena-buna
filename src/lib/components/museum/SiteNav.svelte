@@ -2,7 +2,15 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { m } from '#lib/paraglide/messages.js';
-	import { getLocale, locales, setLocale, type Locale } from '#lib/paraglide/runtime.js';
+	import type { Path } from '$app/types';
+	import {
+		deLocalizeHref,
+		getLocale,
+		localizeHref,
+		locales,
+		setLocale,
+		type Locale
+	} from '#lib/paraglide/runtime.js';
 
 	const links = [
 		{ path: '/', hash: '#halls', label: 'Halls' },
@@ -21,7 +29,14 @@
 		fr: 'Français'
 	};
 	/** A short tag for the closed button, so the nav stays narrow. */
-	const SHORT: Record<Locale, string> = { en: 'EN', am: 'አማ', om: 'OM', ar: 'عربي', it: 'IT', fr: 'FR' };
+	const SHORT: Record<Locale, string> = {
+		en: 'EN',
+		am: 'አማ',
+		om: 'OM',
+		ar: 'عربي',
+		it: 'IT',
+		fr: 'FR'
+	};
 	const current = getLocale();
 
 	let open = $state(false);
@@ -30,7 +45,10 @@
 
 	const toggle = () => {
 		open = !open;
-		if (open) requestAnimationFrame(() => menu?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus());
+		if (open)
+			requestAnimationFrame(() =>
+				menu?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus()
+			);
 	};
 	const close = (refocus = false) => {
 		open = false;
@@ -94,10 +112,15 @@
 <svelte:window onpointerdown={onWindowPointer} />
 
 <header class="nav">
-	<a class="brand" href={resolve('/')} aria-label="Kebena Buna, home">
+	<a class="brand" href={resolve(localizeHref('/') as Path)} aria-label="Kebena Buna, home">
 		<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
 			<ellipse cx="12" cy="12" rx="7" ry="10" fill="currentColor" transform="rotate(28 12 12)" />
-			<path d="M9 4 C14 9 10 15 15 20" stroke="var(--color-forest-900)" stroke-width="1.6" fill="none" />
+			<path
+				d="M9 4 C14 9 10 15 15 20"
+				stroke="var(--color-forest-900)"
+				stroke-width="1.6"
+				fill="none"
+			/>
 		</svg>
 		<span>Kebena</span>
 	</a>
@@ -105,8 +128,17 @@
 		<ul>
 			{#each links as l (l.label)}
 				<li>
-					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the path is resolved; only the #hash is appended -->
-					<a href={`${resolve(l.path)}${l.hash}`} aria-current={!l.hash && page.url.pathname === l.path ? 'page' : undefined}>{l.label}</a>
+					<!-- the path is resolved; only the #hash is appended -->
+					<!-- eslint-disable svelte/no-navigation-without-resolve -->
+					<a
+						href={`${resolve(localizeHref(l.path) as Path)}${l.hash}`}
+						aria-current={!l.hash && deLocalizeHref(page.url.pathname) === l.path
+							? 'page'
+							: undefined}
+					>
+						{l.label}
+					</a>
+					<!-- eslint-enable svelte/no-navigation-without-resolve -->
 				</li>
 			{/each}
 		</ul>
@@ -122,13 +154,30 @@
 			onclick={toggle}
 		>
 			<svg class="globe" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
-				<circle cx="10" cy="10" r="7.5" /><path d="M2.5 10h15M10 2.5c2.2 2.4 2.2 12.6 0 15M10 2.5c-2.2 2.4-2.2 12.6 0 15" />
+				<circle cx="10" cy="10" r="7.5" /><path
+					d="M2.5 10h15M10 2.5c2.2 2.4 2.2 12.6 0 15M10 2.5c-2.2 2.4-2.2 12.6 0 15"
+				/>
 			</svg>
 			<span lang={current}>{SHORT[current]}</span>
-			<svg class={['chev', { up: open }]} viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="m3 4.5 3 3 3-3" /></svg>
+			<svg
+				class={['chev', { up: open }]}
+				viewBox="0 0 12 12"
+				width="10"
+				height="10"
+				aria-hidden="true"
+			>
+				<path d="m3 4.5 3 3 3-3" />
+			</svg>
 		</button>
 		{#if open}
-			<div class="menu" role="menu" aria-label={m.story_language()} tabindex="-1" bind:this={menu} onkeydown={onMenuKey}>
+			<div
+				class="menu"
+				role="menu"
+				aria-label={m.story_language()}
+				tabindex="-1"
+				bind:this={menu}
+				onkeydown={onMenuKey}
+			>
 				{#each locales as l (l)}
 					<button
 						type="button"
@@ -140,23 +189,34 @@
 					>
 						<span class="item-name" lang={l}>{NAMES[l]}</span>
 						{#if l === current}
-							<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="m3.5 8.5 3 3 6-7" /></svg>
+							<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+								<path d="m3.5 8.5 3 3 6-7" />
+							</svg>
 						{/if}
 					</button>
 				{/each}
 			</div>
 		{/if}
 	</div>
-	<button type="button" class="theme" aria-pressed={dark} aria-label="Dark mode" onclick={toggleTheme}>
+	<button
+		type="button"
+		class="theme"
+		aria-pressed={dark}
+		aria-label="Dark mode"
+		onclick={toggleTheme}
+	>
 		<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
 			{#if dark}
 				<path d="M15.5 12.4A6.5 6.5 0 0 1 7.6 4.5a6.5 6.5 0 1 0 7.9 7.9Z" />
 			{:else}
-				<circle cx="10" cy="10" r="3.4" /><path d="M10 2.5v1.6M10 15.9v1.6M2.5 10h1.6M15.9 10h1.6M4.7 4.7l1.1 1.1M14.2 14.2l1.1 1.1M4.7 15.3l1.1-1.1M14.2 5.8l1.1-1.1" />
+				<circle cx="10" cy="10" r="3.4" /><path
+					d="M10 2.5v1.6M10 15.9v1.6M2.5 10h1.6M15.9 10h1.6M4.7 4.7l1.1 1.1M14.2 14.2l1.1 1.1M4.7 15.3l1.1-1.1M14.2 5.8l1.1-1.1"
+				/>
 			{/if}
 		</svg>
 	</button>
-	<a class="order" href="#collection">Order 2026</a>
+	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the path is resolved; only the #hash is appended -->
+	<a class="order" href={`${resolve(localizeHref('/') as Path)}#collection`}>Order</a>
 </header>
 
 <style>
@@ -208,7 +268,9 @@
 		font: inherit;
 		font-size: 14px;
 		cursor: pointer;
-		transition: background-color 0.2s, color 0.2s;
+		transition:
+			background-color 0.2s,
+			color 0.2s;
 	}
 	.lang-btn:hover,
 	.lang-btn[aria-expanded='true'] {
@@ -234,7 +296,9 @@
 		background: none;
 		color: rgb(246 249 246 / 0.82);
 		cursor: pointer;
-		transition: background-color 0.2s, color 0.2s;
+		transition:
+			background-color 0.2s,
+			color 0.2s;
 	}
 	.theme:hover {
 		background: rgb(255 255 255 / 0.08);
@@ -330,7 +394,9 @@
 		color: rgb(246 249 246 / 0.82);
 		text-decoration: none;
 		font-size: 14px;
-		transition: background-color 0.2s, color 0.2s;
+		transition:
+			background-color 0.2s,
+			color 0.2s;
 	}
 	nav a[aria-current='page'] {
 		background: rgb(255 255 255 / 0.1);

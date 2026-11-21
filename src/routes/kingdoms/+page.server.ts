@@ -5,8 +5,12 @@ import type { PageServerLoad } from './$types';
 
 const MODES: StoryMode[] = ['demo', 'worst', 'empty', 'one'];
 
+// built once as static HTML per language; served straight from the CDN
+export const prerender = true;
+
 export const load: PageServerLoad = async ({ url }) => {
-	const m = url.searchParams.get('data') as StoryMode | null;
+	// the ?data= fixture switch is dev-only; reading the query string would block prerendering
+	const m = import.meta.env.DEV ? (url.searchParams.get('data') as StoryMode | null) : null;
 	const mode = import.meta.env.DEV && m && MODES.includes(m) ? m : 'demo';
 	const { kingdoms } = await loadStory(getLocale(), mode);
 	if (!kingdoms) error(404);

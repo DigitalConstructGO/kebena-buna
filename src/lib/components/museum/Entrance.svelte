@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { setupGsap } from '#lib/gsap.js';
+	import { whenIdle } from '#lib/reveal.js';
 	import type { EntranceContent } from '#lib/content/museum.js';
 
 	/** The pinned hero this sheet slides over; it sinks back and dims as it is covered. */
@@ -16,10 +17,24 @@
 	});
 
 	let root: HTMLElement;
+	/**
+	 * The doorway photo sits only one screen below the hero in the raw HTML (the pinned
+	 * hero adds its scroll length later), so native lazy loading would fetch it during
+	 * the first paint. Ask for it once the page has loaded and the main thread is idle.
+	 */
+	let photoReady = $state(false);
 
 	onMount(() => {
+		let stopIdle: (() => void) | undefined;
+		const fetchPhoto = () => (stopIdle = whenIdle(() => void (photoReady = true)));
+		if (document.readyState === 'complete') fetchPhoto();
+		else window.addEventListener('load', fetchPhoto, { once: true });
+		const cancelPhoto = () => {
+			window.removeEventListener('load', fetchPhoto);
+			stopIdle?.();
+		};
 		const { gsap } = setupGsap();
-		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return cancelPhoto;
 
 		const ctx = gsap.context(() => {
 			// the sheet slides up over the pinned hero, which sinks back and dims
@@ -112,7 +127,10 @@
 			return () => mm.revert();
 		}, root);
 
-		return () => ctx.revert();
+		return () => {
+			cancelPhoto();
+			ctx.revert();
+		};
 	});
 </script>
 
@@ -133,7 +151,7 @@
 		<!-- the doorway: an arch on the way in, the whole hall once you are through -->
 		<figure class="door">
 			<img
-				src={content.photo.src}
+				src={photoReady ? content.photo.src : undefined}
 				alt={content.photo.alt}
 				width={content.photo.width}
 				height={content.photo.height}
