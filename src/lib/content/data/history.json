@@ -1,0 +1,822 @@
+{
+	"en": {
+		"eyebrow": "Coffee history",
+		"title": "The History and Origin of Coffee: Perspectives and the Jimma Tradition",
+		"chapters": [
+			{
+				"id": "origins",
+				"title": "Many places, one story",
+				"body": [
+					"The literature on the history of coffee from Africa to the wider world associates the discovery of coffee with Abyssinia, present-day Ethiopia, and recounts the well-known legend of Kalid, a goat herder who is traditionally said to have discovered the energizing effects of coffee berries around the ninth century AD. Other scholars emphasize the historical evidence of coffee consumption among Sufi communities in Yemen, where coffee became associated with religious practices and nighttime prayers."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/history/forest.jpg",
+					"alt": "The wild coffee forest of Jimma: coffee shrubs with red cherries under tall trees in the morning mist",
+					"illustration": true
+				}
+			},
+			{
+				"id": "questions",
+				"title": "Four questions, not one",
+				"body": [
+					"These different perspectives demonstrate that the history of coffee involves several geographical locations, historical interpretations, and oral traditions. While some scholars emphasize Ethiopia as the natural home of Arabica coffee, others highlight Yemen's important role in the early documented consumption, preparation, and subsequent dissemination of coffee. Consequently, it is necessary to distinguish between the natural origin of the coffee plant, the discovery of its stimulating properties, the development of coffee as a prepared beverage, and its spread to other parts of the world."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/harvest-start.jpg",
+					"alt": "Ripe red coffee cherries on the branch",
+					"illustration": false
+				}
+			},
+			{
+				"id": "jimma",
+				"title": "Why look to Jimma",
+				"body": [
+					"From my perspective, southwestern Ethiopia, particularly the Jimma area, deserves significant attention in discussions of the historical origin and early use of Arabica coffee. This argument is supported by the region's long-standing coffee-growing traditions, its natural forest environment, and the oral traditions associated with coffee. One of the best-known narratives is the legend of Kalid, the goat herder whose discovery of coffee is widely recounted in popular accounts of coffee history."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/halls/hall-02.jpg",
+					"alt": "A coffee tree heavy with red cherries on a hillside in the Jimma highlands",
+					"illustration": false
+				}
+			},
+			{
+				"id": "goatherd",
+				"title": "The goatherd",
+				"body": [
+					"According to this legend, Kalid lived in southwestern Ethiopia and herded goats in the surrounding highlands. Some versions of the story suggest that he came from Yemen for trading purposes before settling in the area, although this detail requires further historical verification. One day, he noticed that some of his goats behaved unusually after eating bright-red berries from a nearby coffee shrub. The animals appeared more energetic and active than usual, attracting his attention. Curious about their behavior, Kaldi decided to taste the berries himself and reportedly experienced a similar stimulating effect. Excited by this discovery, he collected some of the berries and took them home to share his experience with his wife."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/goatherd.jpg",
+					"alt": "a goatherd watches his goats eat red coffee cherries in the highland forest",
+					"illustration": true
+				}
+			},
+			{
+				"id": "monastery",
+				"title": "The monastery fire",
+				"body": [
+					"According to the popular version of the legend, Kaldi's wife interpreted the discovery as a gift from God and encouraged him to take the berries to a nearby monastery. Initially, the monks were skeptical of the berries' supposed miraculous properties. One monk reportedly considered them undesirable and threw them into a fire. As the berries roasted, however, they released an appealing aroma that attracted the attention of the other monks. They collected the roasted beans, placed them in hot water, and prepared a fragrant drink. After consuming the beverage, they reportedly experienced increased alertness and energy, which helped them remain awake during nighttime prayers. The story concludes that the monks continued drinking the beverage and that knowledge of coffee gradually spread to other communities."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/monastery.jpg",
+					"alt": "coffee cherries roasting in a fire on a monastery floor at night",
+					"illustration": true
+				}
+			},
+			{
+				"id": "legend",
+				"title": "A legend, not a record",
+				"body": [
+					"Although the Kaldi narrative is one of the most popular stories associated with coffee's discovery, it should be treated as an oral or legendary account rather than a fully verified historical record. Its precise date, geographical setting, and individual details remain uncertain. Nevertheless, the story has become an important part of the cultural history of coffee and reflects the enduring association between Ethiopia and the coffee plant."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/cup-start.jpg",
+					"alt": "A cup of freshly brewed coffee",
+					"illustration": false
+				}
+			},
+			{
+				"id": "yemen",
+				"title": "From Yemen to the world",
+				"body": [
+					"Historically, coffee subsequently became firmly established in Yemen, where its preparation and consumption developed, particularly among Sufi communities. From Yemen, coffee spread to other parts of the Arabian Peninsula and eventually reached Europe and other regions of the world through commercial, religious, and cultural networks. Therefore, Ethiopia's importance as a center of Arabica coffee's genetic diversity and natural growth should be distinguished from Yemen's documented role in the early development and international dissemination of coffee as a beverage."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/history/yemen.jpg",
+					"alt": "sacks of coffee on the quay of an old Red Sea harbour, with dhows behind",
+					"illustration": true
+				}
+			},
+			{
+				"id": "ketta-muduga",
+				"title": "Jimma and Ketta Muduga",
+				"body": [
+					"In the context of southwestern Ethiopia, Jimma Zone occupies a particularly important place in discussions of coffee heritage. The region has a long-standing relationship with coffee cultivation, forest-based livelihoods, traditional exchange systems, and local cultural practices. The Ketta Muduga tradition is especially relevant to this discussion because it is associated with local understandings of coffee's history, production, and cultural significance. According to local beliefs and oral accounts, the Jimma area is regarded as one of the important places associated with the origin or early history of Arabica coffee."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/halls/drying-beds.jpg",
+					"alt": "Raised drying beds of coffee on a green hillside in Jimma",
+					"illustration": false
+				}
+			},
+			{
+				"id": "footprints",
+				"title": "The goats' footprints",
+				"body": [
+					"Local historical narratives also refer to features such as the alleged footprints of Kaldi's goats as evidence connecting the area with the coffee-discovery legend. Such features are important as elements of local memory, cultural identity, and heritage interpretation. However, their historical significance should be examined through systematic field observation, oral-history interviews, archival research, and, where possible, archaeological investigation. Until independently verified, the reported footprints should be described as a local tradition or belief rather than conclusive scientific evidence of coffee's place of origin."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/footprints.jpg",
+					"alt": "small hollows like goat hoof prints in a mossy basalt rock",
+					"illustration": true
+				}
+			},
+			{
+				"id": "research",
+				"title": "What is still to learn",
+				"body": [
+					"In conclusion, the history of coffee should be understood through a combination of botanical evidence, historical documentation, oral traditions, and cultural heritage. Ethiopia, particularly its southwestern forest regions, is widely recognized as the principal center of origin and genetic diversity of Arabica coffee. Within this broader context, Jimma Zone and its Ketta Muduga tradition deserve further historical investigation because they contribute to the understanding of coffee's cultural meaning and historical significance in Ethiopia. Further research into local oral traditions, historical records, coffee-growing landscapes, and associated heritage sites may help clarify the relationship between the region and the wider history of Arabica coffee. Such research would also contribute to the documentation, preservation, and promotion of Jimma's coffee heritage for future generations."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/museum.jpg",
+					"alt": "The Kebena coffee museum in Jimma, shaped like a coffee cup",
+					"illustration": false
+				}
+			}
+		]
+	},
+	"am": {
+		"eyebrow": "የቡና ታሪክ",
+		"title": "የቡና ታሪክና አመጣጥ፦ የተለያዩ አመለካከቶችና የጅማ የቡና ባህል",
+		"chapters": [
+			{
+				"id": "origins",
+				"title": "ብዙ ቦታዎች፣ አንድ ታሪክ",
+				"body": [
+					"ከአፍሪካ እስከ ዓለም አቀፍ ደረጃ የቡናን ታሪክ የሚመለከቱ ጽሑፎች የቡና ግኝትን ከአቢሲኒያ፣ ከዛሬዋ ኢትዮጵያ ጋር ያያይዙታል። እነዚህ ጽሑፎች በዘጠነኛው ክፍለ ዘመን ዓ.ም. አካባቢ የቡናን የማነቃቃት ባህሪ እንዳገኘ በባህላዊ ትረካ የሚነገርለትን ካሊድ (Kalid) የተባለ የፍየል እረኛ ታዋቂ ታሪክ ይዘው ይቀርባሉ። ሌሎች ምሁራን ደግሞ በየመን በሚገኙ የሱፊ ማኅበረሰቦች ውስጥ ቡና ሲጠጣ የነበረውን ታሪካዊ ማስረጃ በማጉላት፣ ቡና ከሃይማኖታዊ ሥርዓቶችና ከሌሊት ጸሎቶች ጋር እንዴት እንደተያያዘ ያብራራሉ።"
+				],
+				"tradition": false,
+				"image": {
+					"src": "/history/forest.jpg",
+					"alt": "The wild coffee forest of Jimma: coffee shrubs with red cherries under tall trees in the morning mist",
+					"illustration": true
+				}
+			},
+			{
+				"id": "questions",
+				"title": "አንድ ሳይሆን አራት ጥያቄዎች",
+				"body": [
+					"እነዚህ የተለያዩ አመለካከቶች የቡና ታሪክ በበርካታ ጂኦግራፊያዊ አካባቢዎች፣ ታሪካዊ ትርጓሜዎችና የቃል ትውፊቶች ላይ የተመሠረተ መሆኑን ያሳያሉ። አንዳንድ ምሁራን ኢትዮጵያን የአረቢካ ቡና (Arabica coffee) ተፈጥሯዊ መገኛ አድርገው ሲያቀርቡ፣ ሌሎች ደግሞ በታሪካዊ ሰነዶች የተመዘገበውን የቡና ፍጆታ፣ ዝግጅትና ወደ ሌሎች አካባቢዎች መስፋፋት ረገድ የየመንን ጠቃሚ ሚና ያጎላሉ። ስለዚህ የቡና ተክል ተፈጥሯዊ መገኛን፣ የማነቃቃት ባህሪው መታወቅን፣ ቡናን እንደ መጠጥ የማዘጋጀት ሂደትን እና ወደ ሌሎች የዓለም ክፍሎች መስፋፋቱን መለየት አስፈላጊ ነው።"
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/harvest-start.jpg",
+					"alt": "Ripe red coffee cherries on the branch",
+					"illustration": false
+				}
+			},
+			{
+				"id": "jimma",
+				"title": "ለምን ጅማ",
+				"body": [
+					"ከእኔ አመለካከት አንጻር፣ በደቡብ ምዕራብ ኢትዮጵያ በተለይም በጅማ አካባቢ የሚገኙ ታሪካዊና ባህላዊ ማስረጃዎች የአረቢካ ቡናን አመጣጥና ቀደምት አጠቃቀም በሚመለከት በሚደረጉ ውይይቶች ውስጥ ትልቅ ትኩረት ሊሰጣቸው ይገባል። ይህንን አመለካከት የሚደግፉት በአካባቢው ለረጅም ጊዜ የቆየው የቡና አበቃቀል ባህል፣ ተፈጥሯዊ የደን አካባቢ እና ከቡና ጋር የተያያዙ የቃል ትውፊቶች ናቸው። ከእነዚህ በጣም የታወቁት ትረካዎች አንዱ የፍየል እረኛው ካሊድ ታሪክ ሲሆን፣ ይህ ታሪክ በተለያዩ ታዋቂ የቡና ታሪክ ዘገባዎች ውስጥ በተደጋጋሚ ይተረካል።"
+				],
+				"tradition": false,
+				"image": {
+					"src": "/halls/hall-02.jpg",
+					"alt": "A coffee tree heavy with red cherries on a hillside in the Jimma highlands",
+					"illustration": false
+				}
+			},
+			{
+				"id": "goatherd",
+				"title": "የፍየል እረኛው",
+				"body": [
+					"በዚህ ታሪክ መሠረት፣ ካሊድ በደቡብ ምዕራብ ኢትዮጵያ ይኖር የነበረ ሲሆን፣ በአካባቢው ደጋማ ሥፍራዎች ፍየሎችን ይጠብቅ ነበር። የታሪኩ አንዳንድ ቅጂዎች የንግድ ሥራ ለማከናወን ከየመን መጥቶ በአካባቢው እንደሰፈረ ይገልጻሉ፤ ሆኖም ይህ ዝርዝር ነገር በታሪካዊ ማስረጃ ተጨማሪ ማረጋገጫ ይፈልጋል።",
+					"አንድ ቀን ከአንድ የቡና ቁጥቋጦ ላይ ቀይ ቀለም ያላቸውን ፍሬዎች ከበሉ በኋላ አንዳንድ ፍየሎቹ ከወትሮው በተለየ ሁኔታ ሲንቀሳቀሱና የበለጠ ንቁ ሲሆኑ አስተዋለ። ይህ ሁኔታ ትኩረቱን ስቦት ስለነበር፣ የፍየሎቹን ባህሪ ለመረዳት ሲል እሱም ፍሬዎቹን ቀመሰ። በታሪኩ መሠረት፣ እሱም ተመሳሳይ የማነቃቃት ተፅዕኖ ተሰማው። በዚህ ግኝት ተደስቶ ከፍሬዎቹ ሰብስቦ ወደ ቤቱ በመውሰድ ያጋጠመውን ልምድ ከሚስቱ ጋር እንደተካፈለ ይነገራል።"
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/goatherd.jpg",
+					"alt": "a goatherd watches his goats eat red coffee cherries in the highland forest",
+					"illustration": true
+				}
+			},
+			{
+				"id": "monastery",
+				"title": "የገዳሙ እሳት",
+				"body": [
+					"በታዋቂው የታሪኩ ትረካ መሠረት፣ የካሊድ ሚስት ይህንን ግኝት ከእግዚአብሔር የተሰጠ ስጦታ እንደሆነ በመቁጠር ፍሬዎቹን ወደ አቅራቢያው ገዳም እንዲወስድ አበረታታችው። በመጀመሪያ መነኮሳቱ ፍሬዎቹ የሚባለውን ተአምራዊ ባህሪ በጥርጣሬ ተመለከቱ። ከእነርሱም አንዱ መነኩሴ ፍሬዎቹን የማይፈለጉ ነገሮች እንደሆኑ በመቁጠር ወደ እሳት እንደጣላቸው ይነገራል። ፍሬዎቹ በእሳት ሲጠበሱ ግን ማራኪ የሆነ ሽታ አወጡ። ይህ ሽታ የሌሎቹን መነኮሳት ቀልብ ሳበ።",
+					"መነኮሳቱም የተጠበሱትን ፍሬዎች ሰብስበው በሙቅ ውሃ ውስጥ በማስገባት ጥሩ መዓዛ ያለው መጠጥ አዘጋጁ። መጠጡን ከጠጡ በኋላ የበለጠ ንቁነትና ጉልበት እንደተሰማቸውና በሌሊት ጸሎታቸው ወቅት እንቅልፍን ለመቋቋም እንደረዳቸው ታሪኩ ይገልጻል። በመጨረሻም መነኮሳቱ መጠጡን መጠቀማቸውን እንደቀጠሉና የቡና አጠቃቀም እውቀትም ቀስ በቀስ ወደ ሌሎች ማኅበረሰቦች እንደተስፋፋ ይተረካል።"
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/monastery.jpg",
+					"alt": "coffee cherries roasting in a fire on a monastery floor at night",
+					"illustration": true
+				}
+			},
+			{
+				"id": "legend",
+				"title": "አፈ ታሪክ እንጂ መዝገብ አይደለም",
+				"body": [
+					"ምንም እንኳን የካሊድ ትረካ ከቡና ግኝት ጋር በጣም ከሚያያዙ ታዋቂ ታሪኮች አንዱ ቢሆንም፣ ሙሉ በሙሉ የተረጋገጠ ታሪካዊ መዝገብ ሳይሆን እንደ የቃል ትውፊት ወይም አፈ ታሪክ መታየት አለበት። ትክክለኛው የታሪኩ ዘመን፣ የተከሰተበት ጂኦግራፊያዊ አካባቢና የግለሰቦቹ ዝርዝር ሁኔታዎች እስካሁን በቂ ማረጋገጫ የላቸውም። ይሁን እንጂ፣ ይህ ታሪክ የቡና ባህላዊ ታሪክ አስፈላጊ ክፍል ሆኖ ቆይቷል፤ በተጨማሪም ኢትዮጵያ ከቡና ተክል ጋር ያላትን ጥልቅ ታሪካዊ ግንኙነት ያንጸባርቃል።"
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/cup-start.jpg",
+					"alt": "A cup of freshly brewed coffee",
+					"illustration": false
+				}
+			},
+			{
+				"id": "yemen",
+				"title": "ከየመን ወደ ዓለም",
+				"body": [
+					"በታሪክ ሂደት ቡና በየመን ውስጥ በጥልቀት ሥር ሰዶ ተስፋፋ። በዚያም የቡና ዝግጅትና አጠቃቀም በተለይም በሱፊ ማኅበረሰቦች ዘንድ የበለጠ የዳበረ ልምድ ሆነ። ከየመን በመነሳት ቡና ወደ ሌሎች የአረብ ባሕረ ገብ መሬት ክፍሎች ተስፋፋ፤ በኋላም በንግድ፣ በሃይማኖትና በባህል ግንኙነቶች አማካይነት ወደ አውሮፓና ሌሎች የዓለም ክፍሎች ደረሰ። ስለዚህ ኢትዮጵያ የአረቢካ ቡና የዘረመል ልዩነትና ተፈጥሯዊ እድገት ዋነኛ ማዕከል መሆኗን፣ የመን ደግሞ ቡናን እንደ መጠጥ በታሪካዊ ሰነዶች በተመዘገበ መልኩ በማሳደግና በዓለም አቀፍ ደረጃ በማስፋፋት የነበራትን ሚና መለየት ያስፈልጋል።"
+				],
+				"tradition": false,
+				"image": {
+					"src": "/history/yemen.jpg",
+					"alt": "sacks of coffee on the quay of an old Red Sea harbour, with dhows behind",
+					"illustration": true
+				}
+			},
+			{
+				"id": "ketta-muduga",
+				"title": "ጅማ እና ከታ ሙዱጋ",
+				"body": [
+					"በደቡብ ምዕራብ ኢትዮጵያ ዐውድ ውስጥ፣ የጅማ ዞን ከቡና ቅርስ ጋር በተያያዘ በተለይ አስፈላጊ ቦታ አለው። ክልሉ ከቡና አበቃቀል፣ ከደን ላይ ከተመሠረቱ የኑሮ ዘይቤዎች፣ ከባህላዊ የልውውጥ ሥርዓቶችና ከአካባቢያዊ ባህላዊ ተግባራት ጋር ለረጅም ጊዜ የቆየ ግንኙነት አለው። የ ሙዱከታ (Ketta Muduga) ባህል ከቡና ታሪክ፣ ምርትና ባህላዊ አስፈላጊነት ጋር ከተያያዙ የአካባቢው እምነቶችና ግንዛቤዎች ጋር ስለሚያያዝ ለዚህ ውይይት ልዩ ጠቀሜታ አለው። በአካባቢው እምነቶችና የቃል ትረካዎች መሠረት፣ የጅማ አካባቢ የአረቢካ ቡና አመጣጥ ወይም ቀደምት ታሪክ ከሚያያዙባቸው አስፈላጊ ሥፍራዎች አንዱ እንደሆነ ይታመናል።"
+				],
+				"tradition": false,
+				"image": {
+					"src": "/halls/drying-beds.jpg",
+					"alt": "Raised drying beds of coffee on a green hillside in Jimma",
+					"illustration": false
+				}
+			},
+			{
+				"id": "footprints",
+				"title": "የፍየሎቹ አሻራዎች",
+				"body": [
+					"የአካባቢው ታሪካዊ ትረካዎች ካሊድ ከሚባለው የቡና ግኝት ታሪክ ጋር አካባቢውን የሚያገናኙ እንደ ፍየሎቹ አሻራዎች የሚጠቀሱ ባህላዊ መገለጫዎችንም ይጠቅሳሉ። እንደነዚህ ያሉ መገለጫዎች በአካባቢው የጋራ ትውስታ፣ ባህላዊ ማንነትና የቅርስ ትርጓሜ ውስጥ አስፈላጊ ሚና አላቸው። ሆኖም ታሪካዊ ጠቀሜታቸው በስርዓት በተደራጀ የመስክ ምልከታ፣ በቃለ መጠይቅ ላይ በተመሠረተ የቃል ታሪክ ጥናት፣ በማህደር ምርምርና አስፈላጊ ሲሆንም በአርኪኦሎጂ ምርመራ መገምገም አለበት። በገለልተኛ ምርምር እስኪረጋገጡ ድረስ፣ እነዚህ የተባሉ የፍየሎች አሻራዎች የቡና መገኛን የሚያረጋግጡ የሳይንስ ማስረጃዎች ሳይሆኑ የአካባቢው ባህላዊ ትውፊት ወይም እምነት ተብለው መገለጽ አለባቸው።"
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/footprints.jpg",
+					"alt": "small hollows like goat hoof prints in a mossy basalt rock",
+					"illustration": true
+				}
+			},
+			{
+				"id": "research",
+				"title": "ገና የሚጠና",
+				"body": [
+					"በማጠቃለያ፣ የቡና ታሪክ በዕፅዋት ሳይንስ ማስረጃዎች፣ በታሪካዊ ሰነዶች፣ በቃል ትውፊቶችና በባህላዊ ቅርስ ምርምር ጥምረት መረዳት ያለበት ታሪክ ነው። ኢትዮጵያ፣ በተለይም የደቡብ ምዕራብ የደን አካባቢዎቿ፣ የአረቢካ ቡና ዋነኛ የመነሻና የዘረመል ልዩነት ማዕከል እንደሆኑ በሰፊው ይታወቃሉ። በዚህ ሰፊ ዐውድ ውስጥ፣ የጅማ ዞንና ከታ ሙዱጋ ባህል ለተጨማሪ ታሪካዊ ጥናት ትኩረት ሊሰጣቸው ይገባል። ምክንያቱም ስለ ቡና ባህላዊ ትርጉምና በኢትዮጵያ ታሪክ ውስጥ ስላለው ጠቀሜታ የበለጠ ለመረዳት ይረዳሉ።",
+					"በአካባቢው የቃል ትውፊቶች፣ ታሪካዊ ሰነዶች፣ የቡና ማምረቻ መልክዓ ምድሮችና ከቡና ጋር የተያያዙ የቅርስ ሥፍራዎች ላይ ተጨማሪ ምርምር ማድረግ፣ በክልሉና በአረቢካ ቡና ሰፊ ታሪክ መካከል ያለውን ግንኙነት ለማብራራት ይረዳል። እንዲህ ያለው ምርምር የጅማን የቡና ቅርስ ለቀጣይ ትውልዶች ለመመዝገብ፣ ለመጠበቅና ለማስተዋወቅ ከፍተኛ አስተዋጽኦ ያደርጋል።"
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/museum.jpg",
+					"alt": "The Kebena coffee museum in Jimma, shaped like a coffee cup",
+					"illustration": false
+				}
+			}
+		]
+	},
+	"om": {
+		"eyebrow": "Seenaa bunaa",
+		"title": "Seenaa fi Ka’umsa Buna",
+		"chapters": [
+			{
+				"id": "origins",
+				"title": "Iddoowwan hedduu, seenaa tokko",
+				"body": [
+					"Barreeffamoonni seenaa buna Afrikaa irraa kaasee hanga addunyaa bal’aatti babal’ate ibsan, argama bunaa Abyssinia, jechuunis Itoophiyaa har’aa, waliin walqabsiisu. Akkasumas, seenaa afaaniin darbaa dhufe kan Kalid jedhamu, tiksee re’ootaa ta’ee, naannoo jaarraa 9ffaa Dh.K.B.tti firii bunaa irraa humna namaa kakaasu argate jedhamee himamu ni dhiyeessu. Hayyoonni biroon immoo ragaa seenaa dhugaatii bunaa hawaasa Suufii (Sufi) Yaman keessatti itti fayyadamaa turan irratti xiyyeeffatu. Yaman keessatti bunni gochoota amantii fi kadhannaa halkanii waliin walqabatee beekamuu jalqabe."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/history/forest.jpg",
+					"alt": "The wild coffee forest of Jimma: coffee shrubs with red cherries under tall trees in the morning mist",
+					"illustration": true
+				}
+			},
+			{
+				"id": "questions",
+				"title": "Gaaffii tokko osoo hin taane afur",
+				"body": [
+					"Ilaalchi garaagaraa kun seenaa bunaa keessatti iddoowwan teessuma lafaa hedduun, hiikawwan seenaa garaagaraa fi duudhoowwan afaaniin darban akka hirmaatan agarsiisa. Hayyoonni tokko tokko Itoophiyaa akka biyya uumamaan bunni Arabica itti argameetti ibsu; kanneen biroon immoo gahee Yaman ragaa seenaa keessatti galmaa’e kan dhugaatii bunaa duraanii, qopheessuu fi booda addunyaa bal’aatti babal’isuu keessatti qabdu irratti xiyyeeffatu. Kanaafuu, ka’umsa uumamaa biqiltuu bunaa, amala kaka’umsa qaamaa kennu isaa hubachuu, bunni akka dhugaatii qophaa’etti guddachuu fi biyyoota addunyaa biroo keessatti babal’achuu adda baasanii ilaaluun barbaachisaa dha."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/harvest-start.jpg",
+					"alt": "Ripe red coffee cherries on the branch",
+					"illustration": false
+				}
+			},
+			{
+				"id": "jimma",
+				"title": "Maaliif Jimmaa",
+				"body": [
+					"Akka ilaalcha kiyyaatti, Itoophiyaan kibba-dhihaa, keessumaa naannoon Jimmaa, marii seenaa ka’umsa bunaa fi itti fayyadama isaa isa durii irratti xiyyeeffannoo guddaa argachuu qaba. Yaadni kun aadaa bunaa yeroo dheeraaf naannichatti gaggeeffamaa ture, naannoo bosona uumamaa fi duudhoowwan afaaniin bunaa waliin walqabatan irratti hundaa’a. Seenaawwan beekamoo keessaa tokko seenaa Kalid, tiksee re’ootaa, argama bunaa waliin walqabatee yeroo baay’ee seenaa bunaa beekamaa keessatti himamu dha."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/halls/hall-02.jpg",
+					"alt": "A coffee tree heavy with red cherries on a hillside in the Jimma highlands",
+					"illustration": false
+				}
+			},
+			{
+				"id": "goatherd",
+				"title": "Tiksee re’ootaa",
+				"body": [
+					"Akka seenaa afaaniin himamu kanaatti, Kalid kibba-dhiha Itoophiyaa keessa jiraachaa, lafa olka’aa naannichaa keessatti re’oota tikfachaa ture. Gosoonni seenaa kanaa tokko tokko Kalid daldalaaf Yaman irraa dhufee naannichatti qubate jedhu; haa ta’u malee, odeeffannoon kun ragaa seenaa dabalataa barbaada. Guyyaa tokko, re’oonni isaa tokko tokko firii diimaa ifaa kan mukkeen bunaa naannoo sanaa irraa nyaatan booda amala adda ta’e agarsiisuu isaanii hubate. Beeyladoonni sun yeroo barame caalaa sochii fi humna guddaa qabaatanii mul’atan. Amala isaanii kanaan ajaa’ibsiifamee, Kalid firiiwwan sana ofii isaatiif dhandhamee, akka seenaa himamutti, dhiibbaa kaka’umsa qaamaa kennu wal fakkaatu arge. Argannoo kanaan gammadee, firiiwwan sana walitti qabee gara mana isaatti fidee haadha manaa isaa waliin muuxannoo isaa qooddate."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/goatherd.jpg",
+					"alt": "a goatherd watches his goats eat red coffee cherries in the highland forest",
+					"illustration": true
+				}
+			},
+			{
+				"id": "monastery",
+				"title": "Ibidda mana amantii",
+				"body": [
+					"Akka seenaa beekamaa kanaatti, haati manaa Kalid argannoo kana kennaa Waaqayyoo ta’uu isaa yaaddee, firiiwwan sana gara mana amantii (monastery) naannoo isaanii jiru tokkootti akka geessu isa gorsite. Jalqaba irratti, moloksoonni (monks) firiiwwan sun amaloota dinqisiisoo qabu jedhamee himamu irratti shakkii qaba turan. Molokseen tokko firiiwwan sana kan hin barbaachifne ta’uu isaanii yaadee ibidda keessa darbate jedhama. Garuu yeroo firiiwwan sun gubatan, urgaa nama hawwatu gadhiisan; urgaan sunis xiyyeeffannoo moloksoota biroo harkise. Isaanis ija bunaa bilchaatee gubame sana walitti qabanii bishaan ho’aa keessa kaa’uun dhugaatii urgaa gaarii qabu qopheessan. Dhugaatii sana erga dhuganii booda, akka seenaa himamutti, dammaqinaa fi humna dabalataa argatan; kunis yeroo kadhannaa halkanii dammaqanii akka turan isaan gargaare. Dhuma irratti, moloksoonni dhugaatii kana dhuguu itti fufan; beekumsi bunaa immoo suuta suutaan hawaasa biroo bira ga’e jedhamee seenaa kana keessatti himama."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/monastery.jpg",
+					"alt": "coffee cherries roasting in a fire on a monastery floor at night",
+					"illustration": true
+				}
+			},
+			{
+				"id": "legend",
+				"title": "Seenaa aadaa malee galmee miti",
+				"body": [
+					"Seenaa Kalid jedhu kun seenaawwan bunni akkamitti argame ibsan keessaa isa baay’ee beekamaa ta’us, akka seenaa afaaniin darbe yookaan seenaa aadaa (legend) tokkootti ilaalamuu qaba malee akka ragaa seenaa guutummaatti mirkanaa’eetti fudhatamuu hin qabu. Guyyaan inni itti raawwatame, bakka sirrii ta’e fi bal’inni seenaa kanaa hanga ammaatti ifatti hin mirkanoofne. Haa ta’u malee, seenaa kanaan walqabatee Itoophiyaan biqiltuu bunaa waliin hariiroo cimaa qabduun beekamteetti; seenaanis kun seenaa aadaa bunaa keessatti bakka guddaa qaba."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/cup-start.jpg",
+					"alt": "A cup of freshly brewed coffee",
+					"illustration": false
+				}
+			},
+			{
+				"id": "yemen",
+				"title": "Yaman irraa gara addunyaatti",
+				"body": [
+					"Seenaa keessatti, bunni booda Yaman keessatti gadi fageenyaan hundeeffamee babal’ate. Achitti qopheessuunii fi dhuguun isaa, keessumaa hawaasa Suufii biratti, guddachaa dhufe. Yaman irraa bunni gara kutaalee Baha Giddugaleessaa (Arabian Peninsula) biroo babal’atee, dhuma irratti karaa daldalaa, amantii fi walitti dhufeenya aadaa gara Awurooppaa fi naannoowwan addunyaa biroo ga’e. Kanaafuu, gahee Itoophiyaan wiirtuu garaagarummaa sanyii fi guddina uumamaa bunaa Arabica ta’uun qabdu, gahee Yaman immoo bunni akka dhugaatii qophaa’eetti dursee guddachuu fi sadarkaa addunyaatti babal’achuu keessatti ragaa seenaatiin deeggaramu qabaachuu irraa adda baafamee hubatamuu qaba."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/history/yemen.jpg",
+					"alt": "sacks of coffee on the quay of an old Red Sea harbour, with dhows behind",
+					"illustration": true
+				}
+			},
+			{
+				"id": "ketta-muduga",
+				"title": "Jimmaa fi Ketta Muduga",
+				"body": [
+					"Haala kibba-dhiha Itoophiyaa keessatti, Godinni Jimmaa marii dhaala bunaa irratti iddoo addaa qaba. Naannichi misooma bunaa, jireenya bosona irratti hundaa’e, sirna waljijjiirraa aadaa fi gochoota aadaa naannoo waliin hariiroo yeroo dheeraa qaba. Duudhaan Ketta Mudugaas marii kana keessatti xiyyeeffannoo addaa argachuu qaba; sababiin isaas, hubannoo hawaasni naannichaa seenaa, oomisha fi hiika aadaa bunaa irratti qabu waliin walqabata. Akka amantii hawaasaa fi seenaawwan afaaniin himamanitti, naannoon Jimmaa iddoowwan ka’umsa yookaan seenaa jalqabaa bunaa Arabica waliin walqabatan keessaa tokko ta’ee ilaalama."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/halls/drying-beds.jpg",
+					"alt": "Raised drying beds of coffee on a green hillside in Jimma",
+					"illustration": false
+				}
+			},
+			{
+				"id": "footprints",
+				"title": "Faana miilaa re’ootaa",
+				"body": [
+					"Seenaawwan naannoo keessatti himaman, mallattoolee akka faana miilaa re’oota Kalid jedhamee himamu illee akka ragaa naannichi seenaa argama bunaa waliin walqabatu agarsiisanitti ni kaasu. Mallattooleen akkasii yaadannoo hawaasaa, eenyummaa aadaa fi ibsa dhaala seenaa keessatti hiika qabu. Haa ta’u malee, hiikni isaanii seenaa keessatti qaban daawwannaa dirree sirnaan gaggeeffamu, af-gaaffii seenaa afaanii, qorannoo galmee seenaa fi, yoo danda’ame, qorannoo arkiyooloojii (qorannoo hambaa lafaa) fayyadamuun qoramuu qaba. Hanga ragaa walaba ta’een mirkanaa’anitti, faana miilaa jedhamee himamu kana ragaa saayinsii murteessaa ka’umsa bunaa ta’uu isaa mirkaneessu jedhanii dhiyeessuu mannaa, akka duudhaa yookaan amantii naannoo tokkootti ibsuun sirrii dha."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/footprints.jpg",
+					"alt": "small hollows like goat hoof prints in a mossy basalt rock",
+					"illustration": true
+				}
+			},
+			{
+				"id": "research",
+				"title": "Kan ammayyuu qoratamu",
+				"body": [
+					"Xumura irratti, seenaa bunaa hubachuuf ragaa biqiltuu, galmeewwan seenaa, duudhoowwan afaaniin darban fi dhaala aadaa walitti fiduun barbaachisaa dha. Itoophiyaan, keessumaa naannoon bosonaa kibba-dhihaa, akka wiirtuu ijoo ka’umsa bunaa Arabica fi garaagarummaa sanyii isaa qabutti bal’inaan beekamti. Haala bal’aa kana keessatti, Godinni Jimmaa fi duudhaan Ketta Muduga qorannoo seenaa dabalataa argachuu qabu; sababiin isaas, hiika aadaa fi barbaachisummaa seenaa bunni Itoophiyaa keessatti qabu hubachuuf gumaacha ni taasisu. Qorannoon dabalataa duudhoowwan afaanii naannoo, galmeewwan seenaa, lafa bunni itti oomishamu fi iddoowwan dhaala seenaa waliin walqabatan irratti gaggeeffamu, hariiroo naannichaa fi seenaa bal’aa bunaa Arabica gidduu jiru ifa gochuuf gargaaruu danda’a. Qorannoon akkasii galmeessuu, kunuunsuu, eeguu fi dhaala bunaa Jimmaa dhaloota dhufuuf beeksisuufis gumaacha guddaa qaba."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/museum.jpg",
+					"alt": "The Kebena coffee museum in Jimma, shaped like a coffee cup",
+					"illustration": false
+				}
+			}
+		]
+	},
+	"ar": {
+		"eyebrow": "تاريخ القهوة",
+		"title": "تاريخ القهوة وأصلها: وجهات نظر مختلفة وتقاليد منطقة جيمّا",
+		"chapters": [
+			{
+				"id": "origins",
+				"title": "أماكن كثيرة وقصة واحدة",
+				"body": [
+					"تربط الأدبيات التي تتناول تاريخ القهوة وانتقالها من أفريقيا إلى مختلف أنحاء العالم اكتشاف القهوة بمنطقة الحبشة، أي إثيوبيا الحالية، كما تروي الأسطورة الشهيرة عن كاليد، راعي الماعز الذي يُقال تقليديًا إنه اكتشف التأثيرات المنشطة لثمار القهوة في حوالي القرن التاسع الميلادي. ويركز باحثون آخرون على الأدلة التاريخية التي تشير إلى استهلاك القهوة بين جماعات الصوفية في اليمن، حيث ارتبطت القهوة بالممارسات الدينية والصلوات الليلية."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/history/forest.jpg",
+					"alt": "The wild coffee forest of Jimma: coffee shrubs with red cherries under tall trees in the morning mist",
+					"illustration": true
+				}
+			},
+			{
+				"id": "questions",
+				"title": "أربعة أسئلة لا سؤال واحد",
+				"body": [
+					"وتُظهر هذه الآراء المختلفة أن تاريخ القهوة يرتبط بعدة مواقع جغرافية وتفسيرات تاريخية وتقاليد شفوية. ففي حين يؤكد بعض الباحثين أن إثيوبيا هي الموطن الطبيعي لبن الأرابيكا، يسلط آخرون الضوء على الدور المهم الذي أداه اليمن في الاستهلاك المبكر للقهوة، كما توثقه المصادر التاريخية، وفي إعدادها وانتشارها لاحقًا. ولذلك، من الضروري التمييز بين الأصل الطبيعي لنبات القهوة، واكتشاف خصائصه المنشطة، وتطور القهوة بوصفها مشروبًا مُحضّرًا، وانتشارها إلى مناطق أخرى من العالم."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/harvest-start.jpg",
+					"alt": "Ripe red coffee cherries on the branch",
+					"illustration": false
+				}
+			},
+			{
+				"id": "jimma",
+				"title": "لماذا جيمّا",
+				"body": [
+					"ومن وجهة نظري، تستحق جنوب غرب إثيوبيا، ولا سيما منطقة جيمّا، اهتمامًا كبيرًا في النقاشات المتعلقة بالأصل التاريخي لبن الأرابيكا واستخدامه المبكر. ويستند هذا الرأي إلى التقاليد العريقة لزراعة القهوة في المنطقة، وبيئتها الغابية الطبيعية، والتقاليد الشفوية المرتبطة بالقهوة. ومن أشهر الروايات في هذا السياق أسطورة كاليد، راعي الماعز الذي تُروى قصة اكتشافه للقهوة على نطاق واسع في الروايات الشعبية المتعلقة بتاريخها."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/halls/hall-02.jpg",
+					"alt": "A coffee tree heavy with red cherries on a hillside in the Jimma highlands",
+					"illustration": false
+				}
+			},
+			{
+				"id": "goatherd",
+				"title": "راعي الماعز",
+				"body": [
+					"وفقًا لهذه الأسطورة، عاش كاليد في جنوب غرب إثيوبيا وكان يرعى الماعز في المرتفعات المحيطة بالمنطقة. وتشير بعض روايات القصة إلى أنه قدم من اليمن لأغراض تجارية قبل أن يستقر في المنطقة، غير أن هذه المعلومة تحتاج إلى مزيد من التحقق التاريخي. وفي أحد الأيام، لاحظ أن بعض ماعزه تتصرف بطريقة غير مألوفة بعد تناولها ثمارًا حمراء زاهية من شجيرة قهوة قريبة. فقد بدت الحيوانات أكثر نشاطًا وحيوية من المعتاد، الأمر الذي لفت انتباهه. وبدافع الفضول لمعرفة سبب هذا السلوك، قرر كاليد تذوق الثمار بنفسه، ويُقال إنه شعر بتأثير منشط مماثل. وإذ غمرته السعادة بهذا الاكتشاف، جمع بعض الثمار وأخذها إلى منزله ليشارك زوجته تجربته."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/goatherd.jpg",
+					"alt": "a goatherd watches his goats eat red coffee cherries in the highland forest",
+					"illustration": true
+				}
+			},
+			{
+				"id": "monastery",
+				"title": "نار الدير",
+				"body": [
+					"ووفقًا للرواية الشائعة لهذه الأسطورة، اعتبرت زوجة كاليد هذا الاكتشاف هبة من الله، وشجعته على أخذ الثمار إلى دير قريب. وفي البداية، شكك الرهبان في الخصائص الخارقة التي نُسبت إلى تلك الثمار. ويُروى أن أحد الرهبان اعتبرها غير مرغوب فيها وألقاها في النار. غير أن الثمار، عندما تحمصت، أطلقت رائحة زكية جذبت انتباه الرهبان الآخرين. فجمعوا حبوب القهوة المحمصة ووضعوها في الماء الساخن، وأعدوا منها شرابًا عطريًا. وبعد تناول هذا المشروب، يُقال إنهم شعروا بزيادة في اليقظة والنشاط، مما ساعدهم على البقاء مستيقظين أثناء الصلوات الليلية. وتنتهي القصة باستمرار الرهبان في شرب هذا المشروب، ثم انتشار معرفة القهوة تدريجيًا بين المجتمعات الأخرى."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/monastery.jpg",
+					"alt": "coffee cherries roasting in a fire on a monastery floor at night",
+					"illustration": true
+				}
+			},
+			{
+				"id": "legend",
+				"title": "أسطورة لا سجل تاريخي",
+				"body": [
+					"وعلى الرغم من أن رواية كاليد تُعد من أشهر القصص المرتبطة باكتشاف القهوة، فإنه ينبغي التعامل معها بوصفها رواية شفوية أو أسطورة شعبية، لا سجلًا تاريخيًا مثبتًا بصورة كاملة. فما يزال التاريخ الدقيق للقصة وموقعها الجغرافي وتفاصيلها الفردية غير مؤكدة. ومع ذلك، أصبحت هذه الرواية جزءًا مهمًا من التاريخ الثقافي للقهوة، وتعكس الارتباط الراسخ بين إثيوبيا ونبات القهوة."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/cup-start.jpg",
+					"alt": "A cup of freshly brewed coffee",
+					"illustration": false
+				}
+			},
+			{
+				"id": "yemen",
+				"title": "من اليمن إلى العالم",
+				"body": [
+					"ومن الناحية التاريخية، ترسخت القهوة لاحقًا في اليمن، حيث تطورت طرق إعدادها واستهلاكها، ولا سيما بين الجماعات الصوفية. ومن اليمن، انتشرت القهوة إلى مناطق أخرى من شبه الجزيرة العربية، ثم وصلت في نهاية المطاف إلى أوروبا ومناطق أخرى من العالم عبر شبكات التجارة والدين والتبادل الثقافي. ولذلك، ينبغي التمييز بين أهمية إثيوبيا بوصفها مركزًا للتنوع الوراثي والنمو الطبيعي لبن الأرابيكا، وبين الدور الذي توثقه المصادر التاريخية لليمن في التطور المبكر للقهوة بوصفها مشروبًا وانتشارها على المستوى الدولي."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/history/yemen.jpg",
+					"alt": "sacks of coffee on the quay of an old Red Sea harbour, with dhows behind",
+					"illustration": true
+				}
+			},
+			{
+				"id": "ketta-muduga",
+				"title": "جيمّا وتقليد كيتّا مودوغا",
+				"body": [
+					"وفي سياق جنوب غرب إثيوبيا، تحتل منطقة جيمّا مكانة مهمة بوجه خاص في النقاشات المتعلقة بتراث القهوة. فقد ارتبطت المنطقة منذ زمن طويل بزراعة القهوة، وسبل العيش القائمة على الغابات، وأنظمة التبادل التقليدية، والممارسات الثقافية المحلية. ويكتسب تقليد «كيتّا مودوغا» (Ketta Muduga) أهمية خاصة في هذا النقاش، لارتباطه بالتصورات المحلية المتعلقة بتاريخ القهوة وإنتاجها وأهميتها الثقافية. ووفقًا للمعتقدات المحلية والروايات الشفوية، تُعد منطقة جيمّا إحدى المناطق المهمة المرتبطة بأصل بن الأرابيكا أو بتاريخه المبكر."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/halls/drying-beds.jpg",
+					"alt": "Raised drying beds of coffee on a green hillside in Jimma",
+					"illustration": false
+				}
+			},
+			{
+				"id": "footprints",
+				"title": "آثار أقدام الماعز",
+				"body": [
+					"كما تشير الروايات التاريخية المحلية إلى معالم مثل الآثار المنسوبة إلى أقدام ماعز كاليد، بوصفها شواهد تربط المنطقة بأسطورة اكتشاف القهوة. وتكتسب هذه المعالم أهمية باعتبارها عناصر من الذاكرة المحلية والهوية الثقافية وتفسير التراث. غير أن دلالتها التاريخية ينبغي أن تخضع للدراسة من خلال الملاحظات الميدانية المنهجية، والمقابلات المتعلقة بالتاريخ الشفوي، والبحوث الأرشيفية، والتحقيقات الأثرية حيثما أمكن ذلك. وإلى أن يتم التحقق منها بصورة مستقلة، ينبغي وصف الآثار المزعومة بأنها تقليد محلي أو معتقد شعبي، لا دليل علمي قاطع على موطن القهوة الأصلي."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/footprints.jpg",
+					"alt": "small hollows like goat hoof prints in a mossy basalt rock",
+					"illustration": true
+				}
+			},
+			{
+				"id": "research",
+				"title": "ما زال قيد البحث",
+				"body": [
+					"وفي الختام، ينبغي فهم تاريخ القهوة من خلال الجمع بين الأدلة النباتية والتوثيق التاريخي والتقاليد الشفوية والتراث الثقافي. وتُعترف إثيوبيا، ولا سيما مناطقها الغابية الجنوبية الغربية، على نطاق واسع بأنها المركز الرئيسي لأصل بن الأرابيكا وتنوعه الوراثي. وفي هذا السياق الأوسع، تستحق منطقة جيمّا وتقليدها المعروف باسم «كيتّا مودوغا» مزيدًا من البحث التاريخي، نظرًا إلى إسهامهما في فهم المعنى الثقافي للقهوة وأهميتها التاريخية في إثيوبيا. وقد تساعد البحوث الإضافية المتعلقة بالتقاليد الشفوية المحلية والسجلات التاريخية والمناطق الزراعية المنتجة للقهوة والمواقع التراثية المرتبطة بها على توضيح العلاقة بين المنطقة والتاريخ الأوسع لبن الأرابيكا. كما يمكن أن تسهم هذه البحوث في توثيق تراث القهوة في جيمّا وصونه والحفاظ عليه والتعريف به للأجيال القادمة."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/museum.jpg",
+					"alt": "The Kebena coffee museum in Jimma, shaped like a coffee cup",
+					"illustration": false
+				}
+			}
+		]
+	},
+	"it": {
+		"eyebrow": "Storia del caffè",
+		"title": "La storia e l’origine del caffè: prospettive e tradizione di Jimma",
+		"chapters": [
+			{
+				"id": "origins",
+				"title": "Molti luoghi, una sola storia",
+				"body": [
+					"La letteratura sulla storia del caffè e sulla sua diffusione dall’Africa al resto del mondo collega la scoperta del caffè all’Abissinia, l’attuale Etiopia, e racconta la nota leggenda di Kalid, un pastore di capre al quale viene tradizionalmente attribuita la scoperta degli effetti stimolanti delle bacche di caffè intorno al IX secolo d.C. Altri studiosi sottolineano le testimonianze storiche del consumo di caffè tra le comunità sufi dello Yemen, dove questa bevanda si associò alle pratiche religiose e alle preghiere notturne."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/history/forest.jpg",
+					"alt": "The wild coffee forest of Jimma: coffee shrubs with red cherries under tall trees in the morning mist",
+					"illustration": true
+				}
+			},
+			{
+				"id": "questions",
+				"title": "Quattro domande, non una",
+				"body": [
+					"Queste diverse prospettive dimostrano che la storia del caffè coinvolge numerose aree geografiche, interpretazioni storiche e tradizioni orali. Mentre alcuni studiosi considerano l’Etiopia la patria naturale del caffè Arabica, altri evidenziano il ruolo importante dello Yemen nel consumo documentato del caffè, nella sua preparazione e nella successiva diffusione. Di conseguenza, è necessario distinguere tra l’origine naturale della pianta del caffè, la scoperta delle sue proprietà stimolanti, lo sviluppo del caffè come bevanda preparata e la sua diffusione in altre parti del mondo."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/harvest-start.jpg",
+					"alt": "Ripe red coffee cherries on the branch",
+					"illustration": false
+				}
+			},
+			{
+				"id": "jimma",
+				"title": "Perché Jimma",
+				"body": [
+					"Dal mio punto di vista, l’Etiopia sud-occidentale, in particolare l’area di Jimma, merita particolare attenzione nelle discussioni sull’origine storica e sull’uso antico del caffè Arabica. Questa considerazione si basa sulle antiche tradizioni di coltivazione del caffè nella regione, sul suo ambiente forestale naturale e sulle tradizioni orali associate al caffè. Una delle narrazioni più conosciute è la leggenda di Kalid, il pastore di capre al quale viene attribuita la scoperta del caffè e la cui storia è ampiamente raccontata nelle narrazioni popolari sulla storia di questa bevanda."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/halls/hall-02.jpg",
+					"alt": "A coffee tree heavy with red cherries on a hillside in the Jimma highlands",
+					"illustration": false
+				}
+			},
+			{
+				"id": "goatherd",
+				"title": "Il pastore di capre",
+				"body": [
+					"Secondo questa leggenda, Kalid viveva nell’Etiopia sud-occidentale e pascolava le sue capre negli altopiani circostanti. Alcune versioni del racconto suggeriscono che fosse arrivato dallo Yemen per motivi commerciali prima di stabilirsi nella regione, sebbene questo dettaglio richieda ulteriori verifiche storiche. Un giorno, notò che alcune delle sue capre si comportavano in modo insolito dopo aver mangiato bacche di colore rosso intenso provenienti da un vicino arbusto di caffè. Gli animali apparivano più energici e attivi del solito, attirando così la sua attenzione. Incuriosito dal loro comportamento, Kalid decise di assaggiare personalmente le bacche e, secondo il racconto, sperimentò un effetto stimolante simile. Entusiasta della scoperta, raccolse alcune bacche e le portò a casa per condividere la propria esperienza con sua moglie."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/goatherd.jpg",
+					"alt": "a goatherd watches his goats eat red coffee cherries in the highland forest",
+					"illustration": true
+				}
+			},
+			{
+				"id": "monastery",
+				"title": "Il fuoco del monastero",
+				"body": [
+					"Secondo la versione più diffusa della leggenda, la moglie di Kalid interpretò questa scoperta come un dono di Dio e lo incoraggiò a portare le bacche in un monastero vicino. Inizialmente, i monaci erano scettici riguardo alle presunte proprietà miracolose delle bacche. Si racconta che un monaco le considerasse indesiderabili e le gettasse nel fuoco. Tuttavia, durante la tostatura, le bacche sprigionarono un aroma gradevole che attirò l’attenzione degli altri monaci. Essi raccolsero i chicchi tostati, li misero in acqua calda e prepararono una bevanda profumata. Dopo averla consumata, secondo il racconto, avvertirono una maggiore vigilanza e un aumento dell’energia, che li aiutavano a rimanere svegli durante le preghiere notturne. La storia si conclude con i monaci che continuarono a bere questa bevanda e con la graduale diffusione della conoscenza del caffè presso altre comunità."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/monastery.jpg",
+					"alt": "coffee cherries roasting in a fire on a monastery floor at night",
+					"illustration": true
+				}
+			},
+			{
+				"id": "legend",
+				"title": "Una leggenda, non un documento",
+				"body": [
+					"Sebbene la narrazione di Kalid sia una delle storie più popolari associate alla scoperta del caffè, dovrebbe essere considerata una tradizione orale o una leggenda, piuttosto che una testimonianza storica pienamente verificata. La data precisa, l’ambientazione geografica e i dettagli specifici della vicenda rimangono incerti. Ciononostante, questa storia è diventata una parte importante della storia culturale del caffè e riflette il legame duraturo tra l’Etiopia e la pianta del caffè."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/cup-start.jpg",
+					"alt": "A cup of freshly brewed coffee",
+					"illustration": false
+				}
+			},
+			{
+				"id": "yemen",
+				"title": "Dallo Yemen al mondo",
+				"body": [
+					"Dal punto di vista storico, il caffè si affermò successivamente nello Yemen, dove si svilupparono le modalità della sua preparazione e del suo consumo, soprattutto tra le comunità sufi. Dallo Yemen, il caffè si diffuse in altre parti della penisola arabica e raggiunse infine l’Europa e altre regioni del mondo attraverso reti commerciali, religiose e culturali. Pertanto, l’importanza dell’Etiopia come centro della diversità genetica e della crescita naturale del caffè Arabica deve essere distinta dal ruolo documentato dello Yemen nello sviluppo iniziale del caffè come bevanda e nella sua diffusione internazionale."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/history/yemen.jpg",
+					"alt": "sacks of coffee on the quay of an old Red Sea harbour, with dhows behind",
+					"illustration": true
+				}
+			},
+			{
+				"id": "ketta-muduga",
+				"title": "Jimma e Ketta Muduga",
+				"body": [
+					"Nel contesto dell’Etiopia sud-occidentale, la zona di Jimma occupa una posizione particolarmente importante nelle discussioni sul patrimonio del caffè. La regione intrattiene da lungo tempo un rapporto con la coltivazione del caffè, i mezzi di sussistenza basati sulle foreste, i sistemi tradizionali di scambio e le pratiche culturali locali. La tradizione di Ketta Muduga è particolarmente rilevante in questa discussione, poiché è legata alle conoscenze e alle interpretazioni locali riguardanti la storia del caffè, la sua produzione e il suo significato culturale. Secondo le credenze locali e le testimonianze orali, l’area di Jimma è considerata uno dei luoghi importanti associati all’origine o alla storia antica del caffè Arabica."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/halls/drying-beds.jpg",
+					"alt": "Raised drying beds of coffee on a green hillside in Jimma",
+					"illustration": false
+				}
+			},
+			{
+				"id": "footprints",
+				"title": "Le impronte delle capre",
+				"body": [
+					"Le narrazioni storiche locali fanno inoltre riferimento a elementi come le presunte impronte delle capre di Kalid, considerate testimonianze del legame tra la regione e la leggenda della scoperta del caffè. Questi elementi sono importanti in quanto espressioni della memoria locale, dell’identità culturale e dell’interpretazione del patrimonio. Tuttavia, il loro significato storico dovrebbe essere esaminato attraverso osservazioni sistematiche sul campo, interviste di storia orale, ricerche archivistiche e, ove possibile, indagini archeologiche. Fino a quando non saranno verificabili in modo indipendente, le presunte impronte dovrebbero essere descritte come una tradizione o una credenza locale, piuttosto che come una prova scientifica conclusiva dell’origine geografica del caffè."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/footprints.jpg",
+					"alt": "small hollows like goat hoof prints in a mossy basalt rock",
+					"illustration": true
+				}
+			},
+			{
+				"id": "research",
+				"title": "Ciò che resta da scoprire",
+				"body": [
+					"In conclusione, la storia del caffè dovrebbe essere compresa attraverso una combinazione di prove botaniche, documentazione storica, tradizioni orali e patrimonio culturale. L’Etiopia, in particolare le sue regioni forestali sud-occidentali, è ampiamente riconosciuta come il principale centro d’origine e di diversità genetica del caffè Arabica. In questo contesto più ampio, la zona di Jimma e la sua tradizione di Ketta Muduga meritano ulteriori ricerche storiche, poiché contribuiscono alla comprensione del significato culturale e dell’importanza storica del caffè in Etiopia. Ulteriori studi sulle tradizioni orali locali, sui documenti storici, sui paesaggi di coltivazione del caffè e sui siti patrimoniali associati potrebbero contribuire a chiarire il rapporto tra la regione e la storia più ampia del caffè Arabica. Tali ricerche contribuirebbero inoltre alla documentazione, alla conservazione, alla tutela e alla promozione del patrimonio del caffè di Jimma a beneficio delle generazioni future."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/museum.jpg",
+					"alt": "The Kebena coffee museum in Jimma, shaped like a coffee cup",
+					"illustration": false
+				}
+			}
+		]
+	},
+	"fr": {
+		"eyebrow": "Histoire du café",
+		"title": "L’histoire et l’origine du café: perspectives historiques et tradition de Jimma",
+		"chapters": [
+			{
+				"id": "origins",
+				"title": "Plusieurs lieux, une seule histoire",
+				"body": [
+					"La littérature consacrée à l’histoire du café, depuis son origine en Afrique jusqu’à sa diffusion dans le reste du monde, associe la découverte du café à l’Abyssinie, correspondant à l’Éthiopie actuelle. Elle rapporte également la célèbre légende de Kalid, un chevrier auquel la tradition attribue la découverte des effets stimulants des baies de caféier vers le IXe siècle apr. J.-C. D’autres chercheurs mettent l’accent sur les preuves historiques de la consommation du café au sein des communautés soufies du Yémen, où cette boisson était associée aux pratiques religieuses et aux prières nocturnes."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/history/forest.jpg",
+					"alt": "The wild coffee forest of Jimma: coffee shrubs with red cherries under tall trees in the morning mist",
+					"illustration": true
+				}
+			},
+			{
+				"id": "questions",
+				"title": "Quatre questions, pas une",
+				"body": [
+					"Ces différentes perspectives montrent que l’histoire du café repose sur plusieurs espaces géographiques, interprétations historiques et traditions orales. Alors que certains chercheurs considèrent l’Éthiopie comme le berceau naturel du café Arabica, d’autres soulignent le rôle important du Yémen dans les premières attestations documentées de sa consommation, de sa préparation et de sa diffusion ultérieure. Il est donc nécessaire de distinguer l’origine naturelle du caféier, la découverte de ses propriétés stimulantes, le développement du café en tant que boisson préparée et sa propagation vers d’autres régions du monde."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/harvest-start.jpg",
+					"alt": "Ripe red coffee cherries on the branch",
+					"illustration": false
+				}
+			},
+			{
+				"id": "jimma",
+				"title": "Pourquoi Jimma",
+				"body": [
+					"De mon point de vue, le sud-ouest de l’Éthiopie, en particulier la région de Jimma, mérite une attention particulière dans les discussions relatives à l’origine historique et à l’utilisation ancienne du café Arabica. Cette affirmation repose sur les traditions anciennes de culture du café dans la région, son environnement forestier naturel et les traditions orales qui lui sont associées. L’un des récits les plus connus est la légende de Kalid, le chevrier dont la découverte du café est fréquemment rapportée dans les récits populaires consacrés à l’histoire de cette boisson."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/halls/hall-02.jpg",
+					"alt": "A coffee tree heavy with red cherries on a hillside in the Jimma highlands",
+					"illustration": false
+				}
+			},
+			{
+				"id": "goatherd",
+				"title": "Le chevrier",
+				"body": [
+					"Selon cette légende, Kalid vivait dans le sud-ouest de l’Éthiopie et gardait des chèvres dans les hautes terres environnantes. Certaines versions du récit suggèrent qu’il serait venu du Yémen pour des activités commerciales avant de s’installer dans la région, bien que ce détail nécessite des vérifications historiques supplémentaires. Un jour, il remarqua que certaines de ses chèvres se comportaient de manière inhabituelle après avoir consommé des baies rouge vif provenant d’un caféier voisin. Les animaux semblaient plus énergiques et plus actifs que d’habitude, ce qui attira son attention. Intrigué par leur comportement, Kalid décida de goûter lui-même ces baies et aurait ressenti des effets stimulants similaires. Enthousiasmé par cette découverte, il en cueillit plusieurs et les rapporta chez lui afin de partager son expérience avec son épouse."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/goatherd.jpg",
+					"alt": "a goatherd watches his goats eat red coffee cherries in the highland forest",
+					"illustration": true
+				}
+			},
+			{
+				"id": "monastery",
+				"title": "Le feu du monastère",
+				"body": [
+					"Selon la version populaire de cette légende, l’épouse de Kalid interpréta cette découverte comme un don de Dieu et l’encouragea à apporter les baies dans un monastère voisin. Au début, les moines se montrèrent sceptiques quant aux propriétés supposément miraculeuses de ces fruits. L’un d’eux les jugea indésirables et les jeta dans le feu. Cependant, lorsque les baies commencèrent à griller, elles dégagèrent un arôme agréable qui attira l’attention des autres moines. Ceux-ci récupérèrent les grains torréfiés, les placèrent dans de l’eau chaude et préparèrent une boisson parfumée. Après l’avoir consommée, ils auraient ressenti une vigilance accrue et davantage d’énergie, ce qui leur aurait permis de rester éveillés pendant les prières nocturnes. Le récit se termine en indiquant que les moines continuèrent à boire cette préparation et que la connaissance du café se diffusa progressivement auprès d’autres communautés."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/monastery.jpg",
+					"alt": "coffee cherries roasting in a fire on a monastery floor at night",
+					"illustration": true
+				}
+			},
+			{
+				"id": "legend",
+				"title": "Une légende, pas une archive",
+				"body": [
+					"Bien que le récit de Kalid soit l’une des histoires les plus populaires associées à la découverte du café, il convient de le considérer comme une tradition orale ou"
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/cup-start.jpg",
+					"alt": "A cup of freshly brewed coffee",
+					"illustration": false
+				}
+			},
+			{
+				"id": "yemen",
+				"title": "Du Yémen au monde",
+				"body": [
+					"Historiquement, le café s’est ensuite solidement implanté au Yémen, où les méthodes de préparation et les pratiques de consommation se sont développées, notamment au sein des communautés soufies. Depuis le Yémen, le café s’est répandu dans d’autres régions de la péninsule Arabique avant d’atteindre l’Europe et d’autres parties du monde grâce aux réseaux commerciaux, religieux et culturels. Par conséquent, l’importance de l’Éthiopie en tant que centre de diversité génétique et de croissance naturelle du café Arabica doit être distinguée du rôle documenté du Yémen dans le développement précoce du café en tant que boisson et dans sa diffusion internationale."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/history/yemen.jpg",
+					"alt": "sacks of coffee on the quay of an old Red Sea harbour, with dhows behind",
+					"illustration": true
+				}
+			},
+			{
+				"id": "ketta-muduga",
+				"title": "Jimma et le Ketta Muduga",
+				"body": [
+					"Dans le contexte du sud-ouest de l’Éthiopie, la zone de Jimma occupe une place particulièrement importante dans les discussions relatives au patrimoine du café. La région entretient depuis longtemps des liens étroits avec la culture du café, les moyens de subsistance fondés sur les ressources forestières, les systèmes traditionnels d’échange et les pratiques culturelles locales. La tradition du Ketta Muduga revêt une importance particulière dans cette discussion, car elle est liée aux conceptions locales de l’histoire du café, de sa production et de sa signification culturelle. Selon les croyances locales et les récits oraux, la région de Jimma est considérée comme l’un des lieux importants associés à l’origine ou à l’histoire ancienne du café Arabica."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/halls/drying-beds.jpg",
+					"alt": "Raised drying beds of coffee on a green hillside in Jimma",
+					"illustration": false
+				}
+			},
+			{
+				"id": "footprints",
+				"title": "Les empreintes des chèvres",
+				"body": [
+					"Les récits historiques locaux mentionnent également certains éléments, tels que les prétendues empreintes des chèvres de Kaldi, présentées comme des indices reliant la région à la légende de la découverte du café. Ces éléments sont importants en tant que composantes de la mémoire collective locale, de l’identité culturelle et de l’interprétation du patrimoine. Toutefois, leur signification historique doit être examinée au moyen d’observations systématiques sur le terrain, d’entretiens d’histoire orale, de recherches archivistiques et, lorsque cela est possible, d’investigations archéologiques. Tant qu’elles n’auront pas été vérifiées de manière indépendante, les empreintes rapportées devront être décrites comme relevant d’une tradition ou d’une croyance locale, plutôt que comme des preuves scientifiques concluantes de l’origine géographique du café."
+				],
+				"tradition": true,
+				"image": {
+					"src": "/history/footprints.jpg",
+					"alt": "small hollows like goat hoof prints in a mossy basalt rock",
+					"illustration": true
+				}
+			},
+			{
+				"id": "research",
+				"title": "Ce qu’il reste à découvrir",
+				"body": [
+					"En conclusion, l’histoire du café doit être comprise à travers une combinaison de données botaniques, de documents historiques, de traditions orales et d’études du patrimoine culturel. L’Éthiopie, en particulier ses régions forestières du sud-ouest, est largement reconnue comme le principal centre d’origine et de diversité génétique du café Arabica. Dans ce contexte plus large, la zone de Jimma et sa tradition du Ketta Muduga méritent des recherches historiques plus approfondies, car elles contribuent à la compréhension de la signification culturelle du café et de son importance historique en Éthiopie.",
+					"Des recherches supplémentaires sur les traditions orales locales, les documents historiques, les paysages de culture du café et les sites patrimoniaux associés pourraient contribuer à clarifier les relations entre cette région et l’histoire plus générale du café Arabica. De telles recherches favoriseraient également la documentation, la préservation et la valorisation du patrimoine caféier de Jimma au bénéfice des générations futures."
+				],
+				"tradition": false,
+				"image": {
+					"src": "/hero/museum.jpg",
+					"alt": "The Kebena coffee museum in Jimma, shaped like a coffee cup",
+					"illustration": false
+				}
+			}
+		]
+	}
+}

@@ -2,10 +2,13 @@ import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
-import adapter from '@sveltejs/adapter-node';
+import nodeAdapter from '@sveltejs/adapter-node';
+import vercelAdapter from '@sveltejs/adapter-vercel';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
+	// gsap's plugin entry points don't load as plain Node ESM; bundle it into the server build
+	ssr: { noExternal: ['gsap'] },
 	plugins: [
 		tailwindcss(),
 		sveltekit({
@@ -14,7 +17,8 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			adapter: adapter()
+			// Vercel builds (its CI sets VERCEL=1) use the Vercel adapter; everywhere else stays on Node
+			adapter: process.env.VERCEL ? vercelAdapter() : nodeAdapter()
 		}),
 
 		paraglideVitePlugin({

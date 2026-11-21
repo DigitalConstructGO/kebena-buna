@@ -1,1 +1,183 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource/jetbrains-mono/400.css';
+/* Ethiopic and Arabic: unicode-range subsets, so they only download on pages that use them */
+@import '@fontsource/noto-sans-ethiopic/400.css';
+@import '@fontsource/noto-naskh-arabic/400.css';
+
+@theme {
+	--font-sans:
+		'Inter Variable', 'Noto Sans Ethiopic', 'Noto Naskh Arabic', ui-sans-serif, system-ui,
+		sans-serif;
+	--font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+	/* Palette from the Figma design system */
+	--color-forest-950: #08170e;
+	--color-forest-900: #0d2217;
+	--color-forest-800: #143323;
+	--color-forest-700: #1d4a31;
+	--color-leaf-50: #eaf3ec;
+	--color-leaf-400: #7fbf98;
+	--color-leaf-600: #3f7a55;
+	--color-leaf-700: #2f6544;
+	--color-mist-50: #f6f9f6;
+	--color-mist-100: #edf3ee;
+	--color-mist-200: #dce7de;
+	--color-mist-500: #5f6f65;
+	--color-mist-700: #3a4a40;
+	--color-mist-800: #1b2d22;
+	--color-lime-300: #c5ee8a;
+	--color-lime-400: #a8e063;
+}
+
+/* Theme roles: paper and soft ink in light, forest and light ink in dark. Every section
+   reads these so it follows the theme; only the hero and the journey stay forest. */
+:root {
+	color-scheme: light;
+	--paper: #fff;
+	--paper-soft: var(--color-mist-50);
+	--paper-tint: var(--color-mist-100);
+	--card: #fff;
+	--ink: var(--color-mist-700);
+	--ink-soft: var(--color-mist-500);
+	--line: var(--color-mist-200);
+	--accent-ink: var(--color-leaf-600);
+	--well: var(--color-mist-200);
+	/* a veil over a full-bleed photo so text on it reads, and the glass panels above it */
+	--scrim: rgb(246 249 246 / 0.86);
+	--glass: rgb(255 255 255 / 0.9);
+	--glass-line: var(--color-mist-200);
+	/* story pages (history, kingdoms): marks, washes and map roles */
+	--ink-strong: var(--color-mist-800);
+	--accent-mark: var(--color-leaf-700);
+	/* the coffee-brown accent of the pour: deep on paper, caramel on forest */
+	--caramel: #94561f;
+	--accent-wash: var(--color-leaf-50);
+	--accent-line: rgb(47 101 68 / 0.3);
+	--accent-area: #cfe3d4;
+	--accent-bar: #b9d8c3;
+	--track: var(--color-mist-200);
+	--water: #5b9bb0;
+	--water-ink: #2f6f82;
+}
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		color-scheme: dark;
+		--paper: var(--color-forest-950);
+		--paper-soft: #0a1b11;
+		--paper-tint: var(--color-forest-900);
+		--card: var(--color-forest-800);
+		--ink: #e4ece6;
+		--ink-soft: #a7b6ac;
+		--line: rgb(255 255 255 / 0.1);
+		--accent-ink: var(--color-leaf-400);
+		--well: var(--color-forest-800);
+		--scrim: rgb(8 23 14 / 0.74);
+		--glass: rgb(20 51 35 / 0.86);
+		--glass-line: rgb(255 255 255 / 0.14);
+		--ink-strong: var(--color-mist-50);
+		--accent-mark: var(--color-lime-300);
+		/* the coffee-brown accent of the pour: deep on paper, caramel on forest */
+		--caramel: #d9a05b;
+		--accent-wash: rgb(197 238 138 / 0.12);
+		--accent-line: rgb(197 238 138 / 0.25);
+		--accent-area: var(--color-leaf-700);
+		--accent-bar: var(--color-leaf-600);
+		--track: rgb(255 255 255 / 0.16);
+		--water: #6fa8b8;
+		--water-ink: #8fbccb;
+	}
+}
+:root[data-theme='dark'] {
+	color-scheme: dark;
+	--paper: var(--color-forest-950);
+	--paper-soft: #0a1b11;
+	--paper-tint: var(--color-forest-900);
+	--card: var(--color-forest-800);
+	--ink: #e4ece6;
+	--ink-soft: #a7b6ac;
+	--line: rgb(255 255 255 / 0.1);
+	--accent-ink: var(--color-leaf-400);
+	--well: var(--color-forest-800);
+	--scrim: rgb(8 23 14 / 0.74);
+	--glass: rgb(20 51 35 / 0.86);
+	--glass-line: rgb(255 255 255 / 0.14);
+	--ink-strong: var(--color-mist-50);
+	--accent-mark: var(--color-lime-300);
+	/* the coffee-brown accent of the pour: deep on paper, caramel on forest */
+	--caramel: #d9a05b;
+	--accent-wash: rgb(197 238 138 / 0.12);
+	--accent-line: rgb(197 238 138 / 0.25);
+	--accent-area: var(--color-leaf-700);
+	--accent-bar: var(--color-leaf-600);
+	--track: rgb(255 255 255 / 0.16);
+	--water: #6fa8b8;
+	--water-ink: #8fbccb;
+}
+
+html {
+	background: var(--color-forest-900);
+}
+
+/* one shared eyebrow and section title for the museum sections */
+.kb-eyebrow {
+	margin: 0;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	line-height: 16px;
+	letter-spacing: 0.6px;
+	text-transform: uppercase;
+	color: var(--accent-ink);
+}
+.kb-title {
+	margin: 0;
+	font-size: clamp(2rem, 3.2vw, 2.5rem);
+	line-height: 1.2;
+	letter-spacing: -0.5px;
+	font-weight: 400;
+	color: var(--ink);
+	text-wrap: balance;
+}
+.kb-section {
+	padding: clamp(72px, 9vw, 120px) max(24px, calc((100% - 1200px) / 2));
+}
+.kb-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 12px 24px;
+	border-radius: 8px;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	line-height: 16px;
+	letter-spacing: 0.6px;
+	text-transform: uppercase;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: background-color 0.2s;
+}
+.kb-btn.primary {
+	background: var(--color-lime-400);
+	color: var(--color-forest-900);
+}
+.kb-btn.primary:hover {
+	background: var(--color-lime-300);
+}
+.kb-btn.secondary {
+	background: var(--color-forest-800);
+	color: #fff;
+}
+.kb-btn.secondary:hover {
+	background: var(--color-forest-700);
+}
+.kb-btn:focus-visible {
+	outline: 2px solid var(--color-lime-400);
+	outline-offset: 2px;
+}
+
+body {
+	font-family: var(--font-sans);
+	color: var(--color-mist-700);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
