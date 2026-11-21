@@ -62,12 +62,14 @@
 
 			/** Draw as much of the stream as the reader has scrolled through, with a drop at its tip. */
 			const paint = () => {
-				if (Math.abs(prog - shown) < 1e-4) return;
+				// nothing to draw along until the stream has been laid out and sampled
+				if (!pts.length || Math.abs(prog - shown) < 1e-4) return;
 				shown = prog;
 				const off = String(len * (1 - prog));
 				for (const p of [glow, main, hi]) p.style.strokeDashoffset = off;
 				const pt = pointAt(prog);
-				head.setAttribute('transform', `translate(${pt.x.toFixed(1)} ${pt.y.toFixed(1)})`);
+				if (Number.isFinite(pt.x) && Number.isFinite(pt.y))
+					head.setAttribute('transform', `translate(${pt.x.toFixed(1)} ${pt.y.toFixed(1)})`);
 				head.style.opacity = prog > 0.002 && prog < 0.995 ? '1' : '0';
 				full = prog > 0.985;
 			};
