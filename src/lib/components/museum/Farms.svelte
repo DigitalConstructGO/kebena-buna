@@ -75,8 +75,8 @@
 			// the facts and the list, on tablets and phones above a panel describing the part in front
 			mm.add(
 				{
-					ring: '(min-height: 560px) and (prefers-reduced-motion: no-preference)',
-					narrow: '(max-width: 899px)'
+					ring: '(prefers-reduced-motion: no-preference)',
+					narrow: '(max-width: 899px), (max-width: 999px) and (max-height: 560px)'
 				},
 				(ctx) => {
 					const { ring, narrow } = ctx.conditions as { ring: boolean; narrow: boolean };
@@ -150,8 +150,10 @@
 	$effect(() => {
 		const on = tabs?.children[active] as HTMLElement | undefined;
 		if (!tabs || !on) return;
+		const t = tabs.getBoundingClientRect();
+		const r = on.getBoundingClientRect();
 		tabs.scrollTo({
-			left: on.offsetLeft - (tabs.clientWidth - on.offsetWidth) / 2,
+			left: tabs.scrollLeft + r.left - t.left - (t.width - r.width) / 2,
 			behavior: 'smooth'
 		});
 	});
@@ -240,25 +242,28 @@
 							</button>
 						{/each}
 					</div>
-					{#key active}
-						<div class="now-body">
-							<p class="now-kind">
-								{pad(active + 1)} / {pad(content.farms.length)} · {current.kind ?? 'Estate'}
-							</p>
-							<p class="now-name">{current.title}</p>
-							<p class="now-text">{current.text}</p>
-							{#if current.meta.length}
-								<dl class="now-meta">
-									{#each current.meta as m (m.label)}
-										<div>
-											<dt>{m.label}</dt>
-											<dd>{m.value}</dd>
-										</div>
-									{/each}
-								</dl>
-							{/if}
-						</div>
-					{/key}
+					<!-- every part is laid in the same cell, so the panel keeps the height of the longest and the ring never resizes -->
+					<div class="bodies">
+						{#each content.farms as farm, i (farm.id)}
+							<div class={['now-body', { on: i === active }]} aria-hidden={i !== active}>
+								<p class="now-kind">
+									{pad(i + 1)} / {pad(content.farms.length)} · {farm.kind ?? 'Estate'}
+								</p>
+								<p class="now-name">{farm.title}</p>
+								<p class="now-text">{farm.text}</p>
+								{#if farm.meta.length}
+									<dl class="now-meta">
+										{#each farm.meta as m (m.label)}
+											<div>
+												<dt>{m.label}</dt>
+												<dd>{m.value}</dd>
+											</div>
+										{/each}
+									</dl>
+								{/if}
+							</div>
+						{/each}
+					</div>
 				</div>
 			{/if}
 		{/if}
@@ -529,27 +534,33 @@
 		display: none;
 	}
 
-	/* tablets and phones: the ring fills the hall, the part in front is described beneath it */
-	@media (max-width: 899px) {
+	/* tablets and phones (and phones on their side): the ring fills the hall, the part in front is described beneath it */
+	@media (max-width: 899px), (max-width: 999px) and (max-height: 560px) {
 		.stage {
-			--d: clamp(300px, 98vw, 560px);
 			grid-template-columns: minmax(0, 1fr);
 			grid-template-rows: minmax(0, 1fr) auto;
-			min-height: 560px;
+			row-gap: 12px;
+			min-height: 0;
 			/* room at the foot for the floor-plan sign */
-			padding: 24px 20px 92px;
+			padding: 16px 20px 92px;
 		}
+		/* the ring owns the space the panel leaves, and sizes itself to fit it whatever the screen */
 		.ring-view {
 			grid-column: 1;
-			grid-row: 1 / -1;
-			margin: -24px -20px -92px;
+			grid-row: 1;
+			margin: -16px -20px 0;
+			container-type: size;
 			perspective: 1300px;
-			perspective-origin: 50% 30%;
-			--fade-y: linear-gradient(transparent, #000 10%, #000 46%, transparent 60%);
+			perspective-origin: 50% 35%;
+			--fade-y: linear-gradient(transparent, #000 12%, #000 86%, transparent);
 		}
-		/* the band turns in the upper part of the hall, so it never moves when the text below changes length */
-		.helix {
-			top: 34%;
+		.tilt {
+			/* the band is about half the diameter tall and climbs 1.2 bands a turn: keep one turn and a bit in view */
+			--d: max(180px, min(98cqw, 135cqh, 560px));
+			--sw: calc(var(--d) * 0.10472);
+			--r: calc(var(--d) / 2);
+			--bh: calc(var(--sw) * 4.9);
+			--drop: calc(var(--bh) * 1.22 / 30);
 		}
 		.facts,
 		.count,
@@ -597,10 +608,29 @@
 			outline: 2px solid var(--accent-ink);
 			outline-offset: 2px;
 		}
-		.now-body {
+		.bodies {
 			display: grid;
+		}
+		.now-body {
+			grid-area: 1 / 1;
+			display: grid;
+			align-content: start;
 			gap: 6px;
-			animation: swap 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+			visibility: hidden;
+			opacity: 0;
+			translate: 0 10px;
+			transition:
+				opacity 0.4s,
+				translate 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+				visibility 0s 0.4s;
+		}
+		.now-body.on {
+			visibility: visible;
+			opacity: 1;
+			translate: 0 0;
+			transition:
+				opacity 0.4s 0.1s,
+				translate 0.5s 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
 		}
 		.now-kind {
 			margin: 0;
@@ -647,9 +677,30 @@
 			overflow-wrap: anywhere;
 		}
 	}
+	/* short phones: tighter type, and on the shortest the three facts give their room to the ring */
+	@media (max-width: 899px) and (max-height: 700px) {
+		.now {
+			gap: 10px;
+		}
+		.tabs button {
+			min-height: 36px;
+			font-size: 13px;
+		}
+		.now-name {
+			font-size: 22px;
+		}
+		.now-text {
+			font-size: 14px;
+			line-height: 1.45;
+		}
+	}
+	@media (max-width: 899px) and (max-height: 620px) {
+		.now-meta {
+			display: none;
+		}
+	}
 	@media (min-width: 600px) and (max-width: 899px) {
 		.stage {
-			--d: clamp(420px, 76vw, 640px);
 			padding-inline: 40px;
 		}
 		.ring-view {
@@ -659,10 +710,42 @@
 			margin-inline: -40px;
 			padding-inline: 40px;
 		}
+		.tilt {
+			--d: max(180px, min(76cqw, 135cqh, 640px));
+		}
 	}
 
-	/* short screens and reduced motion: a plain list of parts, each with a photo strip */
-	@media (max-height: 559px), (prefers-reduced-motion: reduce) {
+	/* phones on their side: the ring on the left, the part in front on the right */
+	@media (max-width: 999px) and (max-height: 560px) and (orientation: landscape) {
+		.stage {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+			grid-template-rows: minmax(0, 1fr);
+			column-gap: 24px;
+			min-height: 0;
+			padding: 16px max(24px, env(safe-area-inset-right)) 16px max(24px, env(safe-area-inset-left));
+		}
+		.ring-view {
+			grid-column: 1;
+			grid-row: 1;
+			margin: -16px 0 -16px -24px;
+		}
+		.now {
+			grid-column: 2;
+			grid-row: 1;
+			align-self: center;
+			/* clear of the floor-plan sign at the foot */
+			padding-bottom: 64px;
+		}
+		.tabs {
+			margin: 0;
+			padding: 0;
+		}
+		.now-meta {
+			display: none;
+		}
+	}
+	/* reduced motion: a plain list of parts, each with a photo strip */
+	@media (prefers-reduced-motion: reduce) {
 		.stage {
 			display: none;
 		}

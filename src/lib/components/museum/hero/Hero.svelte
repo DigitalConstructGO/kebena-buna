@@ -132,6 +132,13 @@
 		});
 		io.observe(root);
 
+		// the clips stay out of the HTML's download queue (preload="none") so on a slow line the page's
+		// scripts and fonts arrive first; once hydrated, fetch them in story order
+		nursery.preload = 'auto';
+		film.preload = 'auto';
+		nursery.load();
+		film.load();
+
 		const filmReady = new Promise<void>((res) => {
 			if (film.readyState >= 3) return res();
 			film.addEventListener('canplaythrough', () => res(), { once: true });
@@ -194,7 +201,7 @@
 			bind:this={film}
 			muted
 			playsinline
-			preload="auto"
+			preload="none"
 			poster="/hero/film-start.webp"
 			disablepictureinpicture
 			aria-hidden="true"
@@ -209,7 +216,7 @@
 			bind:this={nursery}
 			muted
 			playsinline
-			preload="metadata"
+			preload="none"
 			poster="/hero/nursery-start.webp"
 			disablepictureinpicture
 			aria-hidden="true"
