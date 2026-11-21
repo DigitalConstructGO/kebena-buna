@@ -431,7 +431,7 @@
 	}
 	:global(.entrance.live) .unit,
 	:global(.entrance.live) .note {
-		color: rgb(255 255 255 / 0.7);
+		color: rgb(255 255 255 / 0.88);
 	}
 
 	@media (min-width: 700px) {

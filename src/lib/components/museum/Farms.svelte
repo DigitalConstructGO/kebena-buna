@@ -39,8 +39,12 @@
 		}
 		return out;
 	});
-	/** Photos load only once the desktop ribbon is set up; phones never fetch them twice. */
+	/** Photos load only once the ribbon is set up; the fallback list never fetches them twice. */
 	let near = $state(false);
+	/** Below 900px the ring sits above a details panel and turns the lighter 440px photos. */
+	let small = $state(false);
+	const ringSrc = (src: string) => (small ? src.replace(/\.webp$/, '-440.webp') : src);
+	let tabs = $state<HTMLElement>();
 	const starts = $derived(content.farms.map((_, part) => panels.findIndex((p) => p.part === part)));
 
 	let active = $state(0);
@@ -67,14 +71,33 @@
 			if (n < 2) return;
 			const mm = gsap.matchMedia();
 
-			// desktop: the hall holds still while the ribbon turns and sinks past the viewer
+			// the hall holds still while the ribbon turns and sinks past the viewer: on desktop between
+			// the facts and the list, on tablets and phones above a panel describing the part in front
 			mm.add(
-				'(min-width: 900px) and (min-height: 600px) and (prefers-reduced-motion: no-preference)',
-				() => {
+				{
+					ring: '(min-height: 560px) and (prefers-reduced-motion: no-preference)',
+					narrow: '(max-width: 899px)'
+				},
+				(ctx) => {
+					const { ring, narrow } = ctx.conditions as { ring: boolean; narrow: boolean };
+					if (!ring) {
+						// short screens and reduced motion: the plain list, each part fading up as it arrives
+						gsap.utils.toArray<HTMLElement>('.part', root).forEach((el) => {
+							gsap.from(el, {
+								autoAlpha: 0,
+								y: 28,
+								duration: 0.8,
+								ease: 'power3.out',
+								scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+							});
+						});
+						return;
+					}
 					const stage = root.querySelector<HTMLElement>('.stage')!;
 					const helix = root.querySelector<HTMLElement>('.helix')!;
 					const cards = [...root.querySelectorAll<HTMLElement>('.slice')];
 					const proxy = { a: 0 };
+					small = narrow;
 					near = true;
 
 					const apply = () => {
@@ -100,7 +123,8 @@
 						scrollTrigger: {
 							trigger: stage,
 							start: 'top top',
-							end: () => `+=${window.innerHeight * 0.32 * n}`,
+							// a thumb travels less than a wheel: phones turn a photo every quarter screen
+							end: () => `+=${window.innerHeight * (narrow ? 0.24 : 0.32) * n}`,
 							pin: true,
 							scrub: 0.8,
 							anticipatePin: 1
@@ -118,22 +142,19 @@
 					};
 				}
 			);
-
-			// phones and short screens: each part fades up as it arrives
-			mm.add('(max-width: 899px), (max-height: 599px)', () => {
-				gsap.utils.toArray<HTMLElement>('.part', root).forEach((el) => {
-					gsap.from(el, {
-						autoAlpha: 0,
-						y: 28,
-						duration: 0.8,
-						ease: 'power3.out',
-						scrollTrigger: { trigger: el, start: 'top 88%', once: true }
-					});
-				});
-			});
 			return () => mm.revert();
 		})
 	);
+
+	// keep the tab of the part in front in view as the ring turns
+	$effect(() => {
+		const on = tabs?.children[active] as HTMLElement | undefined;
+		if (!tabs || !on) return;
+		tabs.scrollTo({
+			left: on.offsetLeft - (tabs.clientWidth - on.offsetWidth) / 2,
+			behavior: 'smooth'
+		});
+	});
 
 	/** The phone strip shows each photo at most 260px wide; the full 520px file is for the desktop ring. */
 	const stripSet = (src: string) =>
@@ -157,7 +178,7 @@
 								class={['slice', { edge: sl.k === 0 }]}
 								style:--j={sl.j}
 								style:--k={sl.k}
-								style:background-image={near ? `url(${sl.src})` : undefined}
+								style:background-image={near ? `url(${ringSrc(sl.src)})` : undefined}
 							></div>
 						{/each}
 					</div>
@@ -203,6 +224,43 @@
 					</li>
 				{/each}
 			</ol>
+
+			<!-- tablets and phones: the part in front, under the ring -->
+			{#if current}
+				<div class="now">
+					<div class="tabs" bind:this={tabs}>
+						{#each content.farms as farm, i (farm.id)}
+							<button
+								type="button"
+								class={{ on: i === active }}
+								aria-current={i === active ? 'true' : undefined}
+								onclick={() => go(i)}
+							>
+								{farm.title}
+							</button>
+						{/each}
+					</div>
+					{#key active}
+						<div class="now-body">
+							<p class="now-kind">
+								{pad(active + 1)} / {pad(content.farms.length)} · {current.kind ?? 'Estate'}
+							</p>
+							<p class="now-name">{current.title}</p>
+							<p class="now-text">{current.text}</p>
+							{#if current.meta.length}
+								<dl class="now-meta">
+									{#each current.meta as m (m.label)}
+										<div>
+											<dt>{m.label}</dt>
+											<dd>{m.value}</dd>
+										</div>
+									{/each}
+								</dl>
+							{/if}
+						</div>
+					{/key}
+				</div>
+			{/if}
 		{/if}
 	</div>
 
@@ -466,12 +524,145 @@
 	.list li.on .text {
 		display: block;
 	}
-	.parts {
+	.parts,
+	.now {
 		display: none;
 	}
 
-	/* phones, short screens and reduced motion: a plain list of parts, each with a photo strip */
-	@media (max-width: 899px), (max-height: 599px), (prefers-reduced-motion: reduce) {
+	/* tablets and phones: the ring fills the hall, the part in front is described beneath it */
+	@media (max-width: 899px) {
+		.stage {
+			--d: clamp(300px, 98vw, 560px);
+			grid-template-columns: minmax(0, 1fr);
+			grid-template-rows: minmax(0, 1fr) auto;
+			min-height: 560px;
+			/* room at the foot for the floor-plan sign */
+			padding: 24px 20px 92px;
+		}
+		.ring-view {
+			grid-column: 1;
+			grid-row: 1 / -1;
+			margin: -24px -20px -92px;
+			perspective: 1300px;
+			perspective-origin: 50% 30%;
+			--fade-y: linear-gradient(transparent, #000 10%, #000 46%, transparent 60%);
+		}
+		/* the band turns in the upper part of the hall, so it never moves when the text below changes length */
+		.helix {
+			top: 34%;
+		}
+		.facts,
+		.count,
+		.list {
+			display: none;
+		}
+		.now {
+			grid-column: 1;
+			grid-row: 2;
+			position: relative;
+			z-index: 1;
+			display: grid;
+			gap: 14px;
+			min-width: 0;
+		}
+		.tabs {
+			display: flex;
+			gap: 8px;
+			margin: 0 -20px;
+			padding: 0 20px;
+			overflow-x: auto;
+			scrollbar-width: none;
+		}
+		.tabs button {
+			flex: none;
+			min-height: 40px;
+			padding: 0 14px;
+			border: 0;
+			border-radius: 12px;
+			background: var(--paper-tint);
+			color: var(--ink-soft);
+			font: inherit;
+			font-size: 14px;
+			white-space: nowrap;
+			cursor: pointer;
+			transition:
+				background-color 0.3s,
+				color 0.3s;
+		}
+		.tabs button.on {
+			background: var(--accent-ink);
+			color: var(--paper);
+		}
+		.tabs button:focus-visible {
+			outline: 2px solid var(--accent-ink);
+			outline-offset: 2px;
+		}
+		.now-body {
+			display: grid;
+			gap: 6px;
+			animation: swap 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+		}
+		.now-kind {
+			margin: 0;
+			font-family: var(--font-mono);
+			font-size: 12px;
+			color: var(--accent-ink);
+		}
+		.now-name {
+			margin: 0;
+			font-size: clamp(24px, 6vw, 32px);
+			font-weight: 500;
+			line-height: 1.15;
+			letter-spacing: -0.02em;
+			overflow-wrap: anywhere;
+		}
+		.now-text {
+			margin: 0;
+			max-width: 60ch;
+			font-size: 15px;
+			line-height: 1.5;
+			color: var(--ink-soft);
+		}
+		.now-meta {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 12px;
+			margin: 6px 0 0;
+			padding-top: 12px;
+			border-top: 1px solid var(--line);
+		}
+		.now-meta div {
+			display: grid;
+			gap: 2px;
+			min-width: 0;
+		}
+		.now-meta dt {
+			font-size: 12px;
+			color: var(--ink-soft);
+		}
+		.now-meta dd {
+			margin: 0;
+			font-size: 14px;
+			line-height: 1.35;
+			overflow-wrap: anywhere;
+		}
+	}
+	@media (min-width: 600px) and (max-width: 899px) {
+		.stage {
+			--d: clamp(420px, 76vw, 640px);
+			padding-inline: 40px;
+		}
+		.ring-view {
+			margin-inline: -40px;
+		}
+		.tabs {
+			margin-inline: -40px;
+			padding-inline: 40px;
+		}
+	}
+
+	/* short screens and reduced motion: a plain list of parts, each with a photo strip */
+	@media (max-height: 559px), (prefers-reduced-motion: reduce) {
 		.stage {
 			display: none;
 		}
