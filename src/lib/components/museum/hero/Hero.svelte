@@ -23,7 +23,7 @@
 	const current = $derived(CHAPTERS.findLastIndex((c) => time >= c.at - 0.05));
 
 	let tl: gsap.core.Timeline | undefined;
-	let onScreen = true;
+	let onScreen = $state(true);
 	const clock: Clock = { t: 0, nursery: 0 };
 	let weather = { rain: 0 };
 	let score: ReturnType<typeof createScore> | undefined;
@@ -182,7 +182,12 @@
 
 <svelte:document onvisibilitychange={() => score?.pauseForHidden(document.hidden)} />
 
-<section class={['hero', { ready, sound }]} bind:this={root} aria-labelledby="hero-title">
+<!-- away: the full-screen film grain repaints every step, so it rests while the hero is out of view -->
+<section
+	class={['hero', { ready, sound, away: !onScreen }]}
+	bind:this={root}
+	aria-labelledby="hero-title"
+>
 	<div class="stage">
 		<video
 			class="film"
@@ -216,6 +221,8 @@
 		<img
 			class="ceremony"
 			src={museumSrc}
+			width="1920"
+			height="1078"
 			alt=""
 			aria-hidden="true"
 			decoding="async"
@@ -383,6 +390,9 @@
 		background: url('/hero/grain.png') 0 0 / 128px 128px;
 		will-change: transform;
 		animation: grain 0.9s steps(4) infinite;
+	}
+	.hero.away .grain {
+		animation-play-state: paused;
 	}
 	.vignette {
 		position: absolute;

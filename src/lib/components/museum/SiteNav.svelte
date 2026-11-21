@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { m } from '#lib/paraglide/messages.js';
 	import type { Path } from '$app/types';
+	import Wayfinder from './Wayfinder.svelte';
 	import {
 		deLocalizeHref,
 		getLocale,
@@ -219,6 +220,8 @@
 	<a class="order" href={`${resolve(localizeHref('/') as Path)}#collection`}>Order</a>
 </header>
 
+<Wayfinder />
+
 <style>
 	.nav {
 		position: absolute;
@@ -232,10 +235,9 @@
 		gap: 24px;
 		padding: 8px 8px 8px 18px;
 		border-radius: 16px;
-		background: rgb(13 34 23 / 0.62);
+		/* dense enough that the light labels pass contrast even over a white page */
+		background: rgb(13 34 23 / 0.9);
 		border: 1px solid rgb(255 255 255 / 0.1);
-		backdrop-filter: blur(14px) saturate(1.2);
-		-webkit-backdrop-filter: blur(14px) saturate(1.2);
 		color: var(--color-mist-50);
 	}
 	.brand {

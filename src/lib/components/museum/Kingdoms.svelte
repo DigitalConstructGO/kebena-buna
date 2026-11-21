@@ -16,6 +16,9 @@
 	} = $props();
 
 	const content = $derived(section.content);
+	// one level under the section title, so the outline never skips (h1 → h2 → h3)
+	const sub = $derived(heading === 'h1' ? 'h2' : 'h3');
+	const subsub = $derived(heading === 'h1' ? 'h3' : 'h4');
 	const kingdoms = $derived(content.kingdoms);
 	const total = $derived(kingdoms.length);
 	const locale = getLocale();
@@ -201,10 +204,15 @@
 								<span class="dates">{s.openStart ? approx() + ' ' : ''}{s.from}–{s.to}</span>
 							{/if}
 						</p>
-						<h3 class="k-name reveal" id={`kingdom-${k.id}-name`} tabindex="-1">
+						<svelte:element
+							this={sub}
+							class="k-name reveal"
+							id={`kingdom-${k.id}-name`}
+							tabindex="-1"
+						>
 							{k.name}
 							{#if native(k)}<span class="native" lang={locale}>{native(k)}</span>{/if}
-						</h3>
+						</svelte:element>
 
 						<p class="summary reveal">{k.summary}</p>
 
@@ -232,7 +240,9 @@
 						{/if}
 
 						{#if k.rulers.length}
-							<h4 class="reveal">{m.story_kings()}</h4>
+							<svelte:element this={subsub} class="rulers-title reveal">
+								{m.story_kings()}
+							</svelte:element>
 							<ol class="rulers reveal">
 								{#each k.rulers as r (r.name + (r.from ?? ''))}
 									<li>
@@ -497,12 +507,7 @@
 		flex-direction: column;
 		justify-content: center;
 		padding-block: 48px;
-		opacity: 0.38;
-		transition: opacity 0.6s;
 		scroll-margin-top: 24px;
-	}
-	.chapter.on {
-		opacity: 1;
 	}
 	.meta {
 		display: flex;
@@ -513,7 +518,7 @@
 	.dates {
 		color: var(--ink-soft);
 	}
-	h3 {
+	.k-name {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
@@ -578,7 +583,7 @@
 		line-height: 1.8;
 		color: var(--accent-mark);
 	}
-	h4 {
+	.rulers-title {
 		margin: 0 0 10px;
 		font-size: 13px;
 		font-weight: 400;
@@ -765,7 +770,7 @@
 		top: 12px;
 		font-size: 10px;
 		line-height: 12px;
-		color: var(--color-forest-950);
+		color: var(--ink);
 		pointer-events: none;
 	}
 	.row.on .bar-years.inside {

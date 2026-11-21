@@ -15,6 +15,8 @@
 	} = $props();
 
 	const content = $derived(section.content);
+	// one level under the section title, so the outline never skips (h1 → h2 → h3)
+	const sub = $derived(heading === 'h1' ? 'h2' : 'h3');
 	const chapters = $derived(content.chapters);
 	const total = $derived(chapters.length);
 	const pad = (n: number) => String(n).padStart(2, '0');
@@ -183,7 +185,14 @@
 								</span>
 							{/if}
 						</p>
-						<h3 class="reveal" id={`chapter-${c.id}-title`} tabindex="-1">{c.title}</h3>
+						<svelte:element
+							this={sub}
+							class="chapter-title reveal"
+							id={`chapter-${c.id}-title`}
+							tabindex="-1"
+						>
+							{c.title}
+						</svelte:element>
 						{#each c.body as p, k (k)}
 							<p class="text reveal">{p}</p>
 						{/each}
@@ -413,7 +422,7 @@
 		background: var(--accent-wash);
 		color: var(--accent-mark);
 	}
-	h3 {
+	.chapter-title {
 		margin: 0 0 18px;
 		font-size: clamp(1.6rem, 2.3vw, 2.15rem);
 		line-height: 1.18;

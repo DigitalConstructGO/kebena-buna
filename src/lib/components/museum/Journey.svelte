@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { srcsetFor } from '#lib/img.js';
 	import { setupGsap } from '#lib/gsap.js';
 	import { whenIdle } from '#lib/reveal.js';
 	import type { JourneyContent } from '#lib/content/museum.js';
@@ -38,6 +39,26 @@
 			let len = 1;
 			let prog = still ? 1 : 0;
 			let shown = -1;
+			/** Points along the stream, sampled once per layout; the drop reads from here each frame. */
+			let pts: Float32Array = new Float32Array(0);
+			const STEPS = 400;
+			const sample = () => {
+				pts = new Float32Array((STEPS + 1) * 2);
+				for (let k = 0; k <= STEPS; k++) {
+					const q = main.getPointAtLength((len * k) / STEPS);
+					pts[k * 2] = q.x;
+					pts[k * 2 + 1] = q.y;
+				}
+			};
+			const pointAt = (t: number) => {
+				const f = Math.min(1, Math.max(0, t)) * STEPS;
+				const k = Math.min(STEPS - 1, Math.floor(f));
+				const u = f - k;
+				return {
+					x: pts[k * 2] + (pts[k * 2 + 2] - pts[k * 2]) * u,
+					y: pts[k * 2 + 1] + (pts[k * 2 + 3] - pts[k * 2 + 1]) * u
+				};
+			};
 
 			/** Draw as much of the stream as the reader has scrolled through, with a drop at its tip. */
 			const paint = () => {
@@ -45,7 +66,7 @@
 				shown = prog;
 				const off = String(len * (1 - prog));
 				for (const p of [glow, main, hi]) p.style.strokeDashoffset = off;
-				const pt = main.getPointAtLength(len * prog);
+				const pt = pointAt(prog);
 				head.setAttribute('transform', `translate(${pt.x.toFixed(1)} ${pt.y.toFixed(1)})`);
 				head.style.opacity = prog > 0.002 && prog < 0.995 ? '1' : '0';
 				full = prog > 0.985;
@@ -93,6 +114,7 @@
 				headShine.setAttribute('cy', String(-rw * 0.2));
 				len = main.getTotalLength() || 1;
 				for (const p of [glow, main, hi]) p.style.strokeDasharray = `${len} ${len + 10}`;
+				sample();
 				shown = -1;
 				paint();
 			};
@@ -100,22 +122,21 @@
 			const ctx = gsap.context(() => {
 				if (still) return;
 				const s = { v: 0 };
-				// the stream trails the scroll a little, so it pours rather than jumps
+				// the stream trails the scroll a little, so it pours rather than jumps;
+				// quickTo reuses one tween instead of building a new one on every scroll event
+				const pourTo = gsap.quickTo(s, 'v', {
+					duration: 0.6,
+					ease: 'power2.out',
+					onUpdate: () => {
+						prog = s.v;
+						paint();
+					}
+				});
 				ScrollTrigger.create({
 					trigger: sec,
 					start: 'top 55%',
 					end: 'bottom bottom',
-					onUpdate: (self) =>
-						gsap.to(s, {
-							v: self.progress,
-							duration: 0.6,
-							ease: 'power2.out',
-							overwrite: true,
-							onUpdate: () => {
-								prog = s.v;
-								paint();
-							}
-						})
+					onUpdate: (self) => pourTo(self.progress)
 				});
 				gsap.from(top.children, {
 					y: 30,
@@ -222,6 +243,8 @@
 						{#if !broken[s.id]}
 							<img
 								src={s.photo.src}
+								srcset={srcsetFor(s.photo.src)}
+								sizes="(min-width: 900px) 440px, 90vw"
 								alt={s.photo.alt}
 								loading="lazy"
 								decoding="async"
@@ -336,10 +359,8 @@
 		width: min(460px, 46%);
 		padding: 12px 12px clamp(20px, 2.4vw, 30px);
 		border-radius: 24px;
-		background: color-mix(in srgb, var(--card) 62%, transparent);
+		background: color-mix(in srgb, var(--card) 90%, transparent);
 		border: 1px solid var(--line);
-		backdrop-filter: blur(18px) saturate(1.4);
-		-webkit-backdrop-filter: blur(18px) saturate(1.4);
 	}
 	.step:nth-child(odd) {
 		align-self: flex-start;

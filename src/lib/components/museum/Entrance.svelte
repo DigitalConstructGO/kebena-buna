@@ -140,7 +140,14 @@
 	<div class="stage">
 		{#if content.backdrop}
 			<!-- the hall itself, soft and dim, so the photo is there from the moment the sheet arrives -->
-			<img class="backdrop" src={content.backdrop} alt="" aria-hidden="true" />
+			<img
+				class="backdrop"
+				src={content.backdrop}
+				width="160"
+				height="90"
+				alt=""
+				aria-hidden="true"
+			/>
 		{/if}
 		<p class="eyebrow">{content.eyebrow}</p>
 		<h2 class="title" id="entrance-title">

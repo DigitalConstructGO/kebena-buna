@@ -5,8 +5,9 @@ import type { PageServerLoad } from './$types';
 
 const MODES: StoryMode[] = ['demo', 'worst', 'empty', 'one'];
 
-// built once as static HTML per language; served straight from the CDN
-export const prerender = true;
+// built once as static HTML per language; served straight from the CDN. Dev keeps rendering
+// on request so the ?data= stress fixtures still work (prerendered pages cannot read the query).
+export const prerender = !import.meta.env.DEV;
 
 export const load: PageServerLoad = async ({ url }) => {
 	// the ?data= fixture switch is dev-only; reading the query string would block prerendering

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { srcsetFor } from '#lib/img.js';
 	import { setupGsap } from '#lib/gsap.js';
 	import { whenIdle } from '#lib/reveal.js';
 	import type { HallsContent } from '#lib/content/museum.js';
@@ -240,6 +241,8 @@
 									{:else}
 										<img
 											src={h.photo}
+											srcset={srcsetFor(h.photo)}
+											sizes="(min-width: 900px) 300px, 70vw"
 											alt=""
 											loading="lazy"
 											decoding="async"
@@ -293,6 +296,10 @@
 					{#if !broken[halls[active].id]}<img
 							class="thumb"
 							src={halls[active].photo}
+							srcset={srcsetFor(halls[active].photo)}
+							sizes="60px"
+							width="60"
+							height="60"
 							alt=""
 							loading="lazy"
 							decoding="async"
