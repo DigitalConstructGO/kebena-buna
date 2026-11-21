@@ -243,7 +243,10 @@
 			<p class="line line-4" aria-hidden="true">Eight months to a ripe red cherry</p>
 			<p class="line line-5" aria-hidden="true">Stay for the third cup</p>
 		</div>
-		<p class="caption">Jimma, the birthplace of coffee</p>
+		<p class="caption">
+			<span class="sr-only">Jimma, the birthplace of coffee</span>
+			<span class="cap-text" aria-hidden="true">Jimma, the birthplace of coffee</span>
+		</p>
 		<a class="cta" href="#visit">Visit us</a>
 	</div>
 
@@ -257,6 +260,7 @@
 						type="button"
 						class={{ active: i === current }}
 						aria-current={i === current ? 'step' : undefined}
+						aria-label={`Chapter ${i + 1}: ${c.label}`}
 						onclick={() => seek(c.at + 0.01)}
 					>
 						<span class="bar"><span class="fill" style:transform={`scaleX(${fill})`}></span></span>

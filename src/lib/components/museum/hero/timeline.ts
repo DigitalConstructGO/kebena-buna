@@ -93,8 +93,8 @@ export function buildHeroTimeline(root: HTMLElement, weather: Weather, clock: Cl
 		.to(q('.ceremony'), { scale: 1.06, duration: 9, ease: 'power1.out' }, MUSEUM + 0.9);
 
 	/* ---------- headlines, each in step with its stage ---------- */
-	const split = (sel: string, type: string) =>
-		SplitText.create(one(sel), { type, mask: type.includes('lines') ? 'lines' : undefined });
+	const split = (sel: string, type: string, aria: 'auto' | 'none' = 'auto') =>
+		SplitText.create(one(sel), { type, aria, mask: type.includes('lines') ? 'lines' : undefined });
 	const show = (sel: string, at: number, until?: number) => {
 		tl.set(q(sel), { autoAlpha: 1 }, at);
 		if (until !== undefined) tl.set(q(sel), { autoAlpha: 0 }, until);
@@ -194,7 +194,8 @@ export function buildHeroTimeline(root: HTMLElement, weather: Weather, clock: Cl
 	show('.line-5', museumAt);
 	tl.from(s5.words, { y: 28, autoAlpha: 0, ...blur(10), duration: 0.9, stagger: 0.1 }, museumAt);
 
-	const sc = split('.caption', 'words,chars'); // words keep the typewriter from breaking mid-word
+	// the readable copy sits beside it in .sr-only, so this one needs no label
+	const sc = split('.caption .cap-text', 'words,chars', 'none'); // words keep the typewriter from breaking mid-word
 	show('.caption', museumAt + 0.9);
 	tl.from(sc.chars, { autoAlpha: 0, duration: 0.01, stagger: 0.035, ease: 'none' }, museumAt + 0.9);
 

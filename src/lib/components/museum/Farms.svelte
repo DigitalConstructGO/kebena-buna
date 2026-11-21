@@ -134,6 +134,10 @@
 			return () => mm.revert();
 		})
 	);
+
+	/** The phone strip shows each photo at most 260px wide; the full 520px file is for the desktop ring. */
+	const stripSet = (src: string) =>
+		`${src.replace(/\.webp$/, '-280.webp')} 280w, ${src.replace(/\.webp$/, '-440.webp')} 440w`;
 </script>
 
 <section class="farms" id="farms" bind:this={root} aria-labelledby="farms-title">
@@ -210,7 +214,9 @@
 					<div class="strip">
 						{#each [farm.photo, ...(farm.gallery ?? [])] as photo, k (k)}
 							<img
-								src={photo.src}
+								src={photo.src.replace(/\.webp$/, '-440.webp')}
+								srcset={stripSet(photo.src)}
+								sizes="min(62vw, 260px)"
 								alt={photo.alt}
 								width="520"
 								height="680"
