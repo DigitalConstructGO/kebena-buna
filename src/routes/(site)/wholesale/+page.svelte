@@ -9,6 +9,7 @@
 	import Trap from '#lib/site/Trap.svelte';
 	import Consent from '#lib/site/Consent.svelte';
 	import FormNotice from '#lib/site/FormNotice.svelte';
+	import FileUpload from '@nahu/admin-kit/formComponents/FileUpload.svelte';
 
 	let { data } = $props();
 
@@ -16,8 +17,20 @@
 	const application = superForm(data.application);
 	// svelte-ignore state_referenced_locally
 	const quote = superForm(data.quote);
-	const { form: aForm, errors: aErrors, enhance: aEnhance, delayed: aDelayed, message: aMessage } = application;
-	const { form: qForm, errors: qErrors, enhance: qEnhance, delayed: qDelayed, message: qMessage } = quote;
+	const {
+		form: aForm,
+		errors: aErrors,
+		enhance: aEnhance,
+		delayed: aDelayed,
+		message: aMessage
+	} = application;
+	const {
+		form: qForm,
+		errors: qErrors,
+		enhance: qEnhance,
+		delayed: qDelayed,
+		message: qMessage
+	} = quote;
 
 	const locale = $derived(getLocale());
 
@@ -31,10 +44,14 @@
 		other: m.wholesale_type_other
 	};
 	const types = $derived(BUSINESS_TYPES.map((t) => ({ value: t, label: TYPE_NAMES[t]() })));
-	const incoterms = $derived(INCOTERMS.map((t) => ({ value: t, label: t === 'other' ? m.wholesale_incoterm_other() : t })));
+	const incoterms = $derived(
+		INCOTERMS.map((t) => ({ value: t, label: t === 'other' ? m.wholesale_incoterm_other() : t }))
+	);
 
 	const range = (t: { minKg: number; maxKg: number | null }) =>
-		t.maxKg === null ? m.wholesale_tier_from({ min: t.minKg }) : m.wholesale_tier_range({ min: t.minKg, max: t.maxKg });
+		t.maxKg === null
+			? m.wholesale_tier_from({ min: t.minKg })
+			: m.wholesale_tier_range({ min: t.minKg, max: t.maxKg });
 </script>
 
 <svelte:head>
@@ -82,23 +99,69 @@
 	</section>
 
 	<section class="section" aria-labelledby="apply-title">
-		<form method="POST" action="?/application" enctype="multipart/form-data" class="form" use:aEnhance>
+		<form
+			method="POST"
+			action="?/application"
+			enctype="multipart/form-data"
+			class="form"
+			use:aEnhance
+		>
 			<h2 class="section-title" id="apply-title">{m.wholesale_apply_title()}</h2>
 			<Trap bind:value={$aForm.website} />
 			<fieldset>
 				<legend>{m.wholesale_business()}</legend>
 				<div class="fields two">
-					<Field label={m.wholesale_name()} name="name" bind:value={$aForm.name} errors={$aErrors.name} required autocomplete="organization" />
-					<Field label={m.wholesale_type()} name="type" type="select" options={types} bind:value={$aForm.type} errors={$aErrors.type} required />
-					<Field label={m.wholesale_licence()} name="tradeLicenceNumber" bind:value={$aForm.tradeLicenceNumber} errors={$aErrors.tradeLicenceNumber} required />
-					<label class="field" data-invalid={$aErrors.tradeLicenceFile ? '' : undefined}>
+					<Field
+						label={m.wholesale_name()}
+						name="name"
+						bind:value={$aForm.name}
+						errors={$aErrors.name}
+						required
+						autocomplete="organization"
+					/>
+					<Field
+						label={m.wholesale_type()}
+						name="type"
+						type="select"
+						options={types}
+						bind:value={$aForm.type}
+						errors={$aErrors.type}
+						required
+					/>
+					<Field
+						label={m.wholesale_licence()}
+						name="tradeLicenceNumber"
+						bind:value={$aForm.tradeLicenceNumber}
+						errors={$aErrors.tradeLicenceNumber}
+						required
+					/>
+					<!-- The kit's drop zone is the file input's own label, so this one names the field only. -->
+					<div class="field" data-invalid={$aErrors.tradeLicenceFile ? '' : undefined}>
 						<span>{m.wholesale_licence_file()}</span>
-						<input type="file" name="tradeLicenceFile" accept=".pdf,image/*" />
-						<small>{m.wholesale_licence_file_hint()}</small>
-						{#if $aErrors.tradeLicenceFile}<p class="error">{$aErrors.tradeLicenceFile[0]}</p>{/if}
-					</label>
-					<Field label={m.wholesale_tin()} name="tin" bind:value={$aForm.tin} errors={$aErrors.tin} required inputmode="numeric" />
-					<Field label={m.wholesale_vat()} name="vatNumber" bind:value={$aForm.vatNumber} errors={$aErrors.vatNumber} />
+						<FileUpload
+							form={aForm}
+							name="tradeLicenceFile"
+							accept=".pdf,image/*"
+							placeholder={m.wholesale_licence_file_hint()}
+						/>
+						{#if $aErrors.tradeLicenceFile}<p class="error" role="alert">
+								{$aErrors.tradeLicenceFile[0]}
+							</p>{/if}
+					</div>
+					<Field
+						label={m.wholesale_tin()}
+						name="tin"
+						bind:value={$aForm.tin}
+						errors={$aErrors.tin}
+						required
+						inputmode="numeric"
+					/>
+					<Field
+						label={m.wholesale_vat()}
+						name="vatNumber"
+						bind:value={$aForm.vatNumber}
+						errors={$aErrors.vatNumber}
+					/>
 					<Field
 						label={m.wholesale_monthly()}
 						name="expectedMonthlyKg"
@@ -114,12 +177,56 @@
 			<fieldset>
 				<legend>{m.wholesale_contact()}</legend>
 				<div class="fields two">
-					<Field label={m.wholesale_contact_name()} name="contactName" bind:value={$aForm.contactName} errors={$aErrors.contactName} required autocomplete="name" />
-					<Field label={m.wholesale_phone()} name="contactPhone" type="tel" bind:value={$aForm.contactPhone} errors={$aErrors.contactPhone} required autocomplete="tel" />
-					<Field label={m.wholesale_email()} name="contactEmail" type="email" bind:value={$aForm.contactEmail} errors={$aErrors.contactEmail} autocomplete="email" />
-					<Field label={m.wholesale_city()} name="city" bind:value={$aForm.city} errors={$aErrors.city} placeholder="Addis Ababa" autocomplete="address-level2" />
-					<Field label={m.wholesale_address()} name="address" bind:value={$aForm.address} errors={$aErrors.address} wide autocomplete="street-address" hint={m.wholesale_address_hint()} />
-					<Field label={m.wholesale_notes()} name="notes" type="textarea" bind:value={$aForm.notes} errors={$aErrors.notes} wide />
+					<Field
+						label={m.wholesale_contact_name()}
+						name="contactName"
+						bind:value={$aForm.contactName}
+						errors={$aErrors.contactName}
+						required
+						autocomplete="name"
+					/>
+					<Field
+						label={m.wholesale_phone()}
+						name="contactPhone"
+						type="tel"
+						bind:value={$aForm.contactPhone}
+						errors={$aErrors.contactPhone}
+						required
+						autocomplete="tel"
+					/>
+					<Field
+						label={m.wholesale_email()}
+						name="contactEmail"
+						type="email"
+						bind:value={$aForm.contactEmail}
+						errors={$aErrors.contactEmail}
+						autocomplete="email"
+					/>
+					<Field
+						label={m.wholesale_city()}
+						name="city"
+						bind:value={$aForm.city}
+						errors={$aErrors.city}
+						placeholder="Addis Ababa"
+						autocomplete="address-level2"
+					/>
+					<Field
+						label={m.wholesale_address()}
+						name="address"
+						bind:value={$aForm.address}
+						errors={$aErrors.address}
+						wide
+						autocomplete="street-address"
+						hint={m.wholesale_address_hint()}
+					/>
+					<Field
+						label={m.wholesale_notes()}
+						name="notes"
+						type="textarea"
+						bind:value={$aForm.notes}
+						errors={$aErrors.notes}
+						wide
+					/>
 				</div>
 			</fieldset>
 			<Consent bind:checked={$aForm.marketingConsent} />
@@ -134,16 +241,87 @@
 			<p class="muted">{m.wholesale_quote_lede()}</p>
 			<Trap bind:value={$qForm.website} />
 			<div class="fields two">
-				<Field label={m.wholesale_contact_name()} name="name" bind:value={$qForm.name} errors={$qErrors.name} required autocomplete="name" />
-				<Field label={m.wholesale_company()} name="company" bind:value={$qForm.company} errors={$qErrors.company} autocomplete="organization" />
-				<Field label={m.wholesale_email()} name="email" type="email" bind:value={$qForm.email} errors={$qErrors.email} required autocomplete="email" />
-				<Field label={m.wholesale_phone_optional()} name="phone" type="tel" bind:value={$qForm.phone} errors={$qErrors.phone} autocomplete="tel" />
-				<Field label={m.wholesale_country()} name="country" bind:value={$qForm.country} errors={$qErrors.country} required autocomplete="country-name" />
-				<Field label={m.wholesale_origin()} name="origin" bind:value={$qForm.origin} errors={$qErrors.origin} placeholder="Limu, Djimmah, Gera…" />
-				<Field label={m.wholesale_grade()} name="grade" bind:value={$qForm.grade} errors={$qErrors.grade} placeholder="Grade 1" />
-				<Field label={m.wholesale_bags()} name="bags" type="number" min={1} inputmode="numeric" bind:value={$qForm.bags} errors={$qErrors.bags} required hint={m.wholesale_bags_hint()} />
-				<Field label={m.wholesale_incoterm()} name="incoterm" type="select" options={incoterms} bind:value={$qForm.incoterm} errors={$qErrors.incoterm} />
-				<Field label={m.wholesale_message()} name="message" type="textarea" bind:value={$qForm.message} errors={$qErrors.message} wide />
+				<Field
+					label={m.wholesale_contact_name()}
+					name="name"
+					bind:value={$qForm.name}
+					errors={$qErrors.name}
+					required
+					autocomplete="name"
+				/>
+				<Field
+					label={m.wholesale_company()}
+					name="company"
+					bind:value={$qForm.company}
+					errors={$qErrors.company}
+					autocomplete="organization"
+				/>
+				<Field
+					label={m.wholesale_email()}
+					name="email"
+					type="email"
+					bind:value={$qForm.email}
+					errors={$qErrors.email}
+					required
+					autocomplete="email"
+				/>
+				<Field
+					label={m.wholesale_phone_optional()}
+					name="phone"
+					type="tel"
+					bind:value={$qForm.phone}
+					errors={$qErrors.phone}
+					autocomplete="tel"
+				/>
+				<Field
+					label={m.wholesale_country()}
+					name="country"
+					bind:value={$qForm.country}
+					errors={$qErrors.country}
+					required
+					autocomplete="country-name"
+				/>
+				<Field
+					label={m.wholesale_origin()}
+					name="origin"
+					bind:value={$qForm.origin}
+					errors={$qErrors.origin}
+					placeholder="Limu, Djimmah, Gera…"
+				/>
+				<Field
+					label={m.wholesale_grade()}
+					name="grade"
+					bind:value={$qForm.grade}
+					errors={$qErrors.grade}
+					placeholder="Grade 1"
+				/>
+				<Field
+					label={m.wholesale_bags()}
+					name="bags"
+					type="number"
+					min={1}
+					inputmode="numeric"
+					bind:value={$qForm.bags}
+					errors={$qErrors.bags}
+					required
+					hint={m.wholesale_bags_hint()}
+				/>
+				<Field
+					label={m.wholesale_incoterm()}
+					name="incoterm"
+					type="select"
+					options={incoterms}
+					bind:value={$qForm.incoterm}
+					errors={$qErrors.incoterm}
+				/>
+				<Field
+					label={m.wholesale_message()}
+					name="message"
+					type="textarea"
+					bind:value={$qForm.message}
+					errors={$qErrors.message}
+					wide
+				/>
 			</div>
 			<Consent bind:checked={$qForm.marketingConsent} />
 			<FormNotice message={$qMessage} thanks={m.wholesale_quote_thanks()} />

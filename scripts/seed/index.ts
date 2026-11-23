@@ -16,7 +16,9 @@ const MODULES: { name: string; load: () => Promise<{ seed: () => Promise<void> }
 	{ name: 'wholesale', load: () => import('./wholesale.ts') },
 	{ name: 'orders', load: () => import('./orders.ts') },
 	{ name: 'content', load: () => import('./content.ts') },
-	{ name: 'system', load: () => import('./system.ts') }
+	{ name: 'system', load: () => import('./system.ts') },
+	// Last: experiences and events exist once `bookings` and `visits` have run.
+	{ name: 'pictures', load: () => import('./pictures.ts') }
 ];
 
 async function wipe() {

@@ -1,10 +1,15 @@
 <!--
-	A labelled input for the public site's forms, in the design's style (`site.css` › Forms). Binds
-	its value; shows the first superforms error under it. `type="select"` takes `options`,
-	`type="textarea"` takes `rows`; anything else is an `<input>` and extra attributes pass through.
+	A labelled field for the public site's forms, in the design's style (`site.css` › Forms). The
+	control is the admin-kit's: its `Input`, `Textarea` or `SelectComp`. Binds its value and shows
+	the first superforms error under it. `type="select"` takes `options`, `type="textarea"` takes
+	`rows`; anything else is an `Input`, and extra attributes (`autocomplete`, `inputmode`) pass
+	through to it, which the kit's `InputComp` would drop: a checkout must still autofill.
 -->
 <script lang="ts">
-	import type { HTMLInputAttributes } from 'svelte/elements';
+	import type { HTMLInputAttributes, HTMLInputTypeAttribute } from 'svelte/elements';
+	import { Input } from '@nahu/admin-kit/components/ui/input/index.js';
+	import { Textarea } from '@nahu/admin-kit/components/ui/textarea/index.js';
+	import SelectComp from '@nahu/admin-kit/formComponents/SelectComp.svelte';
 
 	type Option = { value: string | number; label: string };
 	let {
@@ -32,40 +37,60 @@
 		rows?: number;
 		required?: boolean;
 		wide?: boolean;
-	} & Omit<HTMLInputAttributes, 'type' | 'value' | 'name'> = $props();
+	} & Omit<HTMLInputAttributes, 'type' | 'value' | 'name' | 'files'> = $props();
 
 	const id = $props.id();
 	const error = $derived(errors?.[0]);
 	const describedBy = $derived(
-		[hint ? `${id}-hint` : null, error ? `${id}-error` : null].filter(Boolean).join(' ') || undefined
+		[hint ? `${id}-hint` : null, error ? `${id}-error` : null].filter(Boolean).join(' ') ||
+			undefined
 	);
+
+	/** An optional select with a placeholder offers it as a choice, so a pick can be taken back. */
+	const items = $derived([
+		...(placeholder && !required ? [{ value: '', name: placeholder }] : []),
+		...options.map((o) => ({ value: o.value, name: o.label }))
+	]);
+	/** The kit's `Input` takes any type but `file`, which has its own upload. */
+	const inputType = $derived((type ?? 'text') as Exclude<HTMLInputTypeAttribute, 'file'>);
+	const text = {
+		get: () => (value == null ? '' : String(value)),
+		set: (v: string) => (value = v)
+	};
 </script>
 
 <label class="field" class:wide data-invalid={error ? '' : undefined} for={id}>
-	<span>{label}{#if required}<span aria-hidden="true"> *</span>{/if}</span>
+	<span>
+		{label}{#if required}<span aria-hidden="true"> *</span>{/if}
+	</span>
 	{#if type === 'select'}
-		<select {id} {name} bind:value {required} aria-invalid={error ? 'true' : undefined} aria-describedby={describedBy}>
-			{#if placeholder}<option value="">{placeholder}</option>{/if}
-			{#each options as o (o.value)}
-				<option value={o.value}>{o.label}</option>
-			{/each}
-		</select>
+		<SelectComp
+			{id}
+			{name}
+			{items}
+			{label}
+			placeholder={placeholder ?? '—'}
+			bind:value
+			{required}
+			invalid={Boolean(error)}
+			{describedBy}
+		/>
 	{:else if type === 'textarea'}
-		<textarea
+		<Textarea
 			{id}
 			{name}
 			{rows}
 			{placeholder}
 			{required}
-			bind:value
+			bind:value={text.get, text.set}
 			aria-invalid={error ? 'true' : undefined}
 			aria-describedby={describedBy}
-		></textarea>
+		/>
 	{:else}
-		<input
+		<Input
 			{id}
 			{name}
-			{type}
+			type={inputType}
 			{placeholder}
 			{required}
 			bind:value

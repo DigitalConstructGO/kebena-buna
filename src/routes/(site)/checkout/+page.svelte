@@ -8,6 +8,8 @@
 	import Field from '#lib/site/Field.svelte';
 	import Trap from '#lib/site/Trap.svelte';
 	import { siteHref } from '#lib/site/locale.ts';
+	import ImageSelect from '@nahu/admin-kit/formComponents/ImageSelect.svelte';
+	import { Checkbox } from '@nahu/admin-kit/components/ui/checkbox/index.js';
 
 	let { data } = $props();
 
@@ -18,10 +20,14 @@
 	});
 
 	const locale = $derived(getLocale());
-	const zone = $derived($form.method === 'delivery' ? data.zones.find((z) => z.id === $form.zoneId) : undefined);
+	const zone = $derived(
+		$form.method === 'delivery' ? data.zones.find((z) => z.id === $form.zoneId) : undefined
+	);
 	const areas = $derived(data.areas.filter((a) => a.zoneId === $form.zoneId));
 	/** The same rule the server charges by (`feeOf`): free above the zone's threshold. */
-	const fee = $derived(zone ? (zone.free !== null && data.subtotal >= zone.free ? 0 : zone.fee) : 0);
+	const fee = $derived(
+		zone ? (zone.free !== null && data.subtotal >= zone.free ? 0 : zone.fee) : 0
+	);
 	const total = $derived(data.subtotal + fee);
 </script>
 
@@ -42,7 +48,15 @@
 			<fieldset>
 				<legend>1. {m.checkout_you()}</legend>
 				<div class="fields two">
-					<Field label={m.checkout_name()} name="name" bind:value={$form.name} errors={$errors.name} required autocomplete="name" wide />
+					<Field
+						label={m.checkout_name()}
+						name="name"
+						bind:value={$form.name}
+						errors={$errors.name}
+						required
+						autocomplete="name"
+						wide
+					/>
 					<Field
 						label={m.checkout_phone()}
 						name="phone"
@@ -53,26 +67,37 @@
 						autocomplete="tel"
 						hint={m.checkout_phone_hint()}
 					/>
-					<Field label={m.checkout_email()} name="email" type="email" bind:value={$form.email} errors={$errors.email} autocomplete="email" hint={m.checkout_email_hint()} />
+					<Field
+						label={m.checkout_email()}
+						name="email"
+						type="email"
+						bind:value={$form.email}
+						errors={$errors.email}
+						autocomplete="email"
+						hint={m.checkout_email_hint()}
+					/>
 				</div>
 			</fieldset>
 
 			<fieldset>
-				<legend>2. {m.checkout_how()}</legend>
-				<div class="opts">
-					<label class="opt">
-						<input type="radio" name="method" value="pickup" bind:group={$form.method} />
-						<span class="mid">{m.checkout_pickup()}</span>
-						<span class="small">
-							{data.pickupPlace ? tr(data.pickupPlace.name, locale) : m.checkout_pickup_place()} · {m.checkout_free()}
-						</span>
-					</label>
-					<label class="opt">
-						<input type="radio" name="method" value="delivery" bind:group={$form.method} />
-						<span class="mid">{m.checkout_delivery()}</span>
-						<span class="small">{m.checkout_delivery_hint()}</span>
-					</label>
-				</div>
+				<legend id="how-legend">2. {m.checkout_how()}</legend>
+				<ImageSelect
+					name="method"
+					bind:value={$form.method}
+					items={[
+						{
+							value: 'pickup',
+							name: m.checkout_pickup(),
+							description: `${data.pickupPlace ? tr(data.pickupPlace.name, locale) : m.checkout_pickup_place()} · ${m.checkout_free()}`
+						},
+						{
+							value: 'delivery',
+							name: m.checkout_delivery(),
+							description: m.checkout_delivery_hint()
+						}
+					]}
+					labelledBy="how-legend"
+				/>
 
 				{#if $form.method === 'delivery'}
 					<div class="fields two">
@@ -98,8 +123,20 @@
 							placeholder={areas.length ? m.checkout_choose() : m.checkout_area_other()}
 							options={areas.map((a) => ({ value: a.id, label: tr(a.name, locale) }))}
 						/>
-						<Field label={m.checkout_city()} name="city" bind:value={$form.city} errors={$errors.city} required autocomplete="address-level2" />
-						<Field label={m.checkout_woreda()} name="woreda" bind:value={$form.woreda} errors={$errors.woreda} />
+						<Field
+							label={m.checkout_city()}
+							name="city"
+							bind:value={$form.city}
+							errors={$errors.city}
+							required
+							autocomplete="address-level2"
+						/>
+						<Field
+							label={m.checkout_woreda()}
+							name="woreda"
+							bind:value={$form.woreda}
+							errors={$errors.woreda}
+						/>
 						<Field
 							label={m.checkout_line1()}
 							name="line1"
@@ -109,7 +146,14 @@
 							autocomplete="street-address"
 							wide
 						/>
-						<Field label={m.checkout_landmark()} name="landmark" bind:value={$form.landmark} errors={$errors.landmark} hint={m.checkout_landmark_hint()} wide />
+						<Field
+							label={m.checkout_landmark()}
+							name="landmark"
+							bind:value={$form.landmark}
+							errors={$errors.landmark}
+							hint={m.checkout_landmark_hint()}
+							wide
+						/>
 					</div>
 					{#if zone?.usesCourier}
 						<p class="notice">{m.checkout_courier_note({ days: zone.transitDays })}</p>
@@ -121,9 +165,16 @@
 
 			<fieldset>
 				<legend>3. {m.checkout_anything()}</legend>
-				<Field label={m.checkout_note()} name="note" type="textarea" rows={3} bind:value={$form.note} errors={$errors.note} />
+				<Field
+					label={m.checkout_note()}
+					name="note"
+					type="textarea"
+					rows={3}
+					bind:value={$form.note}
+					errors={$errors.note}
+				/>
 				<label class="check">
-					<input type="checkbox" name="marketingConsent" bind:checked={$form.marketingConsent} />
+					<Checkbox name="marketingConsent" bind:checked={$form.marketingConsent} />
 					<span>{m.checkout_consent()}</span>
 				</label>
 			</fieldset>
@@ -140,7 +191,15 @@
 				{/each}
 				<li>
 					<span>{m.site_delivery()}</span>
-					<span class="num">{$form.method === 'pickup' ? m.checkout_free() : zone ? (fee ? money(fee) : m.checkout_free()) : '—'}</span>
+					<span class="num">
+						{$form.method === 'pickup'
+							? m.checkout_free()
+							: zone
+								? fee
+									? money(fee)
+									: m.checkout_free()
+								: '—'}
+					</span>
 				</li>
 				<li class="total"><span>{m.site_total()}</span><span class="num">{money(total)}</span></li>
 			</ul>

@@ -16,7 +16,8 @@ import {
 	paymentsOn,
 	recordConsent,
 	startPayment,
-	trackHref
+	trackHref,
+	toCheckout
 } from '#lib/server/site.ts';
 import { checkoutSchema } from '#lib/schemas/checkout.ts';
 import { getLocale } from '#lib/paraglide/runtime.js';
@@ -193,6 +194,7 @@ export const actions: Actions = {
 			console.error('[checkout] could not start Chapa checkout:', err);
 		}
 		// Without a checkout URL the order page offers "Pay now" again.
-		redirect(303, checkout ?? `${page}&pay=failed`);
+		if (checkout) toCheckout(checkout);
+		redirect(303, `${page}&pay=failed`);
 	}
 };

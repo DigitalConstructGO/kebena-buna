@@ -5,6 +5,8 @@
 	import { money, pct, tr } from '#lib/format.ts';
 	import Field from '#lib/site/Field.svelte';
 	import Trap from '#lib/site/Trap.svelte';
+	import ImageSelect from '@nahu/admin-kit/formComponents/ImageSelect.svelte';
+	import { Checkbox } from '@nahu/admin-kit/components/ui/checkbox/index.js';
 
 	let { data } = $props();
 
@@ -17,11 +19,37 @@
 	const otherAdults = $derived(Math.max((plan?.maxAdults ?? 1) - 1, 0));
 	const children = $derived(plan?.maxChildren ?? 0);
 
-	const lines = (text: string) => text.split(/\n+/).map((l) => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
+	const lines = (text: string) =>
+		text
+			.split(/\n+/)
+			.map((l) => l.replace(/^[-•*]\s*/, '').trim())
+			.filter(Boolean);
 	const covers = (p: (typeof data.plans)[number]) =>
 		p.maxChildren
 			? m.member_covers_family({ adults: p.maxAdults, children: p.maxChildren })
 			: m.member_covers_one({ adults: p.maxAdults });
+	/** The plan's own wording when staff wrote one; otherwise what its settings give. */
+	const perks = (p: (typeof data.plans)[number]) => {
+		const written = lines(tr(p.benefits ?? '', locale));
+		if (written.length) return written;
+		return [
+			p.freeEntry && m.member_perk_entry(),
+			p.shopDiscountPct > 0 && m.member_perk_discount({ pct: pct(p.shopDiscountPct) }),
+			p.freeDelivery && m.member_perk_delivery(),
+			p.membersOnlyEvents && m.member_perk_events()
+		].filter(Boolean) as string[];
+	};
+	/** Everything a plan's card says under its name, as the lines of one description. */
+	const planText = (p: (typeof data.plans)[number]) =>
+		[
+			`${m.member_term({ months: p.durationMonths })} · ${covers(p)}`,
+			tr(p.description ?? '', locale),
+			...perks(p).map((perk) => `✓ ${perk}`),
+			tr(p.requiresProof ?? '', locale) &&
+				m.member_proof({ proof: tr(p.requiresProof ?? '', locale) })
+		]
+			.filter(Boolean)
+			.join('\n');
 </script>
 
 <svelte:head>
@@ -45,31 +73,20 @@
 				<input type="hidden" name="idempotencyKey" value={$form.idempotencyKey} />
 
 				<fieldset>
-					<legend>{m.member_step_plan()}</legend>
+					<legend id="plan-legend">{m.member_step_plan()}</legend>
 					<div class="plans">
-						{#each data.plans as p (p.id)}
-							<label class="opt plan">
-								<input type="radio" name="planId" value={p.id} bind:group={$form.planId} />
-								<span class="mid">{tr(p.name, locale)}</span>
-								<span class="big">{money(p.price)}</span>
-								<span class="small">{m.member_term({ months: p.durationMonths })} · {covers(p)}</span>
-								{#if tr(p.description ?? '', locale)}<span class="small">{tr(p.description ?? '', locale)}</span>{/if}
-								<!-- The plan's own wording when staff wrote one; otherwise what its settings give. -->
-								<ul class="perks">
-									{#if lines(tr(p.benefits ?? '', locale)).length}
-										{#each lines(tr(p.benefits ?? '', locale)) as perk (perk)}<li>{perk}</li>{/each}
-									{:else}
-										{#if p.freeEntry}<li>{m.member_perk_entry()}</li>{/if}
-										{#if p.shopDiscountPct > 0}<li>{m.member_perk_discount({ pct: pct(p.shopDiscountPct) })}</li>{/if}
-										{#if p.freeDelivery}<li>{m.member_perk_delivery()}</li>{/if}
-										{#if p.membersOnlyEvents}<li>{m.member_perk_events()}</li>{/if}
-									{/if}
-								</ul>
-								{#if tr(p.requiresProof ?? '', locale)}
-									<span class="small proof">{m.member_proof({ proof: tr(p.requiresProof ?? '', locale) })}</span>
-								{/if}
-							</label>
-						{/each}
+						<ImageSelect
+							name="planId"
+							bind:value={$form.planId}
+							items={data.plans.map((p) => ({
+								value: p.id,
+								name: tr(p.name, locale),
+								meta: money(p.price),
+								description: planText(p)
+							}))}
+							labelledBy="plan-legend"
+							invalid={Boolean($errors.planId)}
+						/>
 					</div>
 					{#if $errors.planId}<p class="error">{$errors.planId[0]}</p>{/if}
 				</fieldset>
@@ -77,9 +94,33 @@
 				<fieldset>
 					<legend>{m.member_step_you()}</legend>
 					<div class="fields two">
-						<Field label={m.member_name()} name="name" bind:value={$form.name} errors={$errors.name} required autocomplete="name" />
-						<Field label={m.member_phone()} name="phone" type="tel" bind:value={$form.phone} errors={$errors.phone} required autocomplete="tel" hint={m.member_phone_hint()} />
-						<Field label={m.member_email()} name="email" type="email" bind:value={$form.email} errors={$errors.email} autocomplete="email" wide />
+						<Field
+							label={m.member_name()}
+							name="name"
+							bind:value={$form.name}
+							errors={$errors.name}
+							required
+							autocomplete="name"
+						/>
+						<Field
+							label={m.member_phone()}
+							name="phone"
+							type="tel"
+							bind:value={$form.phone}
+							errors={$errors.phone}
+							required
+							autocomplete="tel"
+							hint={m.member_phone_hint()}
+						/>
+						<Field
+							label={m.member_email()}
+							name="email"
+							type="email"
+							bind:value={$form.email}
+							errors={$errors.email}
+							autocomplete="email"
+							wide
+						/>
 					</div>
 				</fieldset>
 
@@ -89,10 +130,20 @@
 						<p class="hint">{m.member_people_hint()}</p>
 						<div class="fields two">
 							{#each Array.from({ length: otherAdults }, (_, i) => i) as i (i)}
-								<Field label={m.member_adult({ n: i + 2 })} name="adults" bind:value={$form.adults[i]} autocomplete="off" />
+								<Field
+									label={m.member_adult({ n: i + 2 })}
+									name="adults"
+									bind:value={$form.adults[i]}
+									autocomplete="off"
+								/>
 							{/each}
 							{#each Array.from({ length: children }, (_, i) => i) as i (i)}
-								<Field label={m.member_child({ n: i + 1 })} name="children" bind:value={$form.children[i]} autocomplete="off" />
+								<Field
+									label={m.member_child({ n: i + 1 })}
+									name="children"
+									bind:value={$form.children[i]}
+									autocomplete="off"
+								/>
 							{/each}
 						</div>
 						{#if $errors.adults?._errors}<p class="error">{$errors.adults._errors[0]}</p>{/if}
@@ -118,7 +169,7 @@
 				</fieldset>
 
 				<label class="check">
-					<input type="checkbox" name="marketingConsent" bind:checked={$form.marketingConsent} />
+					<Checkbox name="marketingConsent" bind:checked={$form.marketingConsent} />
 					<span>{m.member_consent()}</span>
 				</label>
 			</div>
@@ -128,8 +179,14 @@
 				{#if plan}
 					<h2 class="section-title">{tr(plan.name, locale)}</h2>
 					<ul class="lines">
-						<li><span>{m.member_term({ months: plan.durationMonths })}</span><span class="num">{money(plan.price)}</span></li>
-						<li class="total"><span>{m.site_total()}</span><span class="num">{money(plan.price)}</span></li>
+						<li>
+							<span>{m.member_term({ months: plan.durationMonths })}</span><span class="num">
+								{money(plan.price)}
+							</span>
+						</li>
+						<li class="total">
+							<span>{m.site_total()}</span><span class="num">{money(plan.price)}</span>
+						</li>
 					</ul>
 				{/if}
 				<p class="hint">{m.member_pay_note()}</p>
@@ -145,30 +202,14 @@
 	.form :global(.field) {
 		align-content: start;
 	}
-	.plans {
-		display: grid;
-		gap: 12px;
+	/* A plan's description is several lines: its term, its wording, its perks. */
+	.plans :global([role='radiogroup']) {
 		grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
 	}
-	.plan {
-		gap: 8px;
-		padding: 18px;
-	}
-	.perks {
-		display: grid;
-		gap: 4px;
-		margin: 6px 0 0;
-		padding: 0;
-		list-style: none;
+	.plans :global([role='radiogroup'] .text-xs) {
+		white-space: pre-line;
 		font-size: 14px;
-	}
-	.perks li::before {
-		content: '✓ ';
-		color: var(--accent-ink);
-		font-weight: 700;
-	}
-	.proof {
-		font-style: italic;
+		line-height: 1.45;
 	}
 	.summary {
 		display: grid;

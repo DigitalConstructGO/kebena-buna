@@ -4,6 +4,9 @@
 	import { tr } from '#lib/format.ts';
 	import { siteHref } from '#lib/site/locale.ts';
 	import TicketCheckout from '#lib/site/visit/TicketCheckout.svelte';
+	import CalendarSwitch from '@nahu/admin-kit/formComponents/CalendarSwitch.svelte';
+	import { useCalendar } from '@nahu/admin-kit/calendarPreference.svelte';
+	import { formatDateIn, otherCalendar } from '@nahu/admin-kit/calendars';
 
 	let { data } = $props();
 
@@ -17,8 +20,23 @@
 		return `${siteHref('/visit', locale)}?${q.join('&')}`;
 	};
 
+	/*
+	 * The days on either calendar, as the kit's date inputs show them: Gregorian by default (the
+	 * root layout's `setKitCalendar`), switchable to Ethiopian, and remembered by this browser for
+	 * every date input. Only the labels change; the link and the ticket keep the Gregorian date.
+	 */
+	const calendar = useCalendar();
+	// After the first render, so the server's page and the browser's match.
+	$effect(() => calendar.restore());
+	const kind = $derived(calendar.kind);
+
 	const weekday = $derived(new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' }));
-	const dayMonth = $derived(new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' }));
+	// Ethiopian months are written in Amharic whatever the page's language, as everywhere in the kit.
+	const dayMonth = $derived(
+		kind === 'ethiopian'
+			? new Intl.DateTimeFormat('am-ET', { calendar: 'ethiopic', day: 'numeric', month: 'short', timeZone: 'UTC' })
+			: new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' })
+	);
 	const asDate = (iso: string) => new Date(`${iso}T00:00:00Z`);
 </script>
 
@@ -61,12 +79,13 @@
 
 		<fieldset>
 			<legend>{m.visit_date()}</legend>
+			<CalendarSwitch class="calendar" value={kind} onchange={(k) => calendar.set(k)} />
 			{#if data.days.length}
 				<div class="days">
 					{#each data.days as d (d.date)}
 						{#if d.free > 0}
 							<a
-										class="day"
+								class="day"
 								class:on={d.date === data.date}
 								aria-current={d.date === data.date ? 'date' : undefined}
 								href={choose({ date: d.date })}
@@ -85,6 +104,13 @@
 						{/if}
 					{/each}
 				</div>
+				{#if data.date}
+					<!-- The chosen day on both calendars, as the kit's date picker writes it. -->
+					<p class="chosen" aria-live="polite">
+						<span class="mid">{formatDateIn(data.date, kind, locale)}</span>
+						<span class="small">{formatDateIn(data.date, otherCalendar(kind), locale, 'short')}</span>
+					</p>
+				{/if}
 			{:else}
 				<p class="notice">{m.visit_no_days()}</p>
 			{/if}
@@ -159,6 +185,14 @@
 	}
 	.day.full {
 		opacity: 0.45;
+	}
+	fieldset :global(.calendar) {
+		justify-self: start;
+	}
+	.chosen {
+		display: grid;
+		gap: 2px;
+		margin: 0;
 	}
 	.mid {
 		font-family: var(--font-display);

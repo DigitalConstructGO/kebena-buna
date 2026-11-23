@@ -3,7 +3,7 @@ import { and, asc, desc, eq } from 'drizzle-orm';
 import { timingSafeEqual } from 'node:crypto';
 import { db } from '#lib/server/db/index.ts';
 import { order, orderLine, orderStatusHistory, ticket, ticketType, visitSlot } from '#lib/server/db/schema.ts';
-import { floodRefused, paymentsOn, startPayment } from '#lib/server/site.ts';
+import { floodRefused, paymentsOn, startPayment, toCheckout } from '#lib/server/site.ts';
 import { ticketQr } from '#lib/server/ticketQr.ts';
 import { m } from '#lib/paraglide/messages.js';
 import type { Actions, PageServerLoad } from './$types';
@@ -100,6 +100,6 @@ export const actions: Actions = {
 			console.error('[pay] could not start Chapa checkout:', err);
 			return fail(502, { payError: m.track_pay_failed() });
 		}
-		redirect(303, url);
+		toCheckout(url);
 	}
 };

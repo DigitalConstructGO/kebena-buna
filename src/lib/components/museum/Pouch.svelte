@@ -4,8 +4,16 @@
 		src,
 		alt = '',
 		weight,
+		name,
 		eager = false
-	}: { src: string; alt?: string; weight: string; eager?: boolean } = $props();
+	}: {
+		src: string;
+		alt?: string;
+		weight: string;
+		/** The coffee in the bag, printed on its back in place of the motto (the shop's bags). */
+		name?: string;
+		eager?: boolean;
+	} = $props();
 </script>
 
 <!-- size it with --w; turn it with --ry and --rx (degrees) -->
@@ -26,7 +34,7 @@
 	<div class="face back" aria-hidden="true">
 		<span class="frame"></span>
 		<span class="brand">Kebena<br />Coffee</span>
-		<span class="tag">From farm to cup</span>
+		<span class="tag">{name ?? 'From farm to cup'}</span>
 		<svg class="art" viewBox="0 0 192 48" preserveAspectRatio="xMidYMax meet">
 			<path
 				d="M7 48V24a17 17 0 0 1 34 0v24M14 48V24a10 10 0 0 1 20 0v24M72 20a11 11 0 1 0 .1 0M50 48l15-15 11 10 9-8 11 13M120 45c-14-12-14-30 0-41 14 11 14 29 0 41ZM120 4v44M150 48V29h36v19M146 30l22-20 22 20"

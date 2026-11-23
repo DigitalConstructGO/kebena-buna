@@ -4,14 +4,17 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { money, tr } from '#lib/format.ts';
 	import { siteHref } from '#lib/site/locale.ts';
+	import ImageSelect from '@nahu/admin-kit/formComponents/ImageSelect.svelte';
 
 	let { data, form } = $props();
 
 	const locale = $derived(getLocale());
 	const p = $derived(data.product);
 
-	const firstOnSale = (list: typeof data.variants) => list.find((v) => v.available === null || v.available > 0) ?? list[0];
-	const defaultOf = <T extends { id: number; isDefault: boolean }>(list: T[]) => (list.find((o) => o.isDefault) ?? list[0])?.id ?? null;
+	const firstOnSale = (list: typeof data.variants) =>
+		list.find((v) => v.available === null || v.available > 0) ?? list[0];
+	const defaultOf = <T extends { id: number; isDefault: boolean }>(list: T[]) =>
+		(list.find((o) => o.isDefault) ?? list[0])?.id ?? null;
 
 	// Choices start from the product's defaults, and start over on another product's page.
 	let variantId = $derived(firstOnSale(data.variants).id);
@@ -34,7 +37,8 @@
 	const unit = $derived(variant.price + (pack?.surcharge ?? 0));
 	const maxQty = $derived(variant.available === null ? 50 : Math.min(50, variant.available));
 	const soldOut = $derived(variant.available !== null && variant.available <= 0);
-	const pictures = $derived(data.images.length ? data.images : [{ src: p.picture, alt: null }]);
+	/** The main picture, then the gallery ("shown after the main picture", as the dashboard says). */
+	const pictures = $derived([{ src: p.picture, alt: null }, ...data.images]);
 	const sizeName = (v: (typeof data.variants)[number]) => tr(v.name ?? v.size ?? '', locale);
 	/** The summary, unless it only repeats the tasting notes shown above it. */
 	const summary = $derived.by(() => {
@@ -60,11 +64,22 @@
 
 	<div class="section split detail">
 		<div class="gallery">
-			<img class="main" src={pictures[shown].src} alt={tr(pictures[shown].alt ?? p.name, locale)} width="900" height="900" />
+			<img
+				class="main"
+				src={pictures[shown].src}
+				alt={tr(pictures[shown].alt ?? p.name, locale)}
+				width="900"
+				height="900"
+			/>
 			{#if pictures.length > 1}
 				<div class="thumbs">
-					{#each pictures as pic, i (pic.src)}
-						<button type="button" class:on={i === shown} onclick={() => (shown = i)} aria-label={m.shop_picture({ n: i + 1 })}>
+					{#each pictures as pic, i (i)}
+						<button
+							type="button"
+							class:on={i === shown}
+							onclick={() => (shown = i)}
+							aria-label={m.shop_picture({ n: i + 1 })}
+						>
 							<img src={pic.src} alt="" loading="lazy" width="120" height="120" />
 						</button>
 					{/each}
@@ -76,7 +91,9 @@
 			<header class="intro">
 				{#if p.category}<p class="label">{tr(p.category, locale)}</p>{/if}
 				<h1 class="name">{tr(p.name, locale)}</h1>
-				{#if p.tastingNotes && tr(p.tastingNotes, locale)}<p class="notes">{tr(p.tastingNotes, locale)}</p>{/if}
+				{#if p.tastingNotes && tr(p.tastingNotes, locale)}<p class="notes">
+						{tr(p.tastingNotes, locale)}
+					</p>{/if}
 				{#if summary}<p class="lede">{summary}</p>{/if}
 			</header>
 
@@ -93,63 +110,69 @@
 				}}
 			>
 				<fieldset>
-					<legend>{data.variants.some((v) => v.size) ? m.shop_size() : m.shop_option()}</legend>
-					<div class="opts">
-						{#each data.variants as v (v.id)}
-							<label class="opt">
-								<input type="radio" name="variantId" value={v.id} bind:group={variantId} disabled={v.available !== null && v.available <= 0} />
-								<span class="big">{sizeName(v)}</span>
-								<span class="small">
-									{money(v.price)}
-									{#if v.compareAtPrice && v.compareAtPrice > v.price}<s>{money(v.compareAtPrice)}</s>{/if}
-								</span>
-								{#if v.available !== null && v.available <= 0}<span class="small">{m.shop_sold_out()}</span>{/if}
-							</label>
-						{/each}
-					</div>
+					<legend id="size-legend">
+						{data.variants.some((v) => v.size) ? m.shop_size() : m.shop_option()}
+					</legend>
+					<ImageSelect
+						name="variantId"
+						bind:value={variantId}
+						items={data.variants.map((v) => ({
+							value: v.id,
+							name: sizeName(v),
+							meta: money(v.price),
+							description:
+								v.available !== null && v.available <= 0
+									? m.shop_sold_out()
+									: v.compareAtPrice && v.compareAtPrice > v.price
+										? m.shop_was({ price: money(v.compareAtPrice) })
+										: undefined,
+							disabled: v.available !== null && v.available <= 0
+						}))}
+						labelledBy="size-legend"
+					/>
 				</fieldset>
 
 				{#if data.roasts.length}
 					<fieldset>
-						<legend>{m.shop_roast()}</legend>
-						<div class="opts">
-							{#each data.roasts as r (r.id)}
-								<label class="opt">
-									<input type="radio" name="roastLevelId" value={r.id} bind:group={roastLevelId} />
-									<span class="mid">{tr(r.name, locale)}</span>
-									{#if r.description && tr(r.description, locale)}<span class="small">{tr(r.description, locale)}</span>{/if}
-								</label>
-							{/each}
-						</div>
+						<legend id="roast-legend">{m.shop_roast()}</legend>
+						<ImageSelect
+							name="roastLevelId"
+							bind:value={roastLevelId}
+							items={data.roasts.map((r) => ({
+								value: r.id,
+								name: tr(r.name, locale),
+								description: (r.description && tr(r.description, locale)) || undefined
+							}))}
+							labelledBy="roast-legend"
+						/>
 					</fieldset>
 				{/if}
 
 				{#if data.grinds.length}
 					<fieldset>
-						<legend>{m.shop_grind()}</legend>
-						<div class="opts">
-							{#each data.grinds as g (g.id)}
-								<label class="opt">
-									<input type="radio" name="grindId" value={g.id} bind:group={grindId} />
-									<span class="mid">{tr(g.name, locale)}</span>
-								</label>
-							{/each}
-						</div>
+						<legend id="grind-legend">{m.shop_grind()}</legend>
+						<ImageSelect
+							name="grindId"
+							bind:value={grindId}
+							items={data.grinds.map((g) => ({ value: g.id, name: tr(g.name, locale) }))}
+							labelledBy="grind-legend"
+						/>
 					</fieldset>
 				{/if}
 
 				{#if data.packs.length > 1}
 					<fieldset>
-						<legend>{m.shop_packaging()}</legend>
-						<div class="opts">
-							{#each data.packs as k (k.id)}
-								<label class="opt">
-									<input type="radio" name="packagingId" value={k.id} bind:group={packagingId} />
-									<span class="mid">{tr(k.name, locale)}</span>
-									<span class="small">{k.surcharge > 0 ? `+ ${money(k.surcharge)}` : m.shop_included()}</span>
-								</label>
-							{/each}
-						</div>
+						<legend id="pack-legend">{m.shop_packaging()}</legend>
+						<ImageSelect
+							name="packagingId"
+							bind:value={packagingId}
+							items={data.packs.map((k) => ({
+								value: k.id,
+								name: tr(k.name, locale),
+								meta: k.surcharge > 0 ? `+ ${money(k.surcharge)}` : m.shop_included()
+							}))}
+							labelledBy="pack-legend"
+						/>
 					</fieldset>
 				{:else if packagingId}
 					<input type="hidden" name="packagingId" value={packagingId} />
@@ -158,9 +181,23 @@
 				<fieldset>
 					<legend>{m.shop_quantity()}</legend>
 					<div class="count">
-						<button type="button" aria-label={m.shop_fewer()} disabled={quantity <= 1} onclick={() => quantity--}>−</button>
+						<button
+							type="button"
+							aria-label={m.shop_fewer()}
+							disabled={quantity <= 1}
+							onclick={() => quantity--}
+						>
+							−
+						</button>
 						<output aria-live="polite">{quantity}</output>
-						<button type="button" aria-label={m.shop_more()} disabled={quantity >= maxQty} onclick={() => quantity++}>+</button>
+						<button
+							type="button"
+							aria-label={m.shop_more()}
+							disabled={quantity >= maxQty}
+							onclick={() => quantity++}
+						>
+							+
+						</button>
 					</div>
 					<input type="hidden" name="quantity" value={quantity} />
 				</fieldset>
@@ -168,14 +205,18 @@
 				<div class="send">
 					<p class="sum">
 						<span class="price">{money(unit * quantity)}</span>
-						{#if quantity > 1}<span class="muted"> · {m.shop_each({ price: money(unit) })}</span>{/if}
+						{#if quantity > 1}<span class="muted">
+								· {m.shop_each({ price: money(unit) })}
+							</span>{/if}
 					</p>
 					{#if p.roastToOrder}
 						<p class="hint">{m.shop_roast_note()}</p>
 					{:else if variant.available !== null && variant.available > 0 && variant.available <= 5}
 						<p class="hint">{m.shop_only_left({ count: variant.available })}</p>
 					{/if}
-					<button class="btn" disabled={soldOut || adding}>{soldOut ? m.shop_sold_out() : m.shop_add()}</button>
+					<button class="btn" disabled={soldOut || adding}>
+						{soldOut ? m.shop_sold_out() : m.shop_add()}
+					</button>
 					{#if form?.added}
 						<p class="notice ok" role="status">
 							{m.shop_added({ count: form.added })}
@@ -202,7 +243,9 @@
 			{#if (p.originStory && tr(p.originStory, locale)) || data.origins.length}
 				<section>
 					<h2 class="section-title">{m.shop_origin()}</h2>
-					{#if p.originStory && tr(p.originStory, locale)}<p class="muted">{tr(p.originStory, locale)}</p>{/if}
+					{#if p.originStory && tr(p.originStory, locale)}<p class="muted">
+							{tr(p.originStory, locale)}
+						</p>{/if}
 					{#if data.origins.length}
 						<ul class="origins">
 							{#each data.origins as o, i (i)}
@@ -301,10 +344,6 @@
 	}
 	.intro .lede {
 		max-width: none;
-	}
-	.opt s {
-		margin-inline-start: 6px;
-		opacity: 0.7;
 	}
 	.send {
 		display: grid;

@@ -8,6 +8,7 @@
 	import Field from '#lib/site/Field.svelte';
 	import Trap from '#lib/site/Trap.svelte';
 	import TicketCheckout from '#lib/site/visit/TicketCheckout.svelte';
+	import { Checkbox } from '@nahu/admin-kit/components/ui/checkbox/index.js';
 
 	let { data } = $props();
 
@@ -28,7 +29,8 @@
 			timeZone: 'Africa/Addis_Ababa'
 		})
 	);
-	const choose = (audience: string) => `${siteHref(`/events/${e.slug}`, locale)}?audience=${encodeURIComponent(audience)}`;
+	const choose = (audience: string) =>
+		`${siteHref(`/events/${e.slug}`, locale)}?audience=${encodeURIComponent(audience)}`;
 </script>
 
 <svelte:head><title>{tr(e.title, locale)} · Kebena</title></svelte:head>
@@ -54,9 +56,9 @@
 			<div>
 				<dt class="label">{m.events_seats()}</dt>
 				<dd>
-					{#if e.visibility === 'members_only'}{m.events_members_only()}{:else if e.open}{m.events_places_left({ count: e.left })}{:else}{e.left > 0
-							? m.events_closed()
-							: m.events_full()}{/if}
+					{#if e.visibility === 'members_only'}{m.events_members_only()}{:else if e.open}{m.events_places_left(
+							{ count: e.left }
+						)}{:else}{e.left > 0 ? m.events_closed() : m.events_full()}{/if}
 				</dd>
 			</div>
 		</dl>
@@ -74,7 +76,7 @@
 				<div class="opts who">
 					{#each data.audiences as a (a.code)}
 						<a
-								class="opt"
+							class="opt"
 							class:on={a.code === data.audience.code}
 							aria-current={a.code === data.audience.code ? 'true' : undefined}
 							href={choose(a.code)}
@@ -102,9 +104,31 @@
 			<form method="POST" action="?/register" class="card form register" use:enhance>
 				<h2 class="section-title">{m.events_register_title()}</h2>
 				<div class="fields two">
-					<Field label={m.visit_name()} name="name" bind:value={$form.name} errors={$errors.name} required autocomplete="name" />
-					<Field label={m.visit_phone()} name="phone" type="tel" bind:value={$form.phone} errors={$errors.phone} required autocomplete="tel" />
-					<Field label={m.visit_email()} name="email" type="email" bind:value={$form.email} errors={$errors.email} autocomplete="email" />
+					<Field
+						label={m.visit_name()}
+						name="name"
+						bind:value={$form.name}
+						errors={$errors.name}
+						required
+						autocomplete="name"
+					/>
+					<Field
+						label={m.visit_phone()}
+						name="phone"
+						type="tel"
+						bind:value={$form.phone}
+						errors={$errors.phone}
+						required
+						autocomplete="tel"
+					/>
+					<Field
+						label={m.visit_email()}
+						name="email"
+						type="email"
+						bind:value={$form.email}
+						errors={$errors.email}
+						autocomplete="email"
+					/>
 					<Field
 						label={m.events_seats()}
 						name="seats"
@@ -117,11 +141,13 @@
 					/>
 				</div>
 				<label class="check">
-					<input type="checkbox" name="marketingConsent" bind:checked={$form.marketingConsent} />
+					<Checkbox name="marketingConsent" bind:checked={$form.marketingConsent} />
 					<span>{m.visit_consent()}</span>
 				</label>
 				<Trap bind:value={$form.website} />
-				{#if $message}<p class="notice" class:ok={$message === m.events_sent()} role="status">{$message}</p>{/if}
+				{#if $message}<p class="notice" class:ok={$message === m.events_sent()} role="status">
+						{$message}
+					</p>{/if}
 				<button class="btn" disabled={$delayed}>{m.events_register()}</button>
 			</form>
 		</section>

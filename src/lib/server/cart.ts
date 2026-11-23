@@ -93,17 +93,11 @@ const availableOf = sql<number>`(select coalesce(sum(ps.units - ps.reserved_unit
 export const tracksStock = (p: { kind: string; fulfilment: string }) => p.kind === 'coffee' && p.fulfilment === 'from_stock';
 
 /**
- * A product's picture: its own, else one of the museum's photos of the same coffee, else the bag.
- * Seeded products have no uploads yet, so the design's pictures stand in.
+ * A product's picture: its own upload (served at `/media`), else the Kebena bag. The seed sets the
+ * design's photos as uploads (`scripts/seed/productImages.ts`).
  */
-export function productImageUrl(p: { image: string | null; slug: string; kind: string }) {
-	if (p.image) return publicFileUrl(p.image);
-	if (p.slug.includes('limu')) return '/collection/washed-limmu.webp';
-	if (p.slug.includes('gera')) return '/collection/washed-gera.webp';
-	if (p.slug.includes('djimmah')) return '/collection/unwashed-djimmah.webp';
-	if (p.slug.includes('cup') || p.slug.includes('jebena')) return '/journey/jebena.webp';
-	if (p.kind === 'bundle') return '/collection/unwashed-nekemte.webp';
-	return '/hero/bag-front.jpg';
+export function productImageUrl(p: { image: string | null }) {
+	return p.image ? publicFileUrl(p.image) : '/hero/bag-front.jpg';
 }
 
 /** Products a visitor may buy: published, switched on, not deleted, and not for members only. */

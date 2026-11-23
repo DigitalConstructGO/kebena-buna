@@ -1,5 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import Pouch from '#lib/components/museum/Pouch.svelte';
+	import Shelf from '#lib/site/shelf/Shelf.svelte';
+	import ShelfCard from '#lib/site/shelf/ShelfCard.svelte';
+	import ProductViewer from '#lib/site/shop/ProductViewer.svelte';
+	import type { ShelfProduct } from '#lib/site/shop/types.ts';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { money, tr } from '#lib/format.ts';
@@ -16,6 +21,16 @@
 			.filter((g) => g.products.length)
 	);
 	const uncategorised = $derived(current ? [] : data.products.filter((p) => !data.categories.some((c) => c.id === p.categoryId)));
+
+	/** The Kebena bag every coffee is sold in: its printed front. */
+	const BAG = '/hero/bag-front.jpg';
+	/** A coffee stands on the shelf in its smallest bag. */
+	const smallest = (p: ShelfProduct) => {
+		const v = p.variants[0];
+		return v ? tr(v.size ?? v.name ?? '', locale) : '';
+	};
+
+	let viewer = $state<ReturnType<typeof ProductViewer>>();
 </script>
 
 <svelte:head>
@@ -56,32 +71,31 @@
 	{/if}
 </div>
 
-{#snippet grid(products: typeof data.products)}
-	<ul class="grid">
-		{#each products as p (p.slug)}
-			<li>
-				<a class="product" href={siteHref(`/shop/${p.slug}`, locale)}>
-					<span class="pic">
-						<img src={p.image} alt="" loading="lazy" decoding="async" width="480" height="480" />
-						{#if p.soldOut}
-							<span class="tag out">{m.shop_sold_out()}</span>
-						{:else if p.roastToOrder}
-							<span class="tag">{m.shop_roast_to_order()}</span>
-						{/if}
-					</span>
-					<span class="body">
-						<span class="name">{tr(p.name, locale)}</span>
-						{#if p.tastingNotes && tr(p.tastingNotes, locale)}
-							<span class="notes">{tr(p.tastingNotes, locale)}</span>
-						{:else if p.summary && tr(p.summary, locale)}
-							<span class="notes">{tr(p.summary, locale)}</span>
-						{/if}
-						<span class="from price">{m.shop_from({ price: money(p.from) })}</span>
-					</span>
-				</a>
-			</li>
+<ProductViewer bind:this={viewer} />
+
+{#snippet grid(products: ShelfProduct[])}
+	<Shelf>
+		{#each products as p, i (p.slug)}
+			{@const notes = tr(p.tastingNotes, locale) || tr(p.summary, locale)}
+			<ShelfCard
+				href={siteHref(`/shop/${p.slug}`, locale)}
+				title={tr(p.name, locale)}
+				notes={notes || undefined}
+				price={m.shop_from({ price: money(p.from) })}
+				tag={p.soldOut ? m.shop_sold_out() : p.roastToOrder ? m.shop_roast_to_order() : undefined}
+				tagOut={p.soldOut}
+				hint={p.kind === 'coffee' ? m.shop_turn() : m.site_look()}
+				turns={p.kind === 'coffee'}
+				image={p.kind === 'coffee' ? undefined : p.image}
+				art={p.kind === 'coffee' ? bag : undefined}
+				beans={p.kind === 'coffee' ? i + 1 : undefined}
+				onpick={() => viewer?.show(p)}
+			/>
+			{#snippet bag()}
+				<Pouch src={BAG} weight={smallest(p)} name={tr(p.name, locale)} />
+			{/snippet}
 		{/each}
-	</ul>
+	</Shelf>
 {/snippet}
 
 <style>
@@ -109,83 +123,5 @@
 	.cat-lede {
 		max-width: 60ch;
 		margin: -8px 0 18px;
-	}
-	.grid {
-		display: grid;
-		gap: 18px;
-		grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-	.product {
-		display: grid;
-		grid-template-rows: auto 1fr;
-		height: 100%;
-		overflow: hidden;
-		border: 1px solid var(--hair);
-		border-radius: 20px;
-		background: var(--card);
-		color: var(--ink);
-		text-decoration: none;
-		transition:
-			border-color 0.25s,
-			transform 0.35s var(--ease);
-	}
-	.product:hover {
-		border-color: var(--accent-ink);
-		transform: translateY(-3px);
-	}
-	.pic {
-		position: relative;
-		display: block;
-		aspect-ratio: 1;
-		background: var(--well);
-	}
-	.pic img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-	}
-	.tag {
-		position: absolute;
-		inset-block-start: 12px;
-		inset-inline-start: 12px;
-		padding: 5px 10px;
-		border-radius: 999px;
-		background: var(--forest-900);
-		color: var(--gold-soft);
-		font-family: var(--font-display);
-		font-size: 12px;
-		font-weight: 500;
-		font-stretch: 75%;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-	}
-	.tag.out {
-		background: var(--cherry);
-		color: #fff;
-	}
-	.body {
-		display: grid;
-		gap: 6px;
-		align-content: start;
-		padding: 16px 18px 20px;
-	}
-	.name {
-		font-family: var(--font-display);
-		font-size: 1.25rem;
-		font-weight: 700;
-		letter-spacing: -0.01em;
-		line-height: 1.15;
-	}
-	.notes {
-		color: var(--ink-soft);
-		font-size: 14px;
-		line-height: 1.4;
-	}
-	.from {
-		margin-top: 6px;
-		font-size: 1rem;
 	}
 </style>

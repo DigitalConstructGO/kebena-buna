@@ -12,6 +12,7 @@
 	import LoadingBtn from '@nahu/admin-kit/formComponents/LoadingBtn.svelte';
 	import { Button } from '@nahu/admin-kit/components/ui/button/index.js';
 	import { Input } from '@nahu/admin-kit/components/ui/input/index.js';
+	import { Checkbox } from '@nahu/admin-kit/components/ui/checkbox/index.js';
 	import { localClock } from '@nahu/admin-kit/time';
 	import { formatDate } from '#lib/format.ts';
 	import { ticketCodeOf } from '#lib/ticketQr.ts';
@@ -110,13 +111,17 @@
 
 <PageHeader
 	title="Check-in desk"
-	description="{formatDate(data.today)} · {inside} of {people} {people === 1 ? 'visitor' : 'visitors'} in. Scan a ticket, or type a code, name or phone number."
+	description="{formatDate(data.today)} · {inside} of {people} {people === 1
+		? 'visitor'
+		: 'visitors'} in. Scan a ticket, or type a code, name or phone number."
 />
 
 <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_18rem]">
 	<div class="flex min-w-0 flex-col gap-4">
 		<div class="relative">
-			<ScanLine class="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground" />
+			<ScanLine
+				class="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground"
+			/>
 			<Input
 				bind:ref={searchBox}
 				bind:value={query}
@@ -134,13 +139,21 @@
 		{#if notFound}
 			<Notice tone="warning">
 				No ticket for today has the code <strong>{notFound}</strong>.
-				<a class="underline" href="/dashboard/visits/tickets?search={encodeURIComponent(notFound)}">Look it up in all tickets</a>
+				<a class="underline" href="/dashboard/visits/tickets?search={encodeURIComponent(notFound)}">
+					Look it up in all tickets
+				</a>
 				— it may be for another day, or cancelled.
 			</Notice>
 		{/if}
 
 		<div class="flex flex-wrap items-center gap-2" role="group" aria-label="Entry time">
-			<Button variant={slotId === null ? 'default' : 'outline'} size="sm" onclick={() => (slotId = null)}>All times</Button>
+			<Button
+				variant={slotId === null ? 'default' : 'outline'}
+				size="sm"
+				onclick={() => (slotId = null)}
+			>
+				All times
+			</Button>
 			{#each data.slots as slot (slot.id)}
 				<Button
 					variant={slotId === slot.id ? 'default' : 'outline'}
@@ -154,8 +167,10 @@
 					<span class="text-xs opacity-75">{slot.checkedIn}/{slot.sold}</span>
 				</Button>
 			{/each}
-			<label class="ml-auto flex min-h-9 cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-				<input type="checkbox" bind:checked={showIn} class="size-4" />
+			<label
+				class="ml-auto flex min-h-9 cursor-pointer items-center gap-2 text-sm text-muted-foreground"
+			>
+				<Checkbox bind:checked={showIn} />
 				Show who is already in
 			</label>
 		</div>
@@ -176,13 +191,25 @@
 			{#each matches as t (t.id)}
 				{@const remaining = remainingOf(t)}
 				{@const n = countFor(t)}
-				<li class={['flex flex-col gap-3 rounded-xl border bg-card p-4', remaining === 0 && 'opacity-60']}>
+				<li
+					class={[
+						'flex flex-col gap-3 rounded-xl border bg-card p-4',
+						remaining === 0 && 'opacity-60'
+					]}
+				>
 					<div class="flex items-start justify-between gap-2">
 						<div class="min-w-0">
-							<a href="/dashboard/visits/tickets/{t.id}" class="font-mono text-lg font-semibold hover:underline">{t.code}</a>
+							<a
+								href="/dashboard/visits/tickets/{t.id}"
+								class="font-mono text-lg font-semibold hover:underline"
+							>
+								{t.code}
+							</a>
 							<p class="truncate font-medium">{nameOf(t)}</p>
 							<p class="truncate text-sm text-muted-foreground">
-								{[t.event || (t.slotStart ? localClock(t.slotStart) : ''), t.type, t.audience].filter(Boolean).join(' · ')}
+								{[t.event || (t.slotStart ? localClock(t.slotStart) : ''), t.type, t.audience]
+									.filter(Boolean)
+									.join(' · ')}
 							</p>
 						</div>
 						<span
@@ -200,12 +227,21 @@
 					</div>
 
 					{#if remaining > 0}
-						<ActionForm action="?/checkIn" reset={false} submit={afterCheckIn(t.id, t.code, n)} class="flex items-center gap-2">
+						<ActionForm
+							action="?/checkIn"
+							reset={false}
+							submit={afterCheckIn(t.id, t.code, n)}
+							class="flex items-center gap-2"
+						>
 							{#snippet children({ busy })}
 								<input type="hidden" name="id" value={t.id} />
 								<input type="hidden" name="headcount" value={n} />
 								{#if remaining > 1}
-									<div class="flex items-center rounded-lg border" role="group" aria-label="People to admit on {t.code}">
+									<div
+										class="flex items-center rounded-lg border"
+										role="group"
+										aria-label="People to admit on {t.code}"
+									>
 										<Button
 											type="button"
 											variant="ghost"
@@ -213,9 +249,16 @@
 											class="size-12"
 											aria-label="One fewer"
 											disabled={n <= 1}
-											onclick={() => (chosen[t.id] = n - 1)}><Minus /></Button
+											onclick={() => (chosen[t.id] = n - 1)}
 										>
-										<span class="w-8 text-center text-lg font-semibold tabular-nums" aria-live="polite">{n}</span>
+											<Minus />
+										</Button>
+										<span
+											class="w-8 text-center text-lg font-semibold tabular-nums"
+											aria-live="polite"
+										>
+											{n}
+										</span>
 										<Button
 											type="button"
 											variant="ghost"
@@ -223,12 +266,15 @@
 											class="size-12"
 											aria-label="One more"
 											disabled={n >= remaining}
-											onclick={() => (chosen[t.id] = n + 1)}><Plus /></Button
+											onclick={() => (chosen[t.id] = n + 1)}
 										>
+											<Plus />
+										</Button>
 									</div>
 								{/if}
 								<Button type="submit" class="h-12 flex-1 text-base" disabled={!!busy}>
-									{#if busy}<LoadingBtn name="Checking in" />{:else}<CircleCheck class="size-5" /> Check in {n}{/if}
+									{#if busy}<LoadingBtn name="Checking in" />{:else}<CircleCheck class="size-5" /> Check
+										in {n}{/if}
 								</Button>
 							{/snippet}
 						</ActionForm>
@@ -260,7 +306,9 @@
 	action="?/checkIn"
 	reset={false}
 	bind:element={quickForm}
-	submit={quickTicket ? afterCheckIn(quickTicket.id, quickTicket.code, remainingOf(quickTicket)) : undefined}
+	submit={quickTicket
+		? afterCheckIn(quickTicket.id, quickTicket.code, remainingOf(quickTicket))
+		: undefined}
 	class="hidden"
 >
 	<input type="hidden" name="id" value={quickId} />
