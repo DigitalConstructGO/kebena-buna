@@ -30,3 +30,8 @@ project.inlang/cache/
 # Uploaded files (admin-kit)
 .tempFiles
 .playwright-mcp/
+
+# Client documents: kept beside the code, never committed
+*.docx
+/Client_Questionnaire.pdf
+/Developer_Brief_CX-01_Confidential.pdf
