@@ -1,1 +1,87 @@
-@import 'tailwindcss';
+@import '@nahu/admin-kit/styles/theme.css';
+
+/*
+ * Kebena's working palette until the brand is final: coffee-leaf green for actions, roasted brown
+ * for accents, white paper. Every kit component draws with these tokens, so changing the brand
+ * later is this file only.
+ */
+:root {
+	--radius: 0.6rem;
+	--background: oklch(1 0 0);
+	--foreground: oklch(0.24 0.03 55);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.24 0.03 55);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.24 0.03 55);
+	--primary: oklch(0.47 0.11 152);
+	--primary-foreground: oklch(0.99 0 0);
+	--secondary: oklch(0.95 0.02 70);
+	--secondary-foreground: oklch(0.33 0.06 50);
+	--muted: oklch(0.965 0.008 75);
+	--muted-foreground: oklch(0.5 0.03 55);
+	--accent: oklch(0.94 0.03 70);
+	--accent-foreground: oklch(0.33 0.06 50);
+	--destructive: oklch(0.55 0.2 27);
+	--success: oklch(0.55 0.13 150);
+	--success-foreground: oklch(0.99 0 0);
+	--warning: oklch(0.78 0.14 75);
+	--warning-foreground: oklch(0.25 0.04 55);
+	--info: oklch(0.52 0.08 235);
+	--info-foreground: oklch(0.99 0 0);
+	--border: oklch(0.91 0.015 70);
+	--input: oklch(0.91 0.015 70);
+	--ring: oklch(0.47 0.11 152);
+	--chart-1: oklch(0.47 0.11 152);
+	--chart-2: oklch(0.45 0.08 50);
+	--chart-3: oklch(0.7 0.12 140);
+	--chart-4: oklch(0.65 0.09 65);
+	--chart-5: oklch(0.35 0.05 40);
+	--sidebar: oklch(0.31 0.05 50);
+	--sidebar-foreground: oklch(0.96 0.01 75);
+	--sidebar-primary: oklch(0.62 0.13 150);
+	--sidebar-primary-foreground: oklch(0.99 0 0);
+	--sidebar-accent: oklch(0.38 0.055 50);
+	--sidebar-accent-foreground: oklch(0.99 0 0);
+	--sidebar-border: oklch(0.38 0.04 50);
+	--sidebar-ring: oklch(0.62 0.13 150);
+}
+
+.dark {
+	--background: oklch(0.2 0.015 55);
+	--foreground: oklch(0.95 0.01 75);
+	--card: oklch(0.24 0.02 55);
+	--card-foreground: oklch(0.95 0.01 75);
+	--popover: oklch(0.24 0.02 55);
+	--popover-foreground: oklch(0.95 0.01 75);
+	--primary: oklch(0.66 0.13 150);
+	--primary-foreground: oklch(0.18 0.02 150);
+	--secondary: oklch(0.3 0.03 55);
+	--secondary-foreground: oklch(0.93 0.02 75);
+	--muted: oklch(0.28 0.02 55);
+	--muted-foreground: oklch(0.72 0.02 70);
+	--accent: oklch(0.32 0.04 55);
+	--accent-foreground: oklch(0.95 0.01 75);
+	--destructive: oklch(0.65 0.19 25);
+	--success: oklch(0.66 0.13 150);
+	--success-foreground: oklch(0.18 0.02 150);
+	--warning: oklch(0.8 0.13 80);
+	--warning-foreground: oklch(0.22 0.03 55);
+	--info: oklch(0.68 0.09 235);
+	--info-foreground: oklch(0.18 0.02 235);
+	--border: oklch(0.34 0.025 55);
+	--input: oklch(0.36 0.025 55);
+	--ring: oklch(0.66 0.13 150);
+	--chart-1: oklch(0.66 0.13 150);
+	--chart-2: oklch(0.65 0.08 55);
+	--chart-3: oklch(0.78 0.12 140);
+	--chart-4: oklch(0.72 0.09 70);
+	--chart-5: oklch(0.55 0.06 45);
+	--sidebar: oklch(0.17 0.015 50);
+	--sidebar-foreground: oklch(0.93 0.01 75);
+	--sidebar-primary: oklch(0.66 0.13 150);
+	--sidebar-primary-foreground: oklch(0.18 0.02 150);
+	--sidebar-accent: oklch(0.26 0.025 50);
+	--sidebar-accent-foreground: oklch(0.95 0.01 75);
+	--sidebar-border: oklch(0.28 0.02 50);
+	--sidebar-ring: oklch(0.66 0.13 150);
+}

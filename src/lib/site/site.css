@@ -1,0 +1,556 @@
+/*
+ * The public site's look, taken from the kebena-buna.vercel.app design (`design/kebena-buna/`):
+ * cream paper, forest-green chrome, gold actions, Bricolage Grotesque for display and Instrument
+ * Sans for text. Everything is scoped to `.site`, so the dashboard's admin-kit theme (which uses
+ * some of the same token names, like `--card`) is never touched.
+ *
+ * The fonts are the design build's own files, kept in `static/kebena-buna/_app/immutable/assets`.
+ */
+@font-face {
+	font-family: 'Bricolage Grotesque Variable';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 200 800;
+	font-stretch: 75% 100%;
+	src: url(/kebena-buna/_app/immutable/assets/bricolage-grotesque-latin-wdth-normal.Dtb2a5nO.woff2)
+		format('woff2-variations');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+		U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+	font-family: 'Bricolage Grotesque Variable';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 200 800;
+	font-stretch: 75% 100%;
+	src: url(/kebena-buna/_app/immutable/assets/bricolage-grotesque-latin-ext-wdth-normal.DoS1gVTC.woff2)
+		format('woff2-variations');
+	unicode-range:
+		U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+		U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+		U+A720-A7FF;
+}
+@font-face {
+	font-family: 'Instrument Sans Variable';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 400 700;
+	src: url(/kebena-buna/_app/immutable/assets/instrument-sans-latin-wght-normal.BbzFLZTg.woff2)
+		format('woff2-variations');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+		U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+	font-family: 'Instrument Sans Variable';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 400 700;
+	src: url(/kebena-buna/_app/immutable/assets/instrument-sans-latin-ext-wght-normal.B5bTHO_g.woff2)
+		format('woff2-variations');
+	unicode-range:
+		U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+		U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+		U+A720-A7FF;
+}
+@font-face {
+	font-family: 'Noto Sans Ethiopic';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 400;
+	src: url(/kebena-buna/_app/immutable/assets/noto-sans-ethiopic-ethiopic-400-normal.qfS4vAZL.woff2)
+		format('woff2');
+	unicode-range: U+030E, U+1200-1399, U+2D80-2DDE, U+AB01-AB2E, U+1E7E0-1E7FE;
+}
+@font-face {
+	font-family: 'Noto Serif Ethiopic Variable';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 100 900;
+	src: url(/kebena-buna/_app/immutable/assets/noto-serif-ethiopic-ethiopic-wght-normal.CZ9A0F7l.woff2)
+		format('woff2-variations');
+	unicode-range: U+030E, U+1200-1399, U+2D80-2DDE, U+AB01-AB2E, U+1E7E0-1E7FE;
+}
+@font-face {
+	font-family: 'Noto Naskh Arabic';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 400;
+	src: url(/kebena-buna/_app/immutable/assets/noto-naskh-arabic-arabic-400-normal.U_i0HMfG.woff2)
+		format('woff2');
+	unicode-range:
+		U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E,
+		U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E,
+		U+10EC2-10EC4, U+10EFC-10EFF, U+1EE00-1EEFF;
+}
+
+.site {
+	--font-sans:
+		'Instrument Sans Variable', 'Noto Sans Ethiopic', 'Noto Naskh Arabic', ui-sans-serif, system-ui,
+		sans-serif;
+	--font-display:
+		'Bricolage Grotesque Variable', 'Noto Serif Ethiopic Variable', 'Noto Naskh Arabic',
+		ui-sans-serif, sans-serif;
+
+	--forest-950: #19211b;
+	--forest-900: #232d25;
+	--forest-800: #2f3b31;
+	--forest-700: #3d4c3f;
+	--mist-50: #f8e7cc;
+	--mist-100: #f2d6ae;
+	--mist-200: #dfc296;
+	--mist-500: #56604f;
+	--mist-700: #232d25;
+	--gold: #dcae3c;
+	--gold-soft: #ecd08a;
+	--cherry: #c8402f;
+	--leaf: #5fa64f;
+
+	--paper: #f8e7cc;
+	--paper-tint: var(--mist-100);
+	--card: #fff9ee6b;
+	--card-solid: #fbeed8;
+	--ink: var(--mist-700);
+	--ink-soft: var(--mist-500);
+	--ink-strong: #19211b;
+	--line: #232d2524;
+	--hair: #dcae3c6b;
+	--accent-ink: #6f5410;
+	--well: var(--mist-200);
+	--chrome: #19211b99;
+	--glass-fx: blur(26px) saturate(180%);
+	--danger: #a3301f;
+	--ok: #2f6b35;
+
+	--gutter: clamp(20px, 4.4vw, 72px);
+	--ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+	color-scheme: light;
+	min-height: 100dvh;
+	background: var(--paper-tint);
+	color: var(--ink);
+	font-family: var(--font-sans);
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) .site {
+		color-scheme: dark;
+		--paper: var(--forest-950);
+		--paper-tint: var(--forest-900);
+		--card: #f4ebd912;
+		--card-solid: var(--forest-800);
+		--ink: #f4ebd9;
+		--ink-soft: #b8bfab;
+		--ink-strong: var(--mist-50);
+		--line: #f4ebd91f;
+		--accent-ink: var(--gold);
+		--well: var(--forest-800);
+		--danger: #f08a78;
+		--ok: #8fd18a;
+	}
+}
+:root[data-theme='dark'] .site {
+	color-scheme: dark;
+	--paper: var(--forest-950);
+	--paper-tint: var(--forest-900);
+	--card: #f4ebd912;
+	--card-solid: var(--forest-800);
+	--ink: #f4ebd9;
+	--ink-soft: #b8bfab;
+	--ink-strong: var(--mist-50);
+	--line: #f4ebd91f;
+	--accent-ink: var(--gold);
+	--well: var(--forest-800);
+	--danger: #f08a78;
+	--ok: #8fd18a;
+}
+
+.site :is(h1, h2, h3, h4) {
+	font-family: var(--font-display);
+	letter-spacing: -0.02em;
+	text-wrap: balance;
+	margin: 0;
+}
+.site :is(p, li, dd, figcaption) {
+	text-wrap: pretty;
+}
+
+/* ── Page frame ─────────────────────────────────────────────────────────────────────────────── */
+.site .page {
+	padding: clamp(104px, 12vw, 140px) var(--gutter) clamp(56px, 8vw, 96px);
+}
+.site .wrap {
+	max-width: 1120px;
+	margin-inline: auto;
+}
+.site .head {
+	display: grid;
+	gap: 14px;
+	max-width: 1120px;
+	margin: 0 auto;
+}
+.site .label {
+	font-family: var(--font-display);
+	font-size: 14px;
+	font-weight: 500;
+	font-stretch: 75%;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	line-height: 1.2;
+	color: var(--accent-ink);
+	margin: 0;
+}
+.site .title {
+	font-size: clamp(2.6rem, 7vw, 5.6rem);
+	font-weight: 800;
+	line-height: 0.94;
+	text-transform: uppercase;
+}
+.site .lede {
+	max-width: 52ch;
+	margin: 0;
+	color: var(--ink-soft);
+	font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+	line-height: 1.5;
+}
+.site .section {
+	max-width: 1120px;
+	margin: clamp(32px, 5vw, 64px) auto 0;
+}
+.site .section-title {
+	font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+	font-weight: 700;
+	margin-bottom: 18px;
+}
+
+/* ── Cards and grids ────────────────────────────────────────────────────────────────────────── */
+.site .card {
+	border: 1px solid var(--hair);
+	background: var(--card);
+	border-radius: 20px;
+	padding: clamp(18px, 2.4vw, 28px);
+}
+.site .cards {
+	display: grid;
+	gap: 16px;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+}
+.site .split {
+	display: grid;
+	gap: clamp(28px, 5vw, 72px);
+}
+@media (width >= 860px) {
+	.site .split {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+		align-items: start;
+	}
+	.site .split > .aside {
+		position: sticky;
+		top: 104px;
+	}
+}
+.site .muted {
+	color: var(--ink-soft);
+}
+.site .num {
+	font-variant-numeric: tabular-nums;
+}
+.site .price {
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── Forms ──────────────────────────────────────────────────────────────────────────────────── */
+.site .form {
+	display: grid;
+	gap: 28px;
+	align-content: start;
+}
+.site fieldset {
+	display: grid;
+	gap: 12px;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+.site legend {
+	padding: 0 0 12px;
+	font-family: var(--font-display);
+	font-size: 14px;
+	font-weight: 500;
+	font-stretch: 75%;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--accent-ink);
+}
+.site .fields {
+	display: grid;
+	gap: 14px;
+}
+@media (width >= 640px) {
+	.site .fields.two {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.site .fields .wide {
+		grid-column: 1 / -1;
+	}
+}
+.site .field {
+	display: grid;
+	gap: 6px;
+	align-content: start;
+}
+.site .field > span {
+	font-size: 14px;
+	font-weight: 600;
+}
+.site .field small,
+.site .hint {
+	color: var(--ink-soft);
+	font-size: 13px;
+}
+.site .field :is(input, select, textarea) {
+	width: 100%;
+	min-height: 48px;
+	padding: 12px 14px;
+	border: 1px solid var(--hair);
+	border-radius: 12px;
+	background: var(--card-solid);
+	color: var(--ink);
+	font: inherit;
+	font-size: 16px;
+	transition: border-color 0.2s;
+}
+.site .field textarea {
+	min-height: 120px;
+	resize: vertical;
+}
+.site .field :is(input, select, textarea):focus-visible {
+	outline: 2px solid var(--accent-ink);
+	outline-offset: 1px;
+	border-color: var(--accent-ink);
+}
+.site .field[data-invalid] :is(input, select, textarea) {
+	border-color: var(--danger);
+}
+.site .error {
+	color: var(--danger);
+	font-size: 13px;
+	margin: 0;
+}
+.site .check {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	font-size: 15px;
+	cursor: pointer;
+}
+.site .check input {
+	width: 20px;
+	height: 20px;
+	margin-top: 2px;
+	accent-color: var(--accent-ink);
+	flex: none;
+}
+
+/* Radio cards: the design's bag-size / delivery choices. */
+.site .opts {
+	display: grid;
+	gap: 10px;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+}
+.site .opt {
+	position: relative;
+	display: grid;
+	gap: 6px;
+	align-content: start;
+	padding: 16px 14px;
+	border: 1px solid var(--hair);
+	border-radius: 16px;
+	cursor: pointer;
+	transition:
+		background-color 0.25s,
+		border-color 0.25s;
+}
+.site .opt input {
+	position: absolute;
+	inset: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+.site .opt:has(input:checked) {
+	border-color: var(--accent-ink);
+	background: color-mix(in srgb, var(--gold) 22%, transparent);
+}
+.site .opt:has(input:focus-visible) {
+	outline: 2px solid var(--accent-ink);
+	outline-offset: 3px;
+}
+.site .opt:has(input:disabled) {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+.site .opt .big {
+	font-family: var(--font-display);
+	font-size: clamp(1.3rem, 2.6vw, 1.8rem);
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	line-height: 1;
+}
+.site .opt .mid {
+	font-family: var(--font-display);
+	font-size: 1.1rem;
+	font-weight: 600;
+	line-height: 1.15;
+}
+.site .opt .small {
+	color: var(--ink-soft);
+	font-size: 14px;
+	line-height: 1.35;
+}
+
+/* The design's quantity stepper. */
+.site .count {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	justify-self: start;
+	padding: 4px;
+	border: 1px solid var(--hair);
+	border-radius: 999px;
+}
+.site .count button {
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: var(--well);
+	color: var(--ink);
+	font-size: 20px;
+	line-height: 1;
+	cursor: pointer;
+}
+.site .count button:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+.site .count output {
+	min-width: 2.4ch;
+	font-family: var(--font-display);
+	font-size: 1.3rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────────────────────────── */
+.site .btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	min-height: 52px;
+	padding: 0 26px;
+	border: 0;
+	border-radius: 999px;
+	background: var(--gold);
+	color: var(--forest-950);
+	font-family: var(--font-display);
+	font-size: 15px;
+	font-weight: 600;
+	font-stretch: 75%;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	text-decoration: none;
+	cursor: pointer;
+	transition: background-color 0.3s;
+}
+.site .btn:hover {
+	background: var(--gold-soft);
+}
+.site .btn:disabled {
+	opacity: 0.55;
+	cursor: progress;
+}
+.site .btn.ghost {
+	background: transparent;
+	color: var(--ink);
+	border: 1px solid var(--hair);
+}
+.site .btn.ghost:hover {
+	background: var(--card);
+}
+.site .btn.small {
+	min-height: 40px;
+	padding: 0 18px;
+	font-size: 13px;
+}
+.site :is(.btn, a, button):focus-visible {
+	outline: 2px solid var(--accent-ink);
+	outline-offset: 3px;
+}
+.site .link {
+	color: var(--accent-ink);
+	text-underline-offset: 4px;
+}
+
+/* ── Notices ────────────────────────────────────────────────────────────────────────────────── */
+.site .notice {
+	padding: 14px 18px;
+	border-radius: 14px;
+	border: 1px solid var(--hair);
+	background: var(--card);
+}
+.site .notice.ok {
+	border-color: color-mix(in srgb, var(--ok) 50%, transparent);
+	background: color-mix(in srgb, var(--ok) 12%, transparent);
+}
+.site .notice.bad {
+	border-color: color-mix(in srgb, var(--danger) 50%, transparent);
+	background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+/* ── Tables (cart, order summary) ───────────────────────────────────────────────────────────── */
+.site .lines {
+	display: grid;
+	gap: 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.site .lines > li {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 16px;
+	padding: 12px 0;
+	border-bottom: 1px solid var(--line);
+}
+.site .lines > li.total {
+	border-bottom: 0;
+	font-size: 1.15rem;
+	font-weight: 700;
+}
+
+/* A field the spam check hides from people. */
+.site .trap {
+	position: absolute;
+	left: -10000px;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.site * {
+		transition: none !important;
+		animation: none !important;
+	}
+}
