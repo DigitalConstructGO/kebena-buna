@@ -140,11 +140,17 @@ export function buildHeroTimeline(root: HTMLElement, weather: Weather, clock: Cl
 	const N = 48;
 	// the swell is a share of the frame's height: a tall phone screen needs less of it
 	const swell = tall ? 0.45 : 1;
-	/** Height of the surface at x (both in % of the frame). Level 0 is below the frame, 1 above it. */
+	/**
+	 * The part of the frame the scenes fill, in % of its height: all of it, except on a portrait
+	 * screen, where the square cut sits low with the dark above it (see the component's --y).
+	 * The liquid fills that part only, so it never sweeps on through the dark over the headline.
+	 */
+	let rise = { top: 0, bottom: 100 };
+	/** Height of the surface at x (both in % of the frame). Level 0 is below the scene, 1 above it. */
 	const surfaceY = (x: number, level: number, phase: number, amp: number, x0: number) =>
-		100 +
+		rise.bottom +
 		amp -
-		level * (100 + 2 * amp) +
+		level * (rise.bottom - rise.top + 2 * amp) +
 		amp * Math.sin(phase + x * 0.085) +
 		amp * 0.45 * Math.sin(phase * 1.7 + x * 0.21) +
 		// rings running out from where the thread lands
@@ -178,6 +184,19 @@ export function buildHeroTimeline(root: HTMLElement, weather: Weather, clock: Cl
 		if (act < 0 && sig === lastSig && !wet) return;
 		lastSig = sig;
 		const t = performance.now() / 1000;
+		const W = svg.clientWidth;
+		const H = svg.clientHeight;
+		if (!W || !H) return;
+		if (box !== `${W} ${H}`) {
+			box = `${W} ${H}`;
+			svg.setAttribute('viewBox', `0 0 ${box}`);
+			const y = parseFloat(getComputedStyle(root).getPropertyValue('--y'));
+			const top = (H - W) * y;
+			rise =
+				Number.isFinite(y) && H > W
+					? { top: (top / H) * 100, bottom: ((top + W) / H) * 100 }
+					: { top: 0, bottom: 100 };
+		}
 
 		scenes.forEach((el, k) => {
 			const into = k ? fills[k - 1] : undefined;
@@ -192,13 +211,6 @@ export function buildHeroTimeline(root: HTMLElement, weather: Weather, clock: Cl
 			return;
 		}
 		const f = fills[act];
-		const W = svg.clientWidth;
-		const H = svg.clientHeight;
-		if (!W || !H) return;
-		if (box !== `${W} ${H}`) {
-			box = `${W} ${H}`;
-			svg.setAttribute('viewBox', `0 0 ${box}`);
-		}
 		if (toneNow !== f.tone) {
 			toneNow = f.tone;
 			const c = TONES[f.tone];
@@ -214,7 +226,7 @@ export function buildHeroTimeline(root: HTMLElement, weather: Weather, clock: Cl
 
 		const ph = f.phase + t * 0.9;
 		const fx = (W * f.x) / 100;
-		let landing = H * f.drop;
+		let landing = ((H * rise.bottom) / 100) * f.drop;
 
 		/* the band: liquid riding on the rising surface, thick where the frame is half full */
 		if (f.level > 0) {

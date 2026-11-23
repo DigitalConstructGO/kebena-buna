@@ -62,13 +62,19 @@
 	 * the clip simply plays (seeking every frame is what made it stutter) and is only nudged back
 	 * if it drifts; backwards or at rest it is stepped.
 	 */
+	/** Clips the browser won't play on their own (iOS in Low Power Mode): those are always stepped. */
+	const stepped = new WeakSet<HTMLVideoElement>();
 	const track = (v: HTMLVideoElement, want: number, from: number, to: number) => {
 		const t = tl ? tl.time() : 0;
-		if (rate <= 0 || t < from || t > to - 0.1) return hold(v, want);
+		if (stepped.has(v) || rate <= 0 || t < from || t > to - 0.1) return hold(v, want);
 		const speed = Math.round(rate * 4) / 4;
 		if (v.playbackRate !== speed) v.playbackRate = speed;
 		if (!v.seeking && Math.abs(v.currentTime - want) > 0.25) v.currentTime = want;
-		if (v.paused) void v.play().catch(() => {});
+		// a pause that lands before play() settles rejects it too (AbortError); only a refusal counts
+		if (v.paused)
+			void v.play().catch((e: unknown) => {
+				if (e instanceof DOMException && e.name === 'NotAllowedError') stepped.add(v);
+			});
 	};
 	const syncFilm = () => {
 		const t = tl ? tl.time() : 0;
@@ -160,6 +166,9 @@
 		film.load();
 		const clips = [nursery, film, pour];
 		clips.forEach((v) => v.addEventListener('seeked', settle));
+		// the posters are cut for the wide shot; portrait screens draw the square ones from CSS instead
+		if (window.matchMedia('(max-aspect-ratio: 20 / 21)').matches)
+			clips.forEach((v) => v.removeAttribute('poster'));
 		// iOS only lets a clip be stepped once it has been started: start each one and stop it at once
 		const prime = (v: HTMLVideoElement) =>
 			void v
@@ -280,6 +289,11 @@
 			disablepictureinpicture
 			aria-hidden="true"
 		>
+			<source
+				src="/hero/nursery-scroll-sq.mp4"
+				type="video/mp4"
+				media="(max-aspect-ratio: 20 / 21)"
+			/>
 			<source src="/hero/nursery-scroll-sm.mp4" type="video/mp4" media="(max-width: 899px)" />
 			<source src="/hero/nursery-scroll.mp4" type="video/mp4" />
 		</video>
@@ -293,7 +307,13 @@
 			disablepictureinpicture
 			aria-hidden="true"
 		>
-			<!-- encoded with a keyframe every few frames, so stepping through them on scroll stays smooth -->
+			<!-- encoded with a keyframe every few frames, so stepping through them on scroll stays smooth;
+			     portrait screens get a square cut around the tree instead of a sliver of the wide shot -->
+			<source
+				src="/hero/growth-scroll-sq.mp4"
+				type="video/mp4"
+				media="(max-aspect-ratio: 20 / 21)"
+			/>
 			<source src="/hero/growth-scroll-sm.mp4" type="video/mp4" media="(max-width: 899px)" />
 			<source src="/hero/growth-scroll.mp4" type="video/mp4" />
 		</video>
@@ -307,6 +327,7 @@
 			disablepictureinpicture
 			aria-hidden="true"
 		>
+			<source src="/hero/cup-scroll-sq.mp4" type="video/mp4" media="(max-aspect-ratio: 20 / 21)" />
 			<source src="/hero/cup-scroll-sm.mp4" type="video/mp4" media="(max-width: 899px)" />
 			<source src="/hero/cup-scroll.mp4" type="video/mp4" />
 		</video>
@@ -673,11 +694,41 @@
 				linear-gradient(180deg, rgb(6 16 11 / 0.7) 0%, rgb(6 16 11 / 0.28) 40%, transparent 56%),
 				linear-gradient(0deg, rgb(6 16 11 / 0.5) 0%, transparent 22%);
 		}
-		.hero .film {
-			object-position: 64% 50%;
+		/* the square cut sits whole in the lower part of the screen, under the story, and fades into
+		   the dark at its top and bottom; --y is where it sits in the room left over (0 top, 1 bottom) */
+		.hero {
+			--y: 0.72;
+			--top: calc((100% - 100vw) * var(--y));
 		}
+		.stage {
+			background: radial-gradient(
+				ellipse 95% 42% at 50% 68%,
+				color-mix(in srgb, var(--color-forest-700) 32%, transparent),
+				transparent 72%
+			);
+		}
+		.hero .film,
+		.hero .nursery,
+		.hero .pour {
+			object-fit: contain;
+			object-position: 50% calc(var(--y) * 100%);
+			background: 50% calc(var(--y) * 100%) / 100% auto no-repeat;
+			mask-image: linear-gradient(
+				transparent var(--top),
+				#000 calc(var(--top) + 26vw),
+				#000 calc(var(--top) + 84vw),
+				transparent calc(var(--top) + 100vw)
+			);
+		}
+		/* the posters, drawn where the clip will be until its first frame arrives */
 		.hero .nursery {
-			object-position: 50% 50%;
+			background-image: url('/hero/nursery-start-sq.webp');
+		}
+		.hero .film {
+			background-image: url('/hero/growth-start-sq.webp');
+		}
+		.hero .pour {
+			background-image: url('/hero/cup-start-sq.webp');
 		}
 		.hero .copy {
 			top: 104px;
@@ -691,6 +742,21 @@
 		}
 		.hero .sound-label {
 			display: none;
+		}
+	}
+	/* phones: the floor plan sign sits bottom centre, so the scroll cue and the sound button take
+	   the corners of the same row */
+	@media (max-width: 720px) {
+		.controls {
+			bottom: calc(max(14px, env(safe-area-inset-bottom)) + 4px);
+		}
+		.buttons {
+			width: 100%;
+			justify-content: space-between;
+		}
+		.cue {
+			order: -1;
+			font-size: 0;
 		}
 	}
 

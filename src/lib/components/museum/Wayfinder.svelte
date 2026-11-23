@@ -380,10 +380,7 @@
 		stroke-linecap: round;
 		stroke-linejoin: round;
 	}
-	/* over the opening story: only the ring and the label, clear of the hero's own controls */
-	.dock.compact {
-		translate: 0 -68px;
-	}
+	/* over the opening story: only the ring and the label, between the hero's own controls */
 	.sign.compact .where {
 		display: none;
 	}

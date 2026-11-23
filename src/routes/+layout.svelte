@@ -54,7 +54,10 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<!-- the bean from the nav; the PNGs are for browsers without SVG icons and iOS home screens -->
+	<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+	<link rel="icon" href={favicon} type="image/svg+xml" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 	{#if isPublic}
 		<link rel="preload" href={interLatin} as="font" type="font/woff2" crossorigin="anonymous" />
 		<link rel="canonical" href={SITE_URL + page.url.pathname} />
