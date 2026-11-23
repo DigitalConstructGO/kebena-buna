@@ -49,6 +49,8 @@
 	--ease: cubic-bezier(0.22, 1, 0.36, 1);
 
 	color-scheme: light;
+	/* the page art (`PageArt.svelte`) sits at z-index -1, above this background */
+	isolation: isolate;
 	min-height: 100dvh;
 	background: var(--paper-tint);
 	color: var(--ink);

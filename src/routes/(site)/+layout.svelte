@@ -1,6 +1,7 @@
 <script lang="ts">
 	import SiteNav from '#lib/components/museum/SiteNav.svelte';
 	import SiteFooter from '#lib/components/museum/SiteFooter.svelte';
+	import PageArt from '#lib/site/PageArt.svelte';
 	import { museum } from '#lib/content/museum.ts';
 	import { setKitLabels } from '@nahu/admin-kit/labels';
 	import { m } from '#lib/paraglide/messages.js';
@@ -27,6 +28,7 @@
 
 <!-- The museum's header and footer around the shop, visit and form pages (`site.css`). -->
 <div class="museum site">
+	<PageArt />
 	<SiteNav wayfinder={false} />
 	<main>
 		{@render children()}
