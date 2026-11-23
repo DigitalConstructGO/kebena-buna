@@ -1,9 +1,13 @@
-import { mysqlTable, serial, int, text } from 'drizzle-orm/mysql-core';
-
-export const task = mysqlTable('task', {
-	id: serial('id').primaryKey(),
-	title: text('title').notNull(),
-	priority: int('priority').notNull().default(1)
-});
-
 export * from './auth.schema';
+export * from './permissions.schema';
+export * from './system.schema';
+export * from './origins.schema';
+export * from './catalog.schema';
+export * from './inventory.schema';
+export * from './customers.schema';
+export * from './wholesale.schema';
+export * from './orders.schema';
+export * from './visits.schema';
+export * from './memberships.schema';
+export * from './bookings.schema';
+export * from './content.schema';

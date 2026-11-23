@@ -4,6 +4,7 @@ import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { adminKit } from '@nahu/admin-kit/vite';
 
 export default defineConfig({
 	plugins: [
@@ -20,8 +21,12 @@ export default defineConfig({
 		paraglideVitePlugin({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide',
-			emitTsDeclarations: true
-		})
+			emitTsDeclarations: true,
+			// `custom-prefix` reads a site page's language off its address (`#lib/site/locale`); the
+			// dashboard has no prefix and falls through to the cookie.
+			strategy: ['custom-prefix', 'cookie', 'globalVariable', 'baseLocale']
+		}),
+		adminKit()
 	],
 	test: {
 		expect: { requireAssertions: true },

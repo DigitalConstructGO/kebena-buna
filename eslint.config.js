@@ -40,5 +40,11 @@ export default defineConfig(
 		// Override or add rule settings here, such as:
 		// 'svelte/button-has-type': 'error'
 		rules: {}
+	},
+	{
+		// Site links go through `siteHref` (`#lib/site/locale`), which puts the language prefix on;
+		// some lead to the design's pages, served by a catch-all route `resolve` cannot name.
+		files: ['src/routes/(site)/**', 'src/lib/site/**'],
+		rules: { 'svelte/no-navigation-without-resolve': 'off' }
 	}
 );
