@@ -541,8 +541,8 @@
 		font-size: 13px;
 		white-space: nowrap;
 		cursor: pointer;
-		backdrop-filter: blur(8px);
-		-webkit-backdrop-filter: blur(8px);
+		backdrop-filter: var(--glass-fx);
+		-webkit-backdrop-filter: var(--glass-fx);
 	}
 	.zoom:hover {
 		background: var(--paper);

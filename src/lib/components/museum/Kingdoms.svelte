@@ -579,8 +579,8 @@
 		flex-shrink: 0;
 		width: 24px;
 		font-family: var(--font-mono);
-		font-size: 11px;
-		line-height: 1.8;
+		font-size: 12px;
+		line-height: 1.65;
 		color: var(--accent-mark);
 	}
 	.rulers-title {
@@ -691,7 +691,7 @@
 		height: 20px;
 		margin-inline-start: var(--name);
 		font-family: var(--font-mono);
-		font-size: 11px;
+		font-size: 12px;
 		color: var(--ink-soft);
 	}
 	.axis span {
@@ -761,14 +761,14 @@
 		position: absolute;
 		top: 9px;
 		font-family: var(--font-mono);
-		font-size: 11px;
+		font-size: 12px;
 		white-space: nowrap;
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-soft);
 	}
 	.bar-years.inside {
 		top: 12px;
-		font-size: 10px;
+		font-size: 11px;
 		line-height: 12px;
 		color: var(--ink);
 		pointer-events: none;

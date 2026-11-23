@@ -244,6 +244,12 @@
 		letter-spacing: -0.02em;
 		text-wrap: balance;
 	}
+	/* on phones the long title runs to four lines; give them room */
+	@media (max-width: 600px) {
+		.title {
+			line-height: 1.2;
+		}
+	}
 	.hint {
 		display: flex;
 		align-items: center;
@@ -313,8 +319,8 @@
 		font-size: 12px;
 		background: rgb(8 23 14 / 0.62);
 		color: rgb(246 249 246 / 0.86);
-		backdrop-filter: blur(8px);
-		-webkit-backdrop-filter: blur(8px);
+		backdrop-filter: var(--glass-fx);
+		-webkit-backdrop-filter: var(--glass-fx);
 	}
 
 	.rail {

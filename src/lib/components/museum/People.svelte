@@ -39,7 +39,12 @@
 	);
 </script>
 
-<section class="people kb-section" id="people" bind:this={root} aria-labelledby="people-title">
+<section
+	class="people kb-section kb-art kb-art--dots-side"
+	id="people"
+	bind:this={root}
+	aria-labelledby="people-title"
+>
 	<div class="copy">
 		<p class="kb-eyebrow" data-reveal>{content.eyebrow}</p>
 		<h2 class="lead" id="people-title" data-reveal>

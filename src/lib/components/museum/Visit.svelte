@@ -19,7 +19,12 @@
 	);
 </script>
 
-<section class="visit kb-section" id="visit" bind:this={root} aria-labelledby="visit-title">
+<section
+	class="visit kb-section kb-art kb-art--rings-far"
+	id="visit"
+	bind:this={root}
+	aria-labelledby="visit-title"
+>
 	<div class="copy">
 		<p class="kb-eyebrow" data-reveal>{content.eyebrow}</p>
 		<h2 class="kb-title" id="visit-title" data-reveal>{content.title}</h2>
@@ -41,10 +46,17 @@
 			{/each}
 		</dl>
 		<div class="actions" data-reveal>
-			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external maps link -->
-			<a class="kb-btn primary" href={content.directions.href} target="_blank" rel="noopener noreferrer">{content.directions.label}</a>
-			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- tel: link -->
+			<!-- eslint-disable svelte/no-navigation-without-resolve -- external maps link and tel: link -->
+			<a
+				class="kb-btn primary"
+				href={content.directions.href}
+				target="_blank"
+				rel="noopener noreferrer"
+			>
+				{content.directions.label}
+			</a>
 			<a class="kb-btn secondary" href={content.call.href}>{content.call.label}</a>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		</div>
 	</div>
 
@@ -178,6 +190,8 @@
 		padding: 12px 16px;
 		border-radius: 12px;
 		background: var(--card);
+		backdrop-filter: var(--glass-fx);
+		-webkit-backdrop-filter: var(--glass-fx);
 	}
 	.name {
 		font-size: 14px;
@@ -185,10 +199,8 @@
 	}
 	.area {
 		font-family: var(--font-mono);
-		font-size: 11px;
+		font-size: 12px;
 		line-height: 16px;
-		letter-spacing: 0.6px;
-		text-transform: uppercase;
 		color: var(--ink-soft);
 	}
 	@media (max-width: 860px) {
@@ -197,11 +209,17 @@
 		}
 	}
 	@media (max-width: 480px) {
+		/* above the pin, which sits in the lower half of the map */
 		.label {
 			left: 12px;
-			top: auto;
-			bottom: 12px;
+			top: 12px;
 			max-width: calc(100% - 24px);
+		}
+		/* phone and email: a full-height row to press, without moving the text */
+		dd a {
+			display: inline-block;
+			margin-block: -12px;
+			padding-block: 12px;
 		}
 		.row {
 			flex-direction: column;

@@ -236,7 +236,9 @@
 		padding: 8px 8px 8px 18px;
 		border-radius: 16px;
 		/* dense enough that the light labels pass contrast even over a white page */
-		background: rgb(13 34 23 / 0.9);
+		background: var(--chrome);
+		backdrop-filter: var(--glass-fx);
+		-webkit-backdrop-filter: var(--glass-fx);
 		border: 1px solid rgb(255 255 255 / 0.1);
 		color: var(--color-mist-50);
 	}
@@ -258,7 +260,15 @@
 	.lang {
 		position: relative;
 	}
+	/* both top-bar buttons keep their size; a finger gets 44px of height */
+	.lang-btn::before,
+	.theme::before {
+		content: '';
+		position: absolute;
+		inset: -5px 0;
+	}
 	.lang-btn {
+		position: relative;
 		display: flex;
 		align-items: center;
 		gap: 7px;
@@ -288,6 +298,8 @@
 		stroke-linejoin: round;
 	}
 	.theme {
+		position: relative;
+		flex: none;
 		display: grid;
 		place-items: center;
 		width: 36px;

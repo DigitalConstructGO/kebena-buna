@@ -4,7 +4,7 @@
 	import { page } from '$app/state';
 	import { baseLocale, deLocalizeHref, locales, localizeHref } from '#lib/paraglide/runtime.js';
 	// the body font, preloaded so the first paint uses it instead of swapping a moment later
-	import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+	import interLatin from '@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2?url';
 	import './layout.css';
 	import favicon from '#lib/assets/favicon.svg';
 	import type { LayoutProps } from './$types';
@@ -36,7 +36,7 @@
 	<meta property="og:url" content={SITE + page.url.pathname} />
 	<meta property="og:image" content={SITE + '/hero/museum.webp'} />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="theme-color" content="#0e2418" />
+	<meta name="theme-color" content="#232d25" />
 </svelte:head>
 
 {@render children()}

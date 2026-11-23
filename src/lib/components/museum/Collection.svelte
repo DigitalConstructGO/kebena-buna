@@ -10,7 +10,12 @@
 	onMount(() => reveal(root));
 </script>
 
-<section class="collection kb-section" id="collection" bind:this={root} aria-labelledby="collection-title">
+<section
+	class="collection kb-section kb-art kb-art--rings-corner"
+	id="collection"
+	bind:this={root}
+	aria-labelledby="collection-title"
+>
 	<header class="head">
 		<div class="lead">
 			<p class="kb-eyebrow" data-reveal>{content.eyebrow}</p>
@@ -95,10 +100,8 @@
 		padding: 4px 8px;
 		border-radius: 8px;
 		font-family: var(--font-mono);
-		font-size: 11px;
+		font-size: 12px;
 		line-height: 16px;
-		letter-spacing: 0.6px;
-		text-transform: uppercase;
 		color: var(--color-forest-900);
 	}
 	.tag.leaf {
@@ -127,6 +130,8 @@
 		border-radius: 12px;
 		overflow: hidden;
 		background: var(--card);
+		backdrop-filter: var(--glass-fx);
+		-webkit-backdrop-filter: var(--glass-fx);
 		transition: border-color 0.25s;
 	}
 	.lot:hover {
@@ -157,10 +162,8 @@
 	.exhibit {
 		margin: 0;
 		font-family: var(--font-mono);
-		font-size: 11px;
+		font-size: 12px;
 		line-height: 16px;
-		letter-spacing: 0.6px;
-		text-transform: uppercase;
 		color: var(--accent-ink);
 	}
 	h3 {
@@ -194,6 +197,25 @@
 	@media (prefers-reduced-motion: reduce) {
 		.photo img {
 			transition: none;
+		}
+	}
+	/* phones: one swipeable row instead of a long stack; the next card peeks in at the edge */
+	@media (max-width: 599px) {
+		.lots {
+			grid-template-columns: none;
+			grid-auto-flow: column;
+			grid-auto-columns: calc(100% - 40px);
+			gap: 12px;
+			margin-inline: -24px;
+			padding-inline: 24px;
+			scroll-padding-inline: 24px;
+			overflow-x: auto;
+			scroll-snap-type: x mandatory;
+			overscroll-behavior-x: contain;
+			scrollbar-width: none;
+		}
+		.lots > li {
+			scroll-snap-align: start;
 		}
 	}
 </style>

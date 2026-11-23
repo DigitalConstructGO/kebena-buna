@@ -15,6 +15,8 @@
 	const LEAD = 5;
 	const TAIL = 12;
 	const pad = (n: number) => String(n).padStart(2, '0');
+	/** Keeps a short unit on the same line as its number: "2,100 m" never leaves the "m" alone. */
+	const tie = (v: string) => v.replace(/ (\S{1,3})$/, '\u00a0$1');
 
 	/** Every photo of every part, in order. */
 	const panels = $derived(
@@ -31,11 +33,17 @@
 		const n = panels.length;
 		if (!n) return [];
 		const at = (k: number) => panels[((k % n) + n) % n];
-		const out: { key: string; src: string; k: number; j: number }[] = [];
+		const out: { key: string; src: string; alt: string; k: number; j: number }[] = [];
 		for (let i = -LEAD; i < n + TAIL; i++) {
 			const p = at(i);
 			for (let k = 0; k < SLICES; k++)
-				out.push({ key: `${i}-${k}`, src: p.photo.src, k, j: i * SLICES + k + 0.5 - SLICES / 2 });
+				out.push({
+					key: `${i}-${k}`,
+					src: p.photo.src,
+					alt: p.photo.alt,
+					k,
+					j: i * SLICES + k + 0.5 - SLICES / 2
+				});
 		}
 		return out;
 	});
@@ -50,6 +58,27 @@
 	let active = $state(0);
 	const current = $derived(content.farms[active]);
 	let pinned: ScrollTrigger | undefined;
+
+	/** A photo lifted off the band to be looked at; `x`/`y` is where it was pressed, so it grows from there. */
+	let lifted = $state<{ src: string; alt: string; x: number; y: number }>();
+	let viewer = $state<HTMLDialogElement>();
+	let liftedAt = 0;
+
+	const lift = (e: MouseEvent, sl: { src: string; alt: string }) => {
+		lifted = {
+			src: sl.src,
+			alt: sl.alt,
+			x: e.clientX - window.innerWidth / 2,
+			y: e.clientY - window.innerHeight / 2
+		};
+		liftedAt = window.scrollY;
+		if (!viewer?.open) viewer?.showModal();
+	};
+	const drop = () => viewer?.close();
+	/** Scrolling on lets the photo go, and the band turns as before. */
+	const onscroll = () => {
+		if (viewer?.open && Math.abs(window.scrollY - liftedAt) > 24) drop();
+	};
 
 	/** Scroll so the part's first photo turns to the front. */
 	const go = (part: number) => {
@@ -163,6 +192,8 @@
 		`${src.replace(/\.webp$/, '-280.webp')} 280w, ${src.replace(/\.webp$/, '-440.webp')} 440w`;
 </script>
 
+<svelte:window {onscroll} />
+
 <section class="farms" id="farms" bind:this={root} aria-labelledby="farms-title">
 	<header class="head">
 		<p class="kb-eyebrow">{content.eyebrow}</p>
@@ -176,11 +207,14 @@
 				<div class="tilt">
 					<div class="helix">
 						{#each slices as sl (sl.key)}
+							<!-- pointer-only: the band is decorative, and the list below carries every photo -->
+							<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 							<div
 								class={['slice', { edge: sl.k === 0 }]}
 								style:--j={sl.j}
 								style:--k={sl.k}
 								style:background-image={near ? `url(${ringSrc(sl.src)})` : undefined}
+								onclick={(e) => lift(e, sl)}
 							></div>
 						{/each}
 					</div>
@@ -256,7 +290,7 @@
 										{#each farm.meta as m (m.label)}
 											<div>
 												<dt>{m.label}</dt>
-												<dd>{m.value}</dd>
+												<dd>{tie(m.value)}</dd>
 											</div>
 										{/each}
 									</dl>
@@ -268,6 +302,23 @@
 			{/if}
 		{/if}
 	</div>
+
+	<!-- a photo pressed on the band comes forward; a press, Escape or scrolling on sends it back -->
+	<dialog class="viewer" bind:this={viewer} onclick={drop} onclose={() => (lifted = undefined)}>
+		{#if lifted}
+			<img
+				src={lifted.src}
+				alt={lifted.alt}
+				width="520"
+				height="680"
+				style:--x={`${lifted.x}px`}
+				style:--y={`${lifted.y}px`}
+			/>
+			<button type="button" class="shut" aria-label="Close photo">
+				<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M1 1l12 12M13 1L1 13" /></svg>
+			</button>
+		{/if}
+	</dialog>
 
 	<!-- phones, short screens and reduced motion: each part with a strip of its photos -->
 	{#if content.farms.length}
@@ -316,7 +367,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 10px;
-		padding: clamp(72px, 9vw, 112px) max(40px, calc((100% - 1440px) / 2)) 0;
+		padding: clamp(72px, 9vw, 112px) max(24px, calc((100% - 1200px) / 2)) 0;
 	}
 	.head > :global(*) {
 		max-width: 640px;
@@ -327,7 +378,26 @@
 		line-height: 1.6;
 		color: var(--ink-soft);
 	}
+	/* behind the helix: a halo of fine rings (bookofshapes.com) that thins out toward the edges */
+	.stage::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		pointer-events: none;
+		background: var(--accent-ink);
+		opacity: 0.14;
+		-webkit-mask:
+			url('/art/truchet.svg') 50% 50% / 1100px auto repeat,
+			radial-gradient(ellipse 42% 62% at 50% 52%, transparent 20%, #000 60%, transparent 100%);
+		mask:
+			url('/art/truchet.svg') 50% 50% / 1100px auto repeat,
+			radial-gradient(ellipse 42% 62% at 50% 52%, transparent 20%, #000 60%, transparent 100%);
+		-webkit-mask-composite: source-in;
+		mask-composite: intersect;
+	}
 	.stage {
+		isolation: isolate;
 		/* band geometry: cylinder diameter, slice width (30 slices round it), band height, drop per slice */
 		--d: clamp(400px, 40vw, 800px);
 		--sw: calc(var(--d) * 0.10472);
@@ -393,6 +463,94 @@
 			translateZ(var(--r)) skewY(11.3deg);
 		/* the skew is atan(drop / slice width), so each slice's top meets its neighbour's in one smooth edge */
 	}
+	/* the band itself lets presses through to the text beside it; only the photos take them */
+	.slice {
+		pointer-events: auto;
+		cursor: zoom-in;
+	}
+
+	/* a pressed photo, lifted off the band to the middle of the screen */
+	.viewer {
+		position: fixed;
+		inset: 0;
+		width: 100vw;
+		height: 100vh;
+		height: 100dvh;
+		max-width: none;
+		max-height: none;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: none;
+		overflow: hidden;
+		cursor: zoom-out;
+	}
+	.viewer[open] {
+		display: grid;
+		place-items: center;
+	}
+	.viewer::backdrop {
+		background: rgb(25 33 27 / 0.62);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		animation: dusk 0.35s ease both;
+	}
+	.viewer img {
+		display: block;
+		width: auto;
+		height: min(84vh, 84dvh, 131vw);
+		max-width: 90vw;
+		aspect-ratio: 520 / 680;
+		object-fit: cover;
+		border: 1.5px solid var(--gold);
+		border-radius: 14px;
+		box-shadow: 0 40px 90px -30px rgb(0 0 0 / 0.7);
+		animation: lift 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+	}
+	@keyframes lift {
+		from {
+			opacity: 0;
+			transform: translate(var(--x), var(--y)) scale(0.28) rotate(-4deg);
+		}
+	}
+	@keyframes dusk {
+		from {
+			opacity: 0;
+		}
+	}
+	.shut {
+		position: absolute;
+		top: clamp(16px, 3vh, 28px);
+		right: clamp(16px, 3vw, 32px);
+		display: grid;
+		place-items: center;
+		width: 44px;
+		height: 44px;
+		padding: 0;
+		border: 1px solid var(--hair);
+		border-radius: 50%;
+		background: var(--chrome);
+		color: var(--on-bag);
+		cursor: pointer;
+	}
+	.shut svg {
+		width: 14px;
+		height: 14px;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.6;
+	}
+	.shut:focus-visible {
+		outline: 2px solid var(--gold);
+		outline-offset: 3px;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.viewer img,
+		.viewer::backdrop {
+			animation: none;
+		}
+	}
+
 	/* a thin paper gap where one photo ends and the next begins */
 	.slice.edge {
 		box-shadow: inset 3px 0 0 var(--paper-soft);
@@ -501,7 +659,7 @@
 	}
 	.name {
 		font-size: clamp(22px, 2vw, 28px);
-		font-weight: 500;
+		font-weight: 400;
 		line-height: 1.1;
 		letter-spacing: -0.02em;
 		text-wrap: balance;
@@ -567,6 +725,17 @@
 		.list {
 			display: none;
 		}
+		/* the halo keeps to the ring: nothing is drawn behind the words below it */
+		.stage::before {
+			-webkit-mask:
+				url('/art/truchet.svg') 50% 0 / 820px auto repeat,
+				radial-gradient(ellipse 70% 32% at 50% 30%, transparent 20%, #000 60%, transparent 100%);
+			mask:
+				url('/art/truchet.svg') 50% 0 / 820px auto repeat,
+				radial-gradient(ellipse 70% 32% at 50% 30%, transparent 20%, #000 60%, transparent 100%);
+			-webkit-mask-composite: source-in;
+			mask-composite: intersect;
+		}
 		.now {
 			grid-column: 1;
 			grid-row: 2;
@@ -585,8 +754,9 @@
 			scrollbar-width: none;
 		}
 		.tabs button {
+			position: relative;
 			flex: none;
-			min-height: 40px;
+			min-height: 44px;
 			padding: 0 14px;
 			border: 0;
 			border-radius: 12px;
@@ -641,7 +811,7 @@
 		.now-name {
 			margin: 0;
 			font-size: clamp(24px, 6vw, 32px);
-			font-weight: 500;
+			font-weight: 400;
 			line-height: 1.15;
 			letter-spacing: -0.02em;
 			overflow-wrap: anywhere;
@@ -683,8 +853,13 @@
 			gap: 10px;
 		}
 		.tabs button {
-			min-height: 36px;
+			min-height: 38px;
 			font-size: 13px;
+		}
+		.tabs button::after {
+			content: '';
+			position: absolute;
+			inset: -3px 0;
 		}
 		.now-name {
 			font-size: 22px;
@@ -792,13 +967,14 @@
 		.part h3 {
 			margin: 0;
 			font-size: 28px;
-			font-weight: 500;
+			font-weight: 400;
 			line-height: 1.15;
 			letter-spacing: -0.02em;
 			overflow-wrap: anywhere;
 		}
 		.part .text {
 			margin: 0;
+			max-width: 65ch;
 			font-size: 16px;
 			line-height: 1.55;
 			color: var(--ink-soft);

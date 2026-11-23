@@ -16,9 +16,12 @@
 	let active = $state(0);
 	let broken = $state<Record<string, boolean>>({});
 
-	/** Card geometry in design pixels; the stage scales it to fit. */
+	/** Card geometry in design pixels; the stage scales it to fit. On phones the card is
+	 *  drawn at its real size instead, so its text is never shrunk below reading size. */
 	const CARD_W = 380;
 	const CARD_H = 520;
+	const PHONE_H = 450;
+	let cw = CARD_W;
 
 	let layout: (animate: boolean) => void = () => {};
 
@@ -74,6 +77,35 @@
 		else layout(true);
 	};
 
+	/** The hall whose card has been lifted to the screen; `x`/`y`/`s` is where its card sat, so it grows from there. */
+	let lifted = $state<{ i: number; x: number; y: number; s: number }>();
+	let viewer = $state<HTMLDialogElement>();
+	let liftedAt = 0;
+
+	const lift = (e: MouseEvent, i: number) => {
+		// the link inside the card still goes where it says
+		if ((e.target as HTMLElement).closest('a')) return;
+		const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+		lifted = {
+			i,
+			x: r.left + r.width / 2 - window.innerWidth / 2,
+			y: r.top + r.height / 2 - window.innerHeight / 2,
+			s: r.width / Math.min(window.innerWidth * 0.92, 700)
+		};
+		liftedAt = window.scrollY;
+		if (!viewer?.open) viewer?.showModal();
+	};
+	const drop = () => viewer?.close();
+	/** A press outside the card, or on its link, sends it back. */
+	const onviewerclick = (e: MouseEvent) => {
+		const t = e.target as HTMLElement;
+		if (!t.closest('.big') || t.closest('a, .shut')) drop();
+	};
+	/** Scrolling on lets the card go. */
+	const onscroll = () => {
+		if (viewer?.open && Math.abs(window.scrollY - liftedAt) > 24) drop();
+	};
+
 	// set up once the page is idle: none of this is visible on the first screen
 	onMount(() =>
 		whenIdle(() => {
@@ -83,6 +115,7 @@
 			const scope = root;
 			const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 			let k = 1;
+			let stopDeal = () => {};
 
 			const ctx = gsap.context(() => {
 				const q = gsap.utils.selector(scope);
@@ -90,8 +123,13 @@
 				const measure = () => {
 					const r = host.getBoundingClientRect();
 					// fit the active card by width (it leaves room for its neighbours to peek) and by height
-					k = Math.min(1, (r.width * 0.8) / CARD_W, r.height / CARD_H);
+					const phone = window.innerWidth <= 600;
+					const ch = phone ? PHONE_H : CARD_H;
+					cw = phone ? Math.round(Math.min(300, r.width * 0.8)) : CARD_W;
+					k = phone ? Math.min(1, r.height / ch) : Math.min(1, (r.width * 0.8) / cw, r.height / ch);
 					host.style.setProperty('--k', String(k));
+					host.style.setProperty('--cw', `${cw}px`);
+					host.style.setProperty('--ch', `${ch}px`);
 				};
 
 				layout = (animate) => {
@@ -105,7 +143,7 @@
 						const offset = a === 0 ? 0 : a === 1 ? 0.953 : 0.953 + (a - 1) * 0.72;
 						const s = a === 0 ? 1 : a === 1 ? 0.79 : 0.66;
 						gsap.to(el, {
-							x: side * offset * CARD_W * k + dragX * (a === 0 ? 0.4 : 0.3),
+							x: side * offset * cw * k + dragX * (a === 0 ? 0.4 : 0.3),
 							scale: s * k,
 							autoAlpha: a <= 1 ? 1 : a === 2 ? 0.55 : 0,
 							zIndex: 10 - a,
@@ -153,14 +191,50 @@
 						stagger: 0.08,
 						scrollTrigger: { trigger: root, start: 'top 70%', once: true }
 					});
-					gsap.from(q('.slot-inner'), {
-						y: 80,
-						autoAlpha: 0,
-						duration: 1,
-						ease: 'power3.out',
-						stagger: { each: 0.07, from: 'center' },
-						scrollTrigger: { trigger: host, start: 'top 80%', once: true }
-					});
+					// dealt like playing cards: they flip up to the front when the hall is in view
+					// (and its doors are open), and fall back to the deck when it is not
+					const inners = q('.slot-inner');
+					const deal = gsap.timeline({ paused: true }).fromTo(
+						inners,
+						{
+							autoAlpha: 0,
+							scale: 0.45,
+							y: 160,
+							rotationY: -75,
+							rotation: (i: number) => (i % 2 ? 10 : -10),
+							transformPerspective: 1100
+						},
+						{
+							autoAlpha: 1,
+							scale: 1,
+							y: 0,
+							rotationY: 0,
+							rotation: 0,
+							duration: 0.9,
+							ease: 'back.out(1.5)',
+							stagger: 0.11
+						}
+					);
+					let doorOpen = true;
+					let inView = false;
+					const sync = () => (doorOpen && inView ? deal.play() : deal.reverse());
+					const onDoor = (e: Event) => {
+						doorOpen = (e as CustomEvent<boolean>).detail;
+						sync();
+					};
+					window.addEventListener('kb:door', onDoor);
+					const io = new IntersectionObserver(
+						([entry]) => {
+							inView = entry.intersectionRatio >= 0.3;
+							sync();
+						},
+						{ threshold: [0, 0.3, 0.6] }
+					);
+					io.observe(host);
+					stopDeal = () => {
+						window.removeEventListener('kb:door', onDoor);
+						io.disconnect();
+					};
 					gsap.from(q('.navi, .dots'), {
 						autoAlpha: 0,
 						y: 16,
@@ -171,7 +245,10 @@
 					});
 				}
 
-				return () => ro.disconnect();
+				return () => {
+					ro.disconnect();
+					stopDeal();
+				};
 			}, scope);
 
 			return () => {
@@ -181,6 +258,8 @@
 		})
 	);
 </script>
+
+<svelte:window {onscroll} />
 
 {#if total}
 	<section
@@ -234,7 +313,8 @@
 						aria-current={on ? 'true' : undefined}
 					>
 						<div class="slot-inner">
-							<article class="card" inert={!on}>
+							<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+							<article class="card" inert={!on} onclick={(e) => lift(e, i)}>
 								<div class="photo">
 									{#if broken[h.id]}
 										<div class="photo-missing"></div>
@@ -251,6 +331,16 @@
 										/>
 									{/if}
 									<span class="chip">Hall {pad(i + 1)}</span>
+									<!-- the keyboard's way to what a press anywhere on the card does -->
+									<button
+										type="button"
+										class="zoom"
+										aria-label={`Enlarge hall ${pad(i + 1)}, ${h.title}`}
+									>
+										<svg viewBox="0 0 16 16" aria-hidden="true">
+											<path d="M9.5 2H14v4.5M14 2 9 7M6.5 14H2V9.5M2 14l5-5" />
+										</svg>
+									</button>
 								</div>
 								<div class="tibeb" aria-hidden="true"></div>
 								<div class="body">
@@ -334,6 +424,52 @@
 				{/each}
 			</div>
 		{/if}
+
+		<!-- a pressed card comes forward, large; a press outside it, Escape or scrolling on sends it back -->
+		<dialog
+			class="viewer"
+			bind:this={viewer}
+			aria-label={lifted ? `Hall ${pad(lifted.i + 1)}, ${halls[lifted.i].title}` : undefined}
+			onclick={onviewerclick}
+			onclose={() => (lifted = undefined)}
+		>
+			{#if lifted}
+				{@const h = halls[lifted.i]}
+				<article
+					class="big"
+					style:--x={`${lifted.x}px`}
+					style:--y={`${lifted.y}px`}
+					style:--s={lifted.s}
+				>
+					<div class="big-photo">
+						{#if !broken[h.id]}
+							<img
+								src={h.photo}
+								srcset={srcsetFor(h.photo)}
+								sizes="min(92vw, 700px)"
+								alt=""
+								decoding="async"
+							/>
+						{/if}
+						<span class="chip">Hall {pad(lifted.i + 1)}</span>
+					</div>
+					<div class="tibeb" aria-hidden="true"></div>
+					<div class="big-body">
+						<h3>{h.title}</h3>
+						{#if h.tagline}<p class="big-sub">{h.tagline}</p>{/if}
+						{#if h.text}<p class="big-text">{h.text}</p>{/if}
+						<div class="foot">
+							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- hall links come from content -->
+							<a href={h.href}>Enter hall <span aria-hidden="true">→</span></a>
+							<span class="count">{pad(lifted.i + 1)} / {pad(total)}</span>
+						</div>
+					</div>
+				</article>
+				<button type="button" class="shut" aria-label="Close">
+					<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M1 1l12 12M13 1L1 13" /></svg>
+				</button>
+			{/if}
+		</dialog>
 	</section>
 {/if}
 
@@ -423,9 +559,9 @@
 		position: absolute;
 		left: 50%;
 		top: 50%;
-		width: 380px;
-		height: 520px;
-		margin: -260px 0 0 -190px;
+		width: var(--cw, 380px);
+		height: var(--ch, 520px);
+		margin: calc(var(--ch, 520px) / -2) 0 0 calc(var(--cw, 380px) / -2);
 		will-change: transform;
 	}
 	.slot-inner {
@@ -443,10 +579,176 @@
 		border-radius: 24px;
 		overflow: hidden;
 		background: var(--glass);
-		border: 1px solid var(--glass-line);
+		backdrop-filter: var(--glass-fx);
+		-webkit-backdrop-filter: var(--glass-fx);
+		/* a playing card: gold edge with a second hairline frame inside it */
+		border: 1.5px solid var(--gold);
+		box-shadow:
+			inset 0 0 0 4px var(--glass),
+			inset 0 0 0 5px var(--hair),
+			0 30px 46px -30px rgb(25 33 27 / 0.6);
+	}
+	.card:not([inert]) {
+		cursor: zoom-in;
+	}
+	.zoom {
+		position: absolute;
+		top: 12px;
+		right: 12px;
+		display: grid;
+		place-items: center;
+		width: 44px;
+		height: 44px;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: rgb(8 23 14 / 0.6);
+		color: #fff;
+		cursor: zoom-in;
+	}
+	.zoom svg,
+	.shut svg {
+		width: 14px;
+		height: 14px;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.6;
+	}
+	.zoom:focus-visible,
+	.shut:focus-visible {
+		outline: 2px solid var(--gold);
+		outline-offset: 3px;
+	}
+
+	/* a pressed card, lifted to the middle of the screen */
+	.viewer {
+		position: fixed;
+		inset: 0;
+		width: 100vw;
+		height: 100vh;
+		height: 100dvh;
+		max-width: none;
+		max-height: none;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: none;
+		overflow: hidden;
+		cursor: zoom-out;
+	}
+	.viewer[open] {
+		display: grid;
+		place-items: center;
+	}
+	.viewer::backdrop {
+		background: rgb(25 33 27 / 0.62);
 		backdrop-filter: blur(10px);
 		-webkit-backdrop-filter: blur(10px);
+		animation: dusk 0.35s ease both;
 	}
+	.big {
+		display: flex;
+		flex-direction: column;
+		width: min(92vw, 700px);
+		max-height: min(90vh, 90dvh);
+		padding: 12px;
+		border-radius: 26px;
+		overflow: hidden;
+		background: var(--paper);
+		color: var(--ink);
+		border: 1.5px solid var(--gold);
+		box-shadow:
+			inset 0 0 0 5px var(--paper),
+			inset 0 0 0 6px var(--hair),
+			0 40px 90px -30px rgb(0 0 0 / 0.7);
+		cursor: auto;
+		animation: lift 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+	}
+	@keyframes lift {
+		from {
+			opacity: 0;
+			transform: translate(var(--x), var(--y)) scale(var(--s));
+		}
+	}
+	@keyframes dusk {
+		from {
+			opacity: 0;
+		}
+	}
+	.big-photo {
+		position: relative;
+		flex: 1 1 auto;
+		min-height: 160px;
+		aspect-ratio: 16 / 10;
+		border-radius: 16px;
+		overflow: hidden;
+		background: var(--well);
+	}
+	.big-photo img {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+	.big-body {
+		flex: none;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		padding: 18px 14px 10px;
+	}
+	.big-body h3 {
+		margin: 0;
+		font-size: clamp(1.8rem, 4.4vw, 2.8rem);
+		font-weight: 700;
+		line-height: 1;
+		letter-spacing: -0.03em;
+		text-wrap: balance;
+	}
+	.big-sub {
+		margin: 0;
+		font-family: var(--font-display);
+		font-stretch: 75%;
+		font-size: 14px;
+		font-weight: 500;
+		letter-spacing: 0.09em;
+		text-transform: uppercase;
+		color: var(--ink-soft);
+	}
+	.big-text {
+		margin: 0;
+		max-width: 56ch;
+		font-size: clamp(1rem, 1.3vw, 1.15rem);
+		line-height: 1.55;
+		text-wrap: pretty;
+	}
+	.big .foot a {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+	.shut {
+		position: absolute;
+		top: clamp(16px, 3vh, 28px);
+		right: clamp(16px, 3vw, 32px);
+		display: grid;
+		place-items: center;
+		width: 44px;
+		height: 44px;
+		padding: 0;
+		border: 1px solid var(--hair);
+		border-radius: 50%;
+		background: var(--chrome);
+		color: var(--on-bag);
+		cursor: pointer;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.big,
+		.viewer::backdrop {
+			animation: none;
+		}
+	}
+
 	.photo {
 		position: relative;
 		/* gives way to a two-line title instead of crowding the footer */
@@ -540,7 +842,7 @@
 	}
 	.count {
 		font-family: var(--font-mono);
-		font-size: 11px;
+		font-size: 12px;
 		color: var(--ink-soft);
 		font-variant-numeric: tabular-nums;
 		white-space: nowrap;
@@ -578,9 +880,11 @@
 		padding: 19px;
 		border-radius: 24px;
 		background: var(--glass);
+		backdrop-filter: var(--glass-fx);
+		-webkit-backdrop-filter: var(--glass-fx);
 		border: 1px solid var(--glass-line);
-		backdrop-filter: blur(14px);
-		-webkit-backdrop-filter: blur(14px);
+		backdrop-filter: var(--glass-fx);
+		-webkit-backdrop-filter: var(--glass-fx);
 	}
 	.arrow {
 		flex: none;
@@ -652,10 +956,10 @@
 		margin-top: 6px;
 	}
 	.dot {
-		/* 24px hit area around an 8px dot */
+		/* a finger-sized hit area around an 8px dot */
 		position: relative;
-		width: 24px;
-		height: 24px;
+		width: 28px;
+		height: 44px;
 		border: 0;
 		background: none;
 		cursor: pointer;
@@ -715,6 +1019,41 @@
 		}
 		.now {
 			gap: 10px;
+		}
+	}
+	@media (max-width: 600px) {
+		/* the card is drawn at real size here: the stage runs edge to edge so the next
+		   hall peeks in, and the type steps down a little instead of being scaled */
+		.stage {
+			min-height: 450px;
+			margin-inline: -24px;
+		}
+		.photo {
+			flex-basis: 210px;
+			min-height: 150px;
+		}
+		.body {
+			padding: 16px 10px 4px;
+		}
+		h3 {
+			font-size: 24px;
+			line-height: 30px;
+		}
+		.text {
+			margin-top: 8px;
+			font-size: 15px;
+			line-height: 21px;
+		}
+		.foot {
+			padding-top: 6px;
+		}
+		.foot a {
+			display: inline-flex;
+			align-items: center;
+			min-height: 44px;
+		}
+		.dots {
+			gap: 0;
 		}
 	}
 	@media (max-width: 400px) {

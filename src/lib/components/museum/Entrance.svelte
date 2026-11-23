@@ -223,10 +223,8 @@
 	.eyebrow {
 		margin: 0;
 		font-family: var(--font-mono);
-		font-size: 11px;
+		font-size: 12px;
 		line-height: 16px;
-		letter-spacing: 0.6px;
-		text-transform: uppercase;
 		color: var(--accent-ink);
 	}
 	.title {

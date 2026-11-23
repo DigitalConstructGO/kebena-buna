@@ -46,6 +46,10 @@ export type JourneyStep = {
 	accent: string;
 	text: string;
 	photo: { src: string; alt: string };
+	/** Starts a new act of the journey, with this as its heading. */
+	act?: string;
+	/** A larger card for the steps the eye should rest on. */
+	wide?: boolean;
 };
 
 /** After the hero's growing stages: the work from picking to the poured cup. */
@@ -56,6 +60,8 @@ export type JourneyContent = {
 	steps: JourneyStep[];
 	/** The line under the cup that fills at the end. */
 	end: string;
+	/** Where the reader goes once the cup is full. */
+	next?: { label: string; href: string };
 };
 
 export type Photo = { src: string; alt: string };
@@ -219,12 +225,13 @@ const halls: HallsContent = {
 };
 
 const journey: JourneyContent = {
-	eyebrow: 'From cherry to cup',
+	eyebrow: 'Interlude · From cherry to cup',
 	title: 'One long,',
 	accent: 'slow pour',
 	steps: [
 		{
 			id: 'harvest',
+			act: 'On the farm',
 			title: 'Picked only when',
 			accent: 'red',
 			text: 'Cherries ripen unevenly, so pickers come back to the same trees again and again, taking only the ripe ones.',
@@ -255,6 +262,8 @@ const journey: JourneyContent = {
 		},
 		{
 			id: 'roasting',
+			act: 'At the ceremony',
+			wide: true,
 			title: 'Roasted over',
 			accent: 'charcoal',
 			text: 'Green beans crackle in a flat pan over the coals, and the fragrant smoke is carried around the room for the guests.',
@@ -275,6 +284,7 @@ const journey: JourneyContent = {
 		},
 		{
 			id: 'jebena',
+			wide: true,
 			title: 'Brewed in the',
 			accent: 'jebena',
 			text: 'The grounds go into the clay pot with water and come to the boil over the coals, then rest so they settle.',
@@ -294,7 +304,8 @@ const journey: JourneyContent = {
 			}
 		}
 	],
-	end: 'And then, the first sip.'
+	end: 'And then, the first sip.',
+	next: { label: 'Come and taste it', href: '#visit' }
 };
 
 const farms: FarmsContent = {
@@ -438,7 +449,10 @@ const process: ProcessContent = {
 			moisture: 52,
 			title: 'Washed',
 			text: 'The fruit is removed at a washing station before the beans dry.',
-			photo: { src: '/collection/washed-limmu.webp', alt: 'Red cherries on a branch before washing' }
+			photo: {
+				src: '/collection/washed-limmu.webp',
+				alt: 'Red cherries on a branch before washing'
+			}
 		},
 		{
 			id: 'sun-dried',
@@ -672,8 +686,7 @@ const visit: VisitContent = {
 	rows: [
 		{
 			label: 'Address',
-			value:
-				'Foziana Building, 1st floor, office C1, Labu, in front of Gara Super Market. Nefas Silk Lafto, Woreda 01, Addis Ababa'
+			value: 'Kebena Museum, the coffee cup building, Jimma, Oromia, Ethiopia'
 		},
 		{ label: 'Hours', value: 'Monday to Friday, 08:30 to 17:00' },
 		{ label: 'Phone', value: '+251 912 605 824' },
@@ -681,10 +694,10 @@ const visit: VisitContent = {
 	],
 	directions: {
 		label: 'Get directions',
-		href: 'https://www.google.com/maps/search/?api=1&query=Foziana+Building+Labu+Nefas+Silk+Lafto+Addis+Ababa'
+		href: 'https://www.google.com/maps/search/?api=1&query=Coffee+cup+building+Jimma+Ethiopia'
 	},
 	call: { label: 'Call us', href: 'tel:+251912605824' },
-	place: { name: 'Kebena Trading, Labu', area: 'Nefas Silk Lafto · Addis Ababa' }
+	place: { name: 'Kebena Museum', area: 'Jimma · Oromia, Ethiopia' }
 };
 
 const footer: FooterContent = {

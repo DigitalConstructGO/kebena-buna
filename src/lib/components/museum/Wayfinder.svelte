@@ -9,17 +9,19 @@
 	 * screen names the room you are standing in; tapping it unfolds the floor plan as
 	 * one route from the entrance to the exit, with the other wings beside it.
 	 */
-	const ROOMS = [
+	type Room = { id: string; name: string; note: string; interlude?: boolean };
+	const ROOMS: Room[] = [
 		{ id: 'entrance', name: 'Entrance', note: 'A living museum of coffee' },
 		{ id: 'halls', name: 'Floor plan', note: 'The four halls at a glance' },
-		{ id: 'journey', name: 'The pour', note: 'From cherry to cup' },
+		// between the halls, not one of them: it takes no number
+		{ id: 'journey', name: 'The pour', note: 'From cherry to cup', interlude: true },
 		{ id: 'farms', name: 'The farms', note: 'Gera and Djimmah estates' },
 		{ id: 'collection', name: 'The collection', note: 'Lots on display this season' },
 		{ id: 'origins', name: 'Origins', note: 'Where else we source' },
 		{ id: 'people', name: 'The people', note: 'The hands behind the coffee' },
 		{ id: 'archive', name: 'Archive', note: 'Notes from the field' },
 		{ id: 'visit', name: 'Visit', note: 'Come and taste the collection' }
-	] as const;
+	];
 	const WINGS = [
 		{ path: '/history', name: 'History', note: 'Coffee and the Jimma tradition' },
 		{ path: '/kingdoms', name: 'Kingdoms', note: 'The five Gibe kingdoms' }
@@ -30,9 +32,14 @@
 	const home = $derived(resolve(localizeHref('/') as Path));
 	const wingHref = (path: string) => resolve(localizeHref(path) as Path);
 	const pad = (n: number) => String(n).padStart(2, '0');
+	/** Room numbers, counting past the interlude so the halls stay consecutive; null for the interlude. */
+	let count = 0;
+	const NUMS = ROOMS.map((r) => (r.interlude ? null : pad(count++)));
 
 	/** Index of the room in view on the home page; -1 while the opening story plays. */
 	let current = $state(-1);
+	// true only above the entrance, while the opening story plays
+	let above = $state(true);
 	/** How far through the museum the reader is, 0 to 1, for the ring on the sign. */
 	let travelled = $state(0);
 	let sheet = $state<HTMLDialogElement>();
@@ -43,7 +50,7 @@
 		wing
 			? { num: 'Wing', name: wing.name }
 			: current >= 0
-				? { num: pad(current), name: ROOMS[current].name }
+				? { num: NUMS[current] ?? 'Interlude', name: ROOMS[current].name }
 				: { num: 'Start', name: 'Explore the museum' }
 	);
 
@@ -68,7 +75,11 @@
 			const max = document.documentElement.scrollHeight - innerHeight;
 			travelled = max > 0 ? Math.min(1, scrollY / max) : 0;
 			// above the entrance the story is still playing: no room yet
-			if (first && first.getBoundingClientRect().top > innerHeight * 0.5) current = -1;
+			above = !!first && first.getBoundingClientRect().top > innerHeight * 0.5;
+			if (above) current = -1;
+			// at the very end the footer holds the middle band, so the last room never crosses it
+			else if (max > 0 && scrollY >= max - 2)
+				current = ROOMS.findIndex((r) => r.id === rooms.at(-1)?.id);
 		};
 		let queued = false;
 		const onScroll = () => {
@@ -87,6 +98,22 @@
 		};
 	});
 
+	/** True once the footer's wordmark has come up to where the sign sits: the sign steps aside for it. */
+	let atFoot = $state(false);
+	$effect(() => {
+		void here;
+		const mark = document.querySelector('footer .mark');
+		if (!mark) return;
+		const io = new IntersectionObserver(([e]) => (atFoot = e.isIntersecting), {
+			rootMargin: '0px 0px -8px 0px'
+		});
+		io.observe(mark);
+		return () => {
+			io.disconnect();
+			atFoot = false;
+		};
+	});
+
 	const open = () => sheet?.showModal();
 	const close = () => sheet?.close();
 	/** A tap on the dimmed page around the sheet closes it. */
@@ -98,7 +125,7 @@
 <div class="wayfinder">
 	<button
 		type="button"
-		class={['sign', { compact: onHome && current < 0 }]}
+		class={['sign', { compact: onHome && above, away: atFoot }]}
 		bind:this={trigger}
 		aria-label={onHome && current < 0 ? 'Floor plan' : undefined}
 		aria-haspopup="dialog"
@@ -149,9 +176,15 @@
 								onclick={close}
 							>
 								<span class="dot" aria-hidden="true"></span>
-								<span class="num">{pad(i)}</span>
+								{#if NUMS[i]}
+									<span class="num">{NUMS[i]}</span>
+								{:else}
+									<span class="num" aria-hidden="true">–</span>
+								{/if}
 								<span class="text">
-									<span class="name">{r.name}</span>
+									<span class="name">
+										{r.name}{#if r.interlude}<span class="sr-only">, interlude</span>{/if}
+									</span>
 									<span class="note">{isHere ? 'You are here' : r.note}</span>
 								</span>
 							</a>
@@ -210,14 +243,25 @@
 		padding: 8px 16px 8px 10px;
 		border: 1px solid rgb(255 255 255 / 0.12);
 		border-radius: 16px;
-		background: rgb(13 34 23);
+		background: var(--chrome);
+		backdrop-filter: var(--glass-fx);
+		-webkit-backdrop-filter: var(--glass-fx);
 		color: var(--color-mist-50);
 		font: inherit;
 		cursor: pointer;
 		-webkit-tap-highlight-color: transparent;
 		transition:
 			scale 0.2s,
-			translate 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+			translate 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+			opacity 0.3s,
+			visibility 0.3s;
+	}
+	/* at the end of the page the wordmark closes the museum on its own */
+	.sign.away {
+		translate: 0 140%;
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
 	}
 	.sign:active {
 		scale: 0.97;
@@ -255,7 +299,7 @@
 	}
 	.where .num {
 		font-family: var(--font-mono);
-		font-size: 11px;
+		font-size: 12px;
 		color: var(--color-lime-300);
 	}
 	.where .name {
@@ -308,7 +352,9 @@
 		padding: 0;
 		border: 0;
 		border-radius: 24px 24px 0 0;
-		background: var(--paper);
+		background: var(--glass-strong);
+		backdrop-filter: var(--glass-fx);
+		-webkit-backdrop-filter: var(--glass-fx);
 		color: var(--ink);
 		overflow: auto;
 		overscroll-behavior: contain;
@@ -472,6 +518,15 @@
 	.stop.here .note,
 	.wings a.here .note {
 		color: var(--accent-mark);
+	}
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
 	}
 
 	.wings {

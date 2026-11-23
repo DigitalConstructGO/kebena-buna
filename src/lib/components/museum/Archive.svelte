@@ -5,12 +5,22 @@
 
 	let { content }: { content: ArchiveContent } = $props();
 	let root: HTMLElement;
-	const dateFmt = new Intl.DateTimeFormat('en', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+	const dateFmt = new Intl.DateTimeFormat('en', {
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric',
+		timeZone: 'UTC'
+	});
 
 	onMount(() => reveal(root));
 </script>
 
-<section class="archive kb-section" id="archive" bind:this={root} aria-labelledby="archive-title">
+<section
+	class="archive kb-section kb-art kb-art--rings-foot"
+	id="archive"
+	bind:this={root}
+	aria-labelledby="archive-title"
+>
 	<header class="head">
 		<p class="kb-eyebrow" data-reveal>{content.eyebrow}</p>
 		<h2 class="kb-title" id="archive-title" data-reveal>{content.title}</h2>
@@ -64,6 +74,8 @@
 		border: 1px solid var(--line);
 		border-radius: 12px;
 		background: var(--card);
+		backdrop-filter: var(--glass-fx);
+		-webkit-backdrop-filter: var(--glass-fx);
 		color: inherit;
 		text-decoration: none;
 		transition: border-color 0.25s;
@@ -77,10 +89,8 @@
 	}
 	time {
 		font-family: var(--font-mono);
-		font-size: 11px;
+		font-size: 12px;
 		line-height: 16px;
-		letter-spacing: 0.6px;
-		text-transform: uppercase;
 		color: var(--ink-soft);
 	}
 	h3 {
@@ -102,5 +112,24 @@
 	}
 	.note:hover .arrow {
 		translate: 4px 0;
+	}
+	/* phones: one swipeable row instead of a long stack; the next card peeks in at the edge */
+	@media (max-width: 599px) {
+		.notes {
+			grid-template-columns: none;
+			grid-auto-flow: column;
+			grid-auto-columns: calc(100% - 40px);
+			gap: 12px;
+			margin-inline: -24px;
+			padding-inline: 24px;
+			scroll-padding-inline: 24px;
+			overflow-x: auto;
+			scroll-snap-type: x mandatory;
+			overscroll-behavior-x: contain;
+			scrollbar-width: none;
+		}
+		.notes > li {
+			scroll-snap-align: start;
+		}
 	}
 </style>
