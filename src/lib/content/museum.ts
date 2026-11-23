@@ -138,6 +138,10 @@ export type VisitContent = {
 	directions: { label: string; href: string };
 	call: { label: string; href: string };
 	place: { name: string; area: string };
+	/** The two captions of the arrival scene: while the map sharpens, and while it tips back. */
+	beats: [string, string];
+	/** What waits at the museum, popping up around its pin (up to six). */
+	tags: string[];
 };
 
 export type FooterContent = {
@@ -697,7 +701,9 @@ const visit: VisitContent = {
 		href: 'https://www.google.com/maps/search/?api=1&query=Coffee+cup+building+Jimma+Ethiopia'
 	},
 	call: { label: 'Call us', href: 'tel:+251912605824' },
-	place: { name: 'Kebena Museum', area: 'Jimma · Oromia, Ethiopia' }
+	place: { name: 'Kebena Museum', area: 'Jimma · Oromia, Ethiopia' },
+	beats: ['In Jimma, where coffee began.', 'Step inside the coffee cup.'],
+	tags: ['The four halls', 'Guided tours', 'Coffee ceremony', 'Tastings', 'Events', 'Coffee shop']
 };
 
 const footer: FooterContent = {

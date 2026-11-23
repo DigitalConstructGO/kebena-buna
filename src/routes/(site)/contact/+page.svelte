@@ -6,6 +6,8 @@
 	import Consent from '#lib/site/Consent.svelte';
 	import FormNotice from '#lib/site/FormNotice.svelte';
 	import ImageSelect from '@nahu/admin-kit/formComponents/ImageSelect.svelte';
+	import ArrivalMap from '#lib/components/museum/ArrivalMap.svelte';
+	import { localizeHref } from '#lib/paraglide/runtime.js';
 
 	let { data } = $props();
 
@@ -228,6 +230,36 @@
 		</aside>
 	</div>
 </div>
+
+<!-- the way here, told as you scroll; every word is one the site already translates -->
+<ArrivalMap
+	eyebrow={m.site_nav_visit()}
+	title={m.contact_visit_us()}
+	beats={[m.contact_address_value(), m.contact_hours_value()]}
+	tags={[
+		m.site_footer_halls(),
+		m.site_nav_experiences(),
+		m.site_footer_events(),
+		m.site_footer_tickets(),
+		m.site_nav_shop(),
+		m.site_footer_membership()
+	]}
+	place={{ name: 'Kebena Museum', area: 'Jimma · Oromia' }}
+	rows={[
+		{ label: m.contact_address(), value: m.contact_address_value() },
+		{ label: m.contact_hours(), value: m.contact_hours_value() },
+		{ label: m.contact_phone(), value: '+251 912 605 824' },
+		{ label: m.contact_email(), value: 'info@kebenageneraltrading.com' }
+	]}
+	actions={[
+		{
+			label: m.contact_directions(),
+			href: 'https://www.google.com/maps/search/?api=1&query=Coffee+cup+building+Jimma+Ethiopia',
+			external: true
+		},
+		{ label: m.site_footer_tickets(), href: localizeHref('/visit') }
+	]}
+/>
 
 <style>
 	.tabs {
