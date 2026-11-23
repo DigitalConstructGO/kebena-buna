@@ -358,3 +358,17 @@ html:has(.museum) {
 		--art-fade: radial-gradient(420px 300px at 0 100%, #000 10%, transparent 100%);
 	}
 }
+
+/*
+ * A letter of a heading mid-arrival, or a whole run of text under the pointer (`lettering`): its
+ * outline at --line, its fill at --fill.
+ */
+.museum .kb-ch,
+.museum .kb-run {
+	-webkit-text-stroke: 1px color-mix(in srgb, currentColor calc(var(--line, 0) * 100%), transparent);
+	-webkit-text-fill-color: color-mix(
+		in srgb,
+		currentColor calc(var(--fill, 1) * 100%),
+		transparent
+	);
+}

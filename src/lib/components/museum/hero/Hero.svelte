@@ -2,7 +2,17 @@
 	import { onMount } from 'svelte';
 	import { setupGsap } from '#lib/gsap.js';
 	import { createRain } from './rain';
-	import { buildHeroTimeline, CHAPTERS, FILM, MUSEUM, NURSERY, type Clock } from './timeline';
+	import {
+		buildHeroTimeline,
+		CHAPTERS,
+		FILM,
+		INTRO,
+		NURSERY,
+		POUR,
+		PROCESS,
+		STEPS,
+		type Clock
+	} from './timeline';
 	import { CLEAR, createScore, SCORE_SRC } from './score';
 
 	/** The music under the story. Any track works; the dashboard will supply it. */
@@ -12,14 +22,12 @@
 	let canvas: HTMLCanvasElement;
 	let film: HTMLVideoElement;
 	let nursery: HTMLVideoElement;
+	/** The jebena and the cup: fetched a few seconds before its turn, not at page load. */
+	let pour: HTMLVideoElement;
+	let pourAsked = false;
 	let ready = $state(false);
-	let playing = $state(true);
 	let time = $state(0);
-	let duration = $state(22);
 	let sound = $state(false);
-	/** The closing still is fetched a few seconds in, not at page load. */
-	let museumSrc = $state<string | undefined>(undefined);
-
 	const current = $derived(CHAPTERS.findLastIndex((c) => time >= c.at - 0.05));
 
 	let tl: gsap.core.Timeline | undefined;
@@ -28,61 +36,44 @@
 	let weather = { rain: 0 };
 	let score: ReturnType<typeof createScore> | undefined;
 
-	/** Keep a <video> on the timeline's clock: play natively while it's on screen and the story runs, seek when it doesn't. */
-	const syncVideo = (
-		v: HTMLVideoElement | undefined,
-		want: number,
-		live: boolean,
-		running: boolean
-	) => {
+	/**
+	 * Hold a <video> on the story's frame. The story follows the scroll, so the clips never play:
+	 * they are stepped. A seek that arrives while the last one is still decoding waits its turn.
+	 */
+	const wanted = new WeakMap<HTMLVideoElement, number>();
+	const hold = (v: HTMLVideoElement | undefined, want: number) => {
 		if (!v) return;
-		if (running && live) {
-			if (v.paused) v.play().catch(() => {});
-			if (Math.abs(v.currentTime - want) > 0.25) v.currentTime = want;
-		} else {
-			if (!v.paused) v.pause();
-			if (Math.abs(v.currentTime - want) > 0.03) v.currentTime = want;
-		}
+		wanted.set(v, want);
+		if (!v.seeking && Math.abs(v.currentTime - want) > 0.02) v.currentTime = want;
 	};
-	const syncFilm = (running: boolean) => {
+	const settle = (e: Event) => {
+		const v = e.currentTarget as HTMLVideoElement;
+		const want = wanted.get(v);
+		if (want !== undefined && Math.abs(v.currentTime - want) > 0.02) v.currentTime = want;
+	};
+	const syncFilm = () => {
 		const t = tl ? tl.time() : 0;
-		syncVideo(
-			film,
-			clock.t,
-			clock.t > 0.01 && clock.t < FILM.length - 0.08 && t < MUSEUM + 1,
-			running
-		);
-		syncVideo(nursery, clock.nursery, t >= NURSERY.start && t < NURSERY.out + 0.5, running);
+		if (t < PROCESS + 0.8) hold(film, Math.min(FILM.length - 0.08, clock.t));
+		if (t < NURSERY.out + 0.6) hold(nursery, clock.nursery);
+		if (!pourAsked && t > POUR.start - 6) {
+			pourAsked = true;
+			pour.preload = 'auto';
+			pour.load();
+			void pour
+				.play()
+				.then(() => pour.pause())
+				.catch(() => {});
+		}
+		if (pourAsked && t > POUR.start - 1.2)
+			hold(pour, Math.min(POUR.length - 0.08, Math.max(0, t - POUR.start)));
 	};
 
-	/** Film and score both follow the story clock. */
-	const syncMedia = (running: boolean, force = false) => {
-		syncFilm(running);
-		score?.update(tl ? tl.time() : 0, running, weather.rain, force);
+	/** Film and score both follow the story clock; the music plays for as long as the hero is in view. */
+	const syncMedia = (force = false) => {
+		syncFilm();
+		score?.update(tl ? tl.time() : 0, onScreen, weather.rain, force);
 	};
 
-	const seek = (at: number) => {
-		if (!tl) return;
-		tl.seek(at);
-		if (playing && onScreen) tl.play();
-		syncMedia(playing && onScreen, true);
-	};
-	const toggle = () => {
-		if (!tl) return;
-		playing = !playing;
-		if (playing) {
-			if (tl.progress() === 1) tl.restart();
-			else if (onScreen) tl.play();
-		} else tl.pause();
-		syncMedia(playing && onScreen, true);
-	};
-	const replay = () => {
-		if (!tl) return;
-		playing = true;
-		score?.rewind();
-		tl.restart();
-		syncMedia(onScreen, true);
-	};
 	const toggleSound = () => {
 		if (!score) return;
 		sound = !sound;
@@ -91,8 +82,10 @@
 	};
 
 	onMount(() => {
-		const { gsap } = setupGsap();
+		const { gsap, ScrollTrigger } = setupGsap();
 		let ctx: gsap.Context | undefined;
+		/** Paints the pour transitions; runs on the ticker so the liquid keeps moving while the scroll rests. */
+		let liquid: (() => void) | undefined;
 		let dead = false;
 		const rain = createRain(canvas, () => null);
 		weather = rain.state;
@@ -105,6 +98,7 @@
 		let avg = 0;
 		let pulse = 0;
 		const meter = () => {
+			liquid?.();
 			if (!sound && pulse < 0.002) {
 				if (pulse !== 0) {
 					pulse = 0;
@@ -125,10 +119,7 @@
 
 		const io = new IntersectionObserver(([e]) => {
 			onScreen = e.isIntersecting;
-			if (!tl) return;
-			if (!onScreen) tl.pause();
-			else if (playing && tl.progress() < 1) tl.play();
-			syncMedia(onScreen && playing && tl.progress() < 1);
+			if (tl) syncMedia(true);
 		});
 		io.observe(root);
 
@@ -138,6 +129,16 @@
 		film.preload = 'auto';
 		nursery.load();
 		film.load();
+		const clips = [nursery, film, pour];
+		clips.forEach((v) => v.addEventListener('seeked', settle));
+		// iOS only lets a clip be stepped once it has been started: start each one and stop it at once
+		const prime = (v: HTMLVideoElement) =>
+			void v
+				.play()
+				.then(() => v.pause())
+				.catch(() => {});
+		prime(nursery);
+		prime(film);
 
 		const filmReady = new Promise<void>((res) => {
 			if (film.readyState >= 3) return res();
@@ -150,26 +151,44 @@
 			ctx = gsap.context(() => {
 				const story = buildHeroTimeline(root, weather, clock);
 				tl = story.tl;
-				duration = tl.duration();
+				liquid = story.draw;
 				if (import.meta.env.DEV) Object.assign(window, { __heroTl: tl, __heroScore: s });
 
 				tl.eventCallback('onUpdate', () => {
 					time = tl!.time();
-					// fetch the closing museum still once the story is under way, well before it is shown
-					if (!museumSrc && time > MUSEUM - 6) museumSrc = '/hero/museum.webp';
-					syncMedia(!tl!.paused());
+					syncMedia();
 					if (time < CLEAR) rain.start();
 					else rain.stop();
 				});
-				tl.eventCallback('onComplete', () => {
-					playing = false;
-					s.release();
-				});
 
-				if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-					playing = false;
+				const track = document.querySelector<HTMLElement>('[data-hero-runway]');
+				if (still || !track || !track.offsetHeight) {
+					// less motion asked for, or no runway on this page: show the ending
 					tl.progress(1);
-				} else if (onScreen) tl.play();
+				} else {
+					// the story is tied to the scroll: forwards as you go down, backwards as you go up
+					const follow = () => {
+						ScrollTrigger.create({
+							trigger: track,
+							start: 'top bottom',
+							end: 'bottom bottom',
+							scrub: 1,
+							animation: gsap.fromTo(
+								story.tl,
+								{ time: INTRO },
+								{ time: story.tl.duration(), ease: 'none', immediateRender: false }
+							)
+						});
+					};
+					// opened at the top: the headline rains in by itself, then the scroll takes over
+					if (window.scrollY > 8) follow();
+					else
+						gsap.fromTo(
+							story.tl,
+							{ time: 0 },
+							{ time: INTRO, duration: INTRO, ease: 'none', onComplete: () => ctx?.add(follow) }
+						);
+				}
 				ready = true;
 			}, root);
 		});
@@ -180,6 +199,7 @@
 			s.destroy();
 			score = undefined;
 			io.disconnect();
+			clips.forEach((v) => v.removeEventListener('seeked', settle));
 			rain.destroy();
 			ctx?.revert();
 			tl = undefined;
@@ -197,21 +217,6 @@
 >
 	<div class="stage">
 		<video
-			class="film"
-			bind:this={film}
-			muted
-			playsinline
-			preload="none"
-			poster="/hero/film-start.webp"
-			disablepictureinpicture
-			aria-hidden="true"
-		>
-			<!-- phones get a 960px encode (about 1 MB instead of 6) -->
-			<source src="/hero/growth-sm.mp4" type="video/mp4" media="(max-width: 899px)" />
-			<source src="/hero/growth.webm" type="video/webm" />
-			<source src="/hero/growth.mp4" type="video/mp4" />
-		</video>
-		<video
 			class="nursery"
 			bind:this={nursery}
 			muted
@@ -221,20 +226,58 @@
 			disablepictureinpicture
 			aria-hidden="true"
 		>
-			<source src="/hero/nursery-sm.webm" type="video/webm" media="(max-width: 899px)" />
-			<source src="/hero/nursery.webm" type="video/webm" />
-			<source src="/hero/nursery.mp4" type="video/mp4" />
+			<source src="/hero/nursery-scroll-sm.mp4" type="video/mp4" media="(max-width: 899px)" />
+			<source src="/hero/nursery-scroll.mp4" type="video/mp4" />
 		</video>
-		<img
-			class="ceremony"
-			src={museumSrc}
-			width="1920"
-			height="1078"
-			alt=""
+		<video
+			class="film"
+			bind:this={film}
+			muted
+			playsinline
+			preload="none"
+			poster="/hero/film-start.webp"
+			disablepictureinpicture
 			aria-hidden="true"
-			decoding="async"
-			fetchpriority="low"
-		/>
+		>
+			<!-- encoded with a keyframe every few frames, so stepping through them on scroll stays smooth -->
+			<source src="/hero/growth-scroll-sm.mp4" type="video/mp4" media="(max-width: 899px)" />
+			<source src="/hero/growth-scroll.mp4" type="video/mp4" />
+		</video>
+		<video
+			class="pour"
+			bind:this={pour}
+			muted
+			playsinline
+			preload="none"
+			poster="/hero/cup-start.webp"
+			disablepictureinpicture
+			aria-hidden="true"
+		>
+			<source src="/hero/cup-scroll-sm.mp4" type="video/mp4" media="(max-width: 899px)" />
+			<source src="/hero/cup-scroll.mp4" type="video/mp4" />
+		</video>
+		<!-- the liquid of the pour transitions, drawn each frame by the timeline's draw() -->
+		<svg class="liquid" aria-hidden="true">
+			<g class="lq-band">
+				<path class="edge" />
+				<path class="body" />
+				<path class="core" />
+				<path class="glint" />
+			</g>
+			<g class="lq-fall">
+				<path class="edge" />
+				<path class="body" />
+				<path class="core" />
+				<path class="glint" />
+			</g>
+			<!-- the bead at the front of the thread, in units of its half-width -->
+			<g class="lq-head">
+				<ellipse class="edge" rx="1.5" ry="1.14" />
+				<ellipse class="body" cx="0.05" cy="0.08" rx="1.2" ry="0.84" />
+				<ellipse class="core" cx="0.1" cy="0.2" rx="0.86" ry="0.52" />
+				<ellipse class="glint" cx="-0.25" rx="0.6" ry="0.2" />
+			</g>
+		</svg>
 		<canvas class="rain" bind:this={canvas} aria-hidden="true"></canvas>
 		<div class="grain" aria-hidden="true"></div>
 		<div class="vignette" aria-hidden="true"></div>
@@ -243,12 +286,25 @@
 
 	<div class="copy">
 		<div class="lines">
-			<h1 id="hero-title" class="line line-1">From a single seed to your cup</h1>
-			<p class="line line-2" aria-hidden="true">Nine months in the nursery shade</p>
-			<p class="line line-3" aria-hidden="true">Planted out, it grows for three years</p>
-			<p class="line line-flower" aria-hidden="true">White blossoms after the rain</p>
-			<p class="line line-4" aria-hidden="true">Eight months to a ripe red cherry</p>
-			<p class="line line-5" aria-hidden="true">Stay for the third cup</p>
+			<h1 id="hero-title" class="line line-1" data-letter="borrow">
+				From a single seed to your cup
+			</h1>
+			<p class="line line-2" data-letter="borrow" aria-hidden="true">
+				Nine months in the nursery shade
+			</p>
+			<p class="line line-3" data-letter="borrow" aria-hidden="true">
+				Planted out, it grows for three years
+			</p>
+			<p class="line line-flower" data-letter="borrow" aria-hidden="true">
+				White blossoms after the rain
+			</p>
+			<p class="line line-4" data-letter="borrow" aria-hidden="true">
+				Eight months to a ripe red cherry
+			</p>
+			{#each STEPS as s (s.id)}
+				<p class={['line', `line-${s.id}`]} data-letter="borrow" aria-hidden="true">{s.line}</p>
+			{/each}
+			<p class="line line-5" data-letter="borrow" aria-hidden="true">Stay for the third cup</p>
 		</div>
 		<p class="caption">
 			<span class="sr-only">Jimma, the birthplace of coffee</span>
@@ -258,25 +314,6 @@
 	</div>
 
 	<div class="controls">
-		<ol class="chapters" aria-label="Story chapters">
-			{#each CHAPTERS as c, i (c.id)}
-				{@const next = CHAPTERS[i + 1]?.at ?? duration}
-				{@const fill = Math.min(1, Math.max(0, (time - c.at) / (next - c.at)))}
-				<li>
-					<button
-						type="button"
-						class={{ active: i === current }}
-						aria-current={i === current ? 'step' : undefined}
-						aria-label={`Chapter ${i + 1}: ${c.label}`}
-						onclick={() => seek(c.at + 0.01)}
-					>
-						<span class="bar"><span class="fill" style:transform={`scaleX(${fill})`}></span></span>
-						<span class="num">{String(i + 1).padStart(2, '0')}</span>
-						<span class="label">{c.label}</span>
-					</button>
-				</li>
-			{/each}
-		</ol>
 		<div class="buttons">
 			<button
 				type="button"
@@ -292,42 +329,19 @@
 				</span>
 				<span class="sound-label">{sound ? 'Sound on' : 'Sound'}</span>
 			</button>
-			<button
-				type="button"
-				class="icon"
-				onclick={toggle}
-				aria-label={playing ? 'Pause the story' : 'Play the story'}
-			>
-				{#if playing}
-					<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
-						<rect x="5" y="4" width="3.4" height="12" rx="1" /><rect
-							x="11.6"
-							y="4"
-							width="3.4"
-							height="12"
-							rx="1"
-						/>
-					</svg>
-				{:else}
-					<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
-						<path
-							d="M6 4.2v11.6a.8.8 0 0 0 1.2.7l9.4-5.8a.8.8 0 0 0 0-1.4L7.2 3.5A.8.8 0 0 0 6 4.2Z"
-						/>
-					</svg>
-				{/if}
-			</button>
-			<button type="button" class="icon" onclick={replay} aria-label="Replay from the seed">
-				<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+			<span class={['cue', { gone: time > INTRO + 0.5 }]} aria-hidden="true">
+				Scroll
+				<svg viewBox="0 0 12 20" width="10" height="16">
 					<path
-						d="M4 10a6 6 0 1 0 1.8-4.3M4 3.5v3.2h3.2"
+						d="M6 1v17M1.5 13.5 6 18l4.5-4.5"
 						fill="none"
 						stroke="currentColor"
-						stroke-width="1.7"
+						stroke-width="1.6"
 						stroke-linecap="round"
 						stroke-linejoin="round"
 					/>
 				</svg>
-			</button>
+			</span>
 		</div>
 	</div>
 	<span class="sr-only" aria-live="polite">
@@ -351,6 +365,8 @@
 	.stage {
 		position: absolute;
 		inset: 0;
+		/* the scenes tip back and forward in depth when one pours into the next */
+		perspective: 1400px;
 		opacity: 0;
 		transition: opacity 0.9s ease;
 	}
@@ -359,7 +375,7 @@
 	}
 	.film,
 	.nursery,
-	.ceremony {
+	.pour {
 		position: absolute;
 		inset: 0;
 		width: 100%;
@@ -368,11 +384,24 @@
 		object-position: 58% 50%;
 		will-change: transform;
 	}
-	.ceremony {
-		opacity: 0;
+	/* every scene after the first waits hidden; the timeline's draw() shows each one as it is poured in */
+	.film {
 		visibility: hidden;
-		object-position: 72% 50%;
-		transform-origin: 72% 38%;
+	}
+	.pour {
+		visibility: hidden;
+		object-position: 50% 50%;
+	}
+	.liquid {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		visibility: hidden;
+		pointer-events: none;
+	}
+	.lq-head {
+		opacity: 0;
 	}
 	.stage {
 		scale: calc(1 + var(--beat, 0) * 0.006);
@@ -484,75 +513,8 @@
 		width: min(var(--wrap), calc(100% - 32px));
 		display: flex;
 		align-items: flex-end;
+		justify-content: flex-end;
 		gap: 20px;
-	}
-	.chapters {
-		flex: 1;
-		/* one row however many chapters the story has; the current one widens to show its name */
-		display: flex;
-		gap: 6px;
-		min-width: 0;
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-	.chapters button {
-		width: 100%;
-		display: grid;
-		grid-template-columns: auto 1fr;
-		column-gap: 8px;
-		row-gap: 10px;
-		padding: 6px 0;
-		border: 0;
-		background: none;
-		color: var(--ink-soft);
-		font: inherit;
-		font-size: 13px;
-		text-align: left;
-		cursor: pointer;
-		transition: color 0.3s;
-	}
-	.chapters li {
-		flex: 1 1 0;
-		min-width: 0;
-		transition: flex-grow 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-	}
-	.chapters li:has(> .active) {
-		flex-grow: 3.4;
-	}
-	.label {
-		display: none;
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-	/* only the current chapter is named; the rest are numbers */
-	@media (min-aspect-ratio: 20.01 / 21) {
-		.hero .active .label {
-			display: block;
-		}
-	}
-	.chapters button.active {
-		color: var(--ink);
-	}
-	.bar {
-		grid-column: 1 / -1;
-		height: 2px;
-		border-radius: 2px;
-		background: color-mix(in srgb, var(--ink) 22%, transparent);
-		overflow: hidden;
-	}
-	.fill {
-		display: block;
-		height: 100%;
-		background: var(--ink);
-		transform-origin: 0 50%;
-	}
-	.num {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		opacity: 0.8;
 	}
 	.buttons {
 		display: flex;
@@ -573,6 +535,27 @@
 	}
 	.icon:hover {
 		background: color-mix(in srgb, var(--ink) 24%, transparent);
+	}
+	.cue {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		height: 44px;
+		padding: 0 6px;
+		font-size: 13px;
+		color: var(--ink-soft);
+		transition: opacity 0.4s;
+	}
+	.cue.gone {
+		opacity: 0;
+	}
+	.cue svg {
+		animation: nudge 1.6s ease-in-out infinite;
+	}
+	@keyframes nudge {
+		50% {
+			transform: translateY(4px);
+		}
 	}
 	.sound-btn {
 		width: auto;
@@ -638,17 +621,6 @@
 		.hero .nursery {
 			object-position: 50% 50%;
 		}
-		/* keep a phone's chapter row quiet: bars only, plus the current number */
-		.hero .num {
-			display: none;
-		}
-		.hero .active .num {
-			display: block;
-		}
-		.hero .ceremony {
-			object-position: 62% 50%;
-			transform-origin: 62% 40%;
-		}
 		.hero .copy {
 			top: 104px;
 			translate: none;
@@ -659,12 +631,8 @@
 		.hero .line {
 			font-size: clamp(2.2rem, 9vw, 3.2rem);
 		}
-		.hero .label,
 		.hero .sound-label {
 			display: none;
-		}
-		.hero .chapters button {
-			grid-template-columns: 1fr;
 		}
 	}
 
@@ -689,12 +657,8 @@
 		.controls {
 			bottom: 12px;
 		}
-		.hero .active .label,
 		.sound-label {
 			display: none;
-		}
-		.chapters button {
-			grid-template-columns: 1fr;
 		}
 	}
 	/* very wide screens: open the column up so the story doesn't sit in a small box */
@@ -721,6 +685,9 @@
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {
+		.cue {
+			display: none;
+		}
 		.grain {
 			animation: none;
 		}

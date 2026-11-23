@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { setupGsap } from '#lib/gsap.js';
+	import { hold } from '#lib/lettering.js';
 	import { town, TOWN_H, TOWN_W } from './arrival-map.js';
 
 	type Row = { label: string; value: string };
@@ -11,6 +12,9 @@
 	 * street plan comes into focus around the museum's pin, the offerings pop up inside its ring,
 	 * the plan tips back, the coffee cup building rises, and a sand wash brings in the headline with
 	 * the address and the ways to get here. Without motion (or JavaScript) it is just that last frame.
+	 *
+	 * Every step moves, scales or fades a layer and nothing else, so the browser never repaints the
+	 * full screen mid-scroll: the frosted glass is a blurred copy of the photo, drawn once.
 	 */
 	let {
 		id,
@@ -72,7 +76,7 @@
 	let toEnd: (() => void) | undefined;
 
 	onMount(() => {
-		const { gsap } = setupGsap();
+		const { gsap, SplitText } = setupGsap();
 		const ctx = gsap.context(() => {
 			const mm = gsap.matchMedia();
 			// a short window cannot hold the scene's last frame; it gets the still version
@@ -90,13 +94,50 @@
 				gsap.set('.am-ring', { drawSVG: '0%' });
 				gsap.set('.am-tag', { autoAlpha: 0, scale: 0.6 });
 				gsap.set('.am-pin', { autoAlpha: 1 });
-				gsap.set('.am-cap', { autoAlpha: 0, y: 30 });
-				gsap.set('.am-photo', { clipPath: 'inset(100% 0% 0% 0%)' });
-				gsap.set('.am-photo img', { scale: 1.18 });
-				gsap.set('.am-flood', { clipPath: 'circle(0% at 0% 100%)' });
+				gsap.set('.am-cap', { autoAlpha: 1 });
+				gsap.set('.am-photo', { opacity: 0, yPercent: 5, scale: 1.1 });
+				gsap.set('.am-flood', { opacity: 0 });
 				gsap.set('.am-eyebrow', { autoAlpha: 0, y: 16 });
-				gsap.set('.am-line > span', { yPercent: 110 });
-				gsap.set('.am-main', { filter: 'blur(12px)', opacity: 0.45 });
+
+				/*
+				 * The words arrive the way a sign is lettered: each letter is drawn as an outline, left to
+				 * right, then filled in; they leave the same way, backwards. Arabic letters join, so
+				 * there the unit is the word.
+				 */
+				const unit = /^ar\b/.test(document.documentElement.lang) ? 'words' : 'chars';
+				const letter = (target: string) => {
+					const split = SplitText.create(target, {
+						type: unit === 'chars' ? 'words,chars' : 'words',
+						[unit === 'chars' ? 'charsClass' : 'wordsClass']: 'am-ch'
+					});
+					const bits = split[unit];
+					gsap.set(bits, { '--line': 0, '--fill': 0 });
+					return bits;
+				};
+				const cap1 = letter('.am-cap[data-n="1"]');
+				const cap2 = letter('.am-cap[data-n="2"]');
+				const head = letter('.am-line > span');
+				/** Outline first, then the fill takes over from it. `at` and `len` are in scene time. */
+				const write = (bits: Element[], at: number, len: number) => {
+					const each = { amount: len * 0.5 };
+					tl.to(bits, { '--line': 1, duration: len * 0.3, stagger: each, ease: 'power1.out' }, at)
+						.to(
+							bits,
+							{ '--fill': 1, duration: len * 0.3, stagger: each, ease: 'power1.inOut' },
+							at + len * 0.2
+						)
+						.to(bits, { '--line': 0, duration: len * 0.2, stagger: each }, at + len * 0.3);
+				};
+				const unwrite = (bits: Element[], at: number, len: number) => {
+					const each = { amount: len * 0.5 };
+					tl.to(bits, { '--line': 1, duration: len * 0.2, stagger: each }, at)
+						.to(bits, { '--fill': 0, duration: len * 0.3, stagger: each, ease: 'power1.inOut' }, at)
+						.to(
+							bits,
+							{ '--line': 0, duration: len * 0.3, stagger: each, ease: 'power1.in' },
+							at + len * 0.2
+						);
+				};
 				// opacity only, so the links stay reachable by keyboard
 				gsap.set('.am-meta', { opacity: 0, y: 24 });
 
@@ -112,11 +153,16 @@
 					return { r, run: Math.max(1, r.height - window.innerHeight) };
 				};
 				let frame = 0;
+				let aim = -1;
 				const follow = () => {
 					frame = 0;
 					const { r, run } = span();
 					const p = Math.min(1, Math.max(0, -r.top / run));
-					gsap.to(tl, { progress: p, duration: 0.6, ease: 'power3.out', overwrite: true });
+					// the rest of the page scrolls past with the scene parked at one end: nothing to do
+					if (p === aim) return;
+					aim = p;
+					// the scene trails the scroll a little, so a wheel's steps read as one glide
+					gsap.to(tl, { progress: p, duration: 0.9, ease: 'power2.out', overwrite: true });
 				};
 				const onScroll = () => {
 					frame ||= requestAnimationFrame(follow);
@@ -133,48 +179,56 @@
 					// 1. the plan comes into focus around the pin
 					.to('.am-plane', { scale: 1, duration: 0.2, ease: 'power1.out' }, 0)
 					.to('.am-sharp', { opacity: 1, duration: 0.16 }, 0.02)
+					// the blurred plan is fully covered from here: stop drawing it
+					.set('.am-soft', { autoAlpha: 0 }, 0.19)
 					.to('.am-ring', { drawSVG: '100%', duration: 0.18, ease: 'power1.inOut' }, 0.1)
 					.to(
 						'.am-tag',
 						{ autoAlpha: 1, scale: 1, duration: 0.08, stagger: 0.025, ease: 'back.out(2)' },
 						0.16
 					)
-					.to('.am-cap[data-n="1"]', { autoAlpha: 1, y: 0, duration: 0.08 }, 0.12)
-					// 2. it tips back, like looking up from the map
-					.to('.am-cap[data-n="1"]', { autoAlpha: 0, y: -24, duration: 0.06 }, 0.34)
+					// 2. it tips back, like looking up from the map: as one sheet again, which tilts cheaper
+					.set('.am-sharp, .am-radius', { willChange: 'auto' }, 0.33)
 					.to('.am-tag', { autoAlpha: 0, duration: 0.06 }, 0.38)
 					.to(
 						'.am-plane',
 						{ rotationX: 56, yPercent: 6, scale: 0.92, duration: 0.2, ease: 'power1.inOut' },
 						0.36
 					)
-					.to('.am-cap[data-n="2"]', { autoAlpha: 1, y: 0, duration: 0.08 }, 0.42)
-					// 3. the building rises where the pin was
-					.to('.am-cap[data-n="2"]', { autoAlpha: 0, y: -24, duration: 0.05 }, 0.58)
-					.to('.am-plane', { rotationX: 74, autoAlpha: 0, duration: 0.12 }, 0.58)
-					.to('.am-pin', { autoAlpha: 0, duration: 0.06 }, 0.6)
-					.to(
-						'.am-photo',
-						{ clipPath: 'inset(0% 0% 0% 0%)', duration: 0.16, ease: 'power2.out' },
-						0.58
-					)
-					.to('.am-photo img', { scale: 1, duration: 0.2, ease: 'power2.out' }, 0.58)
-					// 4. the headline, then the sand wash, then the way here
-					.to('.am-flood', { clipPath: 'circle(160% at 0% 100%)', duration: 0.14 }, 0.68)
-					.to('.am-eyebrow', { autoAlpha: 1, y: 0, duration: 0.05 }, 0.74)
-					.to(
-						'.am-line > span',
-						{ yPercent: 0, duration: 0.07, stagger: 0.03, ease: 'power2.out' },
-						0.75
-					)
-					.to('.am-main', { filter: 'blur(0px)', opacity: 1, duration: 0.1 }, 0.82)
+					// 3. the plan sinks away as the building comes up through it: one long cross-fade
+					.to('.am-pin', { autoAlpha: 0, duration: 0.05 }, 0.57)
+					.to('.am-plane', { rotationX: 70, duration: 0.14, ease: 'power1.in' }, 0.56)
+					.to('.am-plane', { autoAlpha: 0, duration: 0.1, ease: 'power1.inOut' }, 0.6)
+					.to('.am-photo', { opacity: 1, duration: 0.12, ease: 'power1.inOut' }, 0.58)
+					.to('.am-photo', { yPercent: 0, scale: 1, duration: 0.2, ease: 'power2.out' }, 0.58)
+					// 4. the glass settles over the sky, then the headline and the way here
+					.to('.am-flood', { opacity: 1, duration: 0.14, ease: 'power1.inOut' }, 0.68)
+					.to('.am-eyebrow', { autoAlpha: 1, y: 0, duration: 0.05, ease: 'power2.out' }, 0.76)
 					.to('.am-meta', { opacity: 1, y: 0, duration: 0.07, ease: 'power2.out' }, 0.88)
 					.to({}, { duration: 0.03 });
+				write(cap1, 0.1, 0.12);
+				unwrite(cap1, 0.3, 0.08);
+				write(cap2, 0.4, 0.12);
+				unwrite(cap2, 0.52, 0.07);
+				write(head, 0.76, 0.14);
+
+				// once the headline is all there, the pointer letters it again, as on every other heading
+				const titleEl = root.querySelector('.am-title');
+				const again = hold(gsap, () => head);
+				const onOver = () => {
+					if (tl.progress() >= 0.95) again.empty();
+				};
+				const onLeave = () => again.fill();
+				titleEl?.addEventListener('pointerenter', onOver);
+				titleEl?.addEventListener('pointerleave', onLeave);
 				tl.progress(Math.min(1, Math.max(0, -span().r.top / span().run)));
 
 				return () => {
 					window.removeEventListener('scroll', onScroll);
 					window.removeEventListener('resize', onScroll);
+					titleEl?.removeEventListener('pointerenter', onOver);
+					titleEl?.removeEventListener('pointerleave', onLeave);
+					again.kill();
 					cancelAnimationFrame(frame);
 					gsap.killTweensOf(tl);
 					delete root.dataset.live;
@@ -261,14 +315,16 @@
 		<figure class="am-photo">
 			<img src={photo} alt="" loading="lazy" decoding="async" />
 		</figure>
-		<div class="am-flood" aria-hidden="true"></div>
+		<div class="am-flood" aria-hidden="true">
+			<img src={photo} alt="" loading="lazy" decoding="async" />
+		</div>
 
 		<div class="am-final">
 			<p class="am-eyebrow">{eyebrow}</p>
 			<h2 class="am-title" id="{uid}-title">
 				{#each lines as l, i (i)}
 					<span class={['am-line', { 'am-last': i === lines.length - 1 && lines.length > 1 }]}>
-						<span class={{ 'am-main': i === lines.length - 1 }}>{l}</span>
+						<span>{l}</span>
 					</span>
 				{/each}
 			</h2>
@@ -350,6 +406,7 @@
 		--f-on-ink: var(--color-forest-950);
 		--f-hover: rgb(244 235 217 / 0.12);
 		--photo-dim: brightness(0.72) saturate(0.9);
+		--glass-dim: 0.72;
 	}
 	@media (prefers-color-scheme: dark) {
 		:global(:root:not([data-theme='light'])) .am {
@@ -371,6 +428,7 @@
 			--f-on-ink: var(--color-forest-950);
 			--f-hover: rgb(244 235 217 / 0.12);
 			--photo-dim: brightness(0.72) saturate(0.9);
+			--glass-dim: 0.72;
 		}
 	}
 
@@ -426,6 +484,16 @@
 	}
 	.am-soft {
 		filter: blur(10px);
+	}
+	/*
+	 * Each kept as a finished picture of its own: the plan sharpening and the ring drawing itself
+	 * then cost a blend, not a fresh drawing of every street.
+	 */
+	.am:global([data-live]) .am-map {
+		will-change: opacity;
+	}
+	.am:global([data-live]) .am-radius {
+		will-change: transform;
 	}
 	.t-ground {
 		fill: var(--m-ground);
@@ -583,17 +651,35 @@
 		filter: var(--photo-dim);
 		transition: filter 0.3s;
 	}
+	.am:global([data-live]) .am-photo,
+	.am:global([data-live]) .am-flood {
+		will-change: transform, opacity;
+	}
 	/* frosted glass from the bottom-left corner, thinning out before the building on the right */
 	.am-flood {
 		--fade: linear-gradient(100deg, #000 0 40%, rgb(0 0 0 / 0.75) 48%, transparent 62%);
 		position: absolute;
 		inset: 0;
+		overflow: hidden;
+		mask-image: var(--fade);
+	}
+	/* the glass: the same photo, blurred once and kept, rather than a live blur of what is behind */
+	.am-flood img {
+		position: absolute;
+		inset: -44px;
+		width: calc(100% + 88px);
+		height: calc(100% + 88px);
+		object-fit: cover;
+		object-position: 0% 50%;
+		filter: blur(22px) saturate(140%) brightness(var(--glass-dim, 1));
+	}
+	.am-flood::after {
+		content: '';
+		position: absolute;
+		inset: 0;
 		background:
 			linear-gradient(160deg, var(--wash-edge), transparent 40%),
 			rgb(var(--wash) / var(--wash-alpha));
-		backdrop-filter: blur(22px) saturate(140%);
-		-webkit-backdrop-filter: blur(22px) saturate(140%);
-		mask-image: var(--fade);
 	}
 	.am-final {
 		position: relative;
@@ -634,6 +720,24 @@
 	}
 	.am-line > span {
 		display: inline-block;
+	}
+	/* the caption's halo follows each letter's fill, or it would show before the letter does */
+	.am:global([data-live]) .am-cap {
+		text-shadow: none;
+	}
+	.am-cap :global(.am-ch) {
+		text-shadow: 0 0 24px
+			color-mix(in srgb, var(--m-ground) calc(var(--fill, 1) * 100%), transparent);
+	}
+	/* a letter mid-arrival: its outline at --line, its fill at --fill (both 0 to 1) */
+	.am :global(.am-ch) {
+		-webkit-text-stroke: 1px
+			color-mix(in srgb, currentColor calc(var(--line, 0) * 100%), transparent);
+		-webkit-text-fill-color: color-mix(
+			in srgb,
+			currentColor calc(var(--fill, 1) * 100%),
+			transparent
+		);
 	}
 	.am-line:nth-child(2):not(.am-last) {
 		padding-inline-start: 1.4em;

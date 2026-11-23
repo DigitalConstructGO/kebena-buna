@@ -47,7 +47,7 @@
 >
 	<div class="copy">
 		<p class="kb-eyebrow" data-reveal>{content.eyebrow}</p>
-		<h2 class="lead" id="people-title" data-reveal>
+		<h2 class="lead" id="people-title" data-reveal data-no-letter>
 			<span class="big">
 				<span data-to={content.lead.value}>{fmt.format(content.lead.value)}</span>{content.lead
 					.suffix}

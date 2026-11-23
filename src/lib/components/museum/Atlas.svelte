@@ -280,7 +280,7 @@
 				{#key active}
 					<div class="detail" aria-live="polite">
 						<p class="count">Origin {pad(active + 1)} / {pad(content.origins.length)}</p>
-						<h3>{current.name}</h3>
+						<h3 data-no-letter>{current.name}</h3>
 						<p class="coords">{current.lat.toFixed(2)}° N, {current.lon.toFixed(2)}° E</p>
 						<p class="text">{current.text}</p>
 						{#if band || current.harvest?.length}

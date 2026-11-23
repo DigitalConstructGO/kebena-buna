@@ -3,14 +3,14 @@
 	import { deLocalizeHref, localizeHref } from '#lib/paraglide/runtime.js';
 
 	/**
-	 * Phone navigation as museum wayfinding: a "you are here" sign at the bottom of the
-	 * screen names the room you are standing in; tapping it unfolds the floor plan as
-	 * one route from the entrance to the exit, with the other wings beside it.
+	 * Phone navigation as museum wayfinding: a "you are here" sign at the bottom of the screen
+	 * names the room you are standing in; tapping it unfolds the floor plan as one route from the
+	 * entrance to the exit, with the other wings beside it.
 	 */
 	type Room = { id: string; name: string; note: string; interlude?: boolean };
 	const ROOMS: Room[] = [
 		{ id: 'entrance', name: 'Entrance', note: 'A living museum of coffee' },
-		{ id: 'halls', name: 'Floor plan', note: 'The four halls at a glance' },
+		{ id: 'halls', name: 'The four halls', note: 'The museum at a glance' },
 		// between the halls, not one of them: it takes no number
 		{ id: 'journey', name: 'The pour', note: 'From cherry to cup', interlude: true },
 		{ id: 'farms', name: 'The farms', note: 'Gera and Djimmah estates' },
@@ -121,25 +121,27 @@
 </script>
 
 <div class="wayfinder">
-	<button
-		type="button"
-		class={['sign', { compact: onHome && above, away: atFoot }]}
-		bind:this={trigger}
-		aria-label={onHome && current < 0 ? 'Floor plan' : undefined}
-		aria-haspopup="dialog"
-		onclick={open}
-		style:--travelled={onHome ? travelled : 1}
-	>
-		<span class="ring" aria-hidden="true"></span>
-		<span class="where">
-			<span class="num">{label.num}</span>
-			<span class="name">{label.name}</span>
-		</span>
-		<span class="hint">Floor plan</span>
-		<svg class="up" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-			<path d="m3 7.5 3-3 3 3" />
-		</svg>
-	</button>
+	<div class={['dock', { compact: onHome && above, away: atFoot }]}>
+		<button
+			type="button"
+			class={['sign', { compact: onHome && above }]}
+			bind:this={trigger}
+			aria-label={onHome && current < 0 ? 'Floor plan' : undefined}
+			aria-haspopup="dialog"
+			onclick={open}
+			style:--travelled={onHome ? travelled : 1}
+		>
+			<span class="ring" aria-hidden="true"></span>
+			<span class="where">
+				<span class="num">{label.num}</span>
+				<span class="name">{label.name}</span>
+			</span>
+			<span class="hint">Floor plan</span>
+			<svg class="up" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+				<path d="m3 7.5 3-3 3 3" />
+			</svg>
+		</button>
+	</div>
 
 	<dialog
 		class="sheet"
@@ -225,19 +227,35 @@
 			display: block;
 		}
 	}
-
-	.sign {
+	.dock {
 		position: fixed;
 		z-index: 30;
 		inset-inline: 0;
 		bottom: max(14px, env(safe-area-inset-bottom));
 		width: fit-content;
+		max-width: calc(100vw - 32px);
 		margin-inline: auto;
+		display: flex;
+		align-items: stretch;
+		gap: 8px;
+		transition:
+			translate 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+			opacity 0.3s,
+			visibility 0.3s;
+	}
+	/* at the end of the page the wordmark closes the museum on its own */
+	.dock.away {
+		translate: 0 140%;
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+	}
+	.sign {
 		display: flex;
 		align-items: center;
 		gap: 10px;
+		min-width: 0;
 		min-height: 52px;
-		max-width: calc(100vw - 32px);
 		padding: 8px 16px 8px 10px;
 		border: 1px solid rgb(255 255 255 / 0.12);
 		border-radius: 16px;
@@ -246,20 +264,10 @@
 		-webkit-backdrop-filter: var(--glass-fx);
 		color: var(--color-mist-50);
 		font: inherit;
+		text-decoration: none;
 		cursor: pointer;
 		-webkit-tap-highlight-color: transparent;
-		transition:
-			scale 0.2s,
-			translate 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
-			opacity 0.3s,
-			visibility 0.3s;
-	}
-	/* at the end of the page the wordmark closes the museum on its own */
-	.sign.away {
-		translate: 0 140%;
-		opacity: 0;
-		visibility: hidden;
-		pointer-events: none;
+		transition: scale 0.2s;
 	}
 	.sign:active {
 		scale: 0.97;
@@ -323,7 +331,7 @@
 		stroke-linejoin: round;
 	}
 	/* over the opening story: only the ring and the label, clear of the hero's own controls */
-	.sign.compact {
+	.dock.compact {
 		translate: 0 -68px;
 	}
 	.sign.compact .where {

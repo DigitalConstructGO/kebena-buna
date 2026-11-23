@@ -177,7 +177,7 @@
 
 				<div class="about">
 					<p class="pk-label">Kebena Coffee</p>
-					<h3>{held.weight}</h3>
+					<h3 data-no-letter>{held.weight}</h3>
 					<p class="sub">{held.name}. {held.text}</p>
 					<dl>
 						{#each content.notes as n (n.label)}
