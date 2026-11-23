@@ -7,6 +7,7 @@
 	import { pictureOf } from '#lib/site/visit/pictures.ts';
 	import Field from '#lib/site/Field.svelte';
 	import Trap from '#lib/site/Trap.svelte';
+	import { Checkbox } from '@nahu/admin-kit/components/ui/checkbox/index.js';
 
 	let { data } = $props();
 
@@ -33,12 +34,22 @@
 	const sessionOptions = $derived(
 		x.sessions.map((s) => ({
 			value: s.id,
-			label: m.exp_session_option({ when: sessionWhen.format(new Date(s.startsAt)), language: nameOf(s.language), count: s.free })
+			label: m.exp_session_option({
+				when: sessionWhen.format(new Date(s.startsAt)),
+				language: nameOf(s.language),
+				count: s.free
+			})
 		}))
 	);
-	const languageOptions = $derived((x.languages ?? []).map((code) => ({ value: code, label: nameOf(code) })));
+	const languageOptions = $derived(
+		(x.languages ?? []).map((code) => ({ value: code, label: nameOf(code) }))
+	);
 	const basis = $derived(
-		x.pricing === 'per_booking' ? m.exp_per_booking() : x.pricing === 'ticket_plus' ? m.exp_ticket_plus() : m.exp_per_person()
+		x.pricing === 'per_booking'
+			? m.exp_per_booking()
+			: x.pricing === 'ticket_plus'
+				? m.exp_ticket_plus()
+				: m.exp_per_person()
 	);
 </script>
 
@@ -50,7 +61,9 @@
 		<h1 class="title">{tr(x.name, locale)}</h1>
 		<p class="lede">
 			{m.exp_duration({ minutes: x.durationMin })} ·
-			{x.maxParty ? m.exp_party({ min: x.minParty, max: x.maxParty }) : m.exp_party_min({ min: x.minParty })}
+			{x.maxParty
+				? m.exp_party({ min: x.minParty, max: x.maxParty })
+				: m.exp_party_min({ min: x.minParty })}
 		</p>
 	</header>
 
@@ -96,7 +109,13 @@
 					/>
 				{:else}
 					{#if !x.isEnquiryOnly}<p class="notice">{m.exp_no_sessions()}</p>{/if}
-					<Field label={m.exp_preferred_date()} name="preferredDate" type="date" bind:value={$form.preferredDate} errors={$errors.preferredDate} />
+					<Field
+						label={m.exp_preferred_date()}
+						name="preferredDate"
+						type="date"
+						bind:value={$form.preferredDate}
+						errors={$errors.preferredDate}
+					/>
 				{/if}
 				<Field
 					label={m.exp_party_size()}
@@ -109,12 +128,48 @@
 					required
 				/>
 				{#if languageOptions.length > 1}
-					<Field label={m.exp_language()} name="language" type="select" options={languageOptions} bind:value={$form.language} errors={$errors.language} />
+					<Field
+						label={m.exp_language()}
+						name="language"
+						type="select"
+						options={languageOptions}
+						bind:value={$form.language}
+						errors={$errors.language}
+					/>
 				{/if}
-				<Field label={m.visit_name()} name="name" bind:value={$form.name} errors={$errors.name} required autocomplete="name" />
-				<Field label={m.visit_phone()} name="phone" type="tel" bind:value={$form.phone} errors={$errors.phone} required autocomplete="tel" />
-				<Field label={m.visit_email()} name="email" type="email" bind:value={$form.email} errors={$errors.email} autocomplete="email" />
-				<Field label={m.exp_requests()} name="specialRequests" type="textarea" rows={3} bind:value={$form.specialRequests} errors={$errors.specialRequests} />
+				<Field
+					label={m.visit_name()}
+					name="name"
+					bind:value={$form.name}
+					errors={$errors.name}
+					required
+					autocomplete="name"
+				/>
+				<Field
+					label={m.visit_phone()}
+					name="phone"
+					type="tel"
+					bind:value={$form.phone}
+					errors={$errors.phone}
+					required
+					autocomplete="tel"
+				/>
+				<Field
+					label={m.visit_email()}
+					name="email"
+					type="email"
+					bind:value={$form.email}
+					errors={$errors.email}
+					autocomplete="email"
+				/>
+				<Field
+					label={m.exp_requests()}
+					name="specialRequests"
+					type="textarea"
+					rows={3}
+					bind:value={$form.specialRequests}
+					errors={$errors.specialRequests}
+				/>
 				<Field
 					label={m.exp_accessibility()}
 					name="accessibilityNeeds"
@@ -125,12 +180,19 @@
 				/>
 			</div>
 			<label class="check">
-				<input type="checkbox" name="marketingConsent" bind:checked={$form.marketingConsent} />
+				<Checkbox name="marketingConsent" bind:checked={$form.marketingConsent} />
 				<span>{m.visit_consent()}</span>
 			</label>
 			<Trap bind:value={$form.website} />
 			{#if $message}
-				<p class="notice" class:ok={$message === m.exp_sent()} class:bad={$message !== m.exp_sent()} role="status">{$message}</p>
+				<p
+					class="notice"
+					class:ok={$message === m.exp_sent()}
+					class:bad={$message !== m.exp_sent()}
+					role="status"
+				>
+					{$message}
+				</p>
 			{/if}
 			<button class="btn" disabled={$delayed}>{m.exp_send()}</button>
 		</form>

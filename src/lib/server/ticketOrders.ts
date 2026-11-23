@@ -17,7 +17,8 @@ import {
 	paymentsOn,
 	recordConsent,
 	startPayment,
-	trackHref
+	trackHref,
+	toCheckout
 } from '#lib/server/site.ts';
 import { holdTicketPlaces } from '#lib/server/tickets.ts';
 import { completeFreeOrder } from '#lib/server/freeOrders.ts';
@@ -255,7 +256,7 @@ export async function afterOrder(
 			// The order stands; its page offers "Pay now" again.
 			console.error('[tickets] could not start the Chapa checkout:', err);
 		}
-		if (url) redirect(303, url);
+		if (url) toCheckout(url);
 	}
 	redirect(303, trackHref(placed));
 }

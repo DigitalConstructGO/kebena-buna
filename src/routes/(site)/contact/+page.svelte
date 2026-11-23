@@ -5,6 +5,7 @@
 	import Trap from '#lib/site/Trap.svelte';
 	import Consent from '#lib/site/Consent.svelte';
 	import FormNotice from '#lib/site/FormNotice.svelte';
+	import ImageSelect from '@nahu/admin-kit/formComponents/ImageSelect.svelte';
 
 	let { data } = $props();
 
@@ -142,15 +143,19 @@
 				<form method="POST" action="?/feedback" class="form" use:fEnhance>
 					<Trap bind:value={$fForm.website} />
 					<fieldset>
-						<legend>{m.contact_rating()}</legend>
-						<div class="opts rating">
-							{#each ratings as r (r.value)}
-								<label class="opt">
-									<input type="radio" name="rating" value={r.value} bind:group={$fForm.rating} />
-									<span class="big">{r.value}</span>
-									<span class="small">{r.label}</span>
-								</label>
-							{/each}
+						<legend id="rating-legend">{m.contact_rating()}</legend>
+						<div class="rating">
+							<ImageSelect
+								name="rating"
+								bind:value={$fForm.rating}
+								items={ratings.map((r) => ({
+									value: r.value,
+									name: String(r.value),
+									description: r.label
+								}))}
+								labelledBy="rating-legend"
+								invalid={Boolean($fErrors.rating)}
+							/>
 						</div>
 						{#if $fErrors.rating}<p class="error">{$fErrors.rating[0]}</p>{/if}
 					</fieldset>
@@ -249,11 +254,11 @@
 		color: var(--forest-950);
 		font-weight: 600;
 	}
-	.rating {
+	.rating :global([role='radiogroup']) {
 		grid-template-columns: repeat(5, minmax(0, 1fr));
 	}
 	@media (width <= 520px) {
-		.rating {
+		.rating :global([role='radiogroup']) {
 			grid-template-columns: repeat(3, minmax(0, 1fr));
 		}
 	}

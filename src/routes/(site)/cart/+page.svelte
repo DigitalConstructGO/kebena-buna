@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { enhance } from '$app/forms';
+	import SelectComp from '@nahu/admin-kit/formComponents/SelectComp.svelte';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { money, tr } from '#lib/format.ts';
@@ -10,8 +12,20 @@
 	const locale = $derived(getLocale());
 	const anyShort = $derived(data.lines.some((l) => l.short));
 
-	/** Re-sends a line's count as soon as it changes; the page reloads the priced cart. */
-	const submitOnChange = (e: Event) => (e.currentTarget as HTMLSelectElement).form?.requestSubmit();
+	const uid = $props.id();
+	const counts = (quantity: number) =>
+		Array.from({ length: Math.max(10, quantity) }, (_, i) => ({
+			value: String(i + 1),
+			name: String(i + 1)
+		}));
+	/**
+	 * Re-sends a line's count as soon as it changes; the page reloads the priced cart. The select's
+	 * own button belongs to the line's form; the post waits a tick for its hidden input to update.
+	 */
+	const submitCount = (id: string) => () =>
+		tick().then(() =>
+			(document.getElementById(id) as HTMLButtonElement | null)?.form?.requestSubmit()
+		);
 </script>
 
 <svelte:head><title>{m.cart_title()} · Kebena</title></svelte:head>
@@ -33,9 +47,14 @@
 				{#if data.changed}<p class="notice" role="status">{m.cart_changed()}</p>{/if}
 				{#if form?.error}<p class="notice bad" role="alert">{form.error}</p>{/if}
 				<ul class="items">
-					{#each data.lines as l (l.key)}
+					{#each data.lines as l, i (l.key)}
 						<li class="item card">
-							<a class="pic" href={siteHref(`/shop/${l.slug}`, locale)} tabindex="-1" aria-hidden="true">
+							<a
+								class="pic"
+								href={siteHref(`/shop/${l.slug}`, locale)}
+								tabindex="-1"
+								aria-hidden="true"
+							>
 								<img src={l.image} alt="" width="96" height="96" loading="lazy" />
 							</a>
 							<div class="what">
@@ -49,22 +68,26 @@
 								<p class="muted num">{m.shop_each({ price: money(l.unitPrice) })}</p>
 								{#if l.short}
 									<p class="error">
-										{l.available && l.available > 0 ? m.shop_only_left({ count: l.available }) : m.shop_sold_out()}
+										{l.available && l.available > 0
+											? m.shop_only_left({ count: l.available })
+											: m.shop_sold_out()}
 									</p>
 								{/if}
 							</div>
 							<div class="how">
 								<form method="POST" action="?/update" use:enhance>
 									<input type="hidden" name="key" value={l.key} />
-									<label class="qty">
+									<label class="qty" for="{uid}-{i}">
 										<span class="visually-hidden">{m.shop_quantity()}</span>
-										<select name="quantity" value={l.quantity} onchange={submitOnChange}>
-											{#each Array.from({ length: Math.max(10, l.quantity) }, (_, i) => i + 1) as n (n)}
-												<option value={n}>{n}</option>
-											{/each}
-										</select>
+										<SelectComp
+											id="{uid}-{i}"
+											name="quantity"
+											value={String(l.quantity)}
+											items={counts(l.quantity)}
+											label={m.shop_quantity()}
+											onValueChange={submitCount(`${uid}-${i}`)}
+										/>
 									</label>
-									<noscript><button class="btn small ghost">{m.cart_update()}</button></noscript>
 								</form>
 								<p class="price num">{money(l.lineTotal)}</p>
 								<form method="POST" action="?/remove" use:enhance>
@@ -81,7 +104,9 @@
 			<aside class="aside card">
 				<h2 class="section-title">{m.track_summary()}</h2>
 				<ul class="lines">
-					<li class="total"><span>{m.cart_subtotal()}</span><span class="num">{money(data.subtotal)}</span></li>
+					<li class="total">
+						<span>{m.cart_subtotal()}</span><span class="num">{money(data.subtotal)}</span>
+					</li>
 				</ul>
 				<p class="hint">{m.cart_delivery_later()}</p>
 				{#if anyShort}
@@ -157,7 +182,10 @@
 	.how p {
 		margin: 0;
 	}
-	.qty select {
+	.qty :global([data-slot='select-trigger']) {
+		width: auto;
+		min-width: 72px;
+		height: auto;
 		min-height: 40px;
 		padding: 6px 10px;
 		border: 1px solid var(--hair);

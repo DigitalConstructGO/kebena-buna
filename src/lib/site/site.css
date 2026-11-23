@@ -188,6 +188,27 @@
 }
 
 /* ── Forms ──────────────────────────────────────────────────────────────────────────────────── */
+/*
+ * The form controls are the admin-kit's (inputs, selects, pickers, uploads, check boxes). Its
+ * tokens are pointed at the design's here, so they draw in paper, ink and gold on these pages and
+ * follow the dark scheme with them. Lists that open in a layer (a select's options) are drawn
+ * outside `.site` and keep the kit's own colours.
+ */
+.site {
+	--foreground: var(--ink);
+	--card-foreground: var(--ink);
+	--background: var(--card-solid);
+	--primary: var(--accent-ink);
+	--primary-foreground: var(--paper);
+	--muted: var(--well);
+	--muted-foreground: var(--ink-soft);
+	--accent: var(--well);
+	--accent-foreground: var(--ink);
+	--border: var(--hair);
+	--input: var(--hair);
+	--ring: var(--accent-ink);
+	--destructive: var(--danger);
+}
 .site .form {
 	display: grid;
 	gap: 28px;
@@ -237,8 +258,9 @@
 	color: var(--ink-soft);
 	font-size: 13px;
 }
-.site .field :is(input, select, textarea) {
+.site .field :is(input, textarea, [data-slot='select-trigger']) {
 	width: 100%;
+	height: auto;
 	min-height: 48px;
 	padding: 12px 14px;
 	border: 1px solid var(--hair);
@@ -253,12 +275,12 @@
 	min-height: 120px;
 	resize: vertical;
 }
-.site .field :is(input, select, textarea):focus-visible {
+.site .field :is(input, textarea, [data-slot='select-trigger']):focus-visible {
 	outline: 2px solid var(--accent-ink);
 	outline-offset: 1px;
 	border-color: var(--accent-ink);
 }
-.site .field[data-invalid] :is(input, select, textarea) {
+.site .field[data-invalid] :is(input, textarea, [data-slot='select-trigger']) {
 	border-color: var(--danger);
 }
 .site .error {
@@ -273,11 +295,11 @@
 	font-size: 15px;
 	cursor: pointer;
 }
-.site .check input {
+.site .check [data-slot='checkbox'] {
 	width: 20px;
 	height: 20px;
 	margin-top: 2px;
-	accent-color: var(--accent-ink);
+	border-color: var(--accent-ink);
 	flex: none;
 }
 

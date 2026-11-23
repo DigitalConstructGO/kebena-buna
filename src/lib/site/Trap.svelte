@@ -3,9 +3,13 @@
 	from a bot. Pair with `siteFormBase.website` and `isTrapped` on the server.
 -->
 <script lang="ts">
+	import { Input } from '@nahu/admin-kit/components/ui/input/index.js';
+
 	let { value = $bindable() }: { value?: string | null } = $props();
 </script>
 
 <div class="trap" aria-hidden="true">
-	<label>Website <input name="website" type="text" tabindex="-1" autocomplete="off" bind:value /></label>
+	<label>
+		Website <Input name="website" type="text" tabindex={-1} autocomplete="off" bind:value />
+	</label>
 </div>

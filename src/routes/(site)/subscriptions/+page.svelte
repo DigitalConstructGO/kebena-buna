@@ -5,6 +5,8 @@
 	import { money, tr } from '#lib/format.ts';
 	import Field from '#lib/site/Field.svelte';
 	import Trap from '#lib/site/Trap.svelte';
+	import ImageSelect from '@nahu/admin-kit/formComponents/ImageSelect.svelte';
+	import { Checkbox } from '@nahu/admin-kit/components/ui/checkbox/index.js';
 
 	let { data } = $props();
 
@@ -35,9 +37,15 @@
 	const zone = $derived(data.zones.find((z) => z.id === Number($form.deliveryZoneId)));
 	const areas = $derived(data.areas.filter((a) => a.zoneId === zone?.id));
 
-	const perDelivery = $derived(variant && plan ? r2(variant.price * Number($form.quantity || 1) * (1 - plan.discountPct / 100)) : 0);
+	const perDelivery = $derived(
+		variant && plan
+			? r2(variant.price * Number($form.quantity || 1) * (1 - plan.discountPct / 100))
+			: 0
+	);
 	const total = $derived(plan ? r2(perDelivery * plan.deliveries) : 0);
-	const fullPrice = $derived(variant && plan ? r2(variant.price * Number($form.quantity || 1) * plan.deliveries) : 0);
+	const fullPrice = $derived(
+		variant && plan ? r2(variant.price * Number($form.quantity || 1) * plan.deliveries) : 0
+	);
 
 	/** A new coffee keeps the roast only if that coffee comes in it. */
 	function pickVariant(id: number) {
@@ -47,7 +55,10 @@
 		if (!allowed.some((r) => r.id === Number($form.roastLevelId))) {
 			$form.roastLevelId = (allowed.find((r) => r.isDefault) ?? allowed[0])?.id ?? 0;
 		}
-		if ($form.grindId && !data.grinds.some((g) => g.productId === next?.productId && g.id === Number($form.grindId))) {
+		if (
+			$form.grindId &&
+			!data.grinds.some((g) => g.productId === next?.productId && g.id === Number($form.grindId))
+		) {
 			$form.grindId = null;
 		}
 	}
@@ -78,23 +89,20 @@
 					<div class="coffees">
 						{#each products as p (p.id)}
 							<div class="card coffee">
-								<p class="mid">{p.name}</p>
+								<p class="mid" id="coffee-{p.id}">{p.name}</p>
 								{#if p.notes}<p class="small muted">{p.notes}</p>{/if}
-								<div class="opts">
-									{#each p.variants as v (v.id)}
-										<label class="opt">
-											<input
-												type="radio"
-												name="variantId"
-												value={v.id}
-												checked={Number($form.variantId) === v.id}
-												onchange={() => pickVariant(v.id)}
-											/>
-											<span class="mid">{v.size ? tr(v.size, locale) : tr(v.variantName ?? '', locale)}</span>
-											<span class="small">{money(v.price)}</span>
-										</label>
-									{/each}
-								</div>
+								<!-- One radio group across the cards: every card's choices are named `variantId`. -->
+								<ImageSelect
+									name="variantId"
+									id="variant-{p.id}"
+									bind:value={() => Number($form.variantId), (v) => pickVariant(Number(v))}
+									items={p.variants.map((v) => ({
+										value: v.id,
+										name: v.size ? tr(v.size, locale) : tr(v.variantName ?? '', locale),
+										meta: money(v.price)
+									}))}
+									labelledBy="coffee-{p.id}"
+								/>
 							</div>
 						{/each}
 					</div>
@@ -122,38 +130,49 @@
 					<div class="count-row">
 						<span class="small">{m.subs_bags()}</span>
 						<div class="count">
-							<button type="button" aria-label={m.subs_fewer()} disabled={Number($form.quantity) <= 1} onclick={() => ($form.quantity = Number($form.quantity) - 1)}>−</button>
+							<button
+								type="button"
+								aria-label={m.subs_fewer()}
+								disabled={Number($form.quantity) <= 1}
+								onclick={() => ($form.quantity = Number($form.quantity) - 1)}
+							>
+								−
+							</button>
 							<output aria-live="polite">{$form.quantity}</output>
-							<button type="button" aria-label={m.subs_more()} disabled={Number($form.quantity) >= 5} onclick={() => ($form.quantity = Number($form.quantity) + 1)}>+</button>
+							<button
+								type="button"
+								aria-label={m.subs_more()}
+								disabled={Number($form.quantity) >= 5}
+								onclick={() => ($form.quantity = Number($form.quantity) + 1)}
+							>
+								+
+							</button>
 						</div>
 						<input type="hidden" name="quantity" value={$form.quantity} />
 					</div>
 				</fieldset>
 
 				<fieldset>
-					<legend>{m.subs_step_plan()}</legend>
-					<div class="opts">
-						{#each data.plans as p (p.id)}
-							<label class="opt">
-								<input type="radio" name="planId" value={p.id} bind:group={$form.planId} />
-								<span class="big">{p.deliveries}</span>
-								<span class="small">{m.subs_deliveries_word()}</span>
-								{#if p.discountPct > 0}<span class="small">{m.subs_save({ pct: p.discountPct })}</span>{/if}
-							</label>
-						{/each}
-					</div>
-					<div class="opts">
-						<label class="opt">
-							<input type="radio" name="frequency" value="biweekly" bind:group={$form.frequency} />
-							<span class="mid">{m.subs_biweekly()}</span>
-							<span class="small">{m.subs_biweekly_hint()}</span>
-						</label>
-						<label class="opt">
-							<input type="radio" name="frequency" value="monthly" bind:group={$form.frequency} />
-							<span class="mid">{m.subs_monthly()}</span>
-							<span class="small">{m.subs_monthly_hint()}</span>
-						</label>
-					</div>
+					<legend id="plan-legend">{m.subs_step_plan()}</legend>
+					<ImageSelect
+						name="planId"
+						bind:value={$form.planId}
+						items={data.plans.map((p) => ({
+							value: p.id,
+							name: `${p.deliveries} ${m.subs_deliveries_word()}`,
+							description: p.discountPct > 0 ? m.subs_save({ pct: p.discountPct }) : undefined
+						}))}
+						labelledBy="plan-legend"
+					/>
+					<ImageSelect
+						name="frequency"
+						bind:value={$form.frequency}
+						items={[
+							{ value: 'biweekly', name: m.subs_biweekly(), description: m.subs_biweekly_hint() },
+							{ value: 'monthly', name: m.subs_monthly(), description: m.subs_monthly_hint() }
+						]}
+						labelledBy="plan-legend"
+					/>
 				</fieldset>
 
 				<fieldset>
@@ -181,9 +200,31 @@
 							/>
 						{/if}
 						{#if zone && !zone.isPickup}
-							<Field label={m.subs_city()} name="city" bind:value={$form.city} errors={$errors.city} required autocomplete="address-level2" />
-							<Field label={m.subs_line1()} name="line1" bind:value={$form.line1} errors={$errors.line1} required autocomplete="street-address" wide />
-							<Field label={m.subs_landmark()} name="landmark" bind:value={$form.landmark} errors={$errors.landmark} hint={m.subs_landmark_hint()} wide />
+							<Field
+								label={m.subs_city()}
+								name="city"
+								bind:value={$form.city}
+								errors={$errors.city}
+								required
+								autocomplete="address-level2"
+							/>
+							<Field
+								label={m.subs_line1()}
+								name="line1"
+								bind:value={$form.line1}
+								errors={$errors.line1}
+								required
+								autocomplete="street-address"
+								wide
+							/>
+							<Field
+								label={m.subs_landmark()}
+								name="landmark"
+								bind:value={$form.landmark}
+								errors={$errors.landmark}
+								hint={m.subs_landmark_hint()}
+								wide
+							/>
 						{:else if zone}
 							<p class="hint wide">{m.subs_pickup_hint()}</p>
 						{/if}
@@ -193,14 +234,38 @@
 				<fieldset>
 					<legend>{m.subs_step_you()}</legend>
 					<div class="fields two">
-						<Field label={m.member_name()} name="name" bind:value={$form.name} errors={$errors.name} required autocomplete="name" />
-						<Field label={m.member_phone()} name="phone" type="tel" bind:value={$form.phone} errors={$errors.phone} required autocomplete="tel" hint={m.subs_phone_hint()} />
-						<Field label={m.member_email()} name="email" type="email" bind:value={$form.email} errors={$errors.email} autocomplete="email" wide />
+						<Field
+							label={m.member_name()}
+							name="name"
+							bind:value={$form.name}
+							errors={$errors.name}
+							required
+							autocomplete="name"
+						/>
+						<Field
+							label={m.member_phone()}
+							name="phone"
+							type="tel"
+							bind:value={$form.phone}
+							errors={$errors.phone}
+							required
+							autocomplete="tel"
+							hint={m.subs_phone_hint()}
+						/>
+						<Field
+							label={m.member_email()}
+							name="email"
+							type="email"
+							bind:value={$form.email}
+							errors={$errors.email}
+							autocomplete="email"
+							wide
+						/>
 					</div>
 				</fieldset>
 
 				<label class="check">
-					<input type="checkbox" name="marketingConsent" bind:checked={$form.marketingConsent} />
+					<Checkbox name="marketingConsent" bind:checked={$form.marketingConsent} />
 					<span>{m.subs_consent()}</span>
 				</label>
 			</div>
@@ -210,10 +275,24 @@
 				{#if variant && plan}
 					<h2 class="section-title">{tr(variant.product, locale)}</h2>
 					<ul class="lines">
-						<li><span>{m.subs_per_delivery({ count: Number($form.quantity) })}</span><span class="num">{money(perDelivery)}</span></li>
-						<li><span>{m.subs_deliveries({ count: plan.deliveries })}</span><span class="num">× {plan.deliveries}</span></li>
-						{#if fullPrice > total}<li><span>{m.subs_you_save()}</span><span class="num">−{money(fullPrice - total)}</span></li>{/if}
-						<li class="total"><span>{m.site_total()}</span><span class="num">{money(total)}</span></li>
+						<li>
+							<span>{m.subs_per_delivery({ count: Number($form.quantity) })}</span><span
+								class="num"
+							>
+								{money(perDelivery)}
+							</span>
+						</li>
+						<li>
+							<span>{m.subs_deliveries({ count: plan.deliveries })}</span><span class="num">
+								× {plan.deliveries}
+							</span>
+						</li>
+						{#if fullPrice > total}<li>
+								<span>{m.subs_you_save()}</span><span class="num">−{money(fullPrice - total)}</span>
+							</li>{/if}
+						<li class="total">
+							<span>{m.site_total()}</span><span class="num">{money(total)}</span>
+						</li>
 					</ul>
 				{/if}
 				<p class="hint">{m.subs_pay_note()}</p>

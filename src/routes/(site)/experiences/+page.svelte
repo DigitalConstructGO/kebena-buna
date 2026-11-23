@@ -4,14 +4,36 @@
 	import { money, tr } from '#lib/format.ts';
 	import { siteHref } from '#lib/site/locale.ts';
 	import { pictureOf } from '#lib/site/visit/pictures.ts';
+	import Shelf from '#lib/site/shelf/Shelf.svelte';
+	import ShelfCard from '#lib/site/shelf/ShelfCard.svelte';
+	import Sheet from '#lib/site/shelf/Sheet.svelte';
 
 	let { data } = $props();
+
+	type Experience = (typeof data.experiences)[number];
+	/** The experience picked up off the shelf. */
+	let held = $state<Experience>();
+	let sheet = $state<ReturnType<typeof Sheet>>();
+	const pick = (x: Experience) => {
+		held = x;
+		sheet?.show();
+	};
 
 	const locale = $derived(getLocale());
 
 	const fromPrice = (prices: { price: number }[]) => (prices.length ? Math.min(...prices.map((p) => p.price)) : null);
 	const basis = (pricing: string) =>
 		pricing === 'per_booking' ? m.exp_per_booking() : pricing === 'ticket_plus' ? m.exp_ticket_plus() : m.exp_per_person();
+	const party = (x: Experience) => (x.maxParty ? m.exp_party({ min: x.minParty, max: x.maxParty }) : m.exp_party_min({ min: x.minParty }));
+	/** "ETB 300.00 per person", "Free" or "Price on request". */
+	const priceOf = (x: Experience) => {
+		const from = fromPrice(x.prices);
+		if (x.pricing === 'quote') return m.exp_quote();
+		if (x.pricing === 'free' || from === 0) return m.exp_free();
+		return from === null ? undefined : `${money(from)} ${basis(x.pricing)}`;
+	};
+	const languageName = $derived(new Intl.DisplayNames([locale], { type: 'language' }));
+	const languages = (x: Experience) => (x.languages ?? []).map((code) => languageName.of(code) ?? code).join(', ');
 </script>
 
 <svelte:head><title>{m.exp_title()} · Kebena</title></svelte:head>
@@ -25,32 +47,19 @@
 
 	<section class="section">
 		{#if data.experiences.length}
-			<ul class="cards list">
+			<Shelf>
 				{#each data.experiences as x (x.id)}
-					{@const from = fromPrice(x.prices)}
-					<li class="card item">
-						<img src={pictureOf(x.image, x.kind)} alt="" loading="lazy" decoding="async" />
-						<div class="body">
-							<h2>{tr(x.name, locale)}</h2>
-							<p class="muted meta">
-								{m.exp_duration({ minutes: x.durationMin })} ·
-								{x.maxParty ? m.exp_party({ min: x.minParty, max: x.maxParty }) : m.exp_party_min({ min: x.minParty })}
-							</p>
-							{#if x.description}<p class="desc">{tr(x.description, locale)}</p>{/if}
-							<p class="price-line">
-								{#if x.pricing === 'quote'}
-									{m.exp_quote()}
-								{:else if x.pricing === 'free' || from === 0}
-									{m.exp_free()}
-								{:else if from !== null}
-									<span class="price">{money(from)}</span> <span class="muted">{basis(x.pricing)}</span>
-								{/if}
-							</p>
-							<a class="btn small" href={siteHref(`/experiences/${x.slug}`, locale)}>{m.exp_book()}</a>
-						</div>
-					</li>
+					<ShelfCard
+						href={siteHref(`/experiences/${x.slug}`, locale)}
+						title={tr(x.name, locale)}
+						notes={`${m.exp_duration({ minutes: x.durationMin })} · ${party(x)}`}
+						price={priceOf(x)}
+						hint={m.site_look()}
+						image={pictureOf(x.image, x.kind)}
+						onpick={() => pick(x)}
+					/>
 				{/each}
-			</ul>
+			</Shelf>
 		{:else}
 			<p class="notice">{m.exp_empty()}</p>
 		{/if}
@@ -64,48 +73,40 @@
 	</section>
 </div>
 
-<style>
-	.list {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-	}
-	.item {
-		display: grid;
-		grid-template-rows: auto 1fr;
-		padding: 0;
-		overflow: hidden;
-	}
-	.item img {
-		width: 100%;
-		aspect-ratio: 4 / 3;
-		object-fit: cover;
-	}
-	.body {
-		display: grid;
-		gap: 10px;
-		align-content: start;
-		padding: clamp(18px, 2.4vw, 24px);
-	}
-	.body h2 {
-		font-size: 1.4rem;
-		font-weight: 700;
-	}
-	.body p {
-		margin: 0;
-	}
-	.meta {
-		font-size: 14px;
-	}
-	.desc {
-		display: -webkit-box;
-		-webkit-line-clamp: 3;
-		line-clamp: 3;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
-	.btn {
-		justify-self: start;
-	}
-</style>
+<!-- An experience picked up off the shelf: what it is, how long, for how many, and the way to book. -->
+<Sheet bind:this={sheet} label={held ? tr(held.name, locale) : undefined} onclose={() => (held = undefined)}>
+	{#if held}
+		<div class="photo"><img src={pictureOf(held.image, held.kind)} alt="" width="480" height="480" /></div>
+		<div class="about">
+			<p class="pk-label">{m.exp_label()}</p>
+			<h3>{tr(held.name, locale)}</h3>
+			{#if tr(held.description, locale)}<p class="sub">{tr(held.description, locale)}</p>{/if}
+			<dl>
+				<div>
+					<dt>{m.exp_how_long()}</dt>
+					<dd>{m.exp_duration({ minutes: held.durationMin })}</dd>
+				</div>
+				<div>
+					<dt>{m.exp_party_size()}</dt>
+					<dd>{party(held)}</dd>
+				</div>
+				{#if priceOf(held)}
+					<div>
+						<dt>{m.exp_prices()}</dt>
+						<dd>{priceOf(held)}</dd>
+					</div>
+				{/if}
+				{#if languages(held)}
+					<div>
+						<dt>{m.exp_language()}</dt>
+						<dd>{languages(held)}</dd>
+					</div>
+				{/if}
+			</dl>
+			<a class="go" href={siteHref(`/experiences/${held.slug}`, locale)}>
+				<span>{m.exp_book()}</span>
+				<svg viewBox="0 0 14 12" aria-hidden="true"><path d="M1 6h11.5M7.5 1l5 5-5 5" /></svg>
+			</a>
+		</div>
+	{/if}
+</Sheet>

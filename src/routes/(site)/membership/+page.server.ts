@@ -16,7 +16,8 @@ import {
 	paymentsOn,
 	recordConsent,
 	startPayment,
-	trackHref
+	trackHref,
+	toCheckout
 } from '#lib/server/site.ts';
 import { membershipSignupSchema } from '#lib/schemas/signup.ts';
 import { m } from '#lib/paraglide/messages.js';
@@ -155,7 +156,7 @@ export const actions: Actions = {
 				// The order stands; its page offers the payment again.
 				console.error('[membership] could not start Chapa checkout:', err);
 			}
-			if (checkout) redirect(303, checkout);
+			if (checkout) toCheckout(checkout);
 		}
 		redirect(303, trackHref(placed));
 	}

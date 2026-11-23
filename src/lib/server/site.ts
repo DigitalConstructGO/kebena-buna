@@ -7,7 +7,7 @@
  */
 import { randomBytes } from 'node:crypto';
 import { and, eq, isNull } from 'drizzle-orm';
-import type { RequestEvent } from '@sveltejs/kit';
+import { redirect, type RequestEvent } from '@sveltejs/kit';
 import { takeToken } from '@nahu/admin-kit/server/rateLimit';
 import type { Writer } from '@nahu/admin-kit/server/db';
 import { CHAPA_SECRET_KEY } from '$app/env/private';
@@ -258,6 +258,17 @@ export async function orderByIdempotencyKey(key: string | null | undefined) {
 /** The page an order's buyer follows: its status, tickets and pay button. */
 export const trackHref = (o: { number: string; payToken: string | null }) =>
 	`${siteHref(`/track/${encodeURIComponent(o.number)}`, getLocale())}?k=${encodeURIComponent(o.payToken ?? '')}`;
+
+/** Where Chapa's hosted checkout lives: the one outside site a buyer is ever redirected to. */
+const CHAPA_CHECKOUT = ['https://checkout.chapa.co'];
+
+/**
+ * Sends the buyer on to Chapa's checkout. SvelteKit 3 refuses a redirect to another site unless
+ * it is allowed by name, so a bare `redirect(303, url)` here failed every payment with a 500.
+ */
+export function toCheckout(url: string): never {
+	redirect(303, url, { external: CHAPA_CHECKOUT });
+}
 
 /** True when Chapa is set up; without it, orders wait for staff to take payment. */
 export const paymentsOn = () => Boolean(CHAPA_SECRET_KEY);

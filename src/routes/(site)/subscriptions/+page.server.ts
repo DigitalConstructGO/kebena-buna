@@ -30,7 +30,8 @@ import {
 	paymentsOn,
 	recordConsent,
 	startPayment,
-	trackHref
+	trackHref,
+	toCheckout
 } from '#lib/server/site.ts';
 import { subscriptionSignupSchema } from '#lib/schemas/signup.ts';
 import { LANGS } from '#lib/languages.ts';
@@ -249,7 +250,7 @@ export const actions: Actions = {
 			} catch (err) {
 				console.error('[subscriptions] could not start Chapa checkout:', err);
 			}
-			if (checkout) redirect(303, checkout);
+			if (checkout) toCheckout(checkout);
 		}
 		redirect(303, trackHref(placed));
 	}
