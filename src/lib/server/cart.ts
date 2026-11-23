@@ -52,18 +52,22 @@ export function readChoices(cookies: Cookies): CartChoice[] {
 	}
 }
 
+/**
+ * The number of bags, readable by the page (`kb-cart-n`): the museum pages are built ahead as
+ * static HTML, so their header reads the cart badge from this rather than from the server.
+ */
+const COUNT_COOKIE = 'kb-cart-n';
+
 export function writeChoices(cookies: Cookies, lines: CartChoice[], secure: boolean) {
 	if (!lines.length) {
 		cookies.delete(COOKIE, { path: '/' });
+		cookies.delete(COUNT_COOKIE, { path: '/' });
 		return;
 	}
-	cookies.set(COOKIE, JSON.stringify(lines.slice(0, MAX_LINES)), {
-		path: '/',
-		httpOnly: true,
-		sameSite: 'lax',
-		secure,
-		maxAge: 60 * 60 * 24 * 30
-	});
+	const kept = lines.slice(0, MAX_LINES);
+	const options = { path: '/', sameSite: 'lax' as const, secure, maxAge: 60 * 60 * 24 * 30 };
+	cookies.set(COOKIE, JSON.stringify(kept), { ...options, httpOnly: true });
+	cookies.set(COUNT_COOKIE, String(kept.reduce((sum, l) => sum + l.quantity, 0)), { ...options, httpOnly: false });
 }
 
 /** The same choice: one cart line per variant and option set. */

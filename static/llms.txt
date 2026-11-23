@@ -1,0 +1,15 @@
+# Kebena Buna
+
+> A living museum of Ethiopian coffee from Jimma: the farms, the process from red cherry to green coffee, the lots on display this season, and the history of coffee in the Gibe region.
+
+The site is published in English, Amharic, Afaan Oromoo, Arabic, Italian and French. Other languages live under a path prefix, for example `/am/` or `/fr/`.
+
+## Pages
+
+- [Museum home](https://kebena-buna.vercel.app/): the entrance, floor plan, the pour from cherry to cup, the farms, the collection, origins, people, archive and visit
+- [History](https://kebena-buna.vercel.app/history): the history and origin of coffee, and the Jimma tradition
+- [Kingdoms](https://kebena-buna.vercel.app/kingdoms): five kingdoms between the Gibe and the Gojeb
+
+## Optional
+
+- [Sitemap](https://kebena-buna.vercel.app/sitemap.xml)

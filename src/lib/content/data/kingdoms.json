@@ -1,0 +1,138 @@
+{
+	"en": {
+		"eyebrow": "The Gibe kingdoms",
+		"title": "Five kingdoms between the Gibe and the Gojeb",
+		"intro": "In the eighteenth and nineteenth centuries, five Oromo kingdoms rose in the coffee country of southwestern Ethiopia: Limmu Ennarya, Gumma, Gomma, Jimma and Gera. They traded, married into one another, fought, and turned to Islam, until Emperor Menelik II's forces brought them under his rule.",
+		"kingdoms": [
+			{
+				"id": "limmu",
+				"name": "Limmu Ennarya",
+				"names": { "am": "ሊሙ እነርያ", "om": "Limmuu Innaariya", "ar": "ليمو إناريا" },
+				"capital": "Saqqa (Sappa)",
+				"borders": [
+					{ "dir": "e", "to": "Jimma" },
+					{ "dir": "s", "to": "Gomma" },
+					{ "dir": "w", "to": "Gumma, and beyond it the Macha Oromo" }
+				],
+				"summary": "Founded by the Sadacha Oromo confederacy, it took two names, Limmu and Ennarya, to set the new state apart from the older Ennarya.",
+				"body": [
+					"The Kingdom of Limmu Ennarya was one of the five Gibe kingdoms that emerged in southwestern Ethiopia during the nineteenth century. It bordered the Kingdom of Jimma to the east, Gomma to the south, and Gumma to the west, beyond which lived the Macha Oromo. The kingdom was formed by the Sadacha Oromo confederacy and combined the names Limmu and Ennarya to distinguish the new political state from the historical Ennarya.",
+					"The kingdom was established by Bofo, popularly known as Abba Gommol, who expanded his power through warfare, alliances, and territorial conquest, particularly against the neighboring Nonno. His marriage to the daughter of Abba Rebu strengthened his political position and produced his son, Ibsa, better known as Abba Bagibo. Abba Bagibo succeeded his father around 1825 and ruled until 1861. During his reign, Saqqa (Sappa) became an important political and commercial center.",
+					"The kingdom’s development was closely connected with trade, military expansion, and the growth of Islam. Muslim merchants and religious teachers contributed to commercial activities and the spread of Islamic education. However, traditional Oromo religious practices continued alongside Islam for a considerable period. Abba Gommol also fought repeated wars against the Kingdom of Gomma to protect his political authority and commercial routes toward Kaffa. Thus, Limmu Ennarya emerged as an influential Gibe state through military power, trade, political alliances, and the gradual development of new religious and administrative institutions."
+				],
+				"rulers": [
+					{ "name": "Bofo", "alias": "Abba Gommol", "note": "Founder. Expanded through war and alliances, above all against the Nonno." },
+					{ "name": "Ibsa", "alias": "Abba Bagibo", "from": 1825, "to": 1861, "approx": true, "note": "Saqqa grew into a political and trading centre." }
+				]
+			},
+			{
+				"id": "gumma",
+				"name": "Gumma",
+				"names": { "am": "ጉማ", "om": "Gummaa", "ar": "غوما" },
+				"capital": "Chirra",
+				"founded": 1810,
+				"ended": 1885,
+				"borders": [
+					{ "dir": "ne", "to": "Limmu Ennarya" },
+					{ "dir": "s", "to": "Gomma and Gera" },
+					{ "dir": "n", "to": "Macha Oromo" },
+					{ "dir": "w", "to": "Sidama groups, across the Didessa" }
+				],
+				"summary": "Bounded by the Didessa River, Gumma became a centre of Islam and a refuge for people exiled from the neighbouring kingdoms.",
+				"body": [
+					"The Kingdom of Gumma was one of the five Gibe kingdoms in southwestern Ethiopia. Its territory was bounded by the Didessa River, with Limmu Ennarya to the northeast, Gomma and Gera to the south, Macha Oromo groups to the north, and Sidama groups to the west. The kingdom began to emerge in the second half of the eighteenth century, and its state formation was completed around 1810.",
+					"According to historical traditions, the early political struggle in Gumma involved Sarbaroda of Dagoye and Jilcha of Chirra. Following the death of Sarbaroda in conflict, Jilcha became the first ruler of a unified Gumma, with Chirra serving as his principal royal center. He was succeeded by his son Oncho (c. 1810–1830), who consolidated the kingdom through military campaigns and suppressed internal opposition. However, his rule was also remembered for harsh treatment and violence against his own people and neighboring communities.",
+					"Oncho was followed by later rulers, including Abba Jubir. In 1882, Abba Jubir attempted to establish a political alliance known as the Muslim League with the rulers of Jimma, Gomma, and Limmu Ennarya to counter threats from Macha Oromo groups. Despite initial cooperation, the alliance eventually weakened, and conflicts continued among the kingdoms.",
+					"Gumma remained an important center of Islam in the Gibe region and provided refuge to people exiled from neighboring kingdoms. Emperor Menelik II’s forces conquered the kingdom in 1885, although resistance continued. Firisa, son of the last king, returned from Sudan in 1899 and proclaimed a jihad against the new rulers. He was captured in 1902 and subsequently executed in Jimma. Thus, Gumma played a significant role in the political, military, and Islamic history of the Gibe region during the nineteenth century."
+				],
+				"rulers": [
+					{ "name": "Jilcha", "note": "First ruler of a unified Gumma, from Chirra." },
+					{ "name": "Oncho", "from": 1810, "to": 1830, "approx": true, "note": "Consolidated the kingdom; remembered for harsh rule." },
+					{ "name": "Abba Jubir", "note": "In 1882 tried to unite the Gibe kingdoms in a Muslim League." },
+					{ "name": "Firisa", "note": "Son of the last king. Returned from Sudan in 1899, captured in 1902." }
+				]
+			},
+			{
+				"id": "gomma",
+				"name": "Gomma",
+				"names": { "am": "ጎማ", "om": "Gommaa", "ar": "غوما" },
+				"capital": "Agaro",
+				"ended": 1886,
+				"borders": [
+					{ "dir": "n", "to": "Limmu Ennarya" },
+					{ "dir": "w", "to": "Gumma" },
+					{ "dir": "s", "to": "Gera" },
+					{ "dir": "e", "to": "Jimma" }
+				],
+				"summary": "The first Gibe kingdom where Islam took hold across the population. Its rulers became known as Awaalini, “the holy ones”.",
+				"body": [
+					"The Kingdom of Gomma was one of the five Gibe kingdoms in southwestern Ethiopia. It bordered Limmu Ennarya to the north, Gumma to the west, Gera to the south, and Jimma to the east. Its capital was Agaro. Historical accounts offer different explanations regarding the dynasty’s origins, with some associating its foundation with a Muslim holy man and others identifying Sheikh Nur Hussein as its founder.",
+					"Gomma was the first Gibe kingdom in which Islam became widely established among the population during the first half of the nineteenth century. The early formation of the state was associated with Abba Boke, who expanded his authority through control of land, military power, and protection of his followers. Although he established control over much of the region, he died before incorporating Qattu into the kingdom.",
+					"His son, Abba Manno (c. 1820–1840), succeeded him and completed the process of state formation by uniting Qattu with Gomma. He is remembered as a major promoter of Islam who supported Muslim teachers, facilitated religious missionary activities, and encouraged the spread of the Qadiriyya Sufi order. By the 1830s, Islam had reportedly become the religion of the entire population of Gomma. The spread of Islam also strengthened the authority and legitimacy of the ruling dynasty, which became known as Awaalini, meaning “the holy ones.” In 1886, Gomma was conquered by Besha Abue on behalf of Emperor Menelik II, bringing the kingdom’s independent political rule to an end."
+				],
+				"rulers": [
+					{ "name": "Abba Boke", "note": "Built the early state through land, arms and protection of his followers." },
+					{ "name": "Abba Manno", "from": 1820, "to": 1840, "approx": true, "note": "United Qattu with Gomma and spread the Qadiriyya order." }
+				]
+			},
+			{
+				"id": "jimma",
+				"name": "Jimma",
+				"names": { "am": "ጅማ", "om": "Jimmaa", "ar": "جيما" },
+				"capital": "Jiren",
+				"founded": 1742,
+				"ended": 1933,
+				"borders": [
+					{ "dir": "w", "to": "Limmu Ennarya and Gomma" }
+				],
+				"summary": "The longest-lived and richest of the five. From Jiren, Abba Jifar I and his heirs built a trading kingdom that lasted until 1933.",
+				"body": [
+					"The establishment of kingship in Jimma remains debated among historians. Oral traditions suggest that the Oromo settled in the region during the seventeenth century, following the dispersal of the Machaa Oromo from Tute Bisil. Before the establishment of monarchy, Makka Hore and Abbaa Qiriphe reportedly exercised political or religious authority. Dissatisfaction with Makka Hore's leadership led to the establishment of Tumaa Hullee at Odaa Hullee, reflecting changes in the Gadaa system.",
+					"According to Ketebo Abdiyo, Abbaa Faro of the Diggo clan established the Jimma Kaka monarchy in 1742 and ruled until 1787. His grandson, Abbaa Magal Abbaa Faro, succeeded him and ruled from 1787 to 1827, expanding the kingdom and strengthening its administration at Hirmata. After Abbaa Magal's death, Abbaa Rago ruled from 1827 to 1830, followed by Abbaa Jifar, who continued the expansion and consolidation of the Jimma Kingdom.",
+					"Abba Jifar I played a crucial role in consolidating the Jimma Kingdom during the 1830s and 1840s. He established his capital at Jiren, expanded the kingdom's territory, strengthened its army, and promoted trade, making Jimma one of the most prosperous states in the Gibe region. After converting to Islam around 1835 under Sheikh Abduulhakim Kebire Sahle, he encouraged the spread of Islam. At his death in 1855, he left behind a wealthy and powerful kingdom.",
+					"Abba Rebu succeeded his father in 1855 and ruled until approximately 1858. Known for his courage and military ambition, he launched campaigns against neighboring Gibe kingdoms, provoking opposition among regional rulers and Jimma's nobles. He was reportedly assassinated by his warrior, Aba Dima Birama, during a campaign against Gomma.",
+					"Abba Boka, his uncle and a man of about seventy, ruled from approximately 1858 to 1862. He was the opposite of his predecessor: he halted the wars against Jimma's neighbours and signed peace treaties with them, and used Jimma's resources to root Islam in society, building mosques, introducing zakat and reserving waqf land for the clergy near Jiren. He named his son as heir ahead of time, and power passed peacefully.",
+					"His son, Abba Gommol (c. 1862–1878), expanded Jimma's territory and economy. He conquered Garo, the small kingdom to the southeast in today's Omo Nadda district, and absorbed its people into the Jimma Oromo through marriage and settlement.",
+					"Abba Jifar II, son of Abba Gommol and Genne Gummite of the Gumma kingdom, was born around 1860–1861 at Jiren. The marriage between the Diggo dynasty of Jimma and the Adami dynasty of Gumma is said to have had a religious purpose. He succeeded his father around 1878 and ruled until 1933. His reign was marked by administrative reforms, expanded international trade, and infrastructure development, making him one of Jimma's most influential kings."
+				],
+				"rulers": [
+					{ "name": "Abbaa Faro", "from": 1742, "to": 1787, "approx": false, "note": "Of the Diggo clan; founded the Jimma Kaka monarchy." },
+					{ "name": "Abbaa Magal", "from": 1787, "to": 1827, "approx": false, "note": "Expanded the kingdom; governed from Hirmata." },
+					{ "name": "Abbaa Rago", "from": 1827, "to": 1830, "approx": false, "note": "" },
+					{ "name": "Abba Jifar I", "from": 1830, "to": 1855, "approx": false, "note": "Capital at Jiren. Embraced Islam around 1835." },
+					{ "name": "Abba Rebu", "from": 1855, "to": 1858, "approx": true, "note": "Waged war on his neighbours; killed on campaign against Gomma." },
+					{ "name": "Abba Boka", "from": 1858, "to": 1862, "approx": true, "note": "Made peace; built mosques, introduced zakat." },
+					{ "name": "Abba Gommol", "from": 1862, "to": 1878, "approx": true, "note": "Conquered Garo." },
+					{ "name": "Abba Jifar II", "from": 1878, "to": 1933, "approx": true, "note": "Reforms, international trade and new roads and buildings." }
+				]
+			},
+			{
+				"id": "gera",
+				"name": "Gera",
+				"names": { "am": "ጌራ", "om": "Geeraa", "ar": "غيرا" },
+				"capital": "Chala (Cira)",
+				"borders": [
+					{ "dir": "n", "to": "Gumma" },
+					{ "dir": "e", "to": "Gomma" },
+					{ "dir": "s", "to": "Kaffa, across the Gojeb River" }
+				],
+				"summary": "The southern kingdom on the Gojeb, facing Kaffa. Its land is roughly today's Gera Woreda, where Kebena's Gera estate grows coffee.",
+				"body": [
+					"The Kingdom of Gera was one of the Gibe kingdoms in southwestern Ethiopia. It bordered Gumma to the north, Gomma to the east, and Kaffa to the south, separated by the Gojeb River. Its capital was Chala (Cira), and its territory corresponds approximately to present-day Gera Woreda.",
+					"According to Buckingham and Huntingford, the monarchy of Gera may have existed before the Great Oromo Migration of the sixteenth century. However, Mohamed Hassen identifies Gunji as the founder of the kingdom's political nucleus. After Gunji's death, his son Tullu Gunji succeeded him around 1835. Tullu was remembered as an intelligent politician, courageous warrior, and capable administrator who sought to expand Gera's territory.",
+					"Tullu Gunji's relations with Oncho Jilcha, the king of Gumma, deteriorated because of border disputes and political rivalry. Oncho supported Abba Baso, Tullu's half-brother, in the struggle for the throne. Following Tullu's capture and reported execution, Abba Baso became king. Cecchi considered him the first king of Gera, although his reign was short-lived. Around 1838, Abba Rago overthrew him and exiled him to Jimma.",
+					"According to Trimingham, Gera reached its greatest prosperity under King Abba Magal, who converted to Islam. However, the historical accounts differ regarding the role of Abba Bagibo of Limmu-Ennarya and Abba Jubir of Gomma in facilitating the spread of Islam in the kingdom.",
+					"Following Abba Magal's death, Queen Genne Fa reportedly ruled as regent for her son. She was also known as Genne Gummite, Genne Dagoyyiti, and Artiitti in different traditions. Although described as intelligent and politically capable, she was also criticized for oppressive rule, which contributed to internal divisions. Some Gera officials subsequently supported Ras Gobena's military expedition against the kingdom. These internal conflicts weakened Gera's resistance to external conquest, although the precise chronology and the roles of the different military leaders require further verification."
+				],
+				"rulers": [
+					{ "name": "Gunji", "note": "Founder of the kingdom's political core, per Mohamed Hassen." },
+					{ "name": "Tullu Gunji", "from": 1835, "approx": true, "note": "Politician, warrior and administrator." },
+					{ "name": "Abba Baso", "to": 1838, "approx": true, "note": "Half-brother of Tullu; a short reign." },
+					{ "name": "Abba Rago", "from": 1838, "approx": true, "note": "Overthrew Abba Baso." },
+					{ "name": "Abba Magal", "note": "Gera's most prosperous reign; converted to Islam." },
+					{ "name": "Genne Fa", "note": "Queen regent for her son." }
+				]
+			}
+		]
+	}
+}

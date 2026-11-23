@@ -1,0 +1,360 @@
+/*
+ * The museum design's look (melkamu/museum-hero), scoped to `.museum` so it cannot reach the
+ * dashboard: the admin-kit theme on `:root` uses some of the same names (`--card`, `--line`). The
+ * `(museum)` and `(site)` layouts put every public page inside a `.museum` wrapper.
+ */
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/bricolage-grotesque/wdth.css';
+@import '@fontsource-variable/instrument-sans';
+@import '@fontsource-variable/noto-serif-ethiopic';
+@import '@fontsource/jetbrains-mono/400.css';
+/* Ethiopic and Arabic: unicode-range subsets, so they only download on pages that use them */
+@import '@fontsource/noto-sans-ethiopic/400.css';
+@import '@fontsource/noto-naskh-arabic/400.css';
+
+/* The design's palette and type, as plain variables: nothing here touches Tailwind's theme. */
+.museum {
+	--font-sans:
+		'Instrument Sans Variable', 'Noto Sans Ethiopic', 'Noto Naskh Arabic', ui-sans-serif, system-ui,
+		sans-serif;
+	--font-mono: 'Bricolage Grotesque Variable', ui-sans-serif, sans-serif;
+	--font-display:
+		'Bricolage Grotesque Variable', 'Noto Serif Ethiopic Variable', ui-sans-serif, sans-serif;
+
+	/* Palette from the Figma design system */
+	--color-forest-950: #19211b;
+	--color-forest-900: #232d25;
+	--color-forest-800: #2f3b31;
+	--color-forest-700: #3d4c3f;
+	--color-leaf-50: #f3dfbd;
+	--color-leaf-400: #dcae3c;
+	--color-leaf-600: #6f5410;
+	--color-leaf-700: #5c450b;
+	--color-mist-50: #f8e7cc;
+	--color-mist-100: #f2d6ae;
+	--color-mist-200: #dfc296;
+	--color-mist-500: #56604f;
+	--color-mist-700: #232d25;
+	--color-mist-800: #19211b;
+	--color-lime-300: #ecd08a;
+	--color-lime-400: #dcae3c;
+}
+
+/* Theme roles: paper and soft ink in light, forest and light ink in dark. Every section
+   reads these so it follows the theme; only the hero and the journey stay forest. */
+.museum {
+	color-scheme: light;
+	--paper: #f8e7cc;
+	--paper-soft: var(--color-mist-50);
+	--paper-tint: var(--color-mist-100);
+	--card: #fbeed8;
+	--ink: var(--color-mist-700);
+	--ink-soft: var(--color-mist-500);
+	--line: var(--color-mist-200);
+	--accent-ink: var(--color-leaf-600);
+	--well: var(--color-mist-200);
+	/* a veil over a full-bleed photo so text on it reads, and the glass panels above it */
+	--scrim: rgb(248 231 204 / 0.86);
+	--glass: rgb(251 238 216 / 0.92);
+	--glass-line: var(--color-mist-200);
+	/* story pages (history, kingdoms): marks, washes and map roles */
+	--ink-strong: var(--color-mist-800);
+	--accent-mark: var(--color-leaf-700);
+	/* the coffee-brown accent of the pour: deep on paper, caramel on forest */
+	--caramel: #94561f;
+	--accent-wash: var(--color-leaf-50);
+	--accent-line: rgb(111 84 16 / 0.35);
+	--accent-area: #e6c98f;
+	--accent-bar: #d9b877;
+	--track: var(--color-mist-200);
+	--water: #5b9bb0;
+	--water-ink: #2f6f82;
+}
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) .museum {
+		color-scheme: dark;
+		--paper: var(--color-forest-950);
+		--paper-soft: #1e2720;
+		--paper-tint: var(--color-forest-900);
+		--card: var(--color-forest-800);
+		--ink: #f4ebd9;
+		--ink-soft: #b8bfab;
+		--line: rgb(255 255 255 / 0.1);
+		--accent-ink: var(--color-leaf-400);
+		--well: var(--color-forest-800);
+		--scrim: rgb(25 33 27 / 0.78);
+		--glass: rgb(47 59 49 / 0.9);
+		--glass-line: rgb(255 255 255 / 0.14);
+		--ink-strong: var(--color-mist-50);
+		--accent-mark: var(--color-lime-300);
+		/* the coffee-brown accent of the pour: deep on paper, caramel on forest */
+		--caramel: #d9a05b;
+		--accent-wash: rgb(220 174 60 / 0.12);
+		--accent-line: rgb(220 174 60 / 0.42);
+		--accent-area: var(--color-leaf-700);
+		--accent-bar: var(--color-leaf-600);
+		--track: rgb(255 255 255 / 0.16);
+		--water: #6fa8b8;
+		--water-ink: #8fbccb;
+	}
+}
+:root[data-theme='dark'] .museum {
+	color-scheme: dark;
+	--paper: var(--color-forest-950);
+	--paper-soft: #1e2720;
+	--paper-tint: var(--color-forest-900);
+	--card: var(--color-forest-800);
+	--ink: #f4ebd9;
+	--ink-soft: #b8bfab;
+	--line: rgb(255 255 255 / 0.1);
+	--accent-ink: var(--color-leaf-400);
+	--well: var(--color-forest-800);
+	--scrim: rgb(25 33 27 / 0.78);
+	--glass: rgb(47 59 49 / 0.9);
+	--glass-line: rgb(255 255 255 / 0.14);
+	--ink-strong: var(--color-mist-50);
+	--accent-mark: var(--color-lime-300);
+	/* the coffee-brown accent of the pour: deep on paper, caramel on forest */
+	--caramel: #d9a05b;
+	--accent-wash: rgb(220 174 60 / 0.12);
+	--accent-line: rgb(220 174 60 / 0.42);
+	--accent-area: var(--color-leaf-700);
+	--accent-bar: var(--color-leaf-600);
+	--track: rgb(255 255 255 / 0.16);
+	--water: #6fa8b8;
+	--water-ink: #8fbccb;
+}
+
+html:has(.museum) {
+	background: var(--color-forest-900);
+}
+
+/* one shared eyebrow and section title for the museum sections */
+.kb-eyebrow {
+	margin: 0;
+	font-family: var(--font-display);
+	font-stretch: 75%;
+	font-weight: 500;
+	font-size: 14px;
+	line-height: 1.2;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	color: var(--accent-ink);
+}
+.kb-title {
+	margin: 0;
+	font-size: clamp(2rem, 3.2vw, 2.5rem);
+	line-height: 1.2;
+	letter-spacing: -0.03em;
+	font-weight: 600;
+	color: var(--ink);
+	text-wrap: balance;
+}
+.kb-section {
+	padding: clamp(72px, 9vw, 120px) max(24px, calc((100% - 1200px) / 2));
+}
+.kb-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 12px 24px;
+	border-radius: 8px;
+	font-family: var(--font-mono);
+	font-size: 13px;
+	line-height: 16px;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: background-color 0.2s;
+}
+.kb-btn.primary {
+	background: var(--color-lime-400);
+	color: var(--color-forest-900);
+}
+.kb-btn.primary:hover {
+	background: var(--color-lime-300);
+}
+.kb-btn.secondary {
+	background: var(--color-forest-800);
+	color: #fff;
+}
+.kb-btn.secondary:hover {
+	background: var(--color-forest-700);
+}
+.kb-btn:focus-visible {
+	outline: 2px solid var(--color-lime-400);
+	outline-offset: 2px;
+}
+
+.museum {
+	font-family: var(--font-sans);
+	color: var(--color-mist-700);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+/* headings even out their lines; short descriptions never leave one word alone on the last line */
+.museum :is(h1, h2, h3, h4) {
+	text-wrap: balance;
+}
+.museum :is(p, li, dd, figcaption) {
+	text-wrap: pretty;
+}
+/* underlines sit where the font designer put them, clear of descenders */
+.museum a {
+	text-underline-position: from-font;
+	text-decoration-thickness: from-font;
+	text-decoration-skip-ink: auto;
+}
+
+/* ───────── The Kebena coffee bag: tokens shared by the doorway and footer ───────── */
+.museum {
+	--bag: #232d25;
+	--bag-deep: #19211b;
+	--bag-soft: #2f3b31;
+	--cream: #f2d6ae;
+	--cream-soft: #f8e7cc;
+	--gold: #dcae3c;
+	--gold-soft: #ecd08a;
+	--leaf: #5fa64f;
+	--slate: #43565a;
+	--cherry: #c8402f;
+	--on-bag: #f4ebd9;
+	--on-bag-soft: #b8bfab;
+	--on-cream: #232d25;
+	--on-cream-soft: #56604f;
+	--hair: rgb(220 174 60 / 0.42);
+	--pk-display: var(--font-display);
+	--pk-body: var(--font-sans);
+	--pk-ethiopic: 'Noto Serif Ethiopic Variable', serif;
+	--pk-gutter: clamp(20px, 4.4vw, 72px);
+	--pk-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.museum :is(h1, h2, h3, h4) {
+	font-family: var(--font-display);
+	letter-spacing: -0.02em;
+}
+.pk-label {
+	margin: 0;
+	font-family: var(--font-display);
+	font-stretch: 75%;
+	font-weight: 500;
+	font-size: 15px;
+	line-height: 1.2;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	color: var(--gold);
+}
+.pk-display {
+	margin: 0;
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: clamp(2.6rem, 7vw, 6.5rem);
+	line-height: 0.96;
+	letter-spacing: -0.035em;
+	text-wrap: balance;
+}
+.pk-lede {
+	margin: 0;
+	max-width: 46ch;
+	font-size: clamp(1.05rem, 1.35vw, 1.3rem);
+	line-height: 1.5;
+	text-wrap: pretty;
+}
+.pk-frame {
+	border: 1px solid var(--hair);
+}
+
+/* ───────── Glass: frosted, see-through surfaces over soft colour, light and dark ───────── */
+.museum {
+	--glass-fx: blur(26px) saturate(180%);
+	--card: rgb(255 249 238 / 0.42);
+	--glass: rgb(255 249 238 / 0.5);
+	--glass-strong: rgb(250 238 216 / 0.72);
+	--glass-line: rgb(255 255 255 / 0.7);
+	--line: rgb(35 45 37 / 0.14);
+	--chrome: rgb(25 33 27 / 0.6);
+	--glass-shine: inset 0 1px 0 rgb(255 255 255 / 0.75), inset 0 0 0 1px rgb(255 255 255 / 0.28);
+}
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) .museum {
+		--card: rgb(244 235 217 / 0.07);
+		--glass: rgb(244 235 217 / 0.09);
+		--glass-strong: rgb(35 45 37 / 0.72);
+		--glass-line: rgb(244 235 217 / 0.2);
+		--line: rgb(244 235 217 / 0.12);
+		--glass-shine: inset 0 1px 0 rgb(255 255 255 / 0.16), inset 0 0 0 1px rgb(255 255 255 / 0.05);
+	}
+}
+:root[data-theme='dark'] .museum {
+	--card: rgb(244 235 217 / 0.07);
+	--glass: rgb(244 235 217 / 0.09);
+	--glass-strong: rgb(35 45 37 / 0.72);
+	--glass-line: rgb(244 235 217 / 0.2);
+	--line: rgb(244 235 217 / 0.12);
+	--glass-shine: inset 0 1px 0 rgb(255 255 255 / 0.16), inset 0 0 0 1px rgb(255 255 255 / 0.05);
+}
+.kb-btn.secondary {
+	background: var(--glass);
+	color: var(--ink-strong);
+	backdrop-filter: var(--glass-fx);
+	-webkit-backdrop-filter: var(--glass-fx);
+	border: 1px solid var(--glass-line);
+	box-shadow: var(--glass-shine);
+}
+
+/* ---------- pattern art (bookofshapes.com) ----------
+   One layer behind a section's content. The art is a mask, so it takes the theme's ink,
+   and each placement sets its own scale, position and fade. */
+.kb-art {
+	position: relative;
+	isolation: isolate;
+}
+.kb-art::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	background: var(--accent-ink);
+	opacity: var(--art-o, 0.3);
+	-webkit-mask: var(--art), var(--art-fade, linear-gradient(#000, #000));
+	mask: var(--art), var(--art-fade, linear-gradient(#000, #000));
+	-webkit-mask-composite: source-in;
+	mask-composite: intersect;
+}
+/* large rings sweeping in from the top right corner */
+.kb-art--rings-corner {
+	--art: url('/art/truchet.svg') 100% 0 / 1500px auto no-repeat;
+	--art-fade: radial-gradient(900px 620px at 100% 0, #000 20%, transparent 100%);
+	--art-o: 0.28;
+}
+/* the dotted streams pouring down one side */
+.kb-art--dots-side {
+	--art: url('/art/flow-dots.svg') 0 0 / 560px auto repeat;
+	--art-fade: linear-gradient(to right, #000, transparent 46%);
+	--art-o: 0.34;
+}
+/* a fine weave of small rings rising from the bottom edge */
+.kb-art--rings-foot {
+	--art: url('/art/truchet.svg') 50% 100% / 720px auto repeat;
+	--art-fade: linear-gradient(to top, #000, transparent 300px);
+	--art-o: 0.22;
+}
+/* one great ring system behind the far bottom corner */
+.kb-art--rings-far {
+	--art: url('/art/truchet.svg') 0 100% / 1500px auto no-repeat;
+	--art-fade: radial-gradient(760px 460px at 0 100%, #000 10%, transparent 100%);
+	--art-o: 0.18;
+}
+@media (max-width: 700px) {
+	.kb-art--rings-corner {
+		--art: url('/art/truchet.svg') 100% 0 / 900px auto no-repeat;
+		--art-fade: radial-gradient(420px 320px at 100% 0, #000 20%, transparent 100%);
+	}
+	.kb-art--dots-side {
+		--art-fade: linear-gradient(to bottom, #000, transparent 40%);
+	}
+	.kb-art--rings-far {
+		--art: url('/art/truchet.svg') 0 100% / 900px auto no-repeat;
+		--art-fade: radial-gradient(420px 300px at 0 100%, #000 10%, transparent 100%);
+	}
+}

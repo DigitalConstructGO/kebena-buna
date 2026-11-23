@@ -3,7 +3,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { auth } from '#lib/server/auth.ts';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { type Handle, type ServerInit, sequence } from '@sveltejs/kit/hooks';
-import { defineCustomServerStrategy, getTextDirection } from '#lib/paraglide/runtime.js';
+import { getTextDirection } from '#lib/paraglide/runtime.js';
 import { paraglideMiddleware } from '#lib/paraglide/server.js';
 import { configureKit } from '@nahu/admin-kit/server/db';
 import { db } from '#lib/server/db/index.ts';
@@ -12,17 +12,11 @@ import { kitHandle } from '@nahu/admin-kit/server/hooks';
 import { access } from '#lib/access.ts';
 import { loadGrant, syncAccessTables } from '#lib/server/permissions.ts';
 import { startJobs } from '#lib/server/jobs/index.ts';
-import { addressLocale } from '#lib/site/locale.ts';
 
 /** The outbox sender and the hold release run alongside the app (`#lib/server/jobs`). */
 export const init: ServerInit = () => {
 	if (!building) startJobs();
 };
-
-// Site pages take their language from the address (`/am/shop`); see `#lib/site/locale`.
-defineCustomServerStrategy('custom-prefix', {
-	getLocale: (request) => (request ? addressLocale(new URL(request.url).pathname) : undefined)
-});
 
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {

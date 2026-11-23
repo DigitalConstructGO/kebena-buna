@@ -1,28 +1,18 @@
 <script lang="ts">
-	import { getLocale, getTextDirection } from '#lib/paraglide/runtime.js';
-	import SiteHeader from '#lib/site/SiteHeader.svelte';
-	import SiteFooter from '#lib/site/SiteFooter.svelte';
+	import SiteNav from '#lib/components/museum/SiteNav.svelte';
+	import SiteFooter from '#lib/components/museum/SiteFooter.svelte';
+	import { museum } from '#lib/content/museum.ts';
+	import '#lib/site/museum.css';
 	import '#lib/site/site.css';
 
 	let { children } = $props();
-
-	const locale = $derived(getLocale());
 </script>
 
-<svelte:head>
-	<!-- The design's saved theme (`kb-theme`), set before paint so the page does not flash. -->
-	<script>
-		try {
-			var t = localStorage.getItem('kb-theme');
-			if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
-		} catch (e) {}
-	</script>
-</svelte:head>
-
-<div class="site" lang={locale} dir={getTextDirection(locale)}>
-	<SiteHeader />
+<!-- The museum's header and footer around the shop, visit and form pages (`site.css`). -->
+<div class="museum site">
+	<SiteNav wayfinder={false} />
 	<main>
 		{@render children()}
 	</main>
-	<SiteFooter />
+	<SiteFooter content={museum.footer} />
 </div>

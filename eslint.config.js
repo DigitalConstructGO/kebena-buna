@@ -42,9 +42,9 @@ export default defineConfig(
 		rules: {}
 	},
 	{
-		// Site links go through `siteHref` (`#lib/site/locale`), which puts the language prefix on;
-		// some lead to the design's pages, served by a catch-all route `resolve` cannot name.
-		files: ['src/routes/(site)/**', 'src/lib/site/**'],
+		// Public links carry the language prefix (`localizeHref`, `siteHref`): `/am/shop` is no route
+		// `resolve` can name, so they are written as paths.
+		files: ['src/routes/(site)/**', 'src/routes/(museum)/**', 'src/lib/site/**', 'src/lib/components/museum/**'],
 		rules: { 'svelte/no-navigation-without-resolve': 'off' }
 	}
 );
