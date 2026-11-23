@@ -7,6 +7,8 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { adminKit } from '@nahu/admin-kit/vite';
 
 export default defineConfig({
+	// gsap's plugin entry points don't load as plain Node ESM; bundle it into the server build
+	ssr: { noExternal: ['gsap'] },
 	plugins: [
 		tailwindcss(),
 		sveltekit({
@@ -22,9 +24,16 @@ export default defineConfig({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide',
 			emitTsDeclarations: true,
-			// `custom-prefix` reads a site page's language off its address (`#lib/site/locale`); the
-			// dashboard has no prefix and falls through to the cookie.
-			strategy: ['custom-prefix', 'cookie', 'globalVariable', 'baseLocale']
+			// The public site keeps its language in the URL (/am/history), so each language's pages
+			// can be prerendered. Staff pages have no prefix and keep the language their user chose.
+			strategy: ['url', 'cookie', 'baseLocale'],
+			routeStrategies: [
+				{ match: '/dashboard/:path(.*)?', strategy: ['cookie', 'baseLocale'] },
+				{ match: '/login', strategy: ['cookie', 'baseLocale'] },
+				{ match: '/logout', strategy: ['cookie', 'baseLocale'] },
+				{ match: '/api/:path(.*)?', exclude: true },
+				{ match: '/media/:path(.*)?', exclude: true }
+			]
 		}),
 		adminKit()
 	],
