@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { tr } from '#lib/format.ts';
 	import { siteHref } from '#lib/site/locale.ts';
 	import TicketCheckout from '#lib/site/visit/TicketCheckout.svelte';
@@ -16,7 +16,10 @@
 	const choose = (change: { date?: string; audience?: string }) => {
 		const date = change.date ?? data.date;
 		const audience = change.audience ?? data.audience?.code;
-		const q = [date && `date=${encodeURIComponent(date)}`, audience && `audience=${encodeURIComponent(audience)}`].filter(Boolean);
+		const q = [
+			date && `date=${encodeURIComponent(date)}`,
+			audience && `audience=${encodeURIComponent(audience)}`
+		].filter(Boolean);
 		return `${siteHref('/visit', locale)}?${q.join('&')}`;
 	};
 
@@ -34,13 +37,18 @@
 	// Ethiopian months are written in Amharic whatever the page's language, as everywhere in the kit.
 	const dayMonth = $derived(
 		kind === 'ethiopian'
-			? new Intl.DateTimeFormat('am-ET', { calendar: 'ethiopic', day: 'numeric', month: 'short', timeZone: 'UTC' })
+			? new Intl.DateTimeFormat('am-ET', {
+					calendar: 'ethiopic',
+					day: 'numeric',
+					month: 'short',
+					timeZone: 'UTC'
+				})
 			: new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' })
 	);
 	const asDate = (iso: string) => new Date(`${iso}T00:00:00Z`);
 </script>
 
-<svelte:head><title>{m.visit_title()} · Kebena</title></svelte:head>
+<svelte:head><title>{m.site_page_title({ title: m.visit_title() })}</title></svelte:head>
 
 <div class="page">
 	<header class="head">
@@ -108,7 +116,9 @@
 					<!-- The chosen day on both calendars, as the kit's date picker writes it. -->
 					<p class="chosen" aria-live="polite">
 						<span class="mid">{formatDateIn(data.date, kind, locale)}</span>
-						<span class="small">{formatDateIn(data.date, otherCalendar(kind), locale, 'short')}</span>
+						<span class="small">
+							{formatDateIn(data.date, otherCalendar(kind), locale, 'short')}
+						</span>
 					</p>
 				{/if}
 			{:else}
@@ -126,6 +136,7 @@
 					declaration={data.audience.declaration}
 					slots={data.slots}
 					paymentsOn={data.paymentsOn}
+					transfersOn={data.transfersOn}
 				/>
 			{/key}
 		</section>

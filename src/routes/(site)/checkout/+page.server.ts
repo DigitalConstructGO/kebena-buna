@@ -19,20 +19,30 @@ import {
 	trackHref,
 	toCheckout
 } from '#lib/server/site.ts';
+import { transfersOn } from '#lib/server/transfers.ts';
+import { completeFreeOrder } from '#lib/server/freeOrders.ts';
+import { DiscountRefused } from '#lib/server/discounts.ts';
 import { checkoutSchema } from '#lib/schemas/checkout.ts';
 import { getLocale } from '#lib/paraglide/runtime.js';
-import { m } from '#lib/paraglide/messages.js';
+import { m } from '#lib/i18n.ts';
 import { tr } from '#lib/format.ts';
 import { siteHref } from '#lib/site/locale.ts';
 import type { Actions, PageServerLoad } from './$types';
 
-type Zone = { id: number; fee: number; freeAbove: number | null; isPickup: boolean; usesCourier: boolean };
+type Zone = {
+	id: number;
+	fee: number;
+	freeAbove: number | null;
+	isPickup: boolean;
+	usesCourier: boolean;
+};
 
 /**
  * A zone's fee for an order of `subtotal` (3.5): free above its own threshold, or — for an Addis
  * rider zone without one — above the `delivery.free_above` setting. Courier zones are never free.
  */
-const freeFrom = (z: Zone, fallback: number) => z.freeAbove ?? (z.isPickup || z.usesCourier ? null : fallback);
+const freeFrom = (z: Zone, fallback: number) =>
+	z.freeAbove ?? (z.isPickup || z.usesCourier ? null : fallback);
 const feeOf = (z: Zone, subtotal: number, fallback: number) => {
 	const free = freeFrom(z, fallback);
 	return z.isPickup || (free !== null && subtotal >= free) ? 0 : z.fee;
@@ -60,14 +70,24 @@ async function deliveryOptions() {
 			.orderBy(asc(deliveryArea.sortOrder), asc(deliveryArea.id)),
 		// Pickup is at the museum shop, at Site A (3.7).
 		db
-			.select({ id: location.id, code: location.code, name: location.name, address: location.address })
+			.select({
+				id: location.id,
+				code: location.code,
+				name: location.name,
+				address: location.address
+			})
 			.from(location)
 			.where(inArray(location.code, ['SHOP', 'SITE-A'])),
 		readSetting('delivery.free_above', 3000)
 	]);
-	const pickupPlace = places.find((p) => p.code === 'SHOP') ?? places.find((p) => p.code === 'SITE-A') ?? null;
+	const pickupPlace =
+		places.find((p) => p.code === 'SHOP') ?? places.find((p) => p.code === 'SITE-A') ?? null;
 	return {
-		zones: zones.map((z) => ({ ...z, fee: Number(z.fee), freeAbove: z.freeAbove === null ? null : Number(z.freeAbove) })),
+		zones: zones.map((z) => ({
+			...z,
+			fee: Number(z.fee),
+			freeAbove: z.freeAbove === null ? null : Number(z.freeAbove)
+		})),
 		areas,
 		pickupPlace,
 		fallback: Number(fallback)
@@ -76,23 +96,37 @@ async function deliveryOptions() {
 
 export const load: PageServerLoad = async ({ cookies }) => {
 	const cart = await priceCart(readChoices(cookies));
-	if (!cart.lines.length || cart.changed || shortLines(cart.lines).length) redirect(303, siteHref('/cart', getLocale()));
+	if (!cart.lines.length || cart.changed || shortLines(cart.lines).length)
+		redirect(303, siteHref('/cart', getLocale()));
 	const { zones, areas, pickupPlace, fallback } = await deliveryOptions();
 
 	const form = await superValidate(zod4(checkoutSchema));
 	// One key per checkout page: a double-clicked or resent order lands on the same order.
 	form.data.idempotencyKey = randomUUID();
-	form.data.city = 'Addis Ababa';
+	form.data.city = m.checkout_city_default();
 	return {
 		form,
-		lines: cart.lines.map((l) => ({ key: l.key, description: l.description, quantity: l.quantity, lineTotal: l.lineTotal })),
+		lines: cart.lines.map((l) => ({
+			key: l.key,
+			description: l.description,
+			quantity: l.quantity,
+			lineTotal: l.lineTotal
+		})),
 		subtotal: cart.subtotal,
 		pickupPlace,
 		zones: zones
 			.filter((z) => !z.isPickup)
-			.map((z) => ({ id: z.id, name: z.name, fee: z.fee, free: freeFrom(z, fallback), usesCourier: z.usesCourier, transitDays: z.transitDays })),
+			.map((z) => ({
+				id: z.id,
+				name: z.name,
+				fee: z.fee,
+				free: freeFrom(z, fallback),
+				usesCourier: z.usesCourier,
+				transitDays: z.transitDays
+			})),
 		areas,
-		paymentsOn: paymentsOn()
+		paymentsOn: paymentsOn(),
+		transfersOn: await transfersOn()
 	};
 };
 
@@ -104,7 +138,8 @@ export const actions: Actions = {
 		const locale = getLocale();
 		// A bot that filled the hidden field is sent on its way with nothing made.
 		if (isTrapped(form.data)) redirect(303, siteHref('/', locale));
-		if (floodRefused(event, 'checkout', 3)) return message(form, m.site_err_flood(), { status: 429 });
+		if (floodRefused(event, 'checkout', 3))
+			return message(form, m.site_err_flood(), { status: 429 });
 
 		const already = await orderByIdempotencyKey(form.data.idempotencyKey);
 		if (already) redirect(303, trackHref(already));
@@ -112,17 +147,28 @@ export const actions: Actions = {
 		const cart = await priceCart(readChoices(cookies));
 		if (!cart.lines.length) redirect(303, siteHref('/cart', locale));
 		if (cart.changed) {
-			writeChoices(cookies, cart.lines.map((l) => l.choice), url.protocol === 'https:');
+			writeChoices(
+				cookies,
+				cart.lines.map((l) => l.choice),
+				url.protocol === 'https:'
+			);
 			return message(form, m.checkout_cart_changed(), { status: 409 });
 		}
 		const short = shortLines(cart.lines);
 		if (short.length) {
-			return message(form, m.checkout_short({ items: short.map((l) => tr(l.name, locale)).join(', ') }), { status: 409 });
+			return message(
+				form,
+				m.checkout_short({ items: short.map((l) => tr(l.name, locale)).join(', ') }),
+				{ status: 409 }
+			);
 		}
 
 		const { zones, areas, pickupPlace, fallback } = await deliveryOptions();
 		const d = form.data;
-		let delivery: Pick<Parameters<typeof createWebOrder>[2], 'deliveryMethod' | 'deliveryZoneId' | 'deliveryAddress' | 'pickupLocationId' | 'deliveryFee'>;
+		let delivery: Pick<
+			Parameters<typeof createWebOrder>[2],
+			'deliveryMethod' | 'deliveryZoneId' | 'deliveryAddress' | 'pickupLocationId' | 'deliveryFee'
+		>;
 		if (d.method === 'pickup') {
 			delivery = {
 				deliveryMethod: 'pickup',
@@ -150,15 +196,16 @@ export const actions: Actions = {
 			};
 		}
 
-		let placed: Awaited<ReturnType<typeof createWebOrder>>;
+		let placed: Awaited<ReturnType<typeof createWebOrder>> & { free: boolean };
 		try {
 			placed = await db.transaction(async (tx) => {
 				const contact = { name: d.name, phone: d.phone, email: d.email ?? null };
 				const customerId = await customerFor(tx, contact);
 				if (d.marketingConsent) await recordConsent(tx, event, customerId, contact, 'checkout');
-				return createWebOrder(tx, event, {
+				const made = await createWebOrder(tx, event, {
 					customerId,
 					contact,
+					discountCode: d.discountCode,
 					...delivery,
 					customerNote: d.note ?? null,
 					idempotencyKey: d.idempotencyKey ?? null,
@@ -176,8 +223,11 @@ export const actions: Actions = {
 						unitPrice: l.unitPrice
 					}))
 				});
+				// A 100% code: nothing to pay, so it is paid now.
+				return { ...made, free: made.total < 0.005 && (await completeFreeOrder(tx, made.id)) };
 			});
 		} catch (err) {
+			if (err instanceof DiscountRefused) return setError(form, 'discountCode', err.message);
 			// Two submits racing past the idempotency check: the second hits the unique key.
 			const raced = await orderByIdempotencyKey(d.idempotencyKey);
 			if (raced) redirect(303, trackHref(raced));
@@ -186,7 +236,8 @@ export const actions: Actions = {
 
 		writeChoices(cookies, [], url.protocol === 'https:');
 		const page = trackHref(placed);
-		if (!paymentsOn()) redirect(303, page);
+		// A transfer is paid from the order's page, where the accounts and the receipt upload are.
+		if (placed.free || !paymentsOn() || d.payWith === 'transfer') redirect(303, page);
 		let checkout: string | null = null;
 		try {
 			checkout = await startPayment(event, placed.id);

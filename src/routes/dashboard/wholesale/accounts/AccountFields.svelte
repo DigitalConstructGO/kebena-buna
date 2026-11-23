@@ -20,11 +20,26 @@
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 	<InputComp label="Business name" name="name" {form} {errors} required />
-	<InputComp label="Type" name="type" type="select" items={choicesOf(BUSINESS_TYPES)} {form} {errors} required />
+	<InputComp
+		label="Type"
+		name="type"
+		type="select"
+		items={choicesOf(BUSINESS_TYPES)}
+		{form}
+		{errors}
+		required
+	/>
 	<InputComp label="Trade licence number" name="tradeLicenceNumber" {form} {errors} required />
 	<InputComp label="TIN" name="tin" {form} {errors} required />
 	<InputComp label="VAT number" name="vatNumber" {form} {errors} />
-	<InputComp label="Expected kg / month" name="expectedMonthlyKg" type="number" step="0.001" {form} {errors} />
+	<InputComp
+		label="Expected kg / month"
+		name="expectedMonthlyKg"
+		type="number"
+		step="0.001"
+		{form}
+		{errors}
+	/>
 	<InputComp label="Contact person" name="contactName" {form} {errors} required />
 	<InputComp label="Contact phone" name="contactPhone" type="tel" {form} {errors} required />
 	<InputComp label="Contact email" name="contactEmail" type="email" {form} {errors} />

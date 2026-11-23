@@ -23,10 +23,23 @@
 	type Row = (typeof data.recent)[number];
 	const columns: ColumnDef<Row>[] = [
 		{ id: 'date', header: 'Received', cell: ({ row }) => date(row.original.occurredAt) },
-		{ id: 'lot', header: 'Lot', cell: ({ row }) => link('lot', row.original.lotId, row.original.lot) },
-		{ id: 'location', header: 'At', cell: ({ row }) => link('location', row.original.locationId, row.original.location) },
+		{
+			id: 'lot',
+			header: 'Lot',
+			cell: ({ row }) => link('lot', row.original.lotId, row.original.lot)
+		},
+		{
+			id: 'location',
+			header: 'At',
+			cell: ({ row }) => link('location', row.original.locationId, row.original.location)
+		},
 		{ id: 'kg', header: 'kg', meta: { align: 'right' }, cell: ({ row }) => kg(row.original.kg) },
-		{ id: 'cost', header: 'Cost / kg (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.costPerKg) },
+		{
+			id: 'cost',
+			header: 'Cost / kg (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.costPerKg)
+		},
 		{ id: 'note', header: 'Note', cell: ({ row }) => longText(row.original.note) },
 		{ id: 'by', header: 'By', cell: ({ row }) => user(row.original.byId, row.original.by) }
 	];
@@ -42,11 +55,33 @@
 		<form method="POST" use:enhance class="grid grid-cols-1 gap-4">
 			<Errors allErrors={$allErrors} />
 			<InputComp label="Lot" name="lotId" type="combo" items={data.lots} {form} {errors} required />
-			<InputComp label="Received at" name="locationId" type="combo" items={data.locations} {form} {errors} required />
+			<InputComp
+				label="Received at"
+				name="locationId"
+				type="combo"
+				items={data.locations}
+				{form}
+				{errors}
+				required
+			/>
 			<InputComp label="Kilograms" name="kg" type="number" step="0.001" {form} {errors} required />
-			<InputComp label="Cost per kg (ETB)" name="costPerKg" type="number" step="0.01" {form} {errors} required />
+			<InputComp
+				label="Cost per kg (ETB)"
+				name="costPerKg"
+				type="number"
+				step="0.01"
+				{form}
+				{errors}
+				required
+			/>
 			<InputComp label="Date" name="date" type="date" {form} {errors} required />
-			<InputComp label="Note" name="note" placeholder="Truck, delivery note number…" {form} {errors} />
+			<InputComp
+				label="Note"
+				name="note"
+				placeholder="Truck, delivery note number…"
+				{form}
+				{errors}
+			/>
 			<Button type="submit" class="justify-self-start" disabled={$delayed}>
 				{#if $delayed}<LoadingBtn name="Saving" />{:else}<PackagePlus class="size-4" /> Receive{/if}
 			</Button>

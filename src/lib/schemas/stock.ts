@@ -50,7 +50,10 @@ export const roastEditSchema = z.object({
 	isToOrder: bool
 });
 
-export const packSourceSchema = z.object({ roastBatchId: requiredId('Choose a batch'), roastedKg: kg() });
+export const packSourceSchema = z.object({
+	roastBatchId: requiredId('Choose a batch'),
+	roastedKg: kg()
+});
 
 export const packingSchema = z.object({
 	date: isoDate,

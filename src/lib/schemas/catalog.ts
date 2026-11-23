@@ -1,6 +1,11 @@
 /** The catalogue's forms. Client-safe, so each dialog validates with the schema its action uses. */
 import { z } from 'zod/v4';
-import { BUNDLE_PRICINGS, FULFILMENT_MODES, PRODUCT_KINDS, PUBLISH_STATUSES } from '#lib/constants.ts';
+import {
+	BUNDLE_PRICINGS,
+	FULFILMENT_MODES,
+	PRODUCT_KINDS,
+	PUBLISH_STATUSES
+} from '#lib/constants.ts';
 import {
 	amText,
 	bool,
@@ -152,7 +157,10 @@ export const productSchema = z.object({
 	seoDescriptionIt: optionalText(300),
 	seoDescriptionFr: optionalText(300)
 });
-export const productEditSchema = productSchema.extend({ id: z.coerce.number(), isActive: boolTrue });
+export const productEditSchema = productSchema.extend({
+	id: z.coerce.number(),
+	isActive: boolTrue
+});
 
 /** The description, as HTML from the rich editor — sanitised on the server. */
 export const productDescriptionSchema = z.object({
@@ -184,11 +192,19 @@ export const productOriginSchema = z
 		sharePercent: optionalInt,
 		sortOrder
 	})
-	.refine((v) => v.stationId || v.lotId, { path: ['stationId'], message: 'Choose a station or a lot' });
+	.refine((v) => v.stationId || v.lotId, {
+		path: ['stationId'],
+		message: 'Choose a station or a lot'
+	});
 
 /** A sellable size of a product (`childCrud` on the product page). */
 export const variantSchema = z.object({
-	sku: z.string().trim().min(1, 'Required').max(40).transform((v) => v.toUpperCase()),
+	sku: z
+		.string()
+		.trim()
+		.min(1, 'Required')
+		.max(40)
+		.transform((v) => v.toUpperCase()),
 	bagSizeId: optionalId,
 	nameEn: optionalText(80),
 	nameAm: amText(80),
@@ -268,10 +284,18 @@ export const bundleItemSchema = z
 	})
 	.superRefine((v, ctx) => {
 		if (!v.variantId === !v.bagSizeId) {
-			ctx.addIssue({ code: 'custom', path: ['variantId'], message: 'Choose an exact size, or a bag size for the customer to fill — not both' });
+			ctx.addIssue({
+				code: 'custom',
+				path: ['variantId'],
+				message: 'Choose an exact size, or a bag size for the customer to fill — not both'
+			});
 		}
 		if (v.categoryId && !v.bagSizeId) {
-			ctx.addIssue({ code: 'custom', path: ['categoryId'], message: 'Only a customer-filled slot takes a category' });
+			ctx.addIssue({
+				code: 'custom',
+				path: ['categoryId'],
+				message: 'Only a customer-filled slot takes a category'
+			});
 		}
 	});
 export const bundleItemEditSchema = bundleItemSchema.safeExtend({ id: z.coerce.number() });

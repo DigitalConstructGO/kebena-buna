@@ -26,14 +26,37 @@
 	const unit = $derived(data.stage === 'packed' ? 'bags' : 'kg');
 	type Row = (typeof $form.lines)[number] & { index: number };
 	const rows = $derived($form.lines.map((line, index) => ({ ...line, index })));
-	const counted = $derived($form.lines.filter((l) => l.counted !== null && l.counted !== undefined && String(l.counted) !== ''));
-	const differ = $derived(counted.filter((l) => Number(l.counted) !== Number(l.expected ?? 0)).length);
+	const counted = $derived(
+		$form.lines.filter(
+			(l) => l.counted !== null && l.counted !== undefined && String(l.counted) !== ''
+		)
+	);
+	const differ = $derived(
+		counted.filter((l) => Number(l.counted) !== Number(l.expected ?? 0)).length
+	);
 	const setCount = (index: number, value: unknown) =>
-		($form.lines = $form.lines.map((l, i) => (i === index ? { ...l, counted: value as number | null } : l)));
+		($form.lines = $form.lines.map((l, i) =>
+			i === index ? { ...l, counted: value as number | null } : l
+		));
 
 	const columns: ColumnDef<Row>[] = $derived([
-		{ id: 'item', header: humanize(data.stage === 'green' ? 'lot' : data.stage === 'roasted' ? 'roast batch' : 'bag · packing run'), cell: ({ row }) => row.original.label },
-		{ id: 'expected', header: 'On the books', meta: { align: 'right' }, cell: ({ row }) => qty(Number(row.original.expected ?? 0), unit) },
+		{
+			id: 'item',
+			header: humanize(
+				data.stage === 'green'
+					? 'lot'
+					: data.stage === 'roasted'
+						? 'roast batch'
+						: 'bag · packing run'
+			),
+			cell: ({ row }) => row.original.label
+		},
+		{
+			id: 'expected',
+			header: 'On the books',
+			meta: { align: 'right' },
+			cell: ({ row }) => qty(Number(row.original.expected ?? 0), unit)
+		},
 		{
 			id: 'counted',
 			header: `Counted (${unit})`,
@@ -53,7 +76,9 @@
 			header: 'Difference',
 			meta: { align: 'right' },
 			cell: ({ row }) =>
-				row.original.counted === null ? '—' : qty(Number(row.original.counted) - Number(row.original.expected ?? 0), unit)
+				row.original.counted === null
+					? '—'
+					: qty(Number(row.original.counted) - Number(row.original.expected ?? 0), unit)
 		}
 	]);
 </script>
@@ -67,24 +92,43 @@
 	<div class="flex flex-wrap items-center gap-2">
 		<span class="w-20 text-sm text-muted-foreground">Location</span>
 		{#each data.locations as l (l.value)}
-			<Button size="sm" variant={l.value === data.locationId ? 'default' : 'outline'} href="?location={l.value}&stage={data.stage}">{l.name}</Button>
+			<Button
+				size="sm"
+				variant={l.value === data.locationId ? 'default' : 'outline'}
+				href="?location={l.value}&stage={data.stage}"
+			>
+				{l.name}
+			</Button>
 		{/each}
 	</div>
 	<div class="flex flex-wrap items-center gap-2">
 		<span class="w-20 text-sm text-muted-foreground">Stage</span>
 		{#each STOCK_STAGES as s (s)}
-			<Button size="sm" variant={s === data.stage ? 'default' : 'outline'} href="?location={data.locationId}&stage={s}">{humanize(s)}</Button>
+			<Button
+				size="sm"
+				variant={s === data.stage ? 'default' : 'outline'}
+				href="?location={data.locationId}&stage={s}"
+			>
+				{humanize(s)}
+			</Button>
 		{/each}
 	</div>
 </div>
 
-<form method="POST" use:enhance class="mt-6 grid grid-cols-1 max-w-4xl gap-6">
+<form method="POST" use:enhance class="mt-6 grid max-w-4xl grid-cols-1 gap-6">
 	<Errors allErrors={$allErrors} />
 	<PageSection title="Count">
 		<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
 			<InputComp label="Date" name="date" type="date" {form} {errors} required />
 			<InputComp label="Time" name="time" type="time" {form} {errors} required />
-			<InputComp label="Opening count" name="isOpening" type="checkboxSingle" placeholder="The first count of this place" {form} {errors} />
+			<InputComp
+				label="Opening count"
+				name="isOpening"
+				type="checkboxSingle"
+				placeholder="The first count of this place"
+				{form}
+				{errors}
+			/>
 		</div>
 		<InputComp label="Note" name="note" {form} {errors} />
 	</PageSection>
@@ -93,7 +137,12 @@
 			<DataTable variant="sheet" {columns} data={rows} />
 		{:else}<Empty message="Nothing of this stage to count" />{/if}
 	</PageSection>
-	<Button type="submit" size="lg" class="sm:justify-self-start" disabled={$delayed || !counted.length}>
+	<Button
+		type="submit"
+		size="lg"
+		class="sm:justify-self-start"
+		disabled={$delayed || !counted.length}
+	>
 		{#if $delayed}<LoadingBtn name="Posting" />{:else}<Save class="size-4" /> Post count{/if}
 	</Button>
 </form>

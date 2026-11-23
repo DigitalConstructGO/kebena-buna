@@ -23,7 +23,13 @@
 <LanguageTabs {form} {errors} fields={['name', 'requiresProof', 'description', 'benefits']}>
 	{#snippet children({ lang, suffix, language })}
 		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-			<InputComp label="Name ({language})" name="name{suffix}" {form} {errors} required={lang === 'en'} />
+			<InputComp
+				label="Name ({language})"
+				name="name{suffix}"
+				{form}
+				{errors}
+				required={lang === 'en'}
+			/>
 			<InputComp
 				label="Proof needed ({language})"
 				name="requiresProof{suffix}"
@@ -32,14 +38,35 @@
 				{errors}
 			/>
 		</div>
-		<InputComp label="Description ({language})" name="description{suffix}" type="textarea" rows={2} {form} {errors} />
-		<InputComp label="Benefits applied by hand ({language})" name="benefits{suffix}" type="textarea" rows={2} {form} {errors} />
+		<InputComp
+			label="Description ({language})"
+			name="description{suffix}"
+			type="textarea"
+			rows={2}
+			{form}
+			{errors}
+		/>
+		<InputComp
+			label="Benefits applied by hand ({language})"
+			name="benefits{suffix}"
+			type="textarea"
+			rows={2}
+			{form}
+			{errors}
+		/>
 	{/snippet}
 </LanguageTabs>
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 	<InputComp label="Code" name="code" {form} {errors} required />
-	<InputComp label="Publish" name="publishStatus" type="select" items={choicesOf(PUBLISH_STATUSES)} {form} {errors} />
+	<InputComp
+		label="Publish"
+		name="publishStatus"
+		type="select"
+		items={choicesOf(PUBLISH_STATUSES)}
+		{form}
+		{errors}
+	/>
 	<InputComp label="Price (ETB)" name="price" type="number" step="0.01" {form} {errors} required />
 	<InputComp label="Tax" name="taxRateId" type="select" items={options.taxRates} {form} {errors} />
 	<InputComp label="Months" name="durationMonths" type="number" {form} {errors} />
@@ -54,7 +81,14 @@
 		{form}
 		{errors}
 	/>
-	<InputComp label="Shop discount (%)" name="shopDiscountPct" type="number" step="0.01" {form} {errors} />
+	<InputComp
+		label="Shop discount (%)"
+		name="shopDiscountPct"
+		type="number"
+		step="0.01"
+		{form}
+		{errors}
+	/>
 	<InputComp
 		label="Monthly coffee"
 		name="monthlyCoffeeVariantId"
@@ -67,9 +101,37 @@
 	<InputComp label="Order" name="sortOrder" type="number" {form} {errors} />
 </div>
 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-	<InputComp label="Free entry" name="freeEntry" type="checkboxSingle" placeholder="Members enter free" {form} {errors} />
-	<InputComp label="Free delivery" name="freeDelivery" type="checkboxSingle" placeholder="On shop orders" {form} {errors} />
-	<InputComp label="Members-only events" name="membersOnlyEvents" type="checkboxSingle" placeholder="May book them" {form} {errors} />
-	<InputComp label="Active" name="isActive" type="checkboxSingle" placeholder="Offered for sale" {form} {errors} />
+	<InputComp
+		label="Free entry"
+		name="freeEntry"
+		type="checkboxSingle"
+		placeholder="Members enter free"
+		{form}
+		{errors}
+	/>
+	<InputComp
+		label="Free delivery"
+		name="freeDelivery"
+		type="checkboxSingle"
+		placeholder="On shop orders"
+		{form}
+		{errors}
+	/>
+	<InputComp
+		label="Members-only events"
+		name="membersOnlyEvents"
+		type="checkboxSingle"
+		placeholder="May book them"
+		{form}
+		{errors}
+	/>
+	<InputComp
+		label="Active"
+		name="isActive"
+		type="checkboxSingle"
+		placeholder="Offered for sale"
+		{form}
+		{errors}
+	/>
 </div>
 <InputComp label="Image" name="image" type="file" accept="image/*" {image} {form} {errors} />

@@ -131,7 +131,9 @@ async function changeRoasted(
 	const [row] = await tx
 		.select()
 		.from(roastedStock)
-		.where(and(eq(roastedStock.roastBatchId, roastBatchId), eq(roastedStock.locationId, locationId)))
+		.where(
+			and(eq(roastedStock.roastBatchId, roastBatchId), eq(roastedStock.locationId, locationId))
+		)
 		.for('update');
 	const have = Number(row?.kg ?? 0);
 	const free = have - Number(row?.reservedKg ?? 0);
@@ -195,7 +197,8 @@ async function changePacked(
 		})
 		.from(packingRun)
 		.where(eq(packingRun.id, packingRunId));
-	if (!run) throw new WriteRefused(field, 'That packing run no longer exists: reload and choose again.');
+	if (!run)
+		throw new WriteRefused(field, 'That packing run no longer exists: reload and choose again.');
 	const [row] = await tx
 		.select()
 		.from(packedStock)
@@ -316,7 +319,9 @@ export async function recordRoast(
 		const cost = await greenCost(tx, input.lotId, r.locationId);
 		await changeGreen(tx, input.lotId, r.locationId, -input.greenKg, 'inputs');
 		greenValue += cost * input.greenKg;
-		await tx.insert(roastBatchInput).values({ roastBatchId: id, lotId: input.lotId, greenKg: input.greenKg });
+		await tx
+			.insert(roastBatchInput)
+			.values({ roastBatchId: id, lotId: input.lotId, greenKg: input.greenKg });
 		await writeMovement(tx, {
 			stage: 'green',
 			reason: 'roast_input',
@@ -377,7 +382,8 @@ export async function recordPacking(
 ) {
 	const sources = r.sources.filter((s) => s.roastBatchId && s.roastedKg > 0);
 	if (r.units <= 0) throw new WriteRefused('units', 'Enter the bags packed.');
-	if (!sources.length) throw new WriteRefused('sources', 'Add the roast batches the bags came from.');
+	if (!sources.length)
+		throw new WriteRefused('sources', 'Add the roast batches the bags came from.');
 	if (new Set(sources.map((s) => s.roastBatchId)).size !== sources.length)
 		throw new WriteRefused('sources', 'Each batch once: add its kilograms together.');
 	const [variant] = await tx
@@ -389,7 +395,10 @@ export async function recordPacking(
 	const needed = round3((r.units * variant.grams) / 1000);
 	const given = round3(sources.reduce((sum, s) => sum + s.roastedKg, 0));
 	if (given + 0.0005 < needed)
-		throw new WriteRefused('sources', `${r.units} × ${variant.grams} g needs ${needed} kg; the batches give ${given} kg.`);
+		throw new WriteRefused(
+			'sources',
+			`${r.units} × ${variant.grams} g needs ${needed} kg; the batches give ${given} kg.`
+		);
 	const most = round3(needed * (1 + PACK_SPILL));
 	if (given > most + 0.0005)
 		throw new WriteRefused(
@@ -399,12 +408,23 @@ export async function recordPacking(
 
 	// The bags carry the roast of the coffee in them, so every batch must be that roast.
 	const batches = await tx
-		.select({ id: roastBatch.id, code: roastBatch.code, roastLevelId: roastBatch.roastLevelId, roast: enOf(roastLevel.name) })
+		.select({
+			id: roastBatch.id,
+			code: roastBatch.code,
+			roastLevelId: roastBatch.roastLevelId,
+			roast: enOf(roastLevel.name)
+		})
 		.from(roastBatch)
 		.innerJoin(roastLevel, eq(roastBatch.roastLevelId, roastLevel.id))
-		.where(inArray(roastBatch.id, sources.map((s) => s.roastBatchId)));
+		.where(
+			inArray(
+				roastBatch.id,
+				sources.map((s) => s.roastBatchId)
+			)
+		);
 	const missing = sources.find((s) => !batches.some((b) => b.id === s.roastBatchId));
-	if (missing) throw new WriteRefused('sources', 'A roast batch no longer exists: reload and choose again.');
+	if (missing)
+		throw new WriteRefused('sources', 'A roast batch no longer exists: reload and choose again.');
 	const other = batches.find((b) => b.roastLevelId !== r.roastLevelId);
 	if (other)
 		throw new WriteRefused(
@@ -434,7 +454,9 @@ export async function recordPacking(
 		const cost = await roastedCost(tx, source.roastBatchId);
 		await changeRoasted(tx, source.roastBatchId, r.sourceLocationId, -source.roastedKg, 'sources');
 		value += cost * source.roastedKg;
-		await tx.insert(packingRunSource).values({ packingRunId: id, roastBatchId: source.roastBatchId, roastedKg: source.roastedKg });
+		await tx
+			.insert(packingRunSource)
+			.values({ packingRunId: id, roastBatchId: source.roastBatchId, roastedKg: source.roastedKg });
 		await writeMovement(tx, {
 			stage: 'roasted',
 			reason: 'pack_input',
@@ -510,7 +532,8 @@ async function change(
 			.select({ roastLevelId: roastBatch.roastLevelId })
 			.from(roastBatch)
 			.where(eq(roastBatch.id, item.itemId));
-		if (!b) throw new WriteRefused(field, 'That roast batch no longer exists: reload and choose again.');
+		if (!b)
+			throw new WriteRefused(field, 'That roast batch no longer exists: reload and choose again.');
 		unitCost = await roastedCost(tx, item.itemId);
 		await changeRoasted(tx, item.itemId, locationId, quantity, field);
 		extra = { roastLevelId: b.roastLevelId };
@@ -586,8 +609,19 @@ export async function transferStock(
 	const transferKey = randomUUID();
 	const base = { occurredAt: r.occurredAt, note: r.note, userId: r.userId, transferKey };
 	// Green arrives at the cost it left with; the receiving location may have none of the lot yet.
-	const cost = await change(tx, r, r.fromLocationId, -r.quantity, { ...base, reason: 'transfer_out' });
-	await change(tx, r, r.toLocationId, r.quantity, { ...base, reason: 'transfer_in' }, 'quantity', cost);
+	const cost = await change(tx, r, r.fromLocationId, -r.quantity, {
+		...base,
+		reason: 'transfer_out'
+	});
+	await change(
+		tx,
+		r,
+		r.toLocationId,
+		r.quantity,
+		{ ...base, reason: 'transfer_in' },
+		'quantity',
+		cost
+	);
 }
 
 /** What the books say is at a location for a stage, item by item. */
@@ -630,7 +664,9 @@ async function lockedBalance(tx: Writer, item: StockItem, locationId: number) {
 		const [row] = await tx
 			.select({ quantity: roastedStock.kg })
 			.from(roastedStock)
-			.where(and(eq(roastedStock.roastBatchId, item.itemId), eq(roastedStock.locationId, locationId)))
+			.where(
+				and(eq(roastedStock.roastBatchId, item.itemId), eq(roastedStock.locationId, locationId))
+			)
 			.for('update');
 		return Number(row?.quantity ?? 0);
 	}
@@ -690,7 +726,8 @@ export async function postCount(
 ) {
 	const lines = r.lines.filter((l) => l.itemId && l.counted !== null && l.counted !== undefined);
 	if (!lines.length) throw new WriteRefused('lines', 'Count at least one line.');
-	if (lines.some((l) => l.counted < 0)) throw new WriteRefused('lines', 'A count cannot be negative.');
+	if (lines.some((l) => l.counted < 0))
+		throw new WriteRefused('lines', 'A count cannot be negative.');
 	const [res] = await tx.insert(stockCount).values({
 		locationId: r.locationId,
 		stage: r.stage,
@@ -748,4 +785,3 @@ export async function roastedAvailable(tx: Writer, locationId?: number) {
 		.orderBy(sql`${roastBatch.roastedAt} desc`);
 	return rows;
 }
-

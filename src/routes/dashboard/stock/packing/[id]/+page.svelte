@@ -22,51 +22,133 @@
 
 	type Source = (typeof data.sources)[number];
 	const sourceColumns: ColumnDef<Source>[] = [
-		{ id: 'batch', header: 'Roast batch', cell: ({ row }) => link('roastBatch', row.original.roastBatchId, row.original.code) },
+		{
+			id: 'batch',
+			header: 'Roast batch',
+			cell: ({ row }) => link('roastBatch', row.original.roastBatchId, row.original.code)
+		},
 		{ id: 'at', header: 'Roasted', cell: ({ row }) => dateTime(row.original.roastedAt) },
-		{ id: 'kg', header: 'Roasted kg used', meta: { align: 'right' }, cell: ({ row }) => kg(row.original.roastedKg) }
+		{
+			id: 'kg',
+			header: 'Roasted kg used',
+			meta: { align: 'right' },
+			cell: ({ row }) => kg(row.original.roastedKg)
+		}
 	];
 	type Lot = (typeof data.lots)[number];
 	const lotColumns: ColumnDef<Lot>[] = [
-		{ id: 'lot', header: 'Lot', cell: ({ row }) => link('lot', row.original.lotId, row.original.code) },
-		{ id: 'station', header: 'Station', cell: ({ row }) => link('station', row.original.stationId, row.original.station) },
+		{
+			id: 'lot',
+			header: 'Lot',
+			cell: ({ row }) => link('lot', row.original.lotId, row.original.code)
+		},
+		{
+			id: 'station',
+			header: 'Station',
+			cell: ({ row }) => link('station', row.original.stationId, row.original.station)
+		},
 		{ id: 'process', header: 'Process', cell: ({ row }) => humanize(row.original.process) },
 		{ id: 'crop', header: 'Crop year', cell: ({ row }) => row.original.cropYear },
-		{ id: 'batch', header: 'Via batch', cell: ({ row }) => link('roastBatch', row.original.roastBatchId, `#${row.original.roastBatchId}`) }
+		{
+			id: 'batch',
+			header: 'Via batch',
+			cell: ({ row }) =>
+				link('roastBatch', row.original.roastBatchId, `#${row.original.roastBatchId}`)
+		}
 	];
 	type Stock = (typeof data.stock)[number];
 	const stockColumns: ColumnDef<Stock>[] = [
-		{ id: 'location', header: 'Location', cell: ({ row }) => link('location', row.original.locationId, row.original.location) },
-		{ id: 'units', header: 'Bags', meta: { align: 'right' }, cell: ({ row }) => row.original.units },
-		{ id: 'reserved', header: 'Held for orders', meta: { align: 'right' }, cell: ({ row }) => row.original.reservedUnits },
+		{
+			id: 'location',
+			header: 'Location',
+			cell: ({ row }) => link('location', row.original.locationId, row.original.location)
+		},
+		{
+			id: 'units',
+			header: 'Bags',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.units
+		},
+		{
+			id: 'reserved',
+			header: 'Held for orders',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.reservedUnits
+		},
 		{ id: 'updated', header: 'Updated', cell: ({ row }) => dateTime(row.original.updatedAt) }
 	];
 	type Move = (typeof data.movements)[number];
 	const moveColumns: ColumnDef<Move>[] = [
 		{ id: 'at', header: 'When', cell: ({ row }) => dateTime(row.original.occurredAt) },
 		{ id: 'reason', header: 'Reason', cell: ({ row }) => humanize(row.original.reason) },
-		{ id: 'location', header: 'Location', cell: ({ row }) => link('location', row.original.locationId, row.original.location) },
-		{ id: 'batch', header: 'Batch', cell: ({ row }) => (row.original.roastBatchId ? link('roastBatch', row.original.roastBatchId, `#${row.original.roastBatchId}`) : '—') },
-		{ id: 'qty', header: 'Qty', meta: { align: 'right' }, cell: ({ row }) => qty(row.original.quantity, row.original.stage === 'packed' ? 'bags' : 'kg') },
-		{ id: 'ref', header: 'Document', cell: ({ row }) => (row.original.refType === 'stock_count' ? link('stockCount', row.original.refId, `Count #${row.original.refId}`) : (row.original.note ?? '—')) },
+		{
+			id: 'location',
+			header: 'Location',
+			cell: ({ row }) => link('location', row.original.locationId, row.original.location)
+		},
+		{
+			id: 'batch',
+			header: 'Batch',
+			cell: ({ row }) =>
+				row.original.roastBatchId
+					? link('roastBatch', row.original.roastBatchId, `#${row.original.roastBatchId}`)
+					: '—'
+		},
+		{
+			id: 'qty',
+			header: 'Qty',
+			meta: { align: 'right' },
+			cell: ({ row }) => qty(row.original.quantity, row.original.stage === 'packed' ? 'bags' : 'kg')
+		},
+		{
+			id: 'ref',
+			header: 'Document',
+			cell: ({ row }) =>
+				row.original.refType === 'stock_count'
+					? link('stockCount', row.original.refId, `Count #${row.original.refId}`)
+					: (row.original.note ?? '—')
+		},
 		{ id: 'by', header: 'By', cell: ({ row }) => user(row.original.byId, row.original.by) }
 	];
 </script>
 
-<PageHeader title={r.code} eyebrow="Packing run" description={`${data.product} · ${data.sku} · ${data.roastLevel}`}>
+<PageHeader
+	title={r.code}
+	eyebrow="Packing run"
+	description={`${data.product} · ${data.sku} · ${data.roastLevel}`}
+>
 	{#snippet badges()}
 		<Statuses {...flag(Boolean(r.labelPrintedAt), 'Label printed', 'Label not printed')} />
 		{#if r.isToOrder}<Statuses status="ready" label="For one order" />{/if}
 	{/snippet}
 	{#snippet actions()}
 		{#if data.canManage}
-			<FormDialog title="Edit {r.code}" action="?/edit" data={data.editForm} schema={packingEditSchema}>
+			<FormDialog
+				title="Edit {r.code}"
+				action="?/edit"
+				data={data.editForm}
+				schema={packingEditSchema}
+			>
 				{#snippet fields({ form, errors })}
 					<!-- The dialog posts only the fields it renders: without this the save has no batch. -->
 					<InputComp type="hidden" name="id" {form} {errors} />
 					<InputComp label="Best before" name="bestBefore" type="date" futureDays {form} {errors} />
-					<InputComp label="Label printed" name="labelPrinted" type="checkboxSingle" placeholder="The run's label and QR are on the bags" {form} {errors} />
-					<InputComp label="Active" name="isActive" type="checkboxSingle" placeholder="Offered when selling and transferring" {form} {errors} />
+					<InputComp
+						label="Label printed"
+						name="labelPrinted"
+						type="checkboxSingle"
+						placeholder="The run's label and QR are on the bags"
+						{form}
+						{errors}
+					/>
+					<InputComp
+						label="Active"
+						name="isActive"
+						type="checkboxSingle"
+						placeholder="Offered when selling and transferring"
+						{form}
+						{errors}
+					/>
 				{/snippet}
 			</FormDialog>
 		{/if}
@@ -74,9 +156,22 @@
 </PageHeader>
 
 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-	<StatCard stat={{ key: 'packed', label: 'Bags packed', value: r.units, format: 'count', group: 'run' }} />
-	<StatCard stat={{ key: 'left', label: 'Bags on hand', value: onHand, format: 'count', group: 'run' }} />
-	<StatCard stat={{ key: 'cost', label: 'Cost per bag', value: data.costPerBag, format: 'money', group: 'run' }} amharicMoney={false} />
+	<StatCard
+		stat={{ key: 'packed', label: 'Bags packed', value: r.units, format: 'count', group: 'run' }}
+	/>
+	<StatCard
+		stat={{ key: 'left', label: 'Bags on hand', value: onHand, format: 'count', group: 'run' }}
+	/>
+	<StatCard
+		stat={{
+			key: 'cost',
+			label: 'Cost per bag',
+			value: data.costPerBag,
+			format: 'money',
+			group: 'run'
+		}}
+		amharicMoney={false}
+	/>
 </div>
 
 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[24rem_minmax(0,1fr)]">
@@ -102,7 +197,10 @@
 		<PageSection title="Roast batches used">
 			<DataTable variant="compact" columns={sourceColumns} data={data.sources} />
 		</PageSection>
-		<PageSection title="Where the coffee comes from" hint="The lots in those batches, and their stations — what the bag's QR page shows.">
+		<PageSection
+			title="Where the coffee comes from"
+			hint="The lots in those batches, and their stations — what the bag's QR page shows."
+		>
 			{#if data.lots.length}
 				<DataTable variant="compact" columns={lotColumns} data={data.lots} />
 			{:else}<Empty message="No lots recorded for these batches" />{/if}

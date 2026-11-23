@@ -18,6 +18,7 @@ import {
 	membership,
 	order,
 	orderLine,
+	payment,
 	product,
 	productVariant,
 	refund,
@@ -30,7 +31,13 @@ import { lowStock, stockLevels } from '#lib/server/stockReads.ts';
 import type { Stat, ReportChartData } from '@nahu/admin-kit/components/reports/types';
 
 /** Orders that have been paid and still need hands on them. */
-export const TO_FULFIL = ['paid', 'roasting', 'packed', 'ready_for_pickup', 'out_for_delivery'] as const;
+export const TO_FULFIL = [
+	'paid',
+	'roasting',
+	'packed',
+	'ready_for_pickup',
+	'out_for_delivery'
+] as const;
 
 /**
  * What "sales" means here and in Reports alike: orders that were paid (refunded ones included, so a
@@ -53,7 +60,11 @@ const n = (v: unknown) => Number(v ?? 0);
 
 /** A chart's day as "22 Oct": the axis already says which month range it covers. */
 export const dayLabel = (iso: string) =>
-	new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+	new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-GB', {
+		day: 'numeric',
+		month: 'short',
+		timeZone: 'UTC'
+	});
 
 /** "last Tuesday" — what today's figure is set against. */
 const sameDayLastWeek = (iso: string) =>
@@ -126,12 +137,27 @@ export async function homeData(locals: App.Locals) {
 					db
 						.select({ total: netSales() })
 						.from(order)
-						.where(and(soldOrder(), gte(order.paidAt, localDayRange(weekAgo).start), lt(order.paidAt, sameTimeLastWeek))),
-					db.select({ c: count() }).from(order).where(and(inArray(order.status, TO_FULFIL), isNull(order.deletedAt))),
+						.where(
+							and(
+								soldOrder(),
+								gte(order.paidAt, localDayRange(weekAgo).start),
+								lt(order.paidAt, sameTimeLastWeek)
+							)
+						),
+					db
+						.select({ c: count() })
+						.from(order)
+						.where(and(inArray(order.status, TO_FULFIL), isNull(order.deletedAt))),
 					db
 						.select({ day: paidDay(), total: netSales() })
 						.from(order)
-						.where(and(soldOrder(), gte(order.paidAt, localDayRange(monthAgo).start), lt(order.paidAt, end)))
+						.where(
+							and(
+								soldOrder(),
+								gte(order.paidAt, localDayRange(monthAgo).start),
+								lt(order.paidAt, end)
+							)
+						)
 						.groupBy(paidDay())
 				]);
 				stats.push(
@@ -144,9 +170,21 @@ export async function homeData(locals: App.Locals) {
 						hint: `${n(sales?.orders)} paid orders, after refunds`,
 						tone: 'positive',
 						href: `${D}/orders?dateStart=${today}&dateEnd=${today}`,
-						compare: { value: n(salesLastWeek?.total), label: `this time ${sameDayLastWeek(weekAgo)}` }
+						compare: {
+							value: n(salesLastWeek?.total),
+							label: `this time ${sameDayLastWeek(weekAgo)}`
+						}
 					},
-					{ key: 'fulfil', label: 'Orders to fulfil', value: n(toFulfil?.c), format: 'count', group: 'sales', hint: 'Paid, roasting, packed or on the way', tone: n(toFulfil?.c) ? 'warning' : 'neutral', href: `${D}/orders?open=1` }
+					{
+						key: 'fulfil',
+						label: 'Orders to fulfil',
+						value: n(toFulfil?.c),
+						format: 'count',
+						group: 'sales',
+						hint: 'Paid, roasting, packed or on the way',
+						tone: n(toFulfil?.c) ? 'warning' : 'neutral',
+						href: `${D}/orders?open=1`
+					}
 				);
 				const totals = new Map(byDay.map((r) => [String(r.day).slice(0, 10), n(r.total)]));
 				charts.push({
@@ -183,7 +221,16 @@ export async function homeData(locals: App.Locals) {
 		tasks.push(
 			(async () => {
 				const low = await lowStockCount();
-				stats.push({ key: 'low', label: 'Low stock', value: low, format: 'count', group: 'stock', hint: 'Lots, roasted coffee and bag sizes under their level', tone: low ? 'warning' : 'positive', href: `${D}/stock` });
+				stats.push({
+					key: 'low',
+					label: 'Low stock',
+					value: low,
+					format: 'count',
+					group: 'stock',
+					hint: 'Lots, roasted coffee and bag sizes under their level',
+					tone: low ? 'warning' : 'positive',
+					href: `${D}/stock`
+				});
 				roastQueue = await db
 					.select({
 						roastOn: orderLine.roastOn,
@@ -202,8 +249,23 @@ export async function homeData(locals: App.Locals) {
 					.innerJoin(product, eq(productVariant.productId, product.id))
 					.leftJoin(bagSize, eq(productVariant.bagSizeId, bagSize.id))
 					.leftJoin(roastLevel, eq(orderLine.roastLevelId, roastLevel.id))
-					.where(and(isNotNull(orderLine.roastOn), isNull(orderLine.roastBatchId), inArray(order.status, ['paid', 'roasting']), isNull(order.deletedAt)))
-					.groupBy(orderLine.roastOn, orderLine.variantId, product.id, orderLine.roastLevelId, product.name, bagSize.name, roastLevel.name)
+					.where(
+						and(
+							isNotNull(orderLine.roastOn),
+							isNull(orderLine.roastBatchId),
+							inArray(order.status, ['paid', 'roasting']),
+							isNull(order.deletedAt)
+						)
+					)
+					.groupBy(
+						orderLine.roastOn,
+						orderLine.variantId,
+						product.id,
+						orderLine.roastLevelId,
+						product.name,
+						bagSize.name,
+						roastLevel.name
+					)
 					.orderBy(asc(orderLine.roastOn))
 					.limit(10);
 			})()
@@ -219,11 +281,19 @@ export async function homeData(locals: App.Locals) {
 						.from(ticket)
 						.where(and(eq(ticket.visitDate, today), inArray(ticket.status, ['valid', 'used']))),
 					db
-						.select({ capacity: sum(visitDay.capacity), sold: sum(visitDay.sold), held: sum(visitDay.held) })
+						.select({
+							capacity: sum(visitDay.capacity),
+							sold: sum(visitDay.sold),
+							held: sum(visitDay.held)
+						})
 						.from(visitDay)
 						.where(eq(visitDay.date, today)),
 					db
-						.select({ day: ticket.visitDate, admits: sum(ticket.admits), checkedIn: sum(ticket.checkedIn) })
+						.select({
+							day: ticket.visitDate,
+							admits: sum(ticket.admits),
+							checkedIn: sum(ticket.checkedIn)
+						})
 						.from(ticket)
 						.where(and(gte(ticket.visitDate, monthAgo), inArray(ticket.status, ['valid', 'used'])))
 						.groupBy(ticket.visitDate)
@@ -247,7 +317,9 @@ export async function homeData(locals: App.Locals) {
 						value: capacity ? Math.round(((n(cap?.sold) + n(cap?.held)) / capacity) * 100) : 0,
 						format: 'percent',
 						group: 'visits',
-						hint: capacity ? `${n(cap?.sold)} sold, ${n(cap?.held)} held of ${capacity}` : 'No visit day set up for today',
+						hint: capacity
+							? `${n(cap?.sold)} sold, ${n(cap?.held)} held of ${capacity}`
+							: 'No visit day set up for today',
 						tone: 'neutral',
 						href: `${D}/visits/days`
 					}
@@ -265,7 +337,9 @@ export async function homeData(locals: App.Locals) {
 						{ label: 'Checked in', data: days.map((d) => n(tally.get(d)?.checkedIn)) },
 						{
 							label: 'Not checked in',
-							data: days.map((d) => Math.max(0, n(tally.get(d)?.admits) - n(tally.get(d)?.checkedIn)))
+							data: days.map((d) =>
+								Math.max(0, n(tally.get(d)?.admits) - n(tally.get(d)?.checkedIn))
+							)
 						}
 					]
 				});
@@ -280,7 +354,16 @@ export async function homeData(locals: App.Locals) {
 				.from(formSubmission)
 				.where(and(eq(formSubmission.status, 'new'), isNull(formSubmission.deletedAt)))
 				.then(([r]) => {
-					stats.push({ key: 'inbox', label: 'New in the inbox', value: n(r?.c), format: 'count', group: 'bookings', hint: 'Enquiries and requests nobody has opened', tone: n(r?.c) ? 'warning' : 'positive', href: `${D}/inbox?status=new` });
+					stats.push({
+						key: 'inbox',
+						label: 'New in the inbox',
+						value: n(r?.c),
+						format: 'count',
+						group: 'bookings',
+						hint: 'Enquiries and requests nobody has opened',
+						tone: n(r?.c) ? 'warning' : 'positive',
+						href: `${D}/inbox?status=new`
+					});
 				})
 		);
 	}
@@ -294,9 +377,24 @@ export async function homeData(locals: App.Locals) {
 						.select({ c: count(), people: sum(booking.partySize) })
 						.from(booking)
 						.leftJoin(bookingSession, eq(booking.sessionId, bookingSession.id))
-						.where(and(isNull(booking.deletedAt), inArray(booking.status, ['new', 'in_progress', 'confirmed']), sql`${when} >= ${start}`, sql`${when} < ${weekAhead}`))
+						.where(
+							and(
+								isNull(booking.deletedAt),
+								inArray(booking.status, ['new', 'in_progress', 'confirmed']),
+								sql`${when} >= ${start}`,
+								sql`${when} < ${weekAhead}`
+							)
+						)
 				]);
-				stats.push({ key: 'bookings', label: 'Bookings this week', value: n(week?.c), format: 'count', group: 'bookings', hint: `${n(week?.people)} people`, href: `${D}/bookings` });
+				stats.push({
+					key: 'bookings',
+					label: 'Bookings this week',
+					value: n(week?.c),
+					format: 'count',
+					group: 'bookings',
+					hint: `${n(week?.people)} people`,
+					href: `${D}/bookings`
+				});
 				sessions = await db
 					.select({
 						id: bookingSession.id,
@@ -309,7 +407,14 @@ export async function homeData(locals: App.Locals) {
 					})
 					.from(bookingSession)
 					.innerJoin(bookable, eq(bookingSession.bookableId, bookable.id))
-					.where(and(gte(bookingSession.startsAt, start), lt(bookingSession.startsAt, end), eq(bookingSession.isCancelled, false), isNull(bookingSession.deletedAt)))
+					.where(
+						and(
+							gte(bookingSession.startsAt, start),
+							lt(bookingSession.startsAt, end),
+							eq(bookingSession.isCancelled, false),
+							isNull(bookingSession.deletedAt)
+						)
+					)
 					.orderBy(asc(bookingSession.startsAt));
 			})()
 		);
@@ -322,7 +427,15 @@ export async function homeData(locals: App.Locals) {
 				.from(membership)
 				.where(and(inArray(membership.status, ['active', 'grace']), isNull(membership.deletedAt)))
 				.then(([r]) => {
-					stats.push({ key: 'members', label: 'Active members', value: n(r?.c), format: 'count', group: 'members', hint: 'Active or in their grace period', href: `${D}/memberships` });
+					stats.push({
+						key: 'members',
+						label: 'Active members',
+						value: n(r?.c),
+						format: 'count',
+						group: 'members',
+						hint: 'Active or in their grace period',
+						href: `${D}/memberships`
+					});
 				})
 		);
 	}
@@ -335,13 +448,44 @@ export async function homeData(locals: App.Locals) {
 	const decide = (item: (typeof decisions)[number]) => {
 		if (item.count > 0) decisions.push(item);
 	};
+	if (may('orders.manage')) {
+		tasks.push(
+			db
+				.select({ c: count() })
+				.from(payment)
+				.where(
+					and(
+						eq(payment.provider, 'bank_transfer'),
+						eq(payment.status, 'pending'),
+						isNotNull(payment.receiptFile)
+					)
+				)
+				.then(([r]) =>
+					decide({
+						key: 'receipts',
+						label: 'Transfer receipts to check',
+						hint: 'Buyers say they paid; confirm each against the statement',
+						count: n(r?.c),
+						href: `${D}/orders/payments?provider=bank_transfer&status=pending`
+					})
+				)
+		);
+	}
 	if (may('refunds.manage')) {
 		tasks.push(
 			db
 				.select({ c: count() })
 				.from(refund)
 				.where(eq(refund.status, 'requested'))
-				.then(([r]) => decide({ key: 'refunds', label: 'Refunds to approve', hint: 'Asked for, not yet approved or refused', count: n(r?.c), href: `${D}/orders/refunds?status=requested` }))
+				.then(([r]) =>
+					decide({
+						key: 'refunds',
+						label: 'Refunds to approve',
+						hint: 'Asked for, not yet approved or refused',
+						count: n(r?.c),
+						href: `${D}/orders/refunds?status=requested`
+					})
+				)
 		);
 	}
 	if (may('wholesale.manage')) {
@@ -349,8 +493,18 @@ export async function homeData(locals: App.Locals) {
 			db
 				.select({ c: count() })
 				.from(businessAccount)
-				.where(and(eq(businessAccount.approvalStatus, 'pending'), isNull(businessAccount.deletedAt)))
-				.then(([r]) => decide({ key: 'wholesale', label: 'Wholesale applications', hint: 'Businesses waiting to be approved', count: n(r?.c), href: `${D}/wholesale/accounts?approvalStatus=pending` }))
+				.where(
+					and(eq(businessAccount.approvalStatus, 'pending'), isNull(businessAccount.deletedAt))
+				)
+				.then(([r]) =>
+					decide({
+						key: 'wholesale',
+						label: 'Wholesale applications',
+						hint: 'Businesses waiting to be approved',
+						count: n(r?.c),
+						href: `${D}/wholesale/accounts?approvalStatus=pending`
+					})
+				)
 		);
 	}
 	if (may('bookings.view')) {
@@ -359,7 +513,15 @@ export async function homeData(locals: App.Locals) {
 				.select({ c: count() })
 				.from(booking)
 				.where(and(eq(booking.status, 'new'), isNull(booking.deletedAt)))
-				.then(([r]) => decide({ key: 'bookings', label: 'New booking requests', hint: 'Not yet answered', count: n(r?.c), href: `${D}/bookings?status=new` }))
+				.then(([r]) =>
+					decide({
+						key: 'bookings',
+						label: 'New booking requests',
+						hint: 'Not yet answered',
+						count: n(r?.c),
+						href: `${D}/bookings?status=new`
+					})
+				)
 		);
 	}
 	if (may('memberships.view')) {
@@ -368,8 +530,23 @@ export async function homeData(locals: App.Locals) {
 			db
 				.select({ c: count() })
 				.from(membership)
-				.where(and(eq(membership.status, 'active'), gte(membership.endsOn, today), sql`${membership.endsOn} <= ${monthAhead}`, isNull(membership.deletedAt)))
-				.then(([r]) => decide({ key: 'renewals', label: 'Memberships to renew', hint: 'Ending in the next 30 days', count: n(r?.c), href: `${D}/memberships?status=active&dateStart=${today}&dateEnd=${monthAhead}` }))
+				.where(
+					and(
+						eq(membership.status, 'active'),
+						gte(membership.endsOn, today),
+						sql`${membership.endsOn} <= ${monthAhead}`,
+						isNull(membership.deletedAt)
+					)
+				)
+				.then(([r]) =>
+					decide({
+						key: 'renewals',
+						label: 'Memberships to renew',
+						hint: 'Ending in the next 30 days',
+						count: n(r?.c),
+						href: `${D}/memberships?status=active&dateStart=${today}&dateEnd=${monthAhead}`
+					})
+				)
 		);
 	}
 

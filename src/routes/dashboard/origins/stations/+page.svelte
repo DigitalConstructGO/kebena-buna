@@ -73,7 +73,17 @@
 >
 	{#snippet actions()}
 		{#if data.canManage}
-			<FormDialog title="New station" action="?/add" data={data.addForm} schema={stationSchema} dataType="json" triggerLabel="New station" triggerVariant="default" triggerIcon={Plus} submitIcon={Plus}>
+			<FormDialog
+				title="New station"
+				action="?/add"
+				data={data.addForm}
+				schema={stationSchema}
+				dataType="json"
+				triggerLabel="New station"
+				triggerVariant="default"
+				triggerIcon={Plus}
+				submitIcon={Plus}
+			>
 				{#snippet fields({ form, errors })}
 					<StationFields form={form as never} errors={errors as never} options={data.options} />
 				{/snippet}

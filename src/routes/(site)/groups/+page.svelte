@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { superForm } from 'sveltekit-superforms';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import Field from '#lib/site/Field.svelte';
 	import Trap from '#lib/site/Trap.svelte';
 	import Consent from '#lib/site/Consent.svelte';
@@ -32,7 +32,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.groups_title()} · Kebena</title>
+	<title>{m.site_page_title({ title: m.groups_title() })}</title>
 	<meta name="description" content={m.groups_lede()} />
 </svelte:head>
 

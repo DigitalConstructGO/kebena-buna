@@ -32,7 +32,10 @@
 	/>
 	<div class="px-1">
 		<PasswordGenerator
-			bind:password={() => String($form[name] ?? ''), (value: string) => ($form[name] = value)}
+			bind:password={
+				() => String(($form[name] as string | null | undefined) ?? ''),
+				(value: string) => ($form[name] = value)
+			}
 		/>
 	</div>
 </div>

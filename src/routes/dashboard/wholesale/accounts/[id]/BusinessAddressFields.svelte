@@ -24,6 +24,20 @@
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 	<InputComp label="Latitude" name="latitude" type="number" step="0.000001" {form} {errors} />
 	<InputComp label="Longitude" name="longitude" type="number" step="0.000001" {form} {errors} />
-	<InputComp label="Billing address" name="isBilling" type="checkboxSingle" placeholder="Printed on invoices" {form} {errors} />
-	<InputComp label="Default delivery" name="isDefaultDelivery" type="checkboxSingle" placeholder="Offered first" {form} {errors} />
+	<InputComp
+		label="Billing address"
+		name="isBilling"
+		type="checkboxSingle"
+		placeholder="Printed on invoices"
+		{form}
+		{errors}
+	/>
+	<InputComp
+		label="Default delivery"
+		name="isDefaultDelivery"
+		type="checkboxSingle"
+		placeholder="Offered first"
+		{form}
+		{errors}
+	/>
 </div>

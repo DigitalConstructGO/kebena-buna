@@ -3,21 +3,39 @@ import { bundlePrice, inWindow, spreadSaving } from './bundles.ts';
 
 describe('bundlePrice', () => {
 	it('takes a percentage off the bags', () => {
-		expect(bundlePrice({ pricing: 'percent_off', value: 5 }, 4800)).toEqual({ price: 4560, saving: 240 });
+		expect(bundlePrice({ pricing: 'percent_off', value: 5 }, 4800)).toEqual({
+			price: 4560,
+			saving: 240
+		});
 	});
 
 	it('takes an amount off, never below zero', () => {
-		expect(bundlePrice({ pricing: 'amount_off', value: 300 }, 4800)).toEqual({ price: 4500, saving: 300 });
-		expect(bundlePrice({ pricing: 'amount_off', value: 9000 }, 4800)).toEqual({ price: 0, saving: 4800 });
+		expect(bundlePrice({ pricing: 'amount_off', value: 300 }, 4800)).toEqual({
+			price: 4500,
+			saving: 300
+		});
+		expect(bundlePrice({ pricing: 'amount_off', value: 9000 }, 4800)).toEqual({
+			price: 0,
+			saving: 4800
+		});
 	});
 
 	it('charges a fixed price, never more than the bags', () => {
-		expect(bundlePrice({ pricing: 'fixed_price', value: 4400 }, 4800)).toEqual({ price: 4400, saving: 400 });
-		expect(bundlePrice({ pricing: 'fixed_price', value: 5000 }, 4800)).toEqual({ price: 4800, saving: 0 });
+		expect(bundlePrice({ pricing: 'fixed_price', value: 4400 }, 4800)).toEqual({
+			price: 4400,
+			saving: 400
+		});
+		expect(bundlePrice({ pricing: 'fixed_price', value: 5000 }, 4800)).toEqual({
+			price: 4800,
+			saving: 0
+		});
 	});
 
 	it('rounds to the cent', () => {
-		expect(bundlePrice({ pricing: 'percent_off', value: 7.5 }, 1333.33)).toEqual({ price: 1233.33, saving: 100 });
+		expect(bundlePrice({ pricing: 'percent_off', value: 7.5 }, 1333.33)).toEqual({
+			price: 1233.33,
+			saving: 100
+		});
 	});
 });
 

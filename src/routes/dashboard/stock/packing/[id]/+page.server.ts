@@ -118,7 +118,12 @@ export const load = async ({ params, locals }) => {
 				.from(roastBatchInput)
 				.innerJoin(lot, eq(roastBatchInput.lotId, lot.id))
 				.innerJoin(station, eq(lot.stationId, station.id))
-				.where(inArray(roastBatchInput.roastBatchId, sources.map((s) => s.roastBatchId)))
+				.where(
+					inArray(
+						roastBatchInput.roastBatchId,
+						sources.map((s) => s.roastBatchId)
+					)
+				)
 		: [];
 
 	return {
@@ -138,7 +143,12 @@ export const load = async ({ params, locals }) => {
 		costPerBag: cost,
 		canManage: hasPermission(locals, 'stock.manage'),
 		editForm: await superValidate(
-			{ id: r.id, bestBefore: r.bestBefore, labelPrinted: Boolean(r.labelPrintedAt), isActive: r.isActive },
+			{
+				id: r.id,
+				bestBefore: r.bestBefore,
+				labelPrinted: Boolean(r.labelPrintedAt),
+				isActive: r.isActive
+			},
 			zod4(packingEditSchema),
 			{ errors: false }
 		)
@@ -149,7 +159,8 @@ export const actions = {
 	edit: async (event) => {
 		requirePermission(event.locals, 'stock.manage');
 		const form = await superValidate(event.request, zod4(packingEditSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { id, labelPrinted, ...values } = form.data;
 		const { run: before } = await loadRun(String(id));
 		const after = {
@@ -158,8 +169,17 @@ export const actions = {
 			labelPrintedAt: labelPrinted ? (before.labelPrintedAt ?? new Date()) : null
 		};
 		await db.transaction(async (tx) => {
-			await tx.update(packingRun).set({ ...after, updatedBy: event.locals.user?.id }).where(eq(packingRun.id, id));
-			await recordAudit(tx, event, { table: 'packing_run', recordId: id, action: 'update', before, after });
+			await tx
+				.update(packingRun)
+				.set({ ...after, updatedBy: event.locals.user?.id })
+				.where(eq(packingRun.id, id));
+			await recordAudit(tx, event, {
+				table: 'packing_run',
+				recordId: id,
+				action: 'update',
+				before,
+				after
+			});
 		});
 		return message(form, { type: 'success', text: 'Packing run saved' });
 	}

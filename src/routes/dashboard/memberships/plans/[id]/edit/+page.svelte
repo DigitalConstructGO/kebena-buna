@@ -14,10 +14,14 @@
 
 	let { data } = $props();
 	// svelte-ignore state_referenced_locally
-	const { form, errors, enhance, delayed, allErrors } = createForm(data.form, membershipPlanEditSchema, {
-		taintedMessage: confirmLeave,
-		resetForm: false
-	});
+	const { form, errors, enhance, delayed, allErrors } = createForm(
+		data.form,
+		membershipPlanEditSchema,
+		{
+			taintedMessage: confirmLeave,
+			resetForm: false
+		}
+	);
 </script>
 
 <PageHeader title={tr(data.plan.name)} eyebrow="Edit membership plan">
@@ -28,7 +32,12 @@
 	{/snippet}
 </PageHeader>
 
-<form method="POST" enctype="multipart/form-data" use:enhance class="mt-4 grid max-w-5xl grid-cols-1 gap-6">
+<form
+	method="POST"
+	enctype="multipart/form-data"
+	use:enhance
+	class="mt-4 grid max-w-5xl grid-cols-1 gap-6"
+>
 	<Errors allErrors={$allErrors} />
 	<PageSection title="Plan">
 		<div class="grid grid-cols-1 gap-4">

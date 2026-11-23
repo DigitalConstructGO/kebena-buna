@@ -39,7 +39,14 @@
 				options={data.options}
 				lowDefault={data.roastedLowDefault}
 			/>
-			<InputComp label="Active" name="isActive" type="checkboxSingle" placeholder="Offered for sale and in pickers" {form} {errors} />
+			<InputComp
+				label="Active"
+				name="isActive"
+				type="checkboxSingle"
+				placeholder="Offered for sale and in pickers"
+				{form}
+				{errors}
+			/>
 		</div>
 	</PageSection>
 	<div class="sticky bottom-2 flex justify-end">

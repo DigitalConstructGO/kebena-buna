@@ -67,14 +67,21 @@ export function writeChoices(cookies: Cookies, lines: CartChoice[], secure: bool
 	const kept = lines.slice(0, MAX_LINES);
 	const options = { path: '/', sameSite: 'lax' as const, secure, maxAge: 60 * 60 * 24 * 30 };
 	cookies.set(COOKIE, JSON.stringify(kept), { ...options, httpOnly: true });
-	cookies.set(COUNT_COOKIE, String(kept.reduce((sum, l) => sum + l.quantity, 0)), { ...options, httpOnly: false });
+	cookies.set(COUNT_COOKIE, String(kept.reduce((sum, l) => sum + l.quantity, 0)), {
+		...options,
+		httpOnly: false
+	});
 }
 
 /** The same choice: one cart line per variant and option set. */
 const sameChoice = (a: CartChoice, b: CartChoice) =>
-	a.variantId === b.variantId && a.roastLevelId === b.roastLevelId && a.grindId === b.grindId && a.packagingId === b.packagingId;
+	a.variantId === b.variantId &&
+	a.roastLevelId === b.roastLevelId &&
+	a.grindId === b.grindId &&
+	a.packagingId === b.packagingId;
 
-export const lineKey = (c: CartChoice) => `${c.variantId}-${c.roastLevelId ?? 0}-${c.grindId ?? 0}-${c.packagingId ?? 0}`;
+export const lineKey = (c: CartChoice) =>
+	`${c.variantId}-${c.roastLevelId ?? 0}-${c.grindId ?? 0}-${c.packagingId ?? 0}`;
 
 /** Adds `choice` to the cart, merging into a line with the same options. */
 export function addChoice(lines: CartChoice[], choice: CartChoice) {
@@ -85,12 +92,14 @@ export function addChoice(lines: CartChoice[], choice: CartChoice) {
 }
 
 /** Bags on hand for sale: packed units less those already set aside. */
-const availableOf = sql<number>`(select coalesce(sum(ps.units - ps.reserved_units), 0) from packed_stock ps where ps.variant_id = ${productVariant.id})`.mapWith(
-	Number
-);
+const availableOf =
+	sql<number>`(select coalesce(sum(ps.units - ps.reserved_units), 0) from packed_stock ps where ps.variant_id = ${productVariant.id})`.mapWith(
+		Number
+	);
 
 /** Where a coffee's stock is counted: packed bags. Merchandise and sets are not tracked as bags. */
-export const tracksStock = (p: { kind: string; fulfilment: string }) => p.kind === 'coffee' && p.fulfilment === 'from_stock';
+export const tracksStock = (p: { kind: string; fulfilment: string }) =>
+	p.kind === 'coffee' && p.fulfilment === 'from_stock';
 
 /**
  * A product's picture: its own upload (served at `/media`), else the Kebena bag. The seed sets the
@@ -144,17 +153,36 @@ export async function priceCart(choices: CartChoice[]) {
 		.from(productVariant)
 		.innerJoin(product, eq(productVariant.productId, product.id))
 		.leftJoin(bagSize, eq(productVariant.bagSizeId, bagSize.id))
-		.where(and(inArray(productVariant.id, variantIds), eq(productVariant.isActive, true), isNull(productVariant.deletedAt), onSale));
+		.where(
+			and(
+				inArray(productVariant.id, variantIds),
+				eq(productVariant.isActive, true),
+				isNull(productVariant.deletedAt),
+				onSale
+			)
+		);
 	const productIds = [...new Set(variants.map((v) => v.productId))];
 	const [roasts, grinds, packs] = productIds.length
 		? await Promise.all([
 				db
-					.select({ productId: productRoastLevel.productId, id: roastLevel.id, name: roastLevel.name, isDefault: productRoastLevel.isDefault })
+					.select({
+						productId: productRoastLevel.productId,
+						id: roastLevel.id,
+						name: roastLevel.name,
+						isDefault: productRoastLevel.isDefault
+					})
 					.from(productRoastLevel)
 					.innerJoin(roastLevel, eq(productRoastLevel.roastLevelId, roastLevel.id))
-					.where(and(inArray(productRoastLevel.productId, productIds), isNull(roastLevel.deletedAt))),
+					.where(
+						and(inArray(productRoastLevel.productId, productIds), isNull(roastLevel.deletedAt))
+					),
 				db
-					.select({ productId: productGrind.productId, id: grind.id, name: grind.name, isDefault: productGrind.isDefault })
+					.select({
+						productId: productGrind.productId,
+						id: grind.id,
+						name: grind.name,
+						isDefault: productGrind.isDefault
+					})
 					.from(productGrind)
 					.innerJoin(grind, eq(productGrind.grindId, grind.id))
 					.where(and(inArray(productGrind.productId, productIds), isNull(grind.deletedAt))),
@@ -173,9 +201,15 @@ export async function priceCart(choices: CartChoice[]) {
 		: [[], [], []];
 
 	/** The chosen option if the product allows it, else its default, else none. */
-	const pick = <T extends { productId: number; id: number; isDefault: boolean }>(list: T[], productId: number, chosen: number | null) => {
+	const pick = <T extends { productId: number; id: number; isDefault: boolean }>(
+		list: T[],
+		productId: number,
+		chosen: number | null
+	) => {
 		const allowed = list.filter((o) => o.productId === productId);
-		return allowed.find((o) => o.id === chosen) ?? allowed.find((o) => o.isDefault) ?? allowed[0] ?? null;
+		return (
+			allowed.find((o) => o.id === chosen) ?? allowed.find((o) => o.isDefault) ?? allowed[0] ?? null
+		);
 	};
 
 	let changed = false;
@@ -210,7 +244,13 @@ export async function priceCart(choices: CartChoice[]) {
 			roast: roast?.name ?? null,
 			grind: grnd?.name ?? null,
 			packaging: pack && Number(pack.surcharge) > 0 ? pack.name : null,
-			description: describe([v.name, size, roast?.name, grnd?.name, pack && Number(pack.surcharge) > 0 ? pack.name : null]),
+			description: describe([
+				v.name,
+				size,
+				roast?.name,
+				grnd?.name,
+				pack && Number(pack.surcharge) > 0 ? pack.name : null
+			]),
 			sku: v.sku,
 			fulfilment: v.fulfilment,
 			taxRateId: v.taxRateId,
@@ -230,6 +270,10 @@ export async function priceCart(choices: CartChoice[]) {
 /** Lines asking for more bags than are on hand (summed per variant across lines). */
 export function shortLines(lines: PricedLine[]) {
 	const wanted = new Map<number, number>();
-	for (const l of lines) if (l.available !== null) wanted.set(l.choice.variantId, (wanted.get(l.choice.variantId) ?? 0) + l.quantity);
-	return lines.filter((l) => l.available !== null && (wanted.get(l.choice.variantId) ?? 0) > l.available);
+	for (const l of lines)
+		if (l.available !== null)
+			wanted.set(l.choice.variantId, (wanted.get(l.choice.variantId) ?? 0) + l.quantity);
+	return lines.filter(
+		(l) => l.available !== null && (wanted.get(l.choice.variantId) ?? 0) > l.available
+	);
 }

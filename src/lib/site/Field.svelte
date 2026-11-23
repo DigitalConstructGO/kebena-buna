@@ -54,7 +54,7 @@
 	/** The kit's `Input` takes any type but `file`, which has its own upload. */
 	const inputType = $derived((type ?? 'text') as Exclude<HTMLInputTypeAttribute, 'file'>);
 	const text = {
-		get: () => (value == null ? '' : String(value)),
+		get: () => (value == null ? '' : String(value as string | number)),
 		set: (v: string) => (value = v)
 	};
 </script>

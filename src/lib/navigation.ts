@@ -22,33 +22,174 @@ const D = '/dashboard';
  * search, not in the sidebar. `section` is the overview card each belongs on.
  */
 export const SETUP: { title: string; url: string; section: string; hint: string }[] = [
-	{ title: 'Locations', url: `${D}/admin/locations`, section: 'Places and calendar', hint: 'Sites, shop, café, roastery, opening hours' },
-	{ title: 'Holidays & closures', url: `${D}/admin/calendar`, section: 'Places and calendar', hint: 'Days the weekly pattern does not hold' },
-	{ title: 'Categories', url: `${D}/catalog/categories`, section: 'Catalogue', hint: 'How products are grouped in the shop' },
-	{ title: 'Bag sizes', url: `${D}/catalog/bag-sizes`, section: 'Catalogue', hint: '250 g, 500 g, 1 kg and their low-stock levels' },
-	{ title: 'Roast levels', url: `${D}/catalog/roast-levels`, section: 'Catalogue', hint: 'Light, medium, dark (jebena)' },
-	{ title: 'Grinds', url: `${D}/catalog/grinds`, section: 'Catalogue', hint: 'Whole bean, espresso, filter' },
-	{ title: 'Packaging', url: `${D}/catalog/packaging`, section: 'Catalogue', hint: 'Bags and gift boxes' },
-	{ title: 'Varieties', url: `${D}/origins/varieties`, section: 'Catalogue', hint: 'Coffee varieties for lots' },
-	{ title: 'Certifications', url: `${D}/origins/certifications`, section: 'Catalogue', hint: 'Organic, Fairtrade and the like' },
-	{ title: 'Roasting machines', url: `${D}/stock/machines`, section: 'Catalogue', hint: 'Roasters and their batch sizes' },
-	{ title: 'Quantity tiers', url: `${D}/wholesale/tiers`, section: 'Selling', hint: 'Wholesale prices by quantity' },
-	{ title: 'Tax rates', url: `${D}/admin/taxes`, section: 'Selling', hint: 'VAT, inclusive prices' },
-	{ title: 'Audiences', url: `${D}/admin/audiences`, section: 'Selling', hint: 'Resident, foreign visitor' },
-	{ title: 'Delivery zones', url: `${D}/customers/delivery/zones`, section: 'Selling', hint: 'Fees and days per zone' },
-	{ title: 'Delivery areas', url: `${D}/customers/delivery/areas`, section: 'Selling', hint: 'Neighbourhoods in each zone' },
-	{ title: 'Couriers', url: `${D}/customers/delivery/couriers`, section: 'Selling', hint: 'Outside Addis, with tracking links' },
-	{ title: 'Membership plans', url: `${D}/memberships/plans`, section: 'Selling', hint: 'Levels, prices, benefits' },
-	{ title: 'Subscription plans', url: `${D}/subscriptions/plans`, section: 'Selling', hint: 'Coffee subscriptions' },
-	{ title: 'Ticket types', url: `${D}/visits/ticket-types`, section: 'Visits and bookings', hint: 'Who pays what to visit' },
-	{ title: 'Slot pattern', url: `${D}/visits/slot-templates`, section: 'Visits and bookings', hint: 'Entry times and capacity per weekday' },
-	{ title: 'Scanner devices', url: `${D}/visits/devices`, section: 'Visits and bookings', hint: 'Phones and tablets at the gate' },
-	{ title: 'What can be booked', url: `${D}/bookings/bookables`, section: 'Visits and bookings', hint: 'Tours, ceremonies, cuppings, venue hire' },
-	{ title: 'Post categories', url: `${D}/content/post-categories`, section: 'System', hint: 'How blog posts are grouped' },
-	{ title: 'Languages', url: `${D}/admin/languages`, section: 'System', hint: 'Amharic, English, Afaan Oromo, Arabic' },
-	{ title: 'Document numbers', url: `${D}/admin/sequences`, section: 'System', hint: 'Order, lot and batch series' },
-	{ title: 'Message templates', url: `${D}/admin/templates`, section: 'System', hint: 'SMS and email wording' },
-	{ title: 'Payment webhooks', url: `${D}/admin/webhooks`, section: 'System', hint: 'Gateway callbacks as received' }
+	{
+		title: 'Locations',
+		url: `${D}/admin/locations`,
+		section: 'Places and calendar',
+		hint: 'Sites, shop, café, roastery, opening hours'
+	},
+	{
+		title: 'Holidays & closures',
+		url: `${D}/admin/calendar`,
+		section: 'Places and calendar',
+		hint: 'Days the weekly pattern does not hold'
+	},
+	{
+		title: 'Categories',
+		url: `${D}/catalog/categories`,
+		section: 'Catalogue',
+		hint: 'How products are grouped in the shop'
+	},
+	{
+		title: 'Bag sizes',
+		url: `${D}/catalog/bag-sizes`,
+		section: 'Catalogue',
+		hint: '250 g, 500 g, 1 kg and their low-stock levels'
+	},
+	{
+		title: 'Roast levels',
+		url: `${D}/catalog/roast-levels`,
+		section: 'Catalogue',
+		hint: 'Light, medium, dark (jebena)'
+	},
+	{
+		title: 'Grinds',
+		url: `${D}/catalog/grinds`,
+		section: 'Catalogue',
+		hint: 'Whole bean, espresso, filter'
+	},
+	{
+		title: 'Packaging',
+		url: `${D}/catalog/packaging`,
+		section: 'Catalogue',
+		hint: 'Bags and gift boxes'
+	},
+	{
+		title: 'Varieties',
+		url: `${D}/origins/varieties`,
+		section: 'Catalogue',
+		hint: 'Coffee varieties for lots'
+	},
+	{
+		title: 'Certifications',
+		url: `${D}/origins/certifications`,
+		section: 'Catalogue',
+		hint: 'Organic, Fairtrade and the like'
+	},
+	{
+		title: 'Roasting machines',
+		url: `${D}/stock/machines`,
+		section: 'Catalogue',
+		hint: 'Roasters and their batch sizes'
+	},
+	{
+		title: 'Quantity tiers',
+		url: `${D}/wholesale/tiers`,
+		section: 'Selling',
+		hint: 'Wholesale prices by quantity'
+	},
+	{
+		title: 'Tax rates',
+		url: `${D}/admin/taxes`,
+		section: 'Selling',
+		hint: 'VAT, inclusive prices'
+	},
+	{
+		title: 'Bank accounts',
+		url: `${D}/admin/bank-accounts`,
+		section: 'Selling',
+		hint: 'Where buyers pay by transfer'
+	},
+	{
+		title: 'Audiences',
+		url: `${D}/admin/audiences`,
+		section: 'Selling',
+		hint: 'Resident, foreign visitor'
+	},
+	{
+		title: 'Delivery zones',
+		url: `${D}/customers/delivery/zones`,
+		section: 'Selling',
+		hint: 'Fees and days per zone'
+	},
+	{
+		title: 'Delivery areas',
+		url: `${D}/customers/delivery/areas`,
+		section: 'Selling',
+		hint: 'Neighbourhoods in each zone'
+	},
+	{
+		title: 'Couriers',
+		url: `${D}/customers/delivery/couriers`,
+		section: 'Selling',
+		hint: 'Outside Addis, with tracking links'
+	},
+	{
+		title: 'Membership plans',
+		url: `${D}/memberships/plans`,
+		section: 'Selling',
+		hint: 'Levels, prices, benefits'
+	},
+	{
+		title: 'Subscription plans',
+		url: `${D}/subscriptions/plans`,
+		section: 'Selling',
+		hint: 'Coffee subscriptions'
+	},
+	{
+		title: 'Ticket types',
+		url: `${D}/visits/ticket-types`,
+		section: 'Visits and bookings',
+		hint: 'Who pays what to visit'
+	},
+	{
+		title: 'Slot pattern',
+		url: `${D}/visits/slot-templates`,
+		section: 'Visits and bookings',
+		hint: 'Entry times and capacity per weekday'
+	},
+	{
+		title: 'Scanner devices',
+		url: `${D}/visits/devices`,
+		section: 'Visits and bookings',
+		hint: 'Phones and tablets at the gate'
+	},
+	{
+		title: 'What can be booked',
+		url: `${D}/bookings/bookables`,
+		section: 'Visits and bookings',
+		hint: 'Tours, ceremonies, cuppings, venue hire'
+	},
+	{
+		title: 'Post categories',
+		url: `${D}/content/post-categories`,
+		section: 'System',
+		hint: 'How blog posts are grouped'
+	},
+	{
+		title: 'Languages',
+		url: `${D}/admin/languages`,
+		section: 'System',
+		hint: 'Amharic, English, Afaan Oromo, Arabic'
+	},
+	{
+		title: 'Document numbers',
+		url: `${D}/admin/sequences`,
+		section: 'System',
+		hint: 'Order, lot and batch series'
+	},
+	{
+		title: 'Message templates',
+		url: `${D}/admin/templates`,
+		section: 'System',
+		hint: 'SMS and email wording'
+	},
+	{
+		title: 'Payment webhooks',
+		url: `${D}/admin/webhooks`,
+		section: 'System',
+		hint: 'Gateway callbacks as received'
+	}
 ];
 
 /**
@@ -154,6 +295,7 @@ export const NAVIGATION: NavItem[] = [
 		items: [
 			{ title: 'Pages', url: `${D}/content/pages`, icon: Globe },
 			{ title: 'Posts', url: `${D}/content/posts`, icon: Globe },
+			{ title: 'Site text', url: `${D}/content/text`, icon: Globe },
 			{ title: 'Media library', url: `${D}/content/media`, icon: Globe },
 			{ title: 'Knowledge base', url: `${D}/content/knowledge`, icon: Globe },
 			{ title: 'Virtual tour', url: `${D}/content/tour`, icon: Globe },
@@ -172,7 +314,12 @@ export const NAVIGATION: NavItem[] = [
 			{ title: 'Settings', url: `${D}/admin/settings`, icon: Settings },
 			{ title: 'Outbox', url: `${D}/admin/messages`, icon: Settings },
 			{ title: 'Audit log', url: `${D}/admin/audit-log`, icon: Settings },
-			...SETUP.map((entry) => ({ title: entry.title, url: entry.url, icon: Settings, hidden: true }))
+			...SETUP.map((entry) => ({
+				title: entry.title,
+				url: entry.url,
+				icon: Settings,
+				hidden: true
+			}))
 		]
 	}
 ];

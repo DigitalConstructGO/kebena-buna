@@ -2,10 +2,13 @@
 	import { onMount } from 'svelte';
 	import { reveal } from '#lib/reveal.js';
 	import type { ArchiveContent } from '#lib/content/museum.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 
 	let { content }: { content: ArchiveContent } = $props();
 	let root: HTMLElement;
-	const dateFmt = new Intl.DateTimeFormat('en', {
+	// the month named in the reader's language; digits stay Western, like every other number here
+	const dateFmt = new Intl.DateTimeFormat(getLocale(), {
+		numberingSystem: 'latn',
 		year: 'numeric',
 		month: 'long',
 		day: 'numeric',

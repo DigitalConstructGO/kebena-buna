@@ -25,7 +25,11 @@
 	];
 </script>
 
-<PageHeader title="{humanize(e.action)} · {humanize(e.tableName)}" eyebrow="Audit entry #{e.id}" description="Record #{e.recordId}">
+<PageHeader
+	title="{humanize(e.action)} · {humanize(e.tableName)}"
+	eyebrow="Audit entry #{e.id}"
+	description="Record #{e.recordId}"
+>
 	{#snippet badges()}
 		<Statuses status={ACTION_TONE[e.action] ?? 'neutral'} label={humanize(e.action)} />
 	{/snippet}
@@ -41,13 +45,20 @@
 		<SingleTable
 			singleTable={[
 				{ name: 'When', value: formatDateTime(e.createdAt) },
-				{ name: 'Who', value: data.userName ?? (e.userId ? e.userId : 'System'), href: href('user', e.userId) },
+				{
+					name: 'Who',
+					value: data.userName ?? (e.userId ? e.userId : 'System'),
+					href: href('user', e.userId)
+				},
 				{ name: 'Record', value: `${humanize(e.tableName)} #${e.recordId}`, href: recordHref },
 				{ name: 'From (IP)', value: e.ipAddress ?? '—' }
 			]}
 		/>
 	</PageSection>
-	<PageSection title="What changed" hint="Only the fields that moved; passwords are never recorded.">
+	<PageSection
+		title="What changed"
+		hint="Only the fields that moved; passwords are never recorded."
+	>
 		{#if data.changes.length}
 			<DataTable variant="compact" {columns} data={data.changes} />
 		{:else}

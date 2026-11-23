@@ -23,9 +23,28 @@
 	<div class="col-span-full">
 		<LanguageTabs {form} {errors} fields={['name', 'requiresProof', 'description']}>
 			{#snippet children({ lang, suffix, language })}
-				<InputComp label="Name ({language})" name="name{suffix}" {form} {errors} required={lang === 'en'} />
-				<InputComp label="Proof asked at the door ({language})" name="requiresProof{suffix}" placeholder={lang === 'en' ? 'Student ID' : ''} {form} {errors} />
-				<InputComp label="Description ({language})" name="description{suffix}" type="textarea" rows={2} {form} {errors} />
+				<InputComp
+					label="Name ({language})"
+					name="name{suffix}"
+					{form}
+					{errors}
+					required={lang === 'en'}
+				/>
+				<InputComp
+					label="Proof asked at the door ({language})"
+					name="requiresProof{suffix}"
+					placeholder={lang === 'en' ? 'Student ID' : ''}
+					{form}
+					{errors}
+				/>
+				<InputComp
+					label="Description ({language})"
+					name="description{suffix}"
+					type="textarea"
+					rows={2}
+					{form}
+					{errors}
+				/>
 			{/snippet}
 		</LanguageTabs>
 	</div>
@@ -42,14 +61,49 @@
 			{errors}
 		/>
 	{/if}
-	<InputComp label="People admitted per ticket" name="admitsPerTicket" type="number" min={1} {form} {errors} />
+	<InputComp
+		label="People admitted per ticket"
+		name="admitsPerTicket"
+		type="number"
+		min={1}
+		{form}
+		{errors}
+	/>
 	<InputComp label="Minimum per order" name="minQuantity" type="number" min={1} {form} {errors} />
 	<InputComp label="Maximum per order" name="maxQuantity" type="number" {form} {errors} />
 	<InputComp label="Order" name="sortOrder" type="number" {form} {errors} />
 </div>
 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-	<InputComp label="Capacity" name="countsTowardCapacity" type="checkboxSingle" placeholder="Counts toward slot capacity" {form} {errors} />
-	<InputComp label="Staff only" name="isStaffOnly" type="checkboxSingle" placeholder="Sold only at the desk" {form} {errors} />
-	<InputComp label="Members" name="isMemberOnly" type="checkboxSingle" placeholder="Members only" {form} {errors} />
-	<InputComp label="Active" name="isActive" type="checkboxSingle" placeholder="On sale" {form} {errors} />
+	<InputComp
+		label="Capacity"
+		name="countsTowardCapacity"
+		type="checkboxSingle"
+		placeholder="Counts toward slot capacity"
+		{form}
+		{errors}
+	/>
+	<InputComp
+		label="Staff only"
+		name="isStaffOnly"
+		type="checkboxSingle"
+		placeholder="Sold only at the desk"
+		{form}
+		{errors}
+	/>
+	<InputComp
+		label="Members"
+		name="isMemberOnly"
+		type="checkboxSingle"
+		placeholder="Members only"
+		{form}
+		{errors}
+	/>
+	<InputComp
+		label="Active"
+		name="isActive"
+		type="checkboxSingle"
+		placeholder="On sale"
+		{form}
+		{errors}
+	/>
 </div>

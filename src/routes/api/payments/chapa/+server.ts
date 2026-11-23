@@ -13,7 +13,10 @@ import type { RequestHandler } from './$types';
  */
 export const POST: RequestHandler = async (event) => {
 	const raw = await event.request.text();
-	const signed = webhookSignatureOk(raw, event.request.headers.get('x-chapa-signature') ?? event.request.headers.get('chapa-signature'));
+	const signed = webhookSignatureOk(
+		raw,
+		event.request.headers.get('x-chapa-signature') ?? event.request.headers.get('chapa-signature')
+	);
 	if (!signed) return json({ ok: false }, { status: 401 });
 
 	let body: { tx_ref?: string; reference?: string; status?: string; event?: string };
@@ -24,7 +27,10 @@ export const POST: RequestHandler = async (event) => {
 	}
 	const txRef = body.tx_ref;
 	if (!txRef) return json({ ok: true });
-	const eventId = `${body.reference ?? txRef}:${body.status ?? body.event ?? 'event'}`.slice(0, 128);
+	const eventId = `${body.reference ?? txRef}:${body.status ?? body.event ?? 'event'}`.slice(
+		0,
+		128
+	);
 
 	const [seen] = await db
 		.select({ id: webhookEvent.id, processedAt: webhookEvent.processedAt })
@@ -46,7 +52,10 @@ export const POST: RequestHandler = async (event) => {
 
 	try {
 		await settleByTxRef(event, txRef);
-		await db.update(webhookEvent).set({ processedAt: new Date(), error: null }).where(eq(webhookEvent.id, id));
+		await db
+			.update(webhookEvent)
+			.set({ processedAt: new Date(), error: null })
+			.where(eq(webhookEvent.id, id));
 	} catch (err) {
 		await db
 			.update(webhookEvent)

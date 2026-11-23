@@ -9,7 +9,7 @@ import { mediaEditSchema, mediaSchema } from '#lib/schemas/content.ts';
 /** The size of a stored file, or 0 when it is not on this server (seeded rows, another machine). */
 async function sizeOf(name: string) {
 	const path = resolveStoredFile(name);
-	return path ? (await stat(path).catch(() => null))?.size ?? 0 : 0;
+	return path ? ((await stat(path).catch(() => null))?.size ?? 0) : 0;
 }
 
 /** The media library. A new upload records its type and size; an edit without one keeps the file. */

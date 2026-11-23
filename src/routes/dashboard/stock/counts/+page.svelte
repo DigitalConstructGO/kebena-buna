@@ -12,15 +12,48 @@
 	type Row = (typeof data.rows)[number];
 
 	const columns: ColumnDef<Row>[] = [
-		{ id: 'id', accessorKey: 'id', header: sortable('Count'), cell: ({ row }) => link('stockCount', row.original.id, `Count #${row.original.id}`) },
-		{ id: 'countedAt', accessorKey: 'countedAt', header: sortable('Counted'), cell: ({ row }) => dateTime(row.original.countedAt) },
-		{ id: 'location', accessorKey: 'location', header: 'Location', cell: ({ row }) => link('location', row.original.locationId, row.original.location) },
-		{ id: 'stage', accessorKey: 'stage', header: 'Stage', cell: ({ row }) => humanize(row.original.stage) },
-		{ id: 'isOpening', header: 'Kind', cell: ({ row }) => flag(row.original.isOpening, 'Opening count', 'Periodic') },
-		{ id: 'lineCount', accessorKey: 'lineCount', header: 'Lines counted', meta: { align: 'right' } },
+		{
+			id: 'id',
+			accessorKey: 'id',
+			header: sortable('Count'),
+			cell: ({ row }) => link('stockCount', row.original.id, `Count #${row.original.id}`)
+		},
+		{
+			id: 'countedAt',
+			accessorKey: 'countedAt',
+			header: sortable('Counted'),
+			cell: ({ row }) => dateTime(row.original.countedAt)
+		},
+		{
+			id: 'location',
+			accessorKey: 'location',
+			header: 'Location',
+			cell: ({ row }) => link('location', row.original.locationId, row.original.location)
+		},
+		{
+			id: 'stage',
+			accessorKey: 'stage',
+			header: 'Stage',
+			cell: ({ row }) => humanize(row.original.stage)
+		},
+		{
+			id: 'isOpening',
+			header: 'Kind',
+			cell: ({ row }) => flag(row.original.isOpening, 'Opening count', 'Periodic')
+		},
+		{
+			id: 'lineCount',
+			accessorKey: 'lineCount',
+			header: 'Lines counted',
+			meta: { align: 'right' }
+		},
 		{ id: 'adjusted', accessorKey: 'adjusted', header: 'Corrections', meta: { align: 'right' } },
 		{ id: 'note', header: 'Note', cell: ({ row }) => longText(row.original.note) },
-		{ id: 'by', header: 'Counted by', cell: ({ row }) => user(row.original.createdById, row.original.createdBy) }
+		{
+			id: 'by',
+			header: 'Counted by',
+			cell: ({ row }) => user(row.original.createdById, row.original.createdBy)
+		}
 	];
 	const href = useLinks();
 </script>
@@ -36,4 +69,10 @@
 	{/snippet}
 </PageHeader>
 
-<DataTable rowHref={(row) => href('stockCount', row.id)} {columns} data={data.rows} facetKeys={['location', 'stage']} fileName="Stock counts" />
+<DataTable
+	rowHref={(row) => href('stockCount', row.id)}
+	{columns}
+	data={data.rows}
+	facetKeys={['location', 'stage']}
+	fileName="Stock counts"
+/>

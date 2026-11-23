@@ -23,17 +23,60 @@
 		fields: [
 			{ name: 'nameEn', label: 'Name (English)', type: 'text' },
 			{ name: 'nameAm', label: 'Name (Amharic)', type: 'text', required: false },
-			{ name: 'nameOm', label: 'Name (Afaan Oromo)', type: 'text', required: false, inTable: false },
+			{
+				name: 'nameOm',
+				label: 'Name (Afaan Oromo)',
+				type: 'text',
+				required: false,
+				inTable: false
+			},
 			{ name: 'nameAr', label: 'Name (Arabic)', type: 'text', required: false, inTable: false },
 			{ name: 'nameIt', label: 'Name (Italian)', type: 'text', required: false, inTable: false },
 			{ name: 'nameFr', label: 'Name (French)', type: 'text', required: false, inTable: false },
 			{ name: 'date', label: 'Date', type: 'date' },
-			{ name: 'locationId', label: 'Location', type: 'reference', options: 'locationList', display: 'location', required: false },
-			{ name: 'isHoliday', label: 'Public holiday', type: 'checkbox', trueLabel: 'Holiday', falseLabel: 'Not a holiday' },
-			{ name: 'isClosed', label: 'Closed all day', type: 'checkbox', trueLabel: 'Closed', falseLabel: 'Special hours' },
-			{ name: 'opensAt', label: 'Opens', type: 'text', required: false, placeholder: 'HH:MM, if not closed' },
-			{ name: 'closesAt', label: 'Closes', type: 'text', required: false, placeholder: 'HH:MM, if not closed' },
-			{ name: 'blocksRoasting', label: 'No roasting', type: 'checkbox', trueLabel: 'No roasting', falseLabel: 'Roasting as usual' },
+			{
+				name: 'locationId',
+				label: 'Location',
+				type: 'reference',
+				options: 'locationList',
+				display: 'location',
+				required: false
+			},
+			{
+				name: 'isHoliday',
+				label: 'Public holiday',
+				type: 'checkbox',
+				trueLabel: 'Holiday',
+				falseLabel: 'Not a holiday'
+			},
+			{
+				name: 'isClosed',
+				label: 'Closed all day',
+				type: 'checkbox',
+				trueLabel: 'Closed',
+				falseLabel: 'Special hours'
+			},
+			{
+				name: 'opensAt',
+				label: 'Opens',
+				type: 'text',
+				required: false,
+				placeholder: 'HH:MM, if not closed'
+			},
+			{
+				name: 'closesAt',
+				label: 'Closes',
+				type: 'text',
+				required: false,
+				placeholder: 'HH:MM, if not closed'
+			},
+			{
+				name: 'blocksRoasting',
+				label: 'No roasting',
+				type: 'checkbox',
+				trueLabel: 'No roasting',
+				falseLabel: 'Roasting as usual'
+			},
 			{ name: 'status', label: 'Status', type: 'boolean' }
 		]
 	}}

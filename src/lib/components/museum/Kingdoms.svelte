@@ -1,9 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { setupGsap } from '#lib/gsap.js';
-	import { m } from '#lib/paraglide/messages.js';
-	import { getLocale, getTextDirection } from '#lib/paraglide/runtime.js';
-	import type { Kingdom, KingdomsContent, Localized, Ruler } from '#lib/content/story.js';
+	import { m } from '#lib/i18n.ts';
+	import { getTextDirection } from '#lib/paraglide/runtime.js';
+	import type {
+		Direction,
+		Kingdom,
+		KingdomsContent,
+		Localized,
+		Ruler
+	} from '#lib/content/story.js';
 	import EthiopiaMap from './EthiopiaMap.svelte';
 
 	let {
@@ -21,7 +27,6 @@
 	const subsub = $derived(heading === 'h1' ? 'h3' : 'h4');
 	const kingdoms = $derived(content.kingdoms);
 	const total = $derived(kingdoms.length);
-	const locale = getLocale();
 	const pad = (n: number) => String(n).padStart(2, '0');
 	/** "c." in the language of the text around it, so mixed scripts never flip the years. */
 	const approx = () => m.story_approx({}, { locale: section.lang });
@@ -35,9 +40,17 @@
 	let active = $state(0);
 	const current = $derived(kingdoms[active] ?? kingdoms[0]);
 
-	/** The kingdom's name in the visitor's language, when the sources give one. */
-	const native = (k: Kingdom) => (locale !== 'en' ? k.names[locale] : undefined);
-	const label = (k: Kingdom) => native(k) ?? k.name;
+	/** The compass point beside each border. */
+	const DIR: Record<Direction, () => string> = {
+		n: m.kingdoms_dir_n,
+		ne: m.kingdoms_dir_ne,
+		e: m.kingdoms_dir_e,
+		se: m.kingdoms_dir_se,
+		s: m.kingdoms_dir_s,
+		sw: m.kingdoms_dir_sw,
+		w: m.kingdoms_dir_w,
+		nw: m.kingdoms_dir_nw
+	};
 
 	const years = (r: Pick<Ruler, 'from' | 'to' | 'approx'>) => {
 		const c = r.approx ? `${approx()} ` : '';
@@ -159,7 +172,7 @@
 							kingdoms={onMap}
 							currentId={current.id}
 							bind:zoomed
-							nameOf={label}
+							nameOf={(k: Kingdom) => k.name}
 							onpick={go}
 						/>
 						<figcaption>{m.story_map_note()}</figcaption>
@@ -170,7 +183,7 @@
 					<nav class="rail" aria-label={m.story_choose_kingdom()}>
 						<p class="now" aria-live="polite">
 							<span class="num">{pad(active + 1)} / {pad(total)}</span>
-							<span class="now-title">{native(current) ?? current.name}</span>
+							<span class="now-title">{current.name}</span>
 						</p>
 						<ol>
 							{#each kingdoms as k, i (k.id)}
@@ -211,7 +224,6 @@
 							tabindex="-1"
 						>
 							{k.name}
-							{#if native(k)}<span class="native" lang={locale}>{native(k)}</span>{/if}
 						</svelte:element>
 
 						<p class="summary reveal">{k.summary}</p>
@@ -230,7 +242,7 @@
 										<dd>
 											<ul class="borders">
 												{#each k.borders as b (b.dir + b.to)}
-													<li><span class="dir">{b.dir.toUpperCase()}</span>{b.to}</li>
+													<li><span class="dir">{DIR[b.dir]()}</span>{b.to}</li>
 												{/each}
 											</ul>
 										</dd>
@@ -289,7 +301,7 @@
 							onclick={() => go(k.id)}
 							aria-label={`${k.name}${s ? `, ${s.openStart ? approx() + ' ' : ''}${s.from}–${s.to}` : ''}`}
 						>
-							<span class="row-name">{native(k) ?? k.name}</span>
+							<span class="row-name">{k.name}</span>
 							<span class="track">
 								{#each TICKS as y (y)}<span
 										class="grid-line"
@@ -530,11 +542,6 @@
 		letter-spacing: -0.015em;
 		outline: none;
 	}
-	.native {
-		font-size: 0.6em;
-		color: var(--accent-mark);
-		letter-spacing: 0;
-	}
 	.summary {
 		margin: 0 0 20px;
 		font-size: 17px;
@@ -577,7 +584,7 @@
 	}
 	.dir {
 		flex-shrink: 0;
-		width: 24px;
+		min-width: 24px;
 		font-family: var(--font-mono);
 		font-size: 12px;
 		line-height: 1.65;

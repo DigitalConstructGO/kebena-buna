@@ -26,7 +26,8 @@ export async function loadGrant(userId: string): Promise<Grant> {
 		.innerJoin(roles, and(eq(user.roleId, roles.id), eq(roles.isActive, true), notDeleted(roles)))
 		.where(and(eq(user.id, userId), notDeleted(user), eq(user.isActive, true)));
 	if (!holder) return NONE;
-	if (holder.role === OWNER) return { permList: PERMISSIONS.map((p) => p.name), isSuperAdmin: true };
+	if (holder.role === OWNER)
+		return { permList: PERMISSIONS.map((p) => p.name), isSuperAdmin: true };
 
 	const rows = await db
 		.select({ name: permissions.name })

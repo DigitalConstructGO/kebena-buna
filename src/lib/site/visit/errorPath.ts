@@ -3,4 +3,5 @@
  * list (`items._errors`), anything else under its own field.
  */
 export const errorPath = (field: string) =>
-	(field === 'items' ? 'items._errors' : field) as 'items._errors' | 'slotId' | 'audienceId' | 'declared';
+	(field === 'items' ? 'items._errors' : field) as
+		'items._errors' | 'slotId' | 'audienceId' | 'declared' | 'discountCode';

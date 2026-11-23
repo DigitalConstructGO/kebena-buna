@@ -22,26 +22,33 @@ import {
 } from '#lib/server/db/schema.ts';
 
 /** Orders placed, as SQL over `customer`. Cancelled orders are not counted. */
-export const ordersCountOf = sql<number>`(select count(*) from ${order} o where o.customer_id = ${customer.id} and o.status <> 'cancelled')`.mapWith(
-	Number
-);
+export const ordersCountOf =
+	sql<number>`(select count(*) from ${order} o where o.customer_id = ${customer.id} and o.status <> 'cancelled')`.mapWith(
+		Number
+	);
 
 /** What they have paid, less refunds, as SQL over `customer`. */
-export const spentOf = sql<number>`(select coalesce(sum(o.amount_paid - o.amount_refunded), 0) from ${order} o where o.customer_id = ${customer.id})`.mapWith(
-	Number
-);
+export const spentOf =
+	sql<number>`(select coalesce(sum(o.amount_paid - o.amount_refunded), 0) from ${order} o where o.customer_id = ${customer.id})`.mapWith(
+		Number
+	);
 
 /** Store credit they can still spend: the ledger's sum, less lines that have expired. */
-export const creditOf = sql<number>`(select coalesce(sum(sc.amount), 0) from ${storeCredit} sc where sc.customer_id = ${customer.id} and (sc.expires_at is null or sc.expires_at > now()))`.mapWith(
-	Number
-);
+export const creditOf =
+	sql<number>`(select coalesce(sum(sc.amount), 0) from ${storeCredit} sc where sc.customer_id = ${customer.id} and (sc.expires_at is null or sc.expires_at > now()))`.mapWith(
+		Number
+	);
 
 /**
  * What a customer can spend now, with their row locked so two spends in flight cannot both pass
  * the check. Call it first, then write the debit in the same transaction.
  */
 export async function creditBalance(tx: Writer, customerId: number) {
-	await tx.select({ id: customer.id }).from(customer).where(eq(customer.id, customerId)).for('update');
+	await tx
+		.select({ id: customer.id })
+		.from(customer)
+		.where(eq(customer.id, customerId))
+		.for('update');
 	const [row] = await tx
 		.select({ balance: sql<number>`coalesce(sum(${storeCredit.amount}), 0)`.mapWith(Number) })
 		.from(storeCredit)

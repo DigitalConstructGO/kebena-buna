@@ -14,7 +14,8 @@ export type Href = (entity: string, id: string | number | null | undefined) => s
 
 export function useLinks(): Href {
 	const kit = useKit();
-	return (entity, id) => entityHref(kit.entities, entity, id, kit.canOpen) ?? undefined;
+	return (entity, id) =>
+		entityHref(kit.entities, entity, id, (path) => kit.canOpen(path)) ?? undefined;
 }
 
 /** The created/updated rows of a record's `SingleTable`, from `stampsOf` on the server. */

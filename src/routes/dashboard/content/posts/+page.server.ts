@@ -22,7 +22,12 @@ const SORTS = { title: enOf(post.title), publishedAt: post.publishedAt, updatedA
 
 const spec: WhereSpec<(typeof FILTERS)[number]> = {
 	base: [isNull(post.deletedAt)],
-	search: (term) => or(like(post.title, `%${term}%`), like(post.slug, `%${term}%`), like(post.excerpt, `%${term}%`)),
+	search: (term) =>
+		or(
+			like(post.title, `%${term}%`),
+			like(post.slug, `%${term}%`),
+			like(post.excerpt, `%${term}%`)
+		),
 	dateColumn: post.publishedAt,
 	filters: {
 		categoryId: (v) => eq(post.categoryId, Number(v)),
@@ -34,7 +39,9 @@ const spec: WhereSpec<(typeof FILTERS)[number]> = {
 };
 
 const joined = <T extends MySqlSelect>(q: T) =>
-	q.leftJoin(postCategory, eq(post.categoryId, postCategory.id)).leftJoin(author, eq(post.authorId, author.id));
+	q
+		.leftJoin(postCategory, eq(post.categoryId, postCategory.id))
+		.leftJoin(author, eq(post.authorId, author.id));
 
 /** Website › Posts: the blog, newest first, filtered by category and status. */
 export const load = async ({ url }) => {

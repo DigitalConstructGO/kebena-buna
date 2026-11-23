@@ -58,25 +58,48 @@ export const load = async ({ url }) => {
 					price: productVariant.price,
 					compareAtPrice: productVariant.compareAtPrice,
 					packed: packedUnitsOfVariant,
-					lowAt: sql<number>`coalesce(${productVariant.lowStockUnits}, ${lowDefault})`.mapWith(Number),
+					lowAt: sql<number>`coalesce(${productVariant.lowStockUnits}, ${lowDefault})`.mapWith(
+						Number
+					),
 					isActive: productVariant.isActive
 				})
 				.from(productVariant)
 				.$dynamic()
 		)
 			.where(where)
-			.orderBy(...(orderBy(query, SORTS) ?? [product.sortOrder, productVariant.sortOrder, desc(productVariant.id)]))
+			.orderBy(
+				...(orderBy(query, SORTS) ?? [
+					product.sortOrder,
+					productVariant.sortOrder,
+					desc(productVariant.id)
+				])
+			)
 			.limit(query.limit)
 			.offset(query.offset),
 		joined(db.select({ total: count() }).from(productVariant).$dynamic()).where(where),
 		facetCounts({
 			productId: () =>
-				joined(db.select({ value: product.id, label: enOf(product.name), count: count() }).from(productVariant).$dynamic())
+				joined(
+					db
+						.select({ value: product.id, label: enOf(product.name), count: count() })
+						.from(productVariant)
+						.$dynamic()
+				)
 					.where(buildWhere(query, spec, { except: 'productId' }))
 					.groupBy(product.id),
 			bagSizeId: () =>
-				joined(db.select({ value: bagSize.id, label: enOf(bagSize.name), count: count() }).from(productVariant).$dynamic())
-					.where(and(buildWhere(query, spec, { except: 'bagSizeId' }), sql`${productVariant.bagSizeId} is not null`))
+				joined(
+					db
+						.select({ value: bagSize.id, label: enOf(bagSize.name), count: count() })
+						.from(productVariant)
+						.$dynamic()
+				)
+					.where(
+						and(
+							buildWhere(query, spec, { except: 'bagSizeId' }),
+							sql`${productVariant.bagSizeId} is not null`
+						)
+					)
 					.groupBy(bagSize.id),
 			stock: () =>
 				joined(

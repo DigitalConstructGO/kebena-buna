@@ -7,15 +7,27 @@
  */
 import { z } from 'zod/v4';
 import { normalizePhone } from '@nahu/admin-kit/phone';
-import { m } from '#lib/paraglide/messages.js';
+import { m } from '#lib/i18n.ts';
 
 const blankToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v);
 
 export const siteText = (max = 255) =>
-	z.string().trim().min(1, { error: () => m.site_err_required() }).max(max, { error: () => m.site_err_long() });
+	z
+		.string()
+		.trim()
+		.min(1, { error: () => m.site_err_required() })
+		.max(max, { error: () => m.site_err_long() });
 
 export const siteOptionalText = (max = 255) =>
-	z.preprocess(blankToNull, z.string().trim().max(max, { error: () => m.site_err_long() }).nullable().optional());
+	z.preprocess(
+		blankToNull,
+		z
+			.string()
+			.trim()
+			.max(max, { error: () => m.site_err_long() })
+			.nullable()
+			.optional()
+	);
 
 /** A phone stored as E.164: `0911 23 45 67` becomes `+251911234567`; abroad needs its `+code`. */
 const toPhone = (v: string, ctx: z.RefinementCtx) => {
@@ -26,8 +38,15 @@ const toPhone = (v: string, ctx: z.RefinementCtx) => {
 	ctx.addIssue({ code: 'custom', message: m.site_err_phone() });
 	return z.NEVER;
 };
-export const sitePhone = z.string().trim().min(1, { error: () => m.site_err_required() }).transform(toPhone);
-export const siteOptionalPhone = z.preprocess(blankToNull, z.string().trim().transform(toPhone).nullable().optional());
+export const sitePhone = z
+	.string()
+	.trim()
+	.min(1, { error: () => m.site_err_required() })
+	.transform(toPhone);
+export const siteOptionalPhone = z.preprocess(
+	blankToNull,
+	z.string().trim().transform(toPhone).nullable().optional()
+);
 
 export const siteEmail = z.email({ error: () => m.site_err_email() });
 export const siteOptionalEmail = z.preprocess(blankToNull, siteEmail.nullable().optional());
@@ -58,4 +77,14 @@ export const buyerFields = {
 	email: siteOptionalEmail,
 	/** Set once per form render, so a double submit makes one order. */
 	idempotencyKey: z.string().max(64).optional()
+};
+
+/**
+ * How a buyer means to pay, chosen at checkout when both ways are open: Chapa now, or a bank
+ * transfer whose receipt they upload on the order's page next.
+ */
+export const payWithField = {
+	payWith: z.enum(['online', 'transfer']).default('online'),
+	/** A discount code, checked when the order is written (`claimDiscount`). */
+	discountCode: siteOptionalText(32)
 };

@@ -16,7 +16,11 @@ import { FORM_TYPES, WORKFLOW_STATUSES } from '#lib/constants.ts';
 
 const assignee = userAlias('assignee');
 const FILTERS = ['formType', 'status', 'assignedTo'] as const;
-const SORTS = { submittedAt: formSubmission.submittedAt, spamScore: formSubmission.spamScore, rating: formSubmission.rating };
+const SORTS = {
+	submittedAt: formSubmission.submittedAt,
+	spamScore: formSubmission.spamScore,
+	rating: formSubmission.rating
+};
 
 const spec: WhereSpec<(typeof FILTERS)[number]> = {
 	base: [isNull(formSubmission.deletedAt)],
@@ -31,14 +35,19 @@ const spec: WhereSpec<(typeof FILTERS)[number]> = {
 	dateColumn: formSubmission.submittedAt,
 	filters: {
 		formType: (v) =>
-			(FORM_TYPES as readonly string[]).includes(v) ? eq(formSubmission.formType, v as (typeof FORM_TYPES)[number]) : undefined,
+			(FORM_TYPES as readonly string[]).includes(v)
+				? eq(formSubmission.formType, v as (typeof FORM_TYPES)[number])
+				: undefined,
 		status: (v) =>
-			(WORKFLOW_STATUSES as readonly string[]).includes(v) ? eq(formSubmission.status, v as (typeof WORKFLOW_STATUSES)[number]) : undefined,
+			(WORKFLOW_STATUSES as readonly string[]).includes(v)
+				? eq(formSubmission.status, v as (typeof WORKFLOW_STATUSES)[number])
+				: undefined,
 		assignedTo: (v) => eq(formSubmission.assignedTo, v)
 	}
 };
 
-const joined = <T extends MySqlSelect>(q: T) => q.leftJoin(assignee, eq(formSubmission.assignedTo, assignee.id));
+const joined = <T extends MySqlSelect>(q: T) =>
+	q.leftJoin(assignee, eq(formSubmission.assignedTo, assignee.id));
 
 export const load = async ({ url }) => {
 	const query = parseTableQuery(url, FILTERS, 20, Object.keys(SORTS));
@@ -70,18 +79,30 @@ export const load = async ({ url }) => {
 		db.select({ total: count() }).from(formSubmission).where(where),
 		facetCounts({
 			formType: () =>
-				db.select({ value: formSubmission.formType, count: count() }).from(formSubmission)
+				db
+					.select({ value: formSubmission.formType, count: count() })
+					.from(formSubmission)
 					.where(buildWhere(query, spec, { except: 'formType' }))
 					.groupBy(formSubmission.formType),
 			status: () =>
-				db.select({ value: formSubmission.status, count: count() }).from(formSubmission)
+				db
+					.select({ value: formSubmission.status, count: count() })
+					.from(formSubmission)
 					.where(buildWhere(query, spec, { except: 'status' }))
 					.groupBy(formSubmission.status),
 			assignedTo: () =>
-				joined(db.select({ value: assignee.id, label: assignee.name, count: count() }).from(formSubmission).$dynamic())
+				joined(
+					db
+						.select({ value: assignee.id, label: assignee.name, count: count() })
+						.from(formSubmission)
+						.$dynamic()
+				)
 					.where(buildWhere(query, spec, { except: 'assignedTo' }))
 					.groupBy(assignee.id, assignee.name)
 		})
 	]);
-	return { rows, server: { pagination: pagination(query, total), facets, filters: currentQuery(query) } };
+	return {
+		rows,
+		server: { pagination: pagination(query, total), facets, filters: currentQuery(query) }
+	};
 };

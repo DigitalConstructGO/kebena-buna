@@ -11,7 +11,9 @@
 
 	let { data } = $props();
 	// svelte-ignore state_referenced_locally
-	const { form, errors, enhance, delayed, allErrors } = createForm(data.form, pageSchema, { taintedMessage: confirmLeave });
+	const { form, errors, enhance, delayed, allErrors } = createForm(data.form, pageSchema, {
+		taintedMessage: confirmLeave
+	});
 </script>
 
 <PageHeader title="New page" description="Write it in English first; the Amharic can follow." />

@@ -15,6 +15,20 @@
       "when": 1795244561234,
       "tag": "0001_bundles",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1795432747317,
+      "tag": "0002_site_text",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1795436122514,
+      "tag": "0003_bank_transfers",
+      "breakpoints": true
     }
   ]
 }

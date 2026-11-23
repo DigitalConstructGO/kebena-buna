@@ -3,7 +3,7 @@
 	notice on `flood`. Announced to screen readers.
 -->
 <script lang="ts">
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 
 	let { message, thanks }: { message: unknown; thanks: string } = $props();
 </script>

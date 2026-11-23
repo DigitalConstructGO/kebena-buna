@@ -36,9 +36,17 @@
 
 	type Holder = (typeof data.holders)[number];
 	const holderColumns: ColumnDef<Holder>[] = [
-		{ id: 'name', header: 'Name', cell: ({ row }) => link('user', row.original.id, row.original.name) },
+		{
+			id: 'name',
+			header: 'Name',
+			cell: ({ row }) => link('user', row.original.id, row.original.name)
+		},
 		{ id: 'email', accessorKey: 'email', header: 'Email' },
-		{ id: 'active', header: 'Status', cell: ({ row }) => flagCell(row.original.isActive, 'Active', 'Switched off') }
+		{
+			id: 'active',
+			header: 'Status',
+			cell: ({ row }) => flagCell(row.original.isActive, 'Active', 'Switched off')
+		}
 	];
 </script>
 
@@ -52,11 +60,20 @@
 				{#if data.isOwner}
 					<InputComp name="name" type="hidden" {form} {errors} />
 					<InputComp name="status" type="hidden" {form} {errors} />
-					<p class="px-1 text-sm text-muted-foreground">The Owner role keeps its name and is always on.</p>
+					<p class="px-1 text-sm text-muted-foreground">
+						The Owner role keeps its name and is always on.
+					</p>
 				{:else}
 					<InputComp label="Name" name="name" {form} {errors} required />
 				{/if}
-				<InputComp label="What it is for" name="description" type="textarea" rows={3} {form} {errors} />
+				<InputComp
+					label="What it is for"
+					name="description"
+					type="textarea"
+					rows={3}
+					{form}
+					{errors}
+				/>
 				{#if !data.isOwner}
 					<InputComp
 						label="Active"
@@ -70,14 +87,20 @@
 				{/if}
 			{/snippet}
 		</FormDialog>
-		<DeleteEntity entity="role" name={data.role.name} canDelete={data.canDelete && !data.isOwner && holderCount === 0} />
+		<DeleteEntity
+			entity="role"
+			name={data.role.name}
+			canDelete={data.canDelete && !data.isOwner && holderCount === 0}
+		/>
 	{/snippet}
 </PageHeader>
 
 <div class="mt-6 grid grid-cols-1 gap-6">
 	<PageSection
 		title="Who holds this role"
-		hint={holderCount ? `${holderCount} ${holderCount === 1 ? 'person' : 'people'} — a role can be deleted only when nobody holds it` : undefined}
+		hint={holderCount
+			? `${holderCount} ${holderCount === 1 ? 'person' : 'people'} — a role can be deleted only when nobody holds it`
+			: undefined}
 	>
 		{#if holderCount}
 			<DataTable variant="compact" columns={holderColumns} data={data.holders} />
@@ -88,12 +111,14 @@
 
 	<PageSection
 		title="What this role may do"
-		hint={data.isOwner ? `Every one of the ${data.permissions.length} permissions` : `${chosen} of ${data.permissions.length} permissions`}
+		hint={data.isOwner
+			? `Every one of the ${data.permissions.length} permissions`
+			: `${chosen} of ${data.permissions.length} permissions`}
 	>
 		{#if data.isOwner}
 			<Notice tone="info" icon={ShieldCheck}>
-				The Owner always holds every permission, including ones added in later releases, so nobody can lock the
-				business out of its own system.
+				The Owner always holds every permission, including ones added in later releases, so nobody
+				can lock the business out of its own system.
 			</Notice>
 			<div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
 				{#each groups as group (group.area)}
@@ -102,7 +127,11 @@
 						<CheckboxComp
 							id="owner-{group.area}"
 							selectAll={false}
-							items={group.items.map((p) => ({ value: p.id, name: p.description ?? p.name, disabled: true }))}
+							items={group.items.map((p) => ({
+								value: p.id,
+								name: p.description ?? p.name,
+								disabled: true
+							}))}
 							checkedValues={everyId}
 						/>
 					</div>

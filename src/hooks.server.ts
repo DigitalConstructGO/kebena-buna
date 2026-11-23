@@ -12,6 +12,8 @@ import { kitHandle } from '@nahu/admin-kit/server/hooks';
 import { access } from '#lib/access.ts';
 import { loadGrant, syncAccessTables } from '#lib/server/permissions.ts';
 import { startJobs } from '#lib/server/jobs/index.ts';
+import { siteTextEdits } from '#lib/server/siteText.ts';
+import { setSiteText } from '#lib/i18n.ts';
 
 /** The outbox sender and the hold release run alongside the app (`#lib/server/jobs`). */
 export const init: ServerInit = () => {
@@ -90,4 +92,16 @@ const handleKit = kitHandle({
 		event.locals.user ? loadGrant(event.locals.user.id) : { permList: [], isSuperAdmin: false }
 });
 
-export const handle: Handle = sequence(handleParaglide, handleClosed, handleBetterAuth, handleKit);
+/** The dashboard's edits to the site's words, in force for this request's messages. */
+const handleSiteText: Handle = async ({ event, resolve }) => {
+	setSiteText(await siteTextEdits());
+	return resolve(event);
+};
+
+export const handle: Handle = sequence(
+	handleParaglide,
+	handleSiteText,
+	handleClosed,
+	handleBetterAuth,
+	handleKit
+);

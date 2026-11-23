@@ -34,17 +34,40 @@
 
 	type Lot = (typeof data.lots)[number];
 	const lotColumns: ColumnDef<Lot>[] = [
-		{ id: 'code', header: 'Lot', cell: ({ row }) => link('lot', row.original.id, row.original.code) },
+		{
+			id: 'code',
+			header: 'Lot',
+			cell: ({ row }) => link('lot', row.original.id, row.original.code)
+		},
 		{ id: 'process', header: 'Process', cell: ({ row }) => humanize(row.original.process) },
 		{ id: 'year', header: 'Crop year', cell: ({ row }) => row.original.cropYear },
-		{ id: 'grade', header: 'Grade', meta: { align: 'right' }, cell: ({ row }) => row.original.grade ?? '—' },
-		{ id: 'score', header: 'Cupping', meta: { align: 'right' }, cell: ({ row }) => row.original.cuppingScore ?? '—' },
-		{ id: 'kg', header: 'Green on hand', meta: { align: 'right' }, cell: ({ row }) => kg(row.original.greenKg) },
+		{
+			id: 'grade',
+			header: 'Grade',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.grade ?? '—'
+		},
+		{
+			id: 'score',
+			header: 'Cupping',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.cuppingScore ?? '—'
+		},
+		{
+			id: 'kg',
+			header: 'Green on hand',
+			meta: { align: 'right' },
+			cell: ({ row }) => kg(row.original.greenKg)
+		},
 		{ id: 'active', header: 'Status', cell: ({ row }) => flagCell(row.original.isActive) }
 	];
 	type Product = (typeof data.products)[number];
 	const productColumns: ColumnDef<Product>[] = [
-		{ id: 'name', header: 'Product', cell: ({ row }) => link('product', row.original.id, row.original.name) },
+		{
+			id: 'name',
+			header: 'Product',
+			cell: ({ row }) => link('product', row.original.id, row.original.name)
+		},
 		{ id: 'status', header: 'Website', cell: ({ row }) => status(row.original.publishStatus) }
 	];
 </script>
@@ -56,18 +79,49 @@
 	{#snippet actions()}
 		{#if map}
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- an outside map -->
-			<Button href={map} target="_blank" rel="noopener" variant="outline"><MapPin class="size-4" /> Map</Button>
+			<Button href={map} target="_blank" rel="noopener" variant="outline">
+				<MapPin class="size-4" /> Map
+			</Button>
 		{/if}
 		{#if data.canManage}
-			<FormDialog title="Edit {name}" action="?/edit" data={data.editForm} schema={stationEditSchema} dataType="json">
+			<FormDialog
+				title="Edit {name}"
+				action="?/edit"
+				data={data.editForm}
+				schema={stationEditSchema}
+				dataType="json"
+			>
 				{#snippet fields({ form, errors })}
 					<StationFields form={form as never} errors={errors as never} options={data.options} />
-					<InputComp label="Active" name="isActive" type="checkboxSingle" placeholder="Offered when entering lots" {form} {errors} />
+					<InputComp
+						label="Active"
+						name="isActive"
+						type="checkboxSingle"
+						placeholder="Offered when entering lots"
+						{form}
+						{errors}
+					/>
 				{/snippet}
 			</FormDialog>
-			<FormDialog title="Photo" action="?/photo" data={data.photoForm} schema={stationPhotoSchema} multipart triggerLabel="Photo">
+			<FormDialog
+				title="Photo"
+				action="?/photo"
+				data={data.photoForm}
+				schema={stationPhotoSchema}
+				multipart
+				triggerLabel="Photo"
+			>
 				{#snippet fields({ form, errors })}
-					<InputComp label="Photo" name="photo" type="file" accept="image/*" image={s.photo ?? ''} removable={false} {form} {errors} />
+					<InputComp
+						label="Photo"
+						name="photo"
+						type="file"
+						accept="image/*"
+						image={s.photo ?? ''}
+						removable={false}
+						{form}
+						{errors}
+					/>
 				{/snippet}
 			</FormDialog>
 			<ConfirmAction
@@ -83,9 +137,33 @@
 </PageHeader>
 
 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-	<StatCard stat={{ key: 'lots', label: 'Lots', value: data.lots.length, format: 'count', group: 'station' }} />
-	<StatCard stat={{ key: 'onHand', label: 'Green on hand (kg)', value: onHand, format: 'count', group: 'station' }} />
-	<StatCard stat={{ key: 'farmers', label: 'Farmers', value: s.farmerCount ?? 0, format: 'count', group: 'station' }} />
+	<StatCard
+		stat={{
+			key: 'lots',
+			label: 'Lots',
+			value: data.lots.length,
+			format: 'count',
+			group: 'station'
+		}}
+	/>
+	<StatCard
+		stat={{
+			key: 'onHand',
+			label: 'Green on hand (kg)',
+			value: onHand,
+			format: 'count',
+			group: 'station'
+		}}
+	/>
+	<StatCard
+		stat={{
+			key: 'farmers',
+			label: 'Farmers',
+			value: s.farmerCount ?? 0,
+			format: 'count',
+			group: 'station'
+		}}
+	/>
 </div>
 
 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[24rem_minmax(0,1fr)]">
@@ -101,10 +179,20 @@
 					{ name: 'Code', value: s.code },
 					{ name: 'Type', value: humanize(s.type) },
 					{ name: 'Region', value: data.region, href: href('region', s.regionId) },
-					{ name: 'Altitude', value: s.altitudeMinM ? `${s.altitudeMinM}–${s.altitudeMaxM ?? '?'} m` : '—' },
-					{ name: 'Coordinates', value: s.latitude && s.longitude ? `${s.latitude}, ${s.longitude}` : '—', href: map },
+					{
+						name: 'Altitude',
+						value: s.altitudeMinM ? `${s.altitudeMinM}–${s.altitudeMaxM ?? '?'} m` : '—'
+					},
+					{
+						name: 'Coordinates',
+						value: s.latitude && s.longitude ? `${s.latitude}, ${s.longitude}` : '—',
+						href: map
+					},
 					{ name: 'Farmers', value: s.farmerCount?.toLocaleString('en-US') ?? '—' },
-					{ name: 'Certifications', value: data.certifications.map((c) => c.name).join(', ') || '—' },
+					{
+						name: 'Certifications',
+						value: data.certifications.map((c) => c.name).join(', ') || '—'
+					},
 					{ name: 'Story', value: tr(s.story) || '—', long: 40 },
 					...stampRows(data.stamps, href)
 				]}

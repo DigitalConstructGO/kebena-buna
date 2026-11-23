@@ -9,13 +9,23 @@ import {
 	type WhereSpec
 } from '@nahu/admin-kit/server/queryFilters';
 import { db } from '#lib/server/db/index.ts';
-import { location, membershipMember, scannerDevice, ticket, ticketScan } from '#lib/server/db/schema.ts';
+import {
+	location,
+	membershipMember,
+	scannerDevice,
+	ticket,
+	ticketScan
+} from '#lib/server/db/schema.ts';
 import { enOf } from '#lib/server/localized.ts';
 import { userAlias } from '#lib/server/people.ts';
 import { SCAN_RESULTS } from '#lib/constants.ts';
 
 const FILTERS = ['result', 'deviceId', 'locationId'] as const;
-const SORTS = { scannedAt: ticketScan.scannedAt, headcount: ticketScan.headcount, syncedAt: ticketScan.syncedAt };
+const SORTS = {
+	scannedAt: ticketScan.scannedAt,
+	headcount: ticketScan.headcount,
+	syncedAt: ticketScan.syncedAt
+};
 const scanner = userAlias('scanner');
 
 const spec: WhereSpec<(typeof FILTERS)[number]> = {
@@ -35,7 +45,11 @@ const spec: WhereSpec<(typeof FILTERS)[number]> = {
 export const load = async ({ url }) => {
 	const query = parseTableQuery(url, FILTERS, 50, Object.keys(SORTS));
 	const where = buildWhere(query, spec);
-	const base = () => db.select({ total: count() }).from(ticketScan).leftJoin(ticket, eq(ticketScan.ticketId, ticket.id));
+	const base = () =>
+		db
+			.select({ total: count() })
+			.from(ticketScan)
+			.leftJoin(ticket, eq(ticketScan.ticketId, ticket.id));
 	const [rows, [{ total }], facets] = await Promise.all([
 		db
 			.select({
@@ -94,5 +108,8 @@ export const load = async ({ url }) => {
 					.groupBy(location.id, location.name)
 		})
 	]);
-	return { rows, server: { pagination: pagination(query, total), facets, filters: currentQuery(query) } };
+	return {
+		rows,
+		server: { pagination: pagination(query, total), facets, filters: currentQuery(query) }
+	};
 };

@@ -24,7 +24,13 @@ import { enOf } from '#lib/server/localized.ts';
 import { stampsOf, userAlias } from '#lib/server/people.ts';
 import { idParam } from '#lib/server/records.ts';
 import { membershipPlanOptions } from '#lib/server/options.ts';
-import { cardCode, checkMemberRoom, createMembership, addDays, termDates } from '#lib/server/memberships.ts';
+import {
+	cardCode,
+	checkMemberRoom,
+	createMembership,
+	addDays,
+	termDates
+} from '#lib/server/memberships.ts';
 import {
 	cancelSchema,
 	memberEditSchema,
@@ -49,7 +55,8 @@ const members = childCrud({
 			await checkMemberRoom(Number(values.membershipId), isChild);
 			return { ...values, cardCode: cardCode() };
 		}
-		const active = values.isActive === undefined ? Boolean(before.isActive) : Boolean(values.isActive);
+		const active =
+			values.isActive === undefined ? Boolean(before.isActive) : Boolean(values.isActive);
 		if (active && (!before.isActive || Boolean(before.isChild) !== isChild))
 			await checkMemberRoom(Number(before.membershipId), isChild, Number(before.id));
 		return values;
@@ -93,7 +100,12 @@ export const load = async ({ params, locals }) => {
 					.where(eq(membership.id, m.renewsMembershipId))
 			: Promise.resolve([]),
 		db
-			.select({ id: membership.id, number: membership.number, status: membership.status, startsOn: membership.startsOn })
+			.select({
+				id: membership.id,
+				number: membership.number,
+				status: membership.status,
+				startsOn: membership.startsOn
+			})
 			.from(membership)
 			.where(and(eq(membership.renewsMembershipId, m.id), isNull(membership.deletedAt))),
 		db
@@ -111,7 +123,7 @@ export const load = async ({ params, locals }) => {
 		stampsOf(m),
 		membershipPlanOptions()
 	]);
-	const memberIds = memberData.rows.map((r) => r.id as number);
+	const memberIds = memberData.rows.map((r) => r.id);
 	const scans = memberIds.length
 		? await db
 				.select({
@@ -178,14 +190,21 @@ export const actions = {
 	term: async (event) => {
 		requirePermission(event.locals, 'memberships.manage');
 		const form = await superValidate(event.request, zod4(membershipTermSchema), { id: 'term' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { m: before } = await loadMembership(event.params.id);
 		await db.transaction(async (tx) => {
 			await tx
 				.update(membership)
 				.set({ ...form.data, updatedBy: event.locals.user?.id })
 				.where(eq(membership.id, before.id));
-			await recordAudit(tx, event, { table: 'membership', recordId: before.id, action: 'update', before, after: form.data });
+			await recordAudit(tx, event, {
+				table: 'membership',
+				recordId: before.id,
+				action: 'update',
+				before,
+				after: form.data
+			});
 		});
 		return message(form, { type: 'success', text: 'Membership saved' });
 	},
@@ -198,16 +217,28 @@ export const actions = {
 		requirePermission(event.locals, 'memberships.manage');
 		const { m: loaded } = await loadMembership(event.params.id);
 		const refusal = await db.transaction(async (tx) => {
-			const [m] = await tx.select().from(membership).where(eq(membership.id, loaded.id)).for('update');
+			const [m] = await tx
+				.select()
+				.from(membership)
+				.where(eq(membership.id, loaded.id))
+				.for('update');
 			if (m.status === 'active') return `${m.number} is already active`;
-			if (m.status === 'cancelled') return `${m.number} was cancelled: sell a new membership instead`;
+			if (m.status === 'cancelled')
+				return `${m.number} was cancelled: sell a new membership instead`;
 			const today = localToday();
-			const dates = !m.startsOn || (m.endsOn && m.endsOn < today) ? await termDates(m.planId, today) : {};
+			const dates =
+				!m.startsOn || (m.endsOn && m.endsOn < today) ? await termDates(m.planId, today) : {};
 			await tx
 				.update(membership)
 				.set({ status: 'active', ...dates, updatedBy: event.locals.user?.id })
 				.where(eq(membership.id, m.id));
-			await recordAudit(tx, event, { table: 'membership', recordId: m.id, action: 'update', before: m, after: { status: 'active', ...dates } });
+			await recordAudit(tx, event, {
+				table: 'membership',
+				recordId: m.id,
+				action: 'update',
+				before: m,
+				after: { status: 'active', ...dates }
+			});
 			return null;
 		});
 		if (refusal) return { message: { type: 'error', text: refusal } };
@@ -222,9 +253,20 @@ export const actions = {
 		await db.transaction(async (tx) => {
 			await tx
 				.update(membership)
-				.set({ status: 'cancelled', cancelledAt: new Date(), cancelReason: form.data.reason, updatedBy: event.locals.user?.id })
+				.set({
+					status: 'cancelled',
+					cancelledAt: new Date(),
+					cancelReason: form.data.reason,
+					updatedBy: event.locals.user?.id
+				})
 				.where(eq(membership.id, m.id));
-			await recordAudit(tx, event, { table: 'membership', recordId: m.id, action: 'update', before: m, after: { status: 'cancelled' } });
+			await recordAudit(tx, event, {
+				table: 'membership',
+				recordId: m.id,
+				action: 'update',
+				before: m,
+				after: { status: 'cancelled' }
+			});
 		});
 		return message(form, { type: 'success', text: `${m.number} cancelled` });
 	},
@@ -237,23 +279,45 @@ export const actions = {
 		requirePermission(event.locals, 'memberships.manage');
 		const { m: loaded } = await loadMembership(event.params.id);
 		const result = await db.transaction(async (tx) => {
-			const [m] = await tx.select().from(membership).where(eq(membership.id, loaded.id)).for('update');
+			const [m] = await tx
+				.select()
+				.from(membership)
+				.where(eq(membership.id, loaded.id))
+				.for('update');
 			if (m.status === 'pending_payment' || m.status === 'cancelled')
-				return { refusal: `A ${m.status === 'cancelled' ? 'cancelled' : 'unpaid'} membership cannot be renewed` };
+				return {
+					refusal: `A ${m.status === 'cancelled' ? 'cancelled' : 'unpaid'} membership cannot be renewed`
+				};
 			const [renewal] = await tx
 				.select({ number: membership.number })
 				.from(membership)
-				.where(and(eq(membership.renewsMembershipId, m.id), ne(membership.status, 'cancelled'), isNull(membership.deletedAt)))
+				.where(
+					and(
+						eq(membership.renewsMembershipId, m.id),
+						ne(membership.status, 'cancelled'),
+						isNull(membership.deletedAt)
+					)
+				)
 				.limit(1);
 			if (renewal) return { refusal: `${m.number} is already renewed by ${renewal.number}` };
 			const startsOn = m.endsOn && m.endsOn >= localToday() ? addDays(m.endsOn, 1) : localToday();
 			return createMembership(
 				tx,
-				{ customerId: m.customerId, planId: m.planId, startsOn, renewalMethod: m.renewalMethod, renewsMembershipId: m.id },
+				{
+					customerId: m.customerId,
+					planId: m.planId,
+					startsOn,
+					renewalMethod: m.renewalMethod,
+					renewsMembershipId: m.id
+				},
 				event.locals.user?.id
 			);
 		});
 		if ('refusal' in result) return { message: { type: 'error', text: result.refusal } };
-		redirect(`/dashboard/memberships/${result.id}`, { type: 'success', message: `Renewal ${result.number} created — awaiting payment` }, event.cookies);
+		redirect(
+			`/dashboard/memberships/${result.id}`,
+			{ type: 'success', message: `Renewal ${result.number} created — awaiting payment` },
+			event.cookies
+		);
 	}
 };

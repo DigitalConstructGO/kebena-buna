@@ -23,8 +23,20 @@
 			{ name: 'name', label: 'Name', type: 'text' },
 			{ name: 'nativeName', label: 'Native name', type: 'text' },
 			{ name: 'code', label: 'Code', type: 'text', placeholder: 'am, en, om' },
-			{ name: 'isRequired', label: 'Required before publishing', type: 'checkbox', trueLabel: 'Required', falseLabel: 'Optional' },
-			{ name: 'isDefault', label: 'Default', type: 'checkbox', trueLabel: 'Default', falseLabel: '—' },
+			{
+				name: 'isRequired',
+				label: 'Required before publishing',
+				type: 'checkbox',
+				trueLabel: 'Required',
+				falseLabel: 'Optional'
+			},
+			{
+				name: 'isDefault',
+				label: 'Default',
+				type: 'checkbox',
+				trueLabel: 'Default',
+				falseLabel: '—'
+			},
 			{ name: 'sortOrder', label: 'Order', type: 'number' },
 			{ name: 'status', label: 'Status', type: 'boolean' }
 		]

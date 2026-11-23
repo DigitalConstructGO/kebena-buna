@@ -6,10 +6,13 @@
 <script lang="ts">
 	import { superForm, type SuperValidated } from 'sveltekit-superforms';
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { money, tr } from '#lib/format.ts';
 	import Field from '#lib/site/Field.svelte';
 	import Trap from '#lib/site/Trap.svelte';
+	import PayWith from '#lib/site/PayWith.svelte';
+	import DiscountCode from '#lib/site/DiscountCode.svelte';
+	import { discountOff, type DiscountRule } from '#lib/discounts.ts';
 	import ImageSelect from '@nahu/admin-kit/formComponents/ImageSelect.svelte';
 	import { Checkbox } from '@nahu/admin-kit/components/ui/checkbox/index.js';
 
@@ -23,6 +26,8 @@
 		marketingConsent: boolean;
 		audienceId: number;
 		declared: boolean;
+		payWith: 'online' | 'transfer';
+		discountCode?: string | null;
 		slotId?: number;
 		items: { ticketTypeId: number; quantity: number }[];
 	};
@@ -42,6 +47,8 @@
 		declaration,
 		slots,
 		paymentsOn,
+		transfersOn = false,
+		itemType = 'ticket',
 		heading,
 		action
 	}: {
@@ -52,6 +59,10 @@
 		/** Arrival slots, for museum entry. */
 		slots?: { id: number; label: string; remaining: number }[];
 		paymentsOn: boolean;
+		/** Bank accounts are listed, so a transfer can be chosen. */
+		transfersOn?: boolean;
+		/** What the lines are sold as, for the codes that apply only to some: entry or an event. */
+		itemType?: 'ticket' | 'event_ticket';
 		heading?: string;
 		/** A named form action (`?/buy`); the page's default one when left out. */
 		action?: string;
@@ -76,10 +87,15 @@
 
 	const locale = $derived(getLocale());
 	const typeOf = (id: number) => types.find((t) => t.id === id);
-	const total = $derived(
+	const gross = $derived(
 		$form.items.reduce((sum, i) => sum + i.quantity * (typeOf(i.ticketTypeId)?.price ?? 0), 0)
 	);
+	let rule = $state<(DiscountRule & { code: string }) | null>(null);
+	const discount = $derived(discountOff(rule, [{ itemType, gross }]));
+	const total = $derived(gross - discount);
 	const count = $derived($form.items.reduce((sum, i) => sum + i.quantity, 0));
+	/** Straight on to Chapa, or to the order's page to pay by transfer. */
+	const online = $derived(paymentsOn && $form.payWith !== 'transfer');
 
 	/*
 	 * Written through `$form`, not through a local `item`: changing a copy taken out of the store
@@ -213,6 +229,10 @@
 			</label>
 			<Trap bind:value={$form.website} />
 		</fieldset>
+
+		{#if total > 0}
+			<PayWith bind:value={$form.payWith} {paymentsOn} {transfersOn} />
+		{/if}
 	</div>
 
 	<aside class="aside card summary">
@@ -226,16 +246,38 @@
 						<span class="num">{money(item.quantity * (t?.price ?? 0))}</span>
 					</li>
 				{/each}
+				{#if discount > 0 && rule}
+					<li>
+						<span>{m.site_discount_line({ code: rule.code })}</span>
+						<span class="num">−{money(discount)}</span>
+					</li>
+				{/if}
 				<li class="total"><span>{m.visit_total()}</span><span class="num">{money(total)}</span></li>
 			</ul>
 		{:else}
 			<p class="muted">{m.visit_nothing()}</p>
 		{/if}
+		{#if gross > 0}
+			<DiscountCode
+				bind:value={$form.discountCode}
+				bind:rule
+				lines={[{ itemType, gross }]}
+				errors={$errors.discountCode}
+			/>
+		{/if}
 		{#if $message}<p class="notice bad" role="alert">{$message}</p>{/if}
 		<button class="btn" disabled={$delayed || count === 0}>
-			{total > 0 ? m.visit_pay() : m.visit_get_free()}
+			{total === 0 ? m.visit_get_free() : online ? m.visit_pay() : m.site_pay_place()}
 		</button>
-		{#if total > 0}<p class="hint">{paymentsOn ? m.visit_pay_note() : m.visit_pay_later()}</p>{/if}
+		{#if total > 0}
+			<p class="hint">
+				{online
+					? m.visit_pay_note()
+					: transfersOn
+						? m.site_pay_transfer_next()
+						: m.visit_pay_later()}
+			</p>
+		{/if}
 	</aside>
 </form>
 

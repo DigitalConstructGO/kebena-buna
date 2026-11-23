@@ -5,7 +5,10 @@
 	import { localizeHref } from '#lib/paraglide/runtime.js';
 	import Pouch from './Pouch.svelte';
 	import Beans from './Beans.svelte';
-	import { bag as content, type BagSize } from '#lib/content/bag.js';
+	import { bagContent, type BagSize } from '#lib/content/bag.js';
+	import { m } from '#lib/i18n.ts';
+
+	const content = $derived(bagContent());
 
 	let root: HTMLElement;
 	/** The shop, where every bag size of every coffee is on sale. */
@@ -113,7 +116,7 @@
 					type="button"
 					class="card"
 					style:--w={`calc(var(--unit) * ${size.scale})`}
-					aria-label={`Look at the ${size.weight} bag`}
+					aria-label={m.museum_bag_look_at({ weight: size.weight })}
 					onclick={() => pick(size)}
 				>
 					<span class="stand">
@@ -131,7 +134,7 @@
 								d="M2.5 8a5.5 5.5 0 0 1 9.6-3.6M13.5 8a5.5 5.5 0 0 1-9.6 3.6M12.5 1.5v3h-3M3.5 14.5v-3h3"
 							/>
 						</svg>
-						Turn it round
+						{m.museum_bag_turn_hint()}
 					</span>
 				</button>
 			</li>
@@ -148,7 +151,7 @@
 	<dialog
 		class="viewer"
 		bind:this={viewer}
-		aria-label={held ? `Kebena Coffee, ${held.weight}` : undefined}
+		aria-label={held ? m.museum_bag_viewer_label({ weight: held.weight }) : undefined}
 		onclick={onviewerclick}
 		onclose={() => (held = undefined)}
 	>
@@ -158,7 +161,7 @@
 				<div
 					class={['turner', { idle: !touched }]}
 					role="img"
-					aria-label={`A ${held.weight} bag of Kebena Coffee. Drag, or use the arrow keys, to turn it.`}
+					aria-label={m.museum_bag_turner_label({ weight: held.weight })}
 					tabindex="0"
 					style:--w="clamp(150px, min(30vw, 30vh), 270px)"
 					onpointerdown={ondown}
@@ -172,13 +175,13 @@
 					</div>
 					<span class="floor" aria-hidden="true"></span>
 					<span class="spill"><Beans seed={7} /></span>
-					<p class="drag" aria-hidden="true">Drag to turn</p>
+					<p class="drag" aria-hidden="true">{m.museum_bag_drag()}</p>
 				</div>
 
 				<div class="about">
-					<p class="pk-label">Kebena Coffee</p>
-					<h3>{held.weight}</h3>
-					<p class="sub">{held.name}. {held.text}</p>
+					<p class="pk-label">{m.museum_bag_brand()}</p>
+					<h3 data-no-letter>{held.weight}</h3>
+					<p class="sub">{m.museum_bag_sub({ name: held.name, text: held.text })}</p>
 					<dl>
 						{#each content.notes as n (n.label)}
 							<div>
@@ -187,7 +190,7 @@
 							</div>
 						{/each}
 					</dl>
-					<div class="sizes" role="group" aria-label="Bag size">
+					<div class="sizes" role="group" aria-label={m.museum_bag_sizes_label()}>
 						{#each content.sizes as size (size.id)}
 							<button
 								type="button"
@@ -208,7 +211,7 @@
 					<a class="alt" href={content.visit.href}>{content.visit.label}</a>
 				</div>
 
-				<button type="button" class="shut" aria-label="Put the bag back">
+				<button type="button" class="shut" aria-label={m.museum_bag_put_back()}>
 					<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M1 1l12 12M13 1L1 13" /></svg>
 				</button>
 			</div>

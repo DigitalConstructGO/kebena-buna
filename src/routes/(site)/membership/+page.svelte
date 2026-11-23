@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { superForm } from 'sveltekit-superforms';
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { money, pct, tr } from '#lib/format.ts';
 	import Field from '#lib/site/Field.svelte';
 	import Trap from '#lib/site/Trap.svelte';
+	import PayWith from '#lib/site/PayWith.svelte';
+	import DiscountCode from '#lib/site/DiscountCode.svelte';
+	import { discountOff, type DiscountRule } from '#lib/discounts.ts';
 	import ImageSelect from '@nahu/admin-kit/formComponents/ImageSelect.svelte';
 	import { Checkbox } from '@nahu/admin-kit/components/ui/checkbox/index.js';
 
@@ -15,6 +18,9 @@
 
 	const locale = $derived(getLocale());
 	const plan = $derived(data.plans.find((p) => p.id === Number($form.planId)));
+	let rule = $state<(DiscountRule & { code: string }) | null>(null);
+	const codeLines = $derived(plan ? [{ itemType: 'membership', gross: plan.price }] : []);
+	const discount = $derived(discountOff(rule, codeLines));
 	/** The buyer is the first adult; the rest of the plan's room is named here. */
 	const otherAdults = $derived(Math.max((plan?.maxAdults ?? 1) - 1, 0));
 	const children = $derived(plan?.maxChildren ?? 0);
@@ -53,7 +59,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.member_title()} · Kebena</title>
+	<title>{m.site_page_title({ title: m.member_title() })}</title>
 	<meta name="description" content={m.member_lede()} />
 </svelte:head>
 
@@ -168,6 +174,12 @@
 					</div>
 				</fieldset>
 
+				<PayWith
+					bind:value={$form.payWith}
+					paymentsOn={data.paymentsOn}
+					transfersOn={data.transfersOn}
+				/>
+
 				<label class="check">
 					<Checkbox name="marketingConsent" bind:checked={$form.marketingConsent} />
 					<span>{m.member_consent()}</span>
@@ -184,12 +196,30 @@
 								{money(plan.price)}
 							</span>
 						</li>
+						{#if discount > 0 && rule}
+							<li>
+								<span>{m.site_discount_line({ code: rule.code })}</span>
+								<span class="num">−{money(discount)}</span>
+							</li>
+						{/if}
 						<li class="total">
-							<span>{m.site_total()}</span><span class="num">{money(plan.price)}</span>
+							<span>{m.site_total()}</span><span class="num">{money(plan.price - discount)}</span>
 						</li>
 					</ul>
 				{/if}
-				<p class="hint">{m.member_pay_note()}</p>
+				<p class="hint">
+					{(!data.paymentsOn || $form.payWith === 'transfer') && data.transfersOn
+						? m.site_pay_transfer_next()
+						: m.member_pay_note()}
+				</p>
+				{#if plan}
+					<DiscountCode
+						bind:value={$form.discountCode}
+						bind:rule
+						lines={codeLines}
+						errors={$errors.discountCode}
+					/>
+				{/if}
 				{#if $message}<p class="notice" role="status">{$message}</p>{/if}
 				<button class="btn" disabled={$delayed || !plan}>{m.member_submit()}</button>
 			</aside>

@@ -12,16 +12,36 @@
 	type Row = (typeof data.rows)[number];
 
 	const columns: ColumnDef<Row>[] = [
-		{ id: 'title', accessorKey: 'title', header: sortable('Event'), cell: ({ row }) => link('event', row.original.id, row.original.title) },
-		{ id: 'startsAt', accessorKey: 'startsAt', header: sortable('Starts'), cell: ({ row }) => dateTime(row.original.startsAt) },
+		{
+			id: 'title',
+			accessorKey: 'title',
+			header: sortable('Event'),
+			cell: ({ row }) => link('event', row.original.id, row.original.title)
+		},
+		{
+			id: 'startsAt',
+			accessorKey: 'startsAt',
+			header: sortable('Starts'),
+			cell: ({ row }) => dateTime(row.original.startsAt)
+		},
 		{
 			id: 'locationId',
 			header: 'Location',
 			meta: { class: 'hidden md:table-cell' },
 			cell: ({ row }) => link('location', row.original.locationId, row.original.location)
 		},
-		{ id: 'visibility', header: 'For', meta: { class: 'hidden lg:table-cell' }, cell: ({ row }) => humanize(row.original.visibility) },
-		{ id: 'price', header: 'Price', meta: { class: 'hidden lg:table-cell' }, cell: ({ row }) => (row.original.isFree ? 'Free' : 'Paid') },
+		{
+			id: 'visibility',
+			header: 'For',
+			meta: { class: 'hidden lg:table-cell' },
+			cell: ({ row }) => humanize(row.original.visibility)
+		},
+		{
+			id: 'price',
+			header: 'Price',
+			meta: { class: 'hidden lg:table-cell' },
+			cell: ({ row }) => (row.original.isFree ? 'Free' : 'Paid')
+		},
 		{
 			id: 'registered',
 			accessorKey: 'registered',
@@ -29,13 +49,22 @@
 			meta: { align: 'right' },
 			cell: ({ row }) => `${row.original.registered} / ${row.original.capacity}`
 		},
-		{ id: 'full', accessorKey: 'full', header: sortable('Full'), meta: { align: 'right' }, cell: ({ row }) => percent(row.original.full) },
+		{
+			id: 'full',
+			accessorKey: 'full',
+			header: sortable('Full'),
+			meta: { align: 'right' },
+			cell: ({ row }) => percent(row.original.full)
+		},
 		{ id: 'publishStatus', header: 'Status', cell: ({ row }) => status(row.original.publishStatus) }
 	];
 	const href = useLinks();
 </script>
 
-<PageHeader title="Events" description="Talks, tastings and exhibitions. Every event takes registrations; a paid one sells its own ticket types.">
+<PageHeader
+	title="Events"
+	description="Talks, tastings and exhibitions. Every event takes registrations; a paid one sells its own ticket types."
+>
 	{#snippet actions()}
 		{#if data.canManage}
 			<Button href="/dashboard/visits/events/new"><Plus class="size-4" /> New event</Button>

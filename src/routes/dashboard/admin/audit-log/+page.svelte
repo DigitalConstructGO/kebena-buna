@@ -20,14 +20,21 @@
 		{
 			id: 'userId',
 			header: 'Who',
-			cell: ({ row }) => (row.original.userId ? user(row.original.userId, row.original.userName ?? '—') : 'System')
+			cell: ({ row }) =>
+				row.original.userId ? user(row.original.userId, row.original.userName ?? '—') : 'System'
 		},
 		{
 			id: 'action',
 			header: 'Action',
-			cell: ({ row }) => status(ACTION_TONE[row.original.action] ?? 'neutral', humanize(row.original.action))
+			cell: ({ row }) =>
+				status(ACTION_TONE[row.original.action] ?? 'neutral', humanize(row.original.action))
 		},
-		{ id: 'tableName', accessorKey: 'tableName', header: sortable('Table'), cell: ({ row }) => humanize(row.original.tableName) },
+		{
+			id: 'tableName',
+			accessorKey: 'tableName',
+			header: sortable('Table'),
+			cell: ({ row }) => humanize(row.original.tableName)
+		},
 		{
 			id: 'recordId',
 			header: 'Record',
@@ -37,7 +44,12 @@
 					: `#${row.original.recordId}`
 		},
 		{ id: 'summary', header: 'Changes', cell: ({ row }) => longText(row.original.summary, 60) },
-		{ id: 'ipAddress', header: 'IP', meta: { class: 'hidden lg:table-cell' }, cell: ({ row }) => row.original.ipAddress ?? '—' }
+		{
+			id: 'ipAddress',
+			header: 'IP',
+			meta: { class: 'hidden lg:table-cell' },
+			cell: ({ row }) => row.original.ipAddress ?? '—'
+		}
 	];
 	const href = useLinks();
 </script>

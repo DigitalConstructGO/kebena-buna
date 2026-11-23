@@ -16,7 +16,10 @@ export const load = async ({ locals }) => ({
 			stage: stockCount.stage,
 			isOpening: stockCount.isOpening,
 			lineCount: stockCount.lineCount,
-			adjusted: sql<number>`(select count(*) from stock_movement m where m.ref_type = 'stock_count' and m.ref_id = cast(${stockCount.id} as char))`.mapWith(Number),
+			adjusted:
+				sql<number>`(select count(*) from stock_movement m where m.ref_type = 'stock_count' and m.ref_id = cast(${stockCount.id} as char))`.mapWith(
+					Number
+				),
 			postedAt: stockCount.postedAt,
 			note: stockCount.note,
 			createdById: stockCount.createdBy,

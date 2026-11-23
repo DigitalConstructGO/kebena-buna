@@ -18,7 +18,11 @@
 	const payload = $derived(m.payload ? JSON.stringify(m.payload, null, 2) : '');
 </script>
 
-<PageHeader title={m.templateKey} eyebrow="Message #{m.id}" description="{humanize(m.channel)} to {m.recipient}">
+<PageHeader
+	title={m.templateKey}
+	eyebrow="Message #{m.id}"
+	description="{humanize(m.channel)} to {m.recipient}"
+>
 	{#snippet badges()}
 		<Statuses {...badge(m.status)} />
 		{#if m.isMarketing}<Statuses status="info" label="Marketing" />{/if}
@@ -26,10 +30,24 @@
 	{#snippet actions()}
 		{#if data.canManage}
 			{#if m.status === 'failed' || m.status === 'skipped'}
-				<ConfirmAction action="?/retry" label="Send again" icon={RotateCw} variant="outline" title="Queue this message again?" description="It goes back in the queue, due now." />
+				<ConfirmAction
+					action="?/retry"
+					label="Send again"
+					icon={RotateCw}
+					variant="outline"
+					title="Queue this message again?"
+					description="It goes back in the queue, due now."
+				/>
 			{/if}
 			{#if m.status === 'queued' || m.status === 'failed'}
-				<ConfirmAction action="?/skip" label="Skip" icon={Ban} variant="ghost" title="Skip this message?" description="It will not be sent." />
+				<ConfirmAction
+					action="?/skip"
+					label="Skip"
+					icon={Ban}
+					variant="ghost"
+					title="Skip this message?"
+					description="It will not be sent."
+				/>
 			{/if}
 		{/if}
 	{/snippet}
@@ -47,7 +65,8 @@
 				{
 					name: 'About',
 					value: m.refType ? `${humanize(m.refType)} #${m.refId}` : '—',
-					href: m.refType && REF_ENTITY[m.refType] ? href(REF_ENTITY[m.refType], m.refId) : undefined
+					href:
+						m.refType && REF_ENTITY[m.refType] ? href(REF_ENTITY[m.refType], m.refId) : undefined
 				},
 				{ name: 'Due', value: formatDateTime(m.scheduledFor) },
 				{ name: 'Sent', value: formatDateTime(m.sentAt) },

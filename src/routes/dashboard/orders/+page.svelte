@@ -109,7 +109,9 @@
 {#if data.server.filters?.open === '1'}
 	<Notice tone="info" class="mt-4" title="Orders still to fulfil">
 		Paid, roasting, packed, ready for pickup or out for delivery.
-		<a href={resolve('/dashboard/orders')} class="font-medium underline underline-offset-2">Show every order</a>
+		<a href={resolve('/dashboard/orders')} class="font-medium underline underline-offset-2">
+			Show every order
+		</a>
 	</Notice>
 {/if}
 
@@ -120,10 +122,17 @@
 		role="region"
 		aria-label="Ticked orders"
 	>
-		<span class="text-sm font-medium">{selected.length} {selected.length === 1 ? 'order' : 'orders'} ticked</span>
+		<span class="text-sm font-medium">
+			{selected.length}
+			{selected.length === 1 ? 'order' : 'orders'} ticked
+		</span>
 		{#each BULK as b (b.step)}
 			{@const Icon = b.icon}
-			<ActionForm action={bulkAction} fields={{ step: b.step, ids: selected.map((r) => r.id).join(',') }} onDone={() => (selected = [])}>
+			<ActionForm
+				action={bulkAction}
+				fields={{ step: b.step, ids: selected.map((r) => r.id).join(',') }}
+				onDone={() => (selected = [])}
+			>
 				{#snippet children({ busy })}
 					<Button type="submit" size="sm" variant="outline" class="gap-1.5" disabled={!!busy}>
 						{#if busy}<LoadingBtn name="Moving" />{:else}<Icon class="size-4" /> {b.label}{/if}
@@ -131,7 +140,12 @@
 				{/snippet}
 			</ActionForm>
 		{/each}
-		<Button href="/dashboard/orders/slips?ids={selected.map((r) => r.id).join(',')}" size="sm" variant="outline" class="gap-1.5">
+		<Button
+			href="/dashboard/orders/slips?ids={selected.map((r) => r.id).join(',')}"
+			size="sm"
+			variant="outline"
+			class="gap-1.5"
+		>
 			<Printer class="size-4" /> Print packing slips
 		</Button>
 		<Button size="sm" variant="ghost" class="ml-auto" onclick={() => (selected = [])}>Clear</Button>
@@ -145,7 +159,12 @@
 	data={data.rows}
 	server={data.server}
 	facetKeys={['status', 'paymentState', 'channel', 'deliveryMethod']}
-	facetLabels={{ status: 'Status', paymentState: 'Payment', channel: 'Channel', deliveryMethod: 'Delivery' }}
+	facetLabels={{
+		status: 'Status',
+		paymentState: 'Payment',
+		channel: 'Channel',
+		deliveryMethod: 'Delivery'
+	}}
 	tabs="status"
 	rowHref={(row) => href('order', row.id)}
 	dateFilter="Placed"

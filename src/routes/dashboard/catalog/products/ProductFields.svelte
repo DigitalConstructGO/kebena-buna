@@ -33,14 +33,41 @@
 >
 	{#snippet children({ lang, suffix, language })}
 		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-			<InputComp label="Name ({language})" name="name{suffix}" {form} {errors} required={lang === 'en'} />
+			<InputComp
+				label="Name ({language})"
+				name="name{suffix}"
+				{form}
+				{errors}
+				required={lang === 'en'}
+			/>
 			<InputComp label="Tasting notes ({language})" name="tastingNotes{suffix}" {form} {errors} />
 		</div>
-		<InputComp label="Summary ({language})" name="summary{suffix}" type="textarea" rows={2} {form} {errors} />
-		<InputComp label="Origin story ({language})" name="originStory{suffix}" type="textarea" rows={3} {form} {errors} />
+		<InputComp
+			label="Summary ({language})"
+			name="summary{suffix}"
+			type="textarea"
+			rows={2}
+			{form}
+			{errors}
+		/>
+		<InputComp
+			label="Origin story ({language})"
+			name="originStory{suffix}"
+			type="textarea"
+			rows={3}
+			{form}
+			{errors}
+		/>
 		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 			<InputComp label="SEO title ({language})" name="seoTitle{suffix}" {form} {errors} />
-			<InputComp label="SEO description ({language})" name="seoDescription{suffix}" type="textarea" rows={2} {form} {errors} />
+			<InputComp
+				label="SEO description ({language})"
+				name="seoDescription{suffix}"
+				type="textarea"
+				rows={2}
+				{form}
+				{errors}
+			/>
 		</div>
 	{/snippet}
 </LanguageTabs>
@@ -54,9 +81,31 @@
 		{errors}
 		required
 	/>
-	<InputComp label="Kind" name="kind" type="select" items={choicesOf(PRODUCT_KINDS)} {form} {errors} required />
-	<InputComp label="Category" name="categoryId" type="combo" items={options.categories} {form} {errors} />
-	<InputComp label="Tax rate" name="taxRateId" type="select" items={options.taxRates} {form} {errors} />
+	<InputComp
+		label="Kind"
+		name="kind"
+		type="select"
+		items={choicesOf(PRODUCT_KINDS)}
+		{form}
+		{errors}
+		required
+	/>
+	<InputComp
+		label="Category"
+		name="categoryId"
+		type="combo"
+		items={options.categories}
+		{form}
+		{errors}
+	/>
+	<InputComp
+		label="Tax rate"
+		name="taxRateId"
+		type="select"
+		items={options.taxRates}
+		{form}
+		{errors}
+	/>
 	<InputComp
 		label="Fulfilment"
 		name="fulfilment"
@@ -85,11 +134,40 @@
 		{form}
 		{errors}
 	/>
-	<InputComp label="Website" name="publishStatus" type="select" items={choicesOf(PUBLISH_STATUSES)} {form} {errors} required />
+	<InputComp
+		label="Website"
+		name="publishStatus"
+		type="select"
+		items={choicesOf(PUBLISH_STATUSES)}
+		{form}
+		{errors}
+		required
+	/>
 	<InputComp label="Order in the shop" name="sortOrder" type="number" {form} {errors} />
 </div>
 <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
-	<InputComp label="Members only" name="isMemberOnly" type="checkboxSingle" placeholder="Shown only to signed-in members" {form} {errors} />
-	<InputComp label="Subscribable" name="isSubscribable" type="checkboxSingle" placeholder="Offered as a subscription" {form} {errors} />
-	<InputComp label="Wholesale" name="isWholesale" type="checkboxSingle" placeholder="Offered in the wholesale portal" {form} {errors} />
+	<InputComp
+		label="Members only"
+		name="isMemberOnly"
+		type="checkboxSingle"
+		placeholder="Shown only to signed-in members"
+		{form}
+		{errors}
+	/>
+	<InputComp
+		label="Subscribable"
+		name="isSubscribable"
+		type="checkboxSingle"
+		placeholder="Offered as a subscription"
+		{form}
+		{errors}
+	/>
+	<InputComp
+		label="Wholesale"
+		name="isWholesale"
+		type="checkboxSingle"
+		placeholder="Offered in the wholesale portal"
+		{form}
+		{errors}
+	/>
 </div>

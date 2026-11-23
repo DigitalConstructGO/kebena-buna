@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { money, tr } from '#lib/format.ts';
 	import { siteHref } from '#lib/site/locale.ts';
 	import { pictureOf } from '#lib/site/visit/pictures.ts';
@@ -21,10 +21,18 @@
 
 	const locale = $derived(getLocale());
 
-	const fromPrice = (prices: { price: number }[]) => (prices.length ? Math.min(...prices.map((p) => p.price)) : null);
+	const fromPrice = (prices: { price: number }[]) =>
+		prices.length ? Math.min(...prices.map((p) => p.price)) : null;
 	const basis = (pricing: string) =>
-		pricing === 'per_booking' ? m.exp_per_booking() : pricing === 'ticket_plus' ? m.exp_ticket_plus() : m.exp_per_person();
-	const party = (x: Experience) => (x.maxParty ? m.exp_party({ min: x.minParty, max: x.maxParty }) : m.exp_party_min({ min: x.minParty }));
+		pricing === 'per_booking'
+			? m.exp_per_booking()
+			: pricing === 'ticket_plus'
+				? m.exp_ticket_plus()
+				: m.exp_per_person();
+	const party = (x: Experience) =>
+		x.maxParty
+			? m.exp_party({ min: x.minParty, max: x.maxParty })
+			: m.exp_party_min({ min: x.minParty });
 	/** "ETB 300.00 per person", "Free" or "Price on request". */
 	const priceOf = (x: Experience) => {
 		const from = fromPrice(x.prices);
@@ -33,10 +41,11 @@
 		return from === null ? undefined : `${money(from)} ${basis(x.pricing)}`;
 	};
 	const languageName = $derived(new Intl.DisplayNames([locale], { type: 'language' }));
-	const languages = (x: Experience) => (x.languages ?? []).map((code) => languageName.of(code) ?? code).join(', ');
+	const languages = (x: Experience) =>
+		(x.languages ?? []).map((code) => languageName.of(code) ?? code).join(', ');
 </script>
 
-<svelte:head><title>{m.exp_title()} · Kebena</title></svelte:head>
+<svelte:head><title>{m.site_page_title({ title: m.exp_title() })}</title></svelte:head>
 
 <div class="page">
 	<header class="head">
@@ -74,9 +83,15 @@
 </div>
 
 <!-- An experience picked up off the shelf: what it is, how long, for how many, and the way to book. -->
-<Sheet bind:this={sheet} label={held ? tr(held.name, locale) : undefined} onclose={() => (held = undefined)}>
+<Sheet
+	bind:this={sheet}
+	label={held ? tr(held.name, locale) : undefined}
+	onclose={() => (held = undefined)}
+>
 	{#if held}
-		<div class="photo"><img src={pictureOf(held.image, held.kind)} alt="" width="480" height="480" /></div>
+		<div class="photo">
+			<img src={pictureOf(held.image, held.kind)} alt="" width="480" height="480" />
+		</div>
 		<div class="about">
 			<p class="pk-label">{m.exp_label()}</p>
 			<h3>{tr(held.name, locale)}</h3>

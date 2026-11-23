@@ -33,10 +33,13 @@ import {
 	trackHref,
 	toCheckout
 } from '#lib/server/site.ts';
+import { transfersOn } from '#lib/server/transfers.ts';
+import { completeFreeOrder } from '#lib/server/freeOrders.ts';
+import { DiscountRefused } from '#lib/server/discounts.ts';
 import { subscriptionSignupSchema } from '#lib/schemas/signup.ts';
 import { LANGS } from '#lib/languages.ts';
 import { tr } from '#lib/format.ts';
-import { m } from '#lib/paraglide/messages.js';
+import { m } from '#lib/i18n.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -45,7 +48,12 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
 async function offer() {
 	const [plans, variants, roasts, grinds, zones, areas] = await Promise.all([
 		db
-			.select({ id: subscriptionPlan.id, name: subscriptionPlan.name, deliveries: subscriptionPlan.deliveries, discountPct: subscriptionPlan.discountPct })
+			.select({
+				id: subscriptionPlan.id,
+				name: subscriptionPlan.name,
+				deliveries: subscriptionPlan.deliveries,
+				discountPct: subscriptionPlan.discountPct
+			})
 			.from(subscriptionPlan)
 			.where(and(eq(subscriptionPlan.isActive, true), isNull(subscriptionPlan.deletedAt)))
 			.orderBy(asc(subscriptionPlan.deliveries)),
@@ -79,19 +87,34 @@ async function offer() {
 			)
 			.orderBy(asc(product.sortOrder), asc(bagSize.grams)),
 		db
-			.select({ productId: productRoastLevel.productId, id: roastLevel.id, name: roastLevel.name, isDefault: productRoastLevel.isDefault })
+			.select({
+				productId: productRoastLevel.productId,
+				id: roastLevel.id,
+				name: roastLevel.name,
+				isDefault: productRoastLevel.isDefault
+			})
 			.from(productRoastLevel)
 			.innerJoin(roastLevel, eq(productRoastLevel.roastLevelId, roastLevel.id))
 			.where(and(eq(roastLevel.status, true), isNull(roastLevel.deletedAt)))
 			.orderBy(asc(roastLevel.sortOrder)),
 		db
-			.select({ productId: productGrind.productId, id: grind.id, name: grind.name, isDefault: productGrind.isDefault })
+			.select({
+				productId: productGrind.productId,
+				id: grind.id,
+				name: grind.name,
+				isDefault: productGrind.isDefault
+			})
 			.from(productGrind)
 			.innerJoin(grind, eq(productGrind.grindId, grind.id))
 			.where(and(eq(grind.status, true), isNull(grind.deletedAt)))
 			.orderBy(asc(grind.sortOrder)),
 		db
-			.select({ id: deliveryZone.id, name: deliveryZone.name, isPickup: deliveryZone.isPickup, usesCourier: deliveryZone.usesCourier })
+			.select({
+				id: deliveryZone.id,
+				name: deliveryZone.name,
+				isPickup: deliveryZone.isPickup,
+				usesCourier: deliveryZone.usesCourier
+			})
 			.from(deliveryZone)
 			.where(and(eq(deliveryZone.status, true), isNull(deliveryZone.deletedAt)))
 			.orderBy(asc(deliveryZone.sortOrder)),
@@ -114,9 +137,13 @@ async function offer() {
 export const load: PageServerLoad = async () => {
 	const o = await offer();
 	const first = o.variants[0];
-	const defaultRoast = o.roasts.find((r) => r.productId === first?.productId && r.isDefault) ?? o.roasts.find((r) => r.productId === first?.productId);
+	const defaultRoast =
+		o.roasts.find((r) => r.productId === first?.productId && r.isDefault) ??
+		o.roasts.find((r) => r.productId === first?.productId);
 	return {
 		...o,
+		paymentsOn: paymentsOn(),
+		transfersOn: await transfersOn(),
 		form: await superValidate(
 			{
 				planId: o.plans.find((p) => p.deliveries === 6)?.id ?? o.plans[0]?.id,
@@ -125,7 +152,7 @@ export const load: PageServerLoad = async () => {
 				deliveryZoneId: o.zones.find((z) => !z.isPickup)?.id,
 				quantity: 1,
 				frequency: 'monthly' as const,
-				city: 'Addis Ababa',
+				city: m.checkout_city_default(),
 				idempotencyKey: crypto.randomUUID()
 			},
 			zod4(subscriptionSignupSchema),
@@ -139,7 +166,8 @@ export const actions: Actions = {
 		const form = await superValidate(event.request, zod4(subscriptionSignupSchema));
 		if (!form.valid) return fail(400, { form });
 		if (isTrapped(form.data)) return message(form, m.subs_thanks());
-		if (floodRefused(event, 'subscription')) return message(form, m.site_err_flood(), { status: 429 });
+		if (floodRefused(event, 'subscription'))
+			return message(form, m.site_err_flood(), { status: 429 });
 
 		const done = await orderByIdempotencyKey(form.data.idempotencyKey);
 		if (done) redirect(303, trackHref(done));
@@ -153,14 +181,18 @@ export const actions: Actions = {
 		if (!o.roasts.some((r) => r.id === d.roastLevelId && r.productId === variant.productId)) {
 			return setError(form, 'roastLevelId', m.subs_err_roast());
 		}
-		if (d.grindId && !o.grinds.some((g) => g.id === d.grindId && g.productId === variant.productId)) {
+		if (
+			d.grindId &&
+			!o.grinds.some((g) => g.id === d.grindId && g.productId === variant.productId)
+		) {
 			return setError(form, 'grindId', m.subs_err_grind());
 		}
 		const zone = o.zones.find((z) => z.id === d.deliveryZoneId);
 		if (!zone) return setError(form, 'deliveryZoneId', m.subs_err_zone());
 		const areas = o.areas.filter((a) => a.zoneId === zone.id);
 		if (!zone.isPickup) {
-			if (areas.length && !areas.some((a) => a.id === d.areaId)) return setError(form, 'areaId', m.subs_err_area());
+			if (areas.length && !areas.some((a) => a.id === d.areaId))
+				return setError(form, 'areaId', m.subs_err_area());
 			if (!d.line1) return setError(form, 'line1', m.site_err_required());
 		}
 
@@ -174,7 +206,7 @@ export const actions: Actions = {
 			])
 		) as Localized;
 
-		let placed: Awaited<ReturnType<typeof createWebOrder>>;
+		let placed: Awaited<ReturnType<typeof createWebOrder>> & { free: boolean };
 		try {
 			placed = await db.transaction(async (tx) => {
 				const customerId = await customerFor(tx, { name: d.name, phone: d.phone, email: d.email });
@@ -210,6 +242,7 @@ export const actions: Actions = {
 					customerId,
 					contact: { name: d.name, phone: d.phone, email: d.email },
 					idempotencyKey: d.idempotencyKey,
+					discountCode: d.discountCode,
 					lines: [
 						{
 							itemType: 'subscription_bundle',
@@ -233,9 +266,11 @@ export const actions: Actions = {
 					discountPct: plan.discountPct,
 					pricePerDelivery
 				});
-				return order;
+				// A 100% code: nothing to pay, so the subscription starts now.
+				return { ...order, free: order.total < 0.005 && (await completeFreeOrder(tx, order.id)) };
 			});
 		} catch (err) {
+			if (err instanceof DiscountRefused) return setError(form, 'discountCode', err.message);
 			if (isDuplicateKey(err)) {
 				const again = await orderByIdempotencyKey(d.idempotencyKey);
 				if (again) redirect(303, trackHref(again));
@@ -243,7 +278,7 @@ export const actions: Actions = {
 			throw err;
 		}
 
-		if (paymentsOn()) {
+		if (paymentsOn() && d.payWith !== 'transfer' && !placed.free) {
 			let checkout: string | null = null;
 			try {
 				checkout = await startPayment(event, placed.id);

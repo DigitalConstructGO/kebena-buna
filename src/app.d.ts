@@ -4,7 +4,9 @@ import type { User, Session } from 'better-auth';
 // for information about these interfaces
 declare global {
 	namespace App {
-		interface Locals { permList: string[]; isSuperAdmin: boolean;
+		interface Locals {
+			permList: string[];
+			isSuperAdmin: boolean;
 			user?: User;
 			session?: Session;
 		}

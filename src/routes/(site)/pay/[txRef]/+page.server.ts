@@ -1,5 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import { settleByTxRef, trackHref } from '#lib/server/site.ts';
+import { m } from '#lib/i18n.ts';
 import type { PageServerLoad } from './$types';
 
 /**
@@ -8,6 +9,6 @@ import type { PageServerLoad } from './$types';
  */
 export const load: PageServerLoad = async (event) => {
 	const result = await settleByTxRef(event, event.params.txRef);
-	if (!result?.order) error(404, 'Payment not found');
+	if (!result?.order) error(404, m.pay_not_found());
 	redirect(303, `${trackHref(result.order)}&pay=${result.outcome}`);
 };

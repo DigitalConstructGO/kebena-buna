@@ -37,7 +37,12 @@ export const LIVE_STATUSES = ['valid', 'used', 'expired'] as const;
 /** The audiences a price can be set for, in order. */
 export const audienceColumns = () =>
 	db
-		.select({ id: audience.id, code: audience.code, name: enOf(audience.name), colour: audience.colour })
+		.select({
+			id: audience.id,
+			code: audience.code,
+			name: enOf(audience.name),
+			colour: audience.colour
+		})
 		.from(audience)
 		.where(isNull(audience.deletedAt))
 		.orderBy(audience.sortOrder);
@@ -90,7 +95,11 @@ export async function savePriceGrid(
  * Whether another live ticket type already has this code: per event, or among entry types. The
  * unique index cannot catch the second, because MySQL lets any number of null `event_id`s through.
  */
-export async function ticketTypeCodeTaken(code: string, eventId: number | null | undefined, exceptId?: number) {
+export async function ticketTypeCodeTaken(
+	code: string,
+	eventId: number | null | undefined,
+	exceptId?: number
+) {
 	const [row] = await db
 		.select({ id: ticketType.id })
 		.from(ticketType)
@@ -166,8 +175,14 @@ export async function generateDays(
 			);
 			for (const [locationId, pattern] of byLocation) {
 				if (existing.some((d) => d.date === date && d.locationId === locationId)) continue;
-				if (closures.some((c) => c.date === date && (c.locationId === null || c.locationId === locationId))) continue;
-				if (hours.some((h) => h.locationId === locationId && h.weekday === weekday && h.isClosed)) continue;
+				if (
+					closures.some(
+						(c) => c.date === date && (c.locationId === null || c.locationId === locationId)
+					)
+				)
+					continue;
+				if (hours.some((h) => h.locationId === locationId && h.weekday === weekday && h.isClosed))
+					continue;
 				const [res] = await tx
 					.insert(visitDay)
 					.values({ locationId, date, capacity: dayCapacity, createdBy: userId });
@@ -219,22 +234,40 @@ export async function moveCounters(
 	{ column = 'sold', field = 'toSlotId', day: withDay = true }: CounterOptions = {}
 ) {
 	const [slot] = await tx
-		.select({ id: visitSlot.id, dayId: visitSlot.visitDayId, sold: visitSlot.sold, held: visitSlot.held, capacity: visitSlot.capacity, isClosed: visitSlot.isClosed })
+		.select({
+			id: visitSlot.id,
+			dayId: visitSlot.visitDayId,
+			sold: visitSlot.sold,
+			held: visitSlot.held,
+			capacity: visitSlot.capacity,
+			isClosed: visitSlot.isClosed
+		})
 		.from(visitSlot)
 		.where(eq(visitSlot.id, slotId))
 		.for('update');
 	if (!slot) throw new WriteRefused(field, 'Slot not found');
 	const [day] = await tx
-		.select({ sold: visitDay.sold, held: visitDay.held, capacity: visitDay.capacity, isClosed: visitDay.isClosed })
+		.select({
+			sold: visitDay.sold,
+			held: visitDay.held,
+			capacity: visitDay.capacity,
+			isClosed: visitDay.isClosed
+		})
 		.from(visitDay)
 		.where(eq(visitDay.id, slot.dayId))
 		.for('update');
 	if (delta > 0) {
 		if (slot.isClosed || day.isClosed) throw new WriteRefused(field, 'That slot is closed');
 		if (slot.sold + slot.held + delta > slot.capacity)
-			throw new WriteRefused(field, `Only ${Math.max(slot.capacity - slot.sold - slot.held, 0)} places left in that slot`);
+			throw new WriteRefused(
+				field,
+				`Only ${Math.max(slot.capacity - slot.sold - slot.held, 0)} places left in that slot`
+			);
 		if (withDay && day.sold + day.held + delta > day.capacity)
-			throw new WriteRefused(field, `Only ${Math.max(day.capacity - day.sold - day.held, 0)} places left that day`);
+			throw new WriteRefused(
+				field,
+				`Only ${Math.max(day.capacity - day.sold - day.held, 0)} places left that day`
+			);
 	}
 	const slotCol = visitSlot[column];
 	await tx
@@ -259,7 +292,12 @@ async function lockSlots(tx: Writer, slotIds: number[]) {
 		.for('update');
 	const dayIds = [...new Set(slots.map((s) => s.dayId))];
 	if (dayIds.length) {
-		await tx.select({ id: visitDay.id }).from(visitDay).where(inArray(visitDay.id, dayIds)).orderBy(visitDay.id).for('update');
+		await tx
+			.select({ id: visitDay.id })
+			.from(visitDay)
+			.where(inArray(visitDay.id, dayIds))
+			.orderBy(visitDay.id)
+			.for('update');
 	}
 }
 
@@ -275,9 +313,11 @@ export async function rescheduleTicket(
 ) {
 	await db.transaction(async (tx) => {
 		const { ticket: t, counts } = await lockTicket(tx, ticketId);
-		if (t.status !== 'valid') throw new WriteRefused(null, 'Only a valid, unused ticket can be moved');
+		if (t.status !== 'valid')
+			throw new WriteRefused(null, 'Only a valid, unused ticket can be moved');
 		if (!t.visitSlotId) throw new WriteRefused(null, 'An event ticket has no slot to move');
-		if (t.visitSlotId === toSlotId) throw new WriteRefused('toSlotId', 'That is the slot it already has');
+		if (t.visitSlotId === toSlotId)
+			throw new WriteRefused('toSlotId', 'That is the slot it already has');
 		const fromSlotId = t.visitSlotId;
 		await lockSlots(tx, [fromSlotId, toSlotId]);
 		const slots = await tx
@@ -299,7 +339,8 @@ export async function rescheduleTicket(
 		if (from && from.locationId !== target.locationId)
 			throw new WriteRefused('toSlotId', 'That slot is at another location');
 		if (target.endsAt <= new Date()) throw new WriteRefused('toSlotId', 'That slot is over');
-		if (target.isClosed || target.dayClosed) throw new WriteRefused('toSlotId', 'That slot is closed');
+		if (target.isClosed || target.dayClosed)
+			throw new WriteRefused('toSlotId', 'That slot is closed');
 		if (counts) {
 			// Same day: free the old place first, and leave the day's total as it is.
 			const sameDay = from?.dayId === target.dayId;
@@ -311,7 +352,10 @@ export async function rescheduleTicket(
 				await moveCounters(tx, fromSlotId, -t.admits);
 			}
 		}
-		await tx.update(ticket).set({ visitSlotId: toSlotId, visitDate: target.date }).where(eq(ticket.id, ticketId));
+		await tx
+			.update(ticket)
+			.set({ visitSlotId: toSlotId, visitDate: target.date })
+			.where(eq(ticket.id, ticketId));
 		await tx.insert(ticketChange).values({
 			ticketId,
 			kind: 'reschedule',
@@ -325,20 +369,32 @@ export async function rescheduleTicket(
 }
 
 /** Cancels a ticket that has not been used; its places go back to the slot, or to the event. */
-export async function cancelTicket(event: RequestEvent, ticketId: number, reason: string | null | undefined) {
+export async function cancelTicket(
+	event: RequestEvent,
+	ticketId: number,
+	reason: string | null | undefined
+) {
 	await db.transaction(async (tx) => {
 		const { ticket: t, counts } = await lockTicket(tx, ticketId);
-		if (t.status !== 'valid') throw new WriteRefused(null, `A ${t.status} ticket cannot be cancelled`);
+		if (t.status !== 'valid')
+			throw new WriteRefused(null, `A ${t.status} ticket cannot be cancelled`);
 		if (counts && t.visitSlotId) await moveCounters(tx, t.visitSlotId, -t.admits);
 		if (t.eventId) {
 			// The event's registrations are its own counter: give the party's places back.
-			await tx.select({ id: eventTable.id }).from(eventTable).where(eq(eventTable.id, t.eventId)).for('update');
+			await tx
+				.select({ id: eventTable.id })
+				.from(eventTable)
+				.where(eq(eventTable.id, t.eventId))
+				.for('update');
 			await tx
 				.update(eventTable)
 				.set({ registered: sql`greatest(${eventTable.registered} - ${t.admits}, 0)` })
 				.where(eq(eventTable.id, t.eventId));
 		}
-		await tx.update(ticket).set({ status: 'cancelled', cancelledAt: new Date() }).where(eq(ticket.id, ticketId));
+		await tx
+			.update(ticket)
+			.set({ status: 'cancelled', cancelledAt: new Date() })
+			.where(eq(ticket.id, ticketId));
 		await tx.insert(ticketChange).values({
 			ticketId,
 			kind: 'cancel',
@@ -360,10 +416,13 @@ export async function cancelTicket(event: RequestEvent, ticketId: number, reason
 export async function checkInTicket(event: RequestEvent, ticketId: number, headcount?: number) {
 	return db.transaction(async (tx) => {
 		const { ticket: t } = await lockTicket(tx, ticketId);
-		if (t.status !== 'valid') throw new WriteRefused(null, `A ${t.status} ticket cannot be checked in`);
-		if (t.visitDate !== localToday()) throw new WriteRefused(null, `This ticket is for ${t.visitDate}, not today`);
+		if (t.status !== 'valid')
+			throw new WriteRefused(null, `A ${t.status} ticket cannot be checked in`);
+		if (t.visitDate !== localToday())
+			throw new WriteRefused(null, `This ticket is for ${t.visitDate}, not today`);
 		const remaining = Math.max(t.admits - t.checkedIn, 0);
-		const people = headcount === undefined ? remaining : Math.min(Math.max(Math.trunc(headcount), 1), remaining);
+		const people =
+			headcount === undefined ? remaining : Math.min(Math.max(Math.trunc(headcount), 1), remaining);
 		if (people < 1) throw new WriteRefused(null, 'Everyone on this ticket is already in');
 		const checkedIn = t.checkedIn + people;
 		const now = new Date();

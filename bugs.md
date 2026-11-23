@@ -6,18 +6,19 @@ Date: 2026-11-20 · Scope: `src/routes/dashboard/**`, the server modules behind 
 
 ## Severity stages
 
-| Stage | Meaning | Count |
-| --- | --- | --- |
-| **Critical** | Exploitable now for account takeover or access from outside. Fix before any deploy. | 2 |
-| **High** | Money, stock or permissions go wrong in normal use, or a staff role can do far more than it should. | 13 |
-| **Medium** | Wrong data or broken workflow in realistic cases; data leaks to staff who shouldn't see it. | 33 |
-| **Low** | Edge cases, missing validation, 500s instead of form errors, inconsistencies. | 19 |
+| Stage        | Meaning                                                                                             | Count |
+| ------------ | --------------------------------------------------------------------------------------------------- | ----- |
+| **Critical** | Exploitable now for account takeover or access from outside. Fix before any deploy.                 | 2     |
+| **High**     | Money, stock or permissions go wrong in normal use, or a staff role can do far more than it should. | 13    |
+| **Medium**   | Wrong data or broken workflow in realistic cases; data leaks to staff who shouldn't see it.         | 33    |
+| **Low**      | Edge cases, missing validation, 500s instead of form errors, inconsistencies.                       | 19    |
 
 ## Fix status (2026-11-20)
 
 **64 fixed · 2 partly fixed · 1 open.** Nothing is committed and there are no schema changes, so no migration is needed.
 
 Checks run after the fixes:
+
 - `svelte-check`: 0 errors, 0 warnings.
 - `vite build`: passes.
 - Dev server against the seeded DB:
@@ -28,6 +29,7 @@ Checks run after the fixes:
 - CRIT-01 was checked by reading the code. It was not exercised, because that would mean creating a role in the DB.
 
 ### Still to do
+
 - **MED-03:** two-factor sign-in for Owner and Manager. This is a new feature, not a fix, and still needs to be built.
 - **HIGH-11:** no job releases expired holds. Bookings created before this fix also need a one-off reconciliation of `visit_slot.held` and `visit_day.held`.
 - **LOW-03:** tickets are cancelled after the order's transaction. `cancelTicket` opens its own transaction and can't join the order's, so the two aren't atomic.
@@ -45,6 +47,7 @@ Checks run after the fixes:
 ## Critical
 
 ### CRIT-01 · [✅ Fixed] Anyone with `users.manage` can make themselves Owner (super admin)
+
 - **Where:** `src/lib/server/admin.ts:133-167` (`updateUser`), `:96` (`addStaff`), `:169` (`resetPassword`), `:268` (`setRolePermissions`); `src/routes/dashboard/admin/users/[id]/+page.server.ts:191,202`; `src/lib/server/permissions.ts:37`
 - **Problem:** None of these check what the caller holds. A non-Owner with `users.manage` can:
   - set their own `roleId` to Owner (the only self-check stops you switching yourself off);
@@ -57,6 +60,7 @@ Checks run after the fixes:
   - Everyone else may only grant permissions they hold, and may not edit their own role or `roleId`.
 
 ### CRIT-02 · [✅ Fixed] Public sign-up is still open through the scaffold demo route
+
 - **Where:** `src/routes/demo/better-auth/login/+page.server.ts:40-61` (tracked in git)
 - **Problem:** `handleClosed` in `hooks.server.ts` blocks `/api/auth/sign-up*`, but the leftover `?/signUpEmail` action calls `auth.api.signUpEmail` on the server, which bypasses that block and signs the new user in.
 - **Scenario:** Anyone on the internet POSTs to `/demo/better-auth/login?/signUpEmail` and gets a session. That reaches `/dashboard`, `/dashboard/account` and every uploaded file (HIGH-02).
@@ -67,17 +71,19 @@ Checks run after the fixes:
 ## High
 
 ### HIGH-01 · [✅ Fixed] Lookup screens let view-only staff add and edit records
+
 - **Where:** pages that spread `crud.actions` from `contentCrud`/`localizedCrud`, whose `add`/`edit` check no permission (`node_modules/@nahu/admin-kit/dist/server/crud.js`; only delete calls `requireSuperAdmin`):
 
-  | Page | Route gate |
-  | --- | --- |
-  | `catalog/{bag-sizes,categories,roast-levels,grinds,packaging}` | `catalog.view` |
-  | `origins/{regions,varieties,certifications}` | `origins.view` |
-  | `stock/machines` | `stock.view` |
-  | `wholesale/tiers` | `wholesale.view` |
-  | `subscriptions/plans` | `memberships.view` |
-  | `visits/slot-templates` | `visits.view` |
-  | `admin/templates` | `messages.view` |
+  | Page                                                           | Route gate         |
+  | -------------------------------------------------------------- | ------------------ |
+  | `catalog/{bag-sizes,categories,roast-levels,grinds,packaging}` | `catalog.view`     |
+  | `origins/{regions,varieties,certifications}`                   | `origins.view`     |
+  | `stock/machines`                                               | `stock.view`       |
+  | `wholesale/tiers`                                              | `wholesale.view`   |
+  | `subscriptions/plans`                                          | `memberships.view` |
+  | `visits/slot-templates`                                        | `visits.view`      |
+  | `admin/templates`                                              | `messages.view`    |
+
 - **Scenario:**
   - A read-only accountant sets a wholesale tier's `discountPct` to 100.
   - Shop staff set the 1 kg bag size to `grams=1`, so packing (`stock.ts:382`) uses no roasted coffee.
@@ -86,29 +92,34 @@ Checks run after the fixes:
 - **Fix:** Give `localizedCrud`/`contentCrud` a `permission` option that calls `requirePermission` in add and edit, or wrap the actions on each page. `admin/templates` needs a new `messages.manage` permission.
 
 ### HIGH-02 · [✅ Fixed] Private uploads are served to any signed-in account
+
 - **Where:** `src/routes/dashboard/files/[name]/+server.ts:2` re-exports the kit's `GET`; `access.ts:62` gives `files/` `permission: null`.
 - **Problem:** The store holds wholesale trade licences (`tradeLicenceFile`) and member photos (`memberships.schema.ts:129`). Customers, switched-off staff (MED-01) and demo sign-ups (CRIT-02) are all signed-in users. Responses are also cached `immutable` for a year.
 - **Fix:** `export const GET = createFileHandler({ canRead: (l) => l.isSuperAdmin || l.permList.length > 0 })`, or check that the user is active staff.
 
 ### HIGH-03 · [✅ Fixed] The same order can be refunded more than once
+
 - **Where:** `src/lib/server/orders.ts:165-195`, `252-258`
-- **Problem:** `refundable()` subtracts only `refundedQuantity`, which changes when a refund *succeeds*. The cap `amountPaid - amountRefunded` ignores refunds that are requested, approved or processing.
+- **Problem:** `refundable()` subtracts only `refundedQuantity`, which changes when a refund _succeeds_. The cap `amountPaid - amountRefunded` ignores refunds that are requested, approved or processing.
 - **Scenario:** Two "refund everything" requests on a 1,000 ETB order are both created and approved. The order ends with `amountRefunded` = 2,000.
 - **Fix:** When requesting, subtract open (not failed) refunds' quantities and amounts. Check the remaining amount again when marking a refund succeeded.
 
 ### HIGH-04 · [✅ Fixed] A double-submitted refund pays out twice
+
 - **Where:** `src/routes/dashboard/orders/refunds/[id]/+page.server.ts:136-147`; `src/lib/server/orders.ts:239-247`
 - **Problem:** The refund is read outside the transaction with no lock, and the status update doesn't check the old status.
 - **Scenario:** Two concurrent "succeed" POSTs both pass the `approved → succeeded` check. The refund counters go up twice and two store-credit rows are inserted.
 - **Fix:** `select … for update` inside the transaction, or `update … where status = 'approved'` and check how many rows changed.
 
 ### HIGH-05 · [✅ Fixed] Paying an invoice never updates its order
+
 - **Where:** `src/lib/server/orders.ts:138-162`
 - **Problem:** The payment row gets `orderId`, but the order's `amountPaid`, `paymentState` and `status` are never changed.
 - **Scenario:** A wholesale invoice is paid in full, but the order still shows the full balance and stays `pending_payment`. Staff record the payment again on the order, so it is counted twice.
 - **Fix:** When `inv.orderId` is set, lock the order and apply the `recordOrderPayment` logic in the same transaction.
 
 ### HIGH-06 · [✅ Fixed] Order payments lose updates, accept overpayment and skip VAT receipt numbers
+
 - **Where:** `src/lib/server/orders.ts:101-135`; `src/routes/dashboard/orders/[id]/+page.server.ts:364`
 - **Problem:**
   - The order is read without a lock, outside the transaction, and saved as `amountPaid = stale + amount`.
@@ -118,42 +129,49 @@ Checks run after the fixes:
 - **Fix:** Re-read the order `for update` inside the transaction and refuse `amount > total - amountPaid`. Issue a receipt number only while the locked row's number is still null.
 
 ### HIGH-07 · [✅ Fixed] VAT receipt numbers have the year hard-coded (breaks on 2027-01-01)
+
 - **Where:** `src/lib/server/orders.ts:126`
 - **Problem:** Receipts are numbered `` `R-26-…` `` from `nextNumber(tx, 'receipt:2026')`.
 - **Scenario:** From 1 January 2027, six weeks away, receipts are still numbered R-26 and the 2026 sequence never resets.
 - **Fix:** Derive the year from the local date of `paidAt`, as `memberships.ts:34` already does.
 
 ### HIGH-08 · [✅ Fixed] Transferred green coffee arrives at zero cost
+
 - **Where:** `src/lib/server/stock.ts:465-466`, called from `transferStock` (`:534`)
 - **Problem:** On `transfer_in`, the cost comes from `greenCost(tx, lotId, toLocationId)`, which is the destination's cost and 0 at a new location.
 - **Scenario:** 100 kg at 600 ETB/kg moves to a new site and arrives at 0 ETB/kg. Roasts there have zero cost of goods, so stock value is understated.
 - **Fix:** Read the source cost once in `transferStock` and pass it as `costPerKg` for the incoming half.
 
 ### HIGH-09 · [✅ Fixed] Skipped subscription deliveries are counted as used
+
 - **Where:** `src/routes/dashboard/subscriptions/[id]/+page.server.ts:162-173` (`refreshNext`); UI text at `+page.svelte:67,101`
 - **Problem:** `deliveriesUsed` counts `'skipped'`, but Pause and Skip tell staff that the delivery "stays prepaid and is not lost".
 - **Scenario:** A customer on a 6-delivery bundle pauses for 3 months. "Left" drops to 0, the top-up reminder fires, and a cancel then refunds nothing.
 - **Fix:** Stop counting `'skipped'`, or add a replacement delivery for each skip.
 
 ### HIGH-10 · [✅ Fixed] "Bring back" works on cancelled subscriptions
+
 - **Where:** `src/routes/dashboard/subscriptions/[id]/+page.server.ts:179-203` (`setDelivery`); `+page.svelte:45`
 - **Problem:** Cancel changes only `scheduled` deliveries. Future `skipped` ones can still be brought back, because `setDelivery` doesn't check the subscription's status.
 - **Scenario:** Someone brings back a skipped delivery on a cancelled, refunded subscription. It gets roasted and shipped.
 - **Fix:** Refuse unless the status is `active` or `paused`. Cancel should also cancel future `skipped` rows.
 
 ### HIGH-11 · [🟡 Partly fixed] Booking holds never reserve capacity
+
 - **Where:** `src/routes/dashboard/bookings/[id]/+page.server.ts:219-234` (schedule), `:253` (cancel)
 - **Problem:** `heldPlaces` is saved on the booking only. Nothing ever changes `visitSlot.held` or `visitDay.held`.
 - **Scenario:** Staff hold 40 places for a school group, but the slot keeps selling them and is oversold.
 - **Fix:** In the same transaction, move `held` by the change in `heldPlaces`, using the `moveCounters` capacity check. Release the places on cancel or expiry.
 
 ### HIGH-12 · [✅ Fixed] Messages and webhooks can be changed with view-only access
+
 - **Where:** `src/routes/dashboard/admin/messages/[id]/+page.server.ts:38` (retry/skip); `admin/webhooks/[id]/+page.server.ts:20` (replay)
 - **Problem:** There is no `messages.manage` permission, so these actions need only `messages.view`.
 - **Scenario:** Anyone allowed to view messages can requeue them or replay payment webhooks, and the payment worker processes the event again.
 - **Fix:** Add `messages.manage` and require it in retry, skip and replay (and on templates, see HIGH-01).
 
 ### HIGH-13 · [✅ Fixed] Switched-off or deleted accounts can still sign in
+
 - **Where:** `src/lib/server/auth.ts` (no check on `isActive`/`deletedAt`); `src/routes/login/+page.server.ts:19`; `hooks.server.ts:56-63`
 - **Problem:** Switching an account off deletes its sessions, but `signInEmail` never checks `isActive`. The schema says a switched-off account cannot sign in.
 - **Scenario:** A fired employee logs back in and reaches the dashboard shell, their account page and every uploaded file (HIGH-02).
@@ -164,6 +182,7 @@ Checks run after the fixes:
 ## Medium
 
 ### Auth & access
+
 - **MED-01 · [✅ Fixed] Open redirect after login via a tab character**
   - Where: `src/routes/login/+page.server.ts:30-31`.
   - The regex `^\/(?![/\\])` accepts `/\t/evil.com`. Browsers strip the tab, so it resolves to `//evil.com`. A phishing link `/login?redirectTo=/%09/evil.com` sends the user there after a real login.
@@ -177,6 +196,7 @@ Checks run after the fixes:
   - Fix: add the plugin, and gate those roles until it is enabled.
 
 ### Orders, customers & wholesale
+
 - **MED-04 · [✅ Fixed] Store-credit payments never debit the credit ledger**
   - Where: `src/lib/schemas/orders.ts:20`, `src/lib/server/orders.ts:101-117`.
   - The balance is never checked or reduced, so the same 500 ETB of credit can pay many orders.
@@ -207,6 +227,7 @@ Checks run after the fixes:
   - Fix: load it only for `wholesale.manage`, or use a search endpoint.
 
 ### Catalog, origins & stock
+
 - **MED-10 · [✅ Fixed] A stock count can overwrite sales made while it is posting**
   - Where: `stock.ts:590-609`.
   - The difference is worked out from an unlocked read and then added to the locked balance, so a sale in between is lost.
@@ -237,6 +258,7 @@ Checks run after the fixes:
   - Fix: suffix the SKU on delete, or make the indexes ignore deleted rows.
 
 ### Visits, memberships & bookings
+
 - **MED-17 · [✅ Fixed] Activating a lapsed membership keeps its old, expired dates**
   - Where: `memberships/[id]/+page.server.ts:184-189`.
   - `dates = m.startsOn ? {} : termDates(...)`. The action also has no status check, no audit and no transaction.
@@ -279,6 +301,7 @@ Checks run after the fixes:
   - Fix: go through `assignStaff`.
 
 ### Content, messages, settings & reports
+
 - **MED-27 · [✅ Fixed] "Send again" can send a message twice**
   - Where: `admin/messages/[id]/+page.server.ts:40-46`.
   - Only `sent` is refused, so a message that is `sending` can be requeued, and the update doesn't check the status.

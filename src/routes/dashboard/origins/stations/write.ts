@@ -35,5 +35,9 @@ export async function addStation(event: RequestEvent) {
 		}
 		throw err;
 	}
-	redirect(`/dashboard/origins/stations/${id}`, { type: 'success', message: 'Station added' }, event.cookies);
+	redirect(
+		`/dashboard/origins/stations/${id}`,
+		{ type: 'success', message: 'Station added' },
+		event.cookies
+	);
 }

@@ -54,7 +54,11 @@ const joined = <T extends MySqlSelect>(q: T) =>
 export const load = async ({ url, locals }) => {
 	const query = parseTableQuery(url, FILTERS, 20, Object.keys(SORTS));
 	const where = buildWhere(query, spec);
-	const tally = (key: (typeof FILTERS)[number], column: typeof product.kind | typeof product.publishStatus | typeof product.fulfilment) =>
+	const tally =
+		(
+			key: (typeof FILTERS)[number],
+			column: typeof product.kind | typeof product.publishStatus | typeof product.fulfilment
+		) =>
 		() =>
 			db
 				.select({ value: column, count: count() })

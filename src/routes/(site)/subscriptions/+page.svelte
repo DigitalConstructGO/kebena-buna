@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { superForm } from 'sveltekit-superforms';
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { money, tr } from '#lib/format.ts';
 	import Field from '#lib/site/Field.svelte';
 	import Trap from '#lib/site/Trap.svelte';
+	import PayWith from '#lib/site/PayWith.svelte';
+	import DiscountCode from '#lib/site/DiscountCode.svelte';
+	import { discountOff, type DiscountRule } from '#lib/discounts.ts';
 	import ImageSelect from '@nahu/admin-kit/formComponents/ImageSelect.svelte';
 	import { Checkbox } from '@nahu/admin-kit/components/ui/checkbox/index.js';
 
@@ -42,7 +45,13 @@
 			? r2(variant.price * Number($form.quantity || 1) * (1 - plan.discountPct / 100))
 			: 0
 	);
-	const total = $derived(plan ? r2(perDelivery * plan.deliveries) : 0);
+	const bundle = $derived(plan ? r2(perDelivery * plan.deliveries) : 0);
+	let rule = $state<(DiscountRule & { code: string }) | null>(null);
+	const codeLines = $derived(
+		bundle > 0 ? [{ itemType: 'subscription_bundle', gross: bundle }] : []
+	);
+	const discount = $derived(discountOff(rule, codeLines));
+	const total = $derived(r2(bundle - discount));
 	const fullPrice = $derived(
 		variant && plan ? r2(variant.price * Number($form.quantity || 1) * plan.deliveries) : 0
 	);
@@ -65,7 +74,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.subs_title()} · Kebena</title>
+	<title>{m.site_page_title({ title: m.subs_title() })}</title>
 	<meta name="description" content={m.subs_lede()} />
 </svelte:head>
 
@@ -264,6 +273,12 @@
 					</div>
 				</fieldset>
 
+				<PayWith
+					bind:value={$form.payWith}
+					paymentsOn={data.paymentsOn}
+					transfersOn={data.transfersOn}
+				/>
+
 				<label class="check">
 					<Checkbox name="marketingConsent" bind:checked={$form.marketingConsent} />
 					<span>{m.subs_consent()}</span>
@@ -287,15 +302,35 @@
 								× {plan.deliveries}
 							</span>
 						</li>
-						{#if fullPrice > total}<li>
-								<span>{m.subs_you_save()}</span><span class="num">−{money(fullPrice - total)}</span>
+						{#if fullPrice > bundle}<li>
+								<span>{m.subs_you_save()}</span><span class="num">
+									−{money(fullPrice - bundle)}
+								</span>
 							</li>{/if}
+						{#if discount > 0 && rule}
+							<li>
+								<span>{m.site_discount_line({ code: rule.code })}</span>
+								<span class="num">−{money(discount)}</span>
+							</li>
+						{/if}
 						<li class="total">
 							<span>{m.site_total()}</span><span class="num">{money(total)}</span>
 						</li>
 					</ul>
 				{/if}
-				<p class="hint">{m.subs_pay_note()}</p>
+				<p class="hint">
+					{(!data.paymentsOn || $form.payWith === 'transfer') && data.transfersOn
+						? m.site_pay_transfer_next()
+						: m.subs_pay_note()}
+				</p>
+				{#if bundle > 0}
+					<DiscountCode
+						bind:value={$form.discountCode}
+						bind:rule
+						lines={codeLines}
+						errors={$errors.discountCode}
+					/>
+				{/if}
 				{#if $message}<p class="notice" role="status">{$message}</p>{/if}
 				<button class="btn" disabled={$delayed || !variant || !plan}>{m.subs_submit()}</button>
 			</aside>

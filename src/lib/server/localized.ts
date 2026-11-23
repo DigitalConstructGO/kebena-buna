@@ -48,7 +48,10 @@ export function unpackLocalized<T extends Record<string, unknown>>(
 }
 
 /** Only the per-language fields of `fields` (`nameEn`, `nameAm`, …), empty where a language is. */
-export function flatLocalized(row: Record<string, unknown>, fields: string[]): Record<string, string> {
+export function flatLocalized(
+	row: Record<string, unknown>,
+	fields: string[]
+): Record<string, string> {
 	const out: Record<string, string> = {};
 	for (const field of fields) {
 		const value = (row[field] ?? {}) as Localized;

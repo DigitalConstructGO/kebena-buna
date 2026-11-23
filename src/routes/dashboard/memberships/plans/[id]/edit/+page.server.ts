@@ -44,7 +44,8 @@ export const actions = {
 		requirePermission(event.locals, 'memberships.manage');
 		const posted = await postedForm(event.request);
 		const form = await superValidate(posted, zod4(membershipPlanEditSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const plan = await found(event.params.id);
 		try {
 			await savePlan(event, form.data, posted, plan.id);
@@ -55,10 +56,18 @@ export const actions = {
 			}
 			if (isDuplicateKey(err)) {
 				setError(form, 'code', 'A plan already has this code');
-				return message(form, { type: 'error', text: 'A plan already has this code' }, { status: 400 });
+				return message(
+					form,
+					{ type: 'error', text: 'A plan already has this code' },
+					{ status: 400 }
+				);
 			}
 			throw err;
 		}
-		redirect(`/dashboard/memberships/plans/${plan.id}`, { type: 'success', message: 'Plan saved' }, event.cookies);
+		redirect(
+			`/dashboard/memberships/plans/${plan.id}`,
+			{ type: 'success', message: 'Plan saved' },
+			event.cookies
+		);
 	}
 };

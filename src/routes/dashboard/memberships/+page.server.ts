@@ -74,7 +74,10 @@ export const load = async ({ url, locals }) => {
 					startsOn: membership.startsOn,
 					endsOn: membership.endsOn,
 					renewalMethod: membership.renewalMethod,
-					members: sql<number>`(select count(*) from ${membershipMember} mm where mm.membership_id = ${membership.id} and mm.deleted_at is null)`.mapWith(Number),
+					members:
+						sql<number>`(select count(*) from ${membershipMember} mm where mm.membership_id = ${membership.id} and mm.deleted_at is null)`.mapWith(
+							Number
+						),
 					createdById: membership.createdBy,
 					createdBy: creator.name
 				})
@@ -109,7 +112,9 @@ export const load = async ({ url, locals }) => {
 		today: localToday(),
 		server: { pagination: pagination(query, total), facets, filters: currentQuery(query) },
 		canManage,
-		newForm: await superValidate({ startsOn: localToday() }, zod4(newMembershipSchema), { errors: false }),
+		newForm: await superValidate({ startsOn: localToday() }, zod4(newMembershipSchema), {
+			errors: false
+		}),
 		customers: canManage ? await customerOptions() : [],
 		plans: canManage ? await membershipPlanOptions() : []
 	};
@@ -119,10 +124,15 @@ export const actions = {
 	add: async (event) => {
 		requirePermission(event.locals, 'memberships.manage');
 		const form = await superValidate(event.request, zod4(newMembershipSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { id, number } = await db.transaction((tx) =>
 			createMembership(tx, form.data, event.locals.user?.id)
 		);
-		redirect(`/dashboard/memberships/${id}`, { type: 'success', message: `${number} created — awaiting payment` }, event.cookies);
+		redirect(
+			`/dashboard/memberships/${id}`,
+			{ type: 'success', message: `${number} created — awaiting payment` },
+			event.cookies
+		);
 	}
 };

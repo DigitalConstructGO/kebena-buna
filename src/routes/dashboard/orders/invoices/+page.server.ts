@@ -15,7 +15,12 @@ import { businessAccount, customer, invoice, order } from '#lib/server/db/schema
 import { INVOICE_STATUSES } from '#lib/constants.ts';
 
 const FILTERS = ['status'] as const;
-const SORTS = { number: invoice.number, issuedAt: invoice.issuedAt, dueOn: invoice.dueOn, total: invoice.total };
+const SORTS = {
+	number: invoice.number,
+	issuedAt: invoice.issuedAt,
+	dueOn: invoice.dueOn,
+	total: invoice.total
+};
 
 const spec: WhereSpec<(typeof FILTERS)[number]> = {
 	search: (term) =>
@@ -78,8 +83,14 @@ export const load = async ({ url }) => {
 		}),
 		db
 			.select({
-				outstanding: sql<number>`coalesce(sum(case when ${invoice.status} in ('open','overdue') then ${invoice.total} - ${invoice.amountPaid} end), 0)`.mapWith(Number),
-				overdue: sql<number>`coalesce(sum(case when ${invoice.status} = 'overdue' or (${invoice.status} = 'open' and ${invoice.dueOn} < ${localToday()}) then 1 end), 0)`.mapWith(Number)
+				outstanding:
+					sql<number>`coalesce(sum(case when ${invoice.status} in ('open','overdue') then ${invoice.total} - ${invoice.amountPaid} end), 0)`.mapWith(
+						Number
+					),
+				overdue:
+					sql<number>`coalesce(sum(case when ${invoice.status} = 'overdue' or (${invoice.status} = 'open' and ${invoice.dueOn} < ${localToday()}) then 1 end), 0)`.mapWith(
+						Number
+					)
 			})
 			.from(invoice)
 	]);

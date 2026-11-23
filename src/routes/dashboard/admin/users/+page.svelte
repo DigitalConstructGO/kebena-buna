@@ -70,17 +70,35 @@
 			action="?/add"
 			data={data.addForm}
 			schema={addUserSchema}
-			triggerLabel="New staff member" triggerVariant="default" triggerIcon={Plus} submitIcon={Plus}
+			triggerLabel="New staff member"
+			triggerVariant="default"
+			triggerIcon={Plus}
+			submitIcon={Plus}
 			submitLabel="Create account"
 			resetOnSuccess
 		>
 			{#snippet fields({ form, errors })}
 				<InputComp label="Full name" name="name" {form} {errors} required />
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-					<InputComp label="Email (signs in with)" name="email" type="email" {form} {errors} required />
+					<InputComp
+						label="Email (signs in with)"
+						name="email"
+						type="email"
+						{form}
+						{errors}
+						required
+					/>
 					<InputComp label="Phone" name="phone" type="tel" {form} {errors} placeholder="+2519…" />
 				</div>
-				<InputComp label="Role" name="roleId" type="select" items={data.roles} {form} {errors} required />
+				<InputComp
+					label="Role"
+					name="roleId"
+					type="select"
+					items={data.roles}
+					{form}
+					{errors}
+					required
+				/>
 				<PasswordField form={form as never} errors={errors as never} />
 			{/snippet}
 		</FormDialog>

@@ -21,7 +21,7 @@ import {
 	stationCertification,
 	variety
 } from '#lib/server/db/schema.ts';
-import { m } from '#lib/paraglide/messages.js';
+import { m } from '#lib/i18n.ts';
 import type { PageServerLoad } from './$types';
 
 /**
@@ -55,7 +55,12 @@ export const load: PageServerLoad = async ({ params }) => {
 	if (!run) error(404, m.trace_not_found());
 
 	const batches = await db
-		.select({ id: roastBatch.id, code: roastBatch.code, roastedAt: roastBatch.roastedAt, cuppingScore: roastBatch.cuppingScore })
+		.select({
+			id: roastBatch.id,
+			code: roastBatch.code,
+			roastedAt: roastBatch.roastedAt,
+			cuppingScore: roastBatch.cuppingScore
+		})
 		.from(packingRunSource)
 		.innerJoin(roastBatch, eq(packingRunSource.roastBatchId, roastBatch.id))
 		.where(eq(packingRunSource.packingRunId, run.id))
@@ -81,7 +86,12 @@ export const load: PageServerLoad = async ({ params }) => {
 				.from(roastBatchInput)
 				.innerJoin(lot, eq(roastBatchInput.lotId, lot.id))
 				.innerJoin(region, eq(lot.regionId, region.id))
-				.where(inArray(roastBatchInput.roastBatchId, batches.map((b) => b.id)))
+				.where(
+					inArray(
+						roastBatchInput.roastBatchId,
+						batches.map((b) => b.id)
+					)
+				)
 		: [];
 
 	const lotIds = lots.map((l) => l.id);
@@ -113,14 +123,24 @@ export const load: PageServerLoad = async ({ params }) => {
 			: [],
 		lotIds.length
 			? db
-					.select({ lotId: lotCertification.lotId, name: certification.name, logo: certification.logo, url: certification.url })
+					.select({
+						lotId: lotCertification.lotId,
+						name: certification.name,
+						logo: certification.logo,
+						url: certification.url
+					})
 					.from(lotCertification)
 					.innerJoin(certification, eq(lotCertification.certificationId, certification.id))
 					.where(inArray(lotCertification.lotId, lotIds))
 			: [],
 		stationIds.length
 			? db
-					.select({ stationId: stationCertification.stationId, name: certification.name, logo: certification.logo, url: certification.url })
+					.select({
+						stationId: stationCertification.stationId,
+						name: certification.name,
+						logo: certification.logo,
+						url: certification.url
+					})
 					.from(stationCertification)
 					.innerJoin(certification, eq(stationCertification.certificationId, certification.id))
 					.where(inArray(stationCertification.stationId, stationIds))
@@ -128,7 +148,11 @@ export const load: PageServerLoad = async ({ params }) => {
 	]);
 
 	const image = (name: string | null) => (name ? publicFileUrl(name) : null);
-	const cert = <T extends { name: unknown; logo: string | null; url: string | null }>(c: T) => ({ name: c.name as T['name'], logo: image(c.logo), url: c.url });
+	const cert = <T extends { name: unknown; logo: string | null; url: string | null }>(c: T) => ({
+		name: c.name as T['name'],
+		logo: image(c.logo),
+		url: c.url
+	});
 
 	return {
 		run,

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { setupGsap } from '#lib/gsap.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { getTextDirection } from '#lib/paraglide/runtime.js';
 	import type { HistoryContent, Localized } from '#lib/content/story.js';
 
@@ -156,7 +156,7 @@
 									<button
 										type="button"
 										class={['tick', { on: i === active, past: i < active }]}
-										aria-label={`${m.story_chapter()} ${i + 1}: ${c.title}`}
+										aria-label={m.history_rail_label({ n: i + 1, title: c.title })}
 										aria-current={i === active ? 'step' : undefined}
 										onclick={() => go(i)}
 									></button>

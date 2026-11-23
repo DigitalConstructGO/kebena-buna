@@ -8,7 +8,14 @@ import { recordAudit } from '@nahu/admin-kit/server/audit';
 import { isDuplicateKey } from '@nahu/admin-kit/server/dbErrors';
 import { deletionStamp } from '@nahu/admin-kit/server/softDelete';
 import { db } from '#lib/server/db/index.ts';
-import { audience, event, taxRate, ticket, ticketPrice, ticketType } from '#lib/server/db/schema.ts';
+import {
+	audience,
+	event,
+	taxRate,
+	ticket,
+	ticketPrice,
+	ticketType
+} from '#lib/server/db/schema.ts';
 import { enOf, packLocalized, unpackLocalized } from '#lib/server/localized.ts';
 import { stampsOf } from '#lib/server/people.ts';
 import { idParam } from '#lib/server/records.ts';
@@ -97,7 +104,8 @@ export const actions = {
 	edit: async (event) => {
 		requirePermission(event.locals, 'visits.manage');
 		const form = await superValidate(event.request, zod4(ticketTypeEditSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		// The type named by the URL, never the form's hidden id.
 		const { type: before } = await loadType(event.params.id);
 		const id = before.id;
@@ -109,8 +117,12 @@ export const actions = {
 		}
 		// Sold tickets moved the slot counters by the flag they were sold under; cancel and
 		// reschedule read it again, so it is fixed while any of them is still valid.
-		if (values.countsTowardCapacity !== before.countsTowardCapacity && (await hasValidTickets(id))) {
-			const text = 'Valid tickets of this type are out: make a new type instead of changing whether it counts toward capacity';
+		if (
+			values.countsTowardCapacity !== before.countsTowardCapacity &&
+			(await hasValidTickets(id))
+		) {
+			const text =
+				'Valid tickets of this type are out: make a new type instead of changing whether it counts toward capacity';
 			setError(form, 'countsTowardCapacity', text);
 			return message(form, { type: 'error', text }, { status: 400 });
 		}
@@ -119,12 +131,22 @@ export const actions = {
 			await db.transaction(async (tx) => {
 				await tx
 					.update(ticketType)
-					.set({ ...(row as Partial<typeof ticketType.$inferInsert>), updatedBy: event.locals.user?.id })
+					.set({
+						...(row as Partial<typeof ticketType.$inferInsert>),
+						updatedBy: event.locals.user?.id
+					})
 					.where(eq(ticketType.id, id));
-				await recordAudit(tx, event, { table: 'ticket_type', recordId: id, action: 'update', before, after: row });
+				await recordAudit(tx, event, {
+					table: 'ticket_type',
+					recordId: id,
+					action: 'update',
+					before,
+					after: row
+				});
 			});
 		} catch (err) {
-			if (isDuplicateKey(err)) return message(form, { type: 'error', text: 'That code is already used' }, { status: 400 });
+			if (isDuplicateKey(err))
+				return message(form, { type: 'error', text: 'That code is already used' }, { status: 400 });
 			throw err;
 		}
 		return message(form, { type: 'success', text: 'Ticket type saved' });
@@ -134,24 +156,44 @@ export const actions = {
 		requirePermission(event.locals, 'visits.manage');
 		const { type: t } = await loadType(event.params.id);
 		const audiences = await audienceColumns();
-		const form = await superValidate(event.request, zod4(priceGridSchema(audiences.map((a) => a.id))), {
-			id: 'prices'
-		});
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the prices' }, { status: 400 });
-		await savePriceGrid(event, t.id, form.data as Record<string, number | null>);
+		const form = await superValidate(
+			event.request,
+			zod4(priceGridSchema(audiences.map((a) => a.id))),
+			{
+				id: 'prices'
+			}
+		);
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the prices' }, { status: 400 });
+		await savePriceGrid(event, t.id, form.data);
 		return message(form, { type: 'success', text: 'Prices saved' });
 	},
 	delete: async (event) => {
 		requirePermission(event.locals, 'visits.manage');
 		const { type: t } = await loadType(event.params.id);
-		const [{ sold }] = await db.select({ sold: count() }).from(ticket).where(eq(ticket.ticketTypeId, t.id));
+		const [{ sold }] = await db
+			.select({ sold: count() })
+			.from(ticket)
+			.where(eq(ticket.ticketTypeId, t.id));
 		if (sold) {
-			return { message: { type: 'error', text: `${sold} tickets were issued of this type: take it off sale instead.` } };
+			return {
+				message: {
+					type: 'error',
+					text: `${sold} tickets were issued of this type: take it off sale instead.`
+				}
+			};
 		}
 		await db.transaction(async (tx) => {
-			await tx.update(ticketType).set(deletionStamp(event.locals.user?.id)).where(eq(ticketType.id, t.id));
+			await tx
+				.update(ticketType)
+				.set(deletionStamp(event.locals.user?.id))
+				.where(eq(ticketType.id, t.id));
 			await recordAudit(tx, event, { table: 'ticket_type', recordId: t.id, action: 'delete' });
 		});
-		redirect('/dashboard/visits/ticket-types', { type: 'success', message: 'Ticket type deleted' }, event.cookies);
+		redirect(
+			'/dashboard/visits/ticket-types',
+			{ type: 'success', message: 'Ticket type deleted' },
+			event.cookies
+		);
 	}
 };

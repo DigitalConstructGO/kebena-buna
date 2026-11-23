@@ -10,7 +10,13 @@ export async function seed() {
 	await db.insert(s.wholesaleTier).values([
 		{ name: L('5–19 kg', '5–19 ኪ.ግ'), minKg: 5, maxKg: 19.999, discountPct: 20, sortOrder: 1 },
 		{ name: L('20–49 kg', '20–49 ኪ.ግ'), minKg: 20, maxKg: 49.999, discountPct: 27, sortOrder: 2 },
-		{ name: L('50 kg and over', '50 ኪ.ግ እና በላይ'), minKg: 50, maxKg: null, discountPct: 33, sortOrder: 3 }
+		{
+			name: L('50 kg and over', '50 ኪ.ግ እና በላይ'),
+			minKg: 50,
+			maxKg: null,
+			discountPct: 33,
+			sortOrder: 3
+		}
 	]);
 
 	const owner = await userIdByEmail('owner@kebena.coffee');
@@ -23,13 +29,36 @@ export async function seed() {
 	const areas = await db.select({ id: s.deliveryArea.id }).from(s.deliveryArea);
 
 	const accounts = [
-		{ name: 'Tomoca Bole Branch', type: 'cafe', kg: 60, status: 'approved', credit: { limit: 50000, days: 30 }, discount: 2, by: shop },
+		{
+			name: 'Tomoca Bole Branch',
+			type: 'cafe',
+			kg: 60,
+			status: 'approved',
+			credit: { limit: 50000, days: 30 },
+			discount: 2,
+			by: shop
+		},
 		{ name: 'Kaldi’s Coffee — Kazanchis', type: 'cafe', kg: 35, status: 'approved', by: manager },
-		{ name: 'Sheraton Addis', type: 'hotel', kg: 120, status: 'approved', credit: { limit: 150000, days: 45 }, discount: 3, by: manager },
+		{
+			name: 'Sheraton Addis',
+			type: 'hotel',
+			kg: 120,
+			status: 'approved',
+			credit: { limit: 150000, days: 45 },
+			discount: 3,
+			by: manager
+		},
 		{ name: 'Skylight Hotel', type: 'hotel', kg: 80, status: 'pending', by: shop },
 		{ name: 'Ethio Telecom HQ canteen', type: 'office', kg: 25, status: 'pending', by: manager },
 		{ name: 'Shoa Supermarket', type: 'retailer', kg: 40, status: 'approved', by: shop },
-		{ name: 'Abyssinia Green Exporters', type: 'exporter', kg: 500, status: 'rejected', reason: 'Export buyers go through the green-coffee enquiry, not retail wholesale.', by: shop },
+		{
+			name: 'Abyssinia Green Exporters',
+			type: 'exporter',
+			kg: 500,
+			status: 'rejected',
+			reason: 'Export buyers go through the green-coffee enquiry, not retail wholesale.',
+			by: shop
+		},
 		{ name: 'Mokarar Café', type: 'cafe', kg: 8, status: 'pending', by: owner }
 	] as const;
 
@@ -67,14 +96,18 @@ export async function seed() {
 		// The people who order for it: one admin, sometimes a second orderer.
 		const admin = customers[20 + i];
 		if (admin) {
-			await db.insert(s.businessMember).values({ businessAccountId: id, customerId: admin.id, isAdmin: true });
+			await db
+				.insert(s.businessMember)
+				.values({ businessAccountId: id, customerId: admin.id, isAdmin: true });
 			await db
 				.update(s.customer)
 				.set({ businessName: acc.name })
 				.where(eq(s.customer.id, admin.id));
 		}
 		if (i % 3 === 0 && customers[i + 2]) {
-			await db.insert(s.businessMember).values({ businessAccountId: id, customerId: customers[i + 2].id, isAdmin: false });
+			await db
+				.insert(s.businessMember)
+				.values({ businessAccountId: id, customerId: customers[i + 2].id, isAdmin: false });
 		}
 
 		await db.insert(s.businessAddress).values({

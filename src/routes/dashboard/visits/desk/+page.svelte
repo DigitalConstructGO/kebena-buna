@@ -2,6 +2,7 @@
 	import { onMount, tick } from 'svelte';
 	import type { SubmitFunction } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import ScanLine from '@lucide/svelte/icons/scan-line';
 	import Minus from '@lucide/svelte/icons/minus';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -103,7 +104,7 @@
 		searchBox?.focus();
 		// Other desks and the gate scanners admit people too: keep the counts current.
 		const timer = setInterval(() => {
-			if (document.visibilityState === 'visible') invalidateAll();
+			if (document.visibilityState === 'visible') void invalidateAll();
 		}, 30_000);
 		return () => clearInterval(timer);
 	});
@@ -139,7 +140,10 @@
 		{#if notFound}
 			<Notice tone="warning">
 				No ticket for today has the code <strong>{notFound}</strong>.
-				<a class="underline" href="/dashboard/visits/tickets?search={encodeURIComponent(notFound)}">
+				<a
+					class="underline"
+					href="{resolve('/dashboard/visits/tickets')}?search={encodeURIComponent(notFound)}"
+				>
 					Look it up in all tickets
 				</a>
 				— it may be for another day, or cancelled.
@@ -200,7 +204,7 @@
 					<div class="flex items-start justify-between gap-2">
 						<div class="min-w-0">
 							<a
-								href="/dashboard/visits/tickets/{t.id}"
+								href={resolve('/dashboard/visits/tickets/[id]', { id: String(t.id) })}
 								class="font-mono text-lg font-semibold hover:underline"
 							>
 								{t.code}

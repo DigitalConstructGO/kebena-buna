@@ -14,4 +14,7 @@ const crud = localizedCrud({
 });
 
 export const load = () => crud.load();
-export const actions = { ...crud.actions, delete: lookupDeleteAction(deliveryZone, 'delivery zone') };
+export const actions = {
+	...crud.actions,
+	delete: lookupDeleteAction(deliveryZone, 'delivery zone')
+};

@@ -4,6 +4,7 @@
 	import { setupGsap } from '#lib/gsap.js';
 	import { whenIdle } from '#lib/reveal.js';
 	import type { HallsContent } from '#lib/content/museum.js';
+	import { m } from '#lib/i18n.ts';
 
 	let { content }: { content: HallsContent } = $props();
 
@@ -295,7 +296,7 @@
 			class="stage"
 			bind:this={stage}
 			role="group"
-			aria-label="Halls, use the arrow keys to move between them"
+			aria-label={m.home_halls_carousel_label()}
 			tabindex="0"
 			{onkeydown}
 			{onpointerdown}
@@ -309,7 +310,7 @@
 					<li
 						class="slot"
 						aria-roledescription="slide"
-						aria-label={`${i + 1} of ${total}`}
+						aria-label={m.home_halls_slide_label({ n: i + 1, total })}
 						aria-current={on ? 'true' : undefined}
 					>
 						<div class="slot-inner">
@@ -335,7 +336,7 @@
 									<button
 										type="button"
 										class="zoom"
-										aria-label={`Enlarge hall ${pad(i + 1)}, ${h.title}`}
+										aria-label={m.home_halls_enlarge({ n: pad(i + 1), title: h.title })}
 									>
 										<svg viewBox="0 0 16 16" aria-hidden="true">
 											<path d="M9.5 2H14v4.5M14 2 9 7M6.5 14H2V9.5M2 14l5-5" />
@@ -348,7 +349,7 @@
 									{#if h.text}<p class="text">{h.text}</p>{/if}
 									<div class="foot">
 										<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- hall links come from content -->
-										<a href={h.href}>Enter hall <span aria-hidden="true">→</span></a>
+										<a href={h.href}>{m.home_halls_enter()} <span aria-hidden="true">→</span></a>
 										<span class="count">{pad(i + 1)} / {pad(total)}</span>
 									</div>
 								</div>
@@ -359,7 +360,7 @@
 									type="button"
 									class="pick"
 									tabindex="-1"
-									aria-label={`Show hall ${pad(i + 1)}, ${h.title}`}
+									aria-label={m.home_halls_show({ n: pad(i + 1), title: h.title })}
 									onclick={() => go(i)}
 								></button>
 							{/if}
@@ -376,7 +377,7 @@
 					class="arrow"
 					onclick={prev}
 					disabled={active === 0}
-					aria-label="Previous hall"
+					aria-label={m.home_halls_prev()}
 				>
 					<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
 						<path d="M12 5 7 10l5 5" />
@@ -395,7 +396,9 @@
 							decoding="async"
 						/>{/if}
 					<p class="now-text">
-						<span class="now-title">Hall {pad(active + 1)} · {halls[active].title}</span>
+						<span class="now-title">
+							{m.home_halls_now({ n: pad(active + 1), title: halls[active].title })}
+						</span>
 						{#if halls[active].tagline}<span class="now-sub">{halls[active].tagline}</span>{/if}
 					</p>
 				</div>
@@ -404,7 +407,7 @@
 					class="arrow"
 					onclick={next}
 					disabled={active === total - 1}
-					aria-label="Next hall"
+					aria-label={m.home_halls_next()}
 				>
 					<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
 						<path d="m8 5 5 5-5 5" />
@@ -417,7 +420,7 @@
 					<button
 						type="button"
 						class={['dot', { on: i === active }]}
-						aria-label={`Hall ${pad(i + 1)}, ${h.title}`}
+						aria-label={m.home_halls_hall_label({ n: pad(i + 1), title: h.title })}
 						aria-current={i === active ? 'true' : undefined}
 						onclick={() => go(i)}
 					></button>
@@ -429,7 +432,9 @@
 		<dialog
 			class="viewer"
 			bind:this={viewer}
-			aria-label={lifted ? `Hall ${pad(lifted.i + 1)}, ${halls[lifted.i].title}` : undefined}
+			aria-label={lifted
+				? m.home_halls_hall_label({ n: pad(lifted.i + 1), title: halls[lifted.i].title })
+				: undefined}
 			onclick={onviewerclick}
 			onclose={() => (lifted = undefined)}
 		>
@@ -460,12 +465,12 @@
 						{#if h.text}<p class="big-text">{h.text}</p>{/if}
 						<div class="foot">
 							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- hall links come from content -->
-							<a href={h.href}>Enter hall <span aria-hidden="true">→</span></a>
+							<a href={h.href}>{m.home_halls_enter()} <span aria-hidden="true">→</span></a>
 							<span class="count">{pad(lifted.i + 1)} / {pad(total)}</span>
 						</div>
 					</div>
 				</article>
-				<button type="button" class="shut" aria-label="Close">
+				<button type="button" class="shut" aria-label={m.home_halls_close()}>
 					<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M1 1l12 12M13 1L1 13" /></svg>
 				</button>
 			{/if}

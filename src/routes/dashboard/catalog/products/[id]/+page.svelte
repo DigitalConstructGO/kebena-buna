@@ -51,15 +51,35 @@
 	const sold = $derived(data.lines.reduce((sum, l) => sum + Number(l.quantity), 0));
 
 	// svelte-ignore state_referenced_locally
-	const description = createForm(data.descriptionForm, productDescriptionSchema, { taintedMessage: confirmLeave, resetForm: false });
-	const { form: descForm, enhance: descEnhance, delayed: descDelayed, allErrors: descErrors } =
-		description;
+	const description = createForm(data.descriptionForm, productDescriptionSchema, {
+		taintedMessage: confirmLeave,
+		resetForm: false
+	});
+	const {
+		form: descForm,
+		enhance: descEnhance,
+		delayed: descDelayed,
+		allErrors: descErrors
+	} = description;
 
 	type Origin = (typeof data.origins)[number];
 	const originColumns: ColumnDef<Origin>[] = [
-		{ id: 'station', header: 'Station', cell: ({ row }) => link('station', row.original.stationId, row.original.station) },
-		{ id: 'lot', header: 'Lot', cell: ({ row }) => link('lot', row.original.lotId, row.original.lot) },
-		{ id: 'share', header: 'Share', meta: { align: 'right' }, cell: ({ row }) => percent(row.original.sharePercent) },
+		{
+			id: 'station',
+			header: 'Station',
+			cell: ({ row }) => link('station', row.original.stationId, row.original.station)
+		},
+		{
+			id: 'lot',
+			header: 'Lot',
+			cell: ({ row }) => link('lot', row.original.lotId, row.original.lot)
+		},
+		{
+			id: 'share',
+			header: 'Share',
+			meta: { align: 'right' },
+			cell: ({ row }) => percent(row.original.sharePercent)
+		},
 		{
 			id: 'remove',
 			header: '',
@@ -79,34 +99,102 @@
 
 	type Stock = (typeof data.stock)[number];
 	const stockColumns: ColumnDef<Stock>[] = [
-		{ id: 'sku', header: 'Size', cell: ({ row }) => link('variant', row.original.variantId, row.original.sku) },
+		{
+			id: 'sku',
+			header: 'Size',
+			cell: ({ row }) => link('variant', row.original.variantId, row.original.sku)
+		},
 		{ id: 'roast', header: 'Roast', cell: ({ row }) => row.original.roastLevel },
-		{ id: 'location', header: 'Location', cell: ({ row }) => link('location', row.original.locationId, row.original.location) },
-		{ id: 'run', header: 'Packing run', cell: ({ row }) => link('packingRun', row.original.packingRunId, row.original.packingRun) },
+		{
+			id: 'location',
+			header: 'Location',
+			cell: ({ row }) => link('location', row.original.locationId, row.original.location)
+		},
+		{
+			id: 'run',
+			header: 'Packing run',
+			cell: ({ row }) => link('packingRun', row.original.packingRunId, row.original.packingRun)
+		},
 		{ id: 'bestBefore', header: 'Best before', cell: ({ row }) => date(row.original.bestBefore) },
-		{ id: 'units', header: 'Bags', meta: { align: 'right' }, cell: ({ row }) => row.original.units },
-		{ id: 'reserved', header: 'Reserved', meta: { align: 'right' }, cell: ({ row }) => row.original.reserved }
+		{
+			id: 'units',
+			header: 'Bags',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.units
+		},
+		{
+			id: 'reserved',
+			header: 'Reserved',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.reserved
+		}
 	];
 
 	type Batch = (typeof data.batches)[number];
 	const batchColumns: ColumnDef<Batch>[] = [
-		{ id: 'code', header: 'Batch', cell: ({ row }) => link('roastBatch', row.original.id, row.original.code) },
+		{
+			id: 'code',
+			header: 'Batch',
+			cell: ({ row }) => link('roastBatch', row.original.id, row.original.code)
+		},
 		{ id: 'at', header: 'Roasted', cell: ({ row }) => dateTime(row.original.roastedAt) },
 		{ id: 'roast', header: 'Roast', cell: ({ row }) => row.original.roastLevel },
-		{ id: 'in', header: 'Green in', meta: { align: 'right' }, cell: ({ row }) => kg(row.original.greenKgIn) },
-		{ id: 'out', header: 'Roasted out', meta: { align: 'right' }, cell: ({ row }) => kg(row.original.roastedKgOut) },
-		{ id: 'loss', header: 'Loss', meta: { align: 'right' }, cell: ({ row }) => percent(row.original.weightLossPct) },
-		{ id: 'roaster', header: 'Roaster', cell: ({ row }) => user(row.original.roasterId, row.original.roaster) }
+		{
+			id: 'in',
+			header: 'Green in',
+			meta: { align: 'right' },
+			cell: ({ row }) => kg(row.original.greenKgIn)
+		},
+		{
+			id: 'out',
+			header: 'Roasted out',
+			meta: { align: 'right' },
+			cell: ({ row }) => kg(row.original.roastedKgOut)
+		},
+		{
+			id: 'loss',
+			header: 'Loss',
+			meta: { align: 'right' },
+			cell: ({ row }) => percent(row.original.weightLossPct)
+		},
+		{
+			id: 'roaster',
+			header: 'Roaster',
+			cell: ({ row }) => user(row.original.roasterId, row.original.roaster)
+		}
 	];
 
 	type Line = (typeof data.lines)[number];
 	const lineColumns: ColumnDef<Line>[] = [
-		{ id: 'order', header: 'Order', cell: ({ row }) => link('order', row.original.orderId, row.original.number) },
+		{
+			id: 'order',
+			header: 'Order',
+			cell: ({ row }) => link('order', row.original.orderId, row.original.number)
+		},
 		{ id: 'placed', header: 'Placed', cell: ({ row }) => dateTime(row.original.placedAt) },
-		{ id: 'sku', header: 'Size', cell: ({ row }) => link('variant', row.original.variantId, row.original.sku) },
-		{ id: 'qty', header: 'Qty', meta: { align: 'right' }, cell: ({ row }) => row.original.quantity },
-		{ id: 'price', header: 'Unit (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.unitPrice) },
-		{ id: 'total', header: 'Total (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.lineTotal) },
+		{
+			id: 'sku',
+			header: 'Size',
+			cell: ({ row }) => link('variant', row.original.variantId, row.original.sku)
+		},
+		{
+			id: 'qty',
+			header: 'Qty',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.quantity
+		},
+		{
+			id: 'price',
+			header: 'Unit (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.unitPrice)
+		},
+		{
+			id: 'total',
+			header: 'Total (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.lineTotal)
+		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) }
 	];
 
@@ -114,7 +202,11 @@
 		items.map((i) => (i.isDefault ? `${i.name} (default)` : i.name)).join(', ') || '—';
 </script>
 
-<PageHeader title={name} eyebrow="Product" description={`${data.category ?? 'No category'} · ${humanize(p.kind)} · ${humanize(p.fulfilment)}`}>
+<PageHeader
+	title={name}
+	eyebrow="Product"
+	description={`${data.category ?? 'No category'} · ${humanize(p.kind)} · ${humanize(p.fulfilment)}`}
+>
 	{#snippet badges()}
 		<Statuses {...badge(p.publishStatus)} />
 		{#if !p.isActive}<Statuses {...flag(false)} />{/if}
@@ -122,13 +214,33 @@
 	{#snippet actions()}
 		{#if data.canManage}
 			<!-- A page of its own: 40-odd fields were too many for a dialog. -->
-			<Button href="/dashboard/catalog/products/{p.id}/edit" variant="ghost" size="sm" class="gap-1">
+			<Button
+				href="/dashboard/catalog/products/{p.id}/edit"
+				variant="ghost"
+				size="sm"
+				class="gap-1"
+			>
 				<SquarePen class="size-4" /> Edit
 			</Button>
 			{#if p.publishStatus === 'published'}
-				<ConfirmAction action="?/publish" fields={{ to: 'draft' }} label="Unpublish" icon={EyeOff} variant="outline" title="Take {name} off the website?" description="It goes back to draft; nothing already sold changes." />
+				<ConfirmAction
+					action="?/publish"
+					fields={{ to: 'draft' }}
+					label="Unpublish"
+					icon={EyeOff}
+					variant="outline"
+					title="Take {name} off the website?"
+					description="It goes back to draft; nothing already sold changes."
+				/>
 			{:else}
-				<ConfirmAction action="?/publish" fields={{ to: 'published' }} label="Publish" icon={Globe} title="Publish {name}?" description="It appears in the shop with its active sizes." />
+				<ConfirmAction
+					action="?/publish"
+					fields={{ to: 'published' }}
+					label="Publish"
+					icon={Globe}
+					title="Publish {name}?"
+					description="It appears in the shop with its active sizes."
+				/>
 			{/if}
 			<ConfirmAction
 				action="?/delete"
@@ -143,10 +255,43 @@
 </PageHeader>
 
 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-	<StatCard stat={{ key: 'sizes', label: 'Sizes', value: data.variants.rows.length, format: 'count', group: 'product' }} />
-	<StatCard stat={{ key: 'onHand', label: 'Bags on hand', value: onHand, format: 'count', group: 'product', tone: onHand ? 'positive' : 'warning' }} />
-	<StatCard stat={{ key: 'batches', label: 'Roast batches', value: data.batches.length, format: 'count', group: 'product' }} />
-	<StatCard stat={{ key: 'sold', label: 'Bags sold (recent orders)', value: sold, format: 'count', group: 'product' }} />
+	<StatCard
+		stat={{
+			key: 'sizes',
+			label: 'Sizes',
+			value: data.variants.rows.length,
+			format: 'count',
+			group: 'product'
+		}}
+	/>
+	<StatCard
+		stat={{
+			key: 'onHand',
+			label: 'Bags on hand',
+			value: onHand,
+			format: 'count',
+			group: 'product',
+			tone: onHand ? 'positive' : 'warning'
+		}}
+	/>
+	<StatCard
+		stat={{
+			key: 'batches',
+			label: 'Roast batches',
+			value: data.batches.length,
+			format: 'count',
+			group: 'product'
+		}}
+	/>
+	<StatCard
+		stat={{
+			key: 'sold',
+			label: 'Bags sold (recent orders)',
+			value: sold,
+			format: 'count',
+			group: 'product'
+		}}
+	/>
 </div>
 
 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[24rem_minmax(0,1fr)]">
@@ -154,14 +299,45 @@
 		<PageSection title="Pictures">
 			{#snippet actions()}
 				{#if data.canManage}
-					<FormDialog title="Main picture" action="?/image" data={data.imageForm} schema={productImageSchema} multipart triggerLabel="Main picture">
+					<FormDialog
+						title="Main picture"
+						action="?/image"
+						data={data.imageForm}
+						schema={productImageSchema}
+						multipart
+						triggerLabel="Main picture"
+					>
 						{#snippet fields({ form, errors })}
-							<InputComp label="Picture" name="image" type="file" accept="image/*" image={p.image ?? ''} removable={false} {form} {errors} />
+							<InputComp
+								label="Picture"
+								name="image"
+								type="file"
+								accept="image/*"
+								image={p.image ?? ''}
+								removable={false}
+								{form}
+								{errors}
+							/>
 						{/snippet}
 					</FormDialog>
-					<FormDialog title="Add photos" action="?/addPhotos" data={data.photosForm} schema={productPhotosSchema} multipart resetOnSuccess triggerLabel="Add photos" triggerIcon={Plus} submitIcon={Plus}>
+					<FormDialog
+						title="Add photos"
+						action="?/addPhotos"
+						data={data.photosForm}
+						schema={productPhotosSchema}
+						multipart
+						resetOnSuccess
+						triggerLabel="Add photos"
+						triggerIcon={Plus}
+						submitIcon={Plus}
+					>
 						{#snippet fields({ form })}
-							<GalleryUpload {form} name="photos" label="Photos" hint="Shown after the main picture on the product page." />
+							<GalleryUpload
+								{form}
+								name="photos"
+								label="Photos"
+								hint="Shown after the main picture on the product page."
+							/>
 						{/snippet}
 					</FormDialog>
 				{/if}
@@ -170,7 +346,12 @@
 				<div class="flex flex-wrap items-start gap-3">
 					{#if p.image}
 						<div class="grid grid-cols-1 justify-items-start gap-1">
-							<LookupFileCell name={p.image} image alt={name} gallery={data.photos.map((ph) => ph.fileName)} />
+							<LookupFileCell
+								name={p.image}
+								image
+								alt={name}
+								gallery={data.photos.map((ph) => ph.fileName)}
+							/>
 							<span class="text-xs text-muted-foreground">Main</span>
 						</div>
 					{/if}
@@ -178,7 +359,13 @@
 						<div class="grid grid-cols-1 justify-items-start gap-1">
 							<LookupFileCell name={photo.fileName} image alt={name} />
 							{#if data.canManage}
-								<ConfirmAction action="?/deletePhoto" fields={{ imageId: photo.id }} label="Remove" variant="ghost" title="Remove this photo?" />
+								<ConfirmAction
+									action="?/deletePhoto"
+									fields={{ imageId: photo.id }}
+									label="Remove"
+									variant="ghost"
+									title="Remove this photo?"
+								/>
 							{/if}
 						</div>
 					{/each}
@@ -193,9 +380,15 @@
 					{ name: 'Category', value: data.category ?? '—' },
 					{ name: 'Kind', value: humanize(p.kind) },
 					{ name: 'Fulfilment', value: humanize(p.fulfilment) },
-					{ name: 'Dispatch', value: `${p.dispatchDays} working day${p.dispatchDays === 1 ? '' : 's'}` },
+					{
+						name: 'Dispatch',
+						value: `${p.dispatchDays} working day${p.dispatchDays === 1 ? '' : 's'}`
+					},
 					{ name: 'Tax', value: data.taxRate ?? '—' },
-					{ name: 'Roasted low-stock level', value: p.lowStockRoastedKg ? `${p.lowStockRoastedKg} kg` : 'Setting' },
+					{
+						name: 'Roasted low-stock level',
+						value: p.lowStockRoastedKg ? `${p.lowStockRoastedKg} kg` : 'Setting'
+					},
 					{ name: 'Members only', value: yesNo(p.isMemberOnly) },
 					{ name: 'Subscribable', value: yesNo(p.isSubscribable) },
 					{ name: 'Wholesale', value: yesNo(p.isWholesale) },
@@ -213,7 +406,14 @@
 		<PageSection title="Allowed options">
 			{#snippet actions()}
 				{#if data.canManage}
-					<FormDialog title="Allowed options" action="?/options" data={data.optionsForm} schema={productOptionsSchema} dataType="json" triggerLabel="Change">
+					<FormDialog
+						title="Allowed options"
+						action="?/options"
+						data={data.optionsForm}
+						schema={productOptionsSchema}
+						dataType="json"
+						triggerLabel="Change"
+					>
 						{#snippet fields({ form, errors })}
 							<OptionFields form={form as never} errors={errors as never} options={data.options} />
 						{/snippet}
@@ -231,7 +431,10 @@
 	</div>
 
 	<div class="grid min-w-0 grid-cols-1 content-start gap-6">
-		<PageSection title="Sizes and prices" hint="Price changes are kept in the audit log; past orders keep the price they were sold at.">
+		<PageSection
+			title="Sizes and prices"
+			hint="Price changes are kept in the audit log; past orders keep the price they were sold at."
+		>
 			<LookupSection
 				config={{
 					entity: 'Size',
@@ -239,21 +442,81 @@
 					detailEntity: 'variant',
 					fields: [
 						{ name: 'sku', label: 'SKU', type: 'text' },
-						{ name: 'bagSizeId', label: 'Bag size', type: 'reference', display: 'bagSize', picker: 'select', required: false },
-						{ name: 'nameEn', label: 'Name (English)', type: 'text', required: false, placeholder: 'For sizes with no bag size: “Set of 6”, “XL”' },
-						{ name: 'nameAm', label: 'Name (Amharic)', type: 'text', required: false, inTable: false },
-						{ name: 'nameOm', label: 'Name (Afaan Oromo)', type: 'text', required: false, inTable: false },
-						{ name: 'nameAr', label: 'Name (Arabic)', type: 'text', required: false, inTable: false },
-						{ name: 'nameIt', label: 'Name (Italian)', type: 'text', required: false, inTable: false },
-						{ name: 'nameFr', label: 'Name (French)', type: 'text', required: false, inTable: false },
+						{
+							name: 'bagSizeId',
+							label: 'Bag size',
+							type: 'reference',
+							display: 'bagSize',
+							picker: 'select',
+							required: false
+						},
+						{
+							name: 'nameEn',
+							label: 'Name (English)',
+							type: 'text',
+							required: false,
+							placeholder: 'For sizes with no bag size: “Set of 6”, “XL”'
+						},
+						{
+							name: 'nameAm',
+							label: 'Name (Amharic)',
+							type: 'text',
+							required: false,
+							inTable: false
+						},
+						{
+							name: 'nameOm',
+							label: 'Name (Afaan Oromo)',
+							type: 'text',
+							required: false,
+							inTable: false
+						},
+						{
+							name: 'nameAr',
+							label: 'Name (Arabic)',
+							type: 'text',
+							required: false,
+							inTable: false
+						},
+						{
+							name: 'nameIt',
+							label: 'Name (Italian)',
+							type: 'text',
+							required: false,
+							inTable: false
+						},
+						{
+							name: 'nameFr',
+							label: 'Name (French)',
+							type: 'text',
+							required: false,
+							inTable: false
+						},
 						{ name: 'price', label: 'Price', type: 'money' },
-						{ name: 'compareAtPrice', label: 'Was (struck through)', type: 'money', required: false },
-						{ name: 'lowStockUnits', label: 'Low-stock bags', type: 'number', required: false, inTable: false },
+						{
+							name: 'compareAtPrice',
+							label: 'Was (struck through)',
+							type: 'money',
+							required: false
+						},
+						{
+							name: 'lowStockUnits',
+							label: 'Low-stock bags',
+							type: 'number',
+							required: false,
+							inTable: false
+						},
 						{ name: 'barcode', label: 'Barcode', type: 'text', required: false, inTable: false },
 						{ name: 'sortOrder', label: 'Order', type: 'number', inTable: false },
 						{ name: 'status', label: 'Status', type: 'boolean' }
 					],
-					extraColumns: [{ id: 'packed', header: 'Bags on hand', cell: ({ row }) => String(row.original.packed ?? 0) }]
+					extraColumns: [
+						{
+							id: 'packed',
+							header: 'Bags on hand',
+							cell: ({ row }) => String((row.original.packed as number | null) ?? 0)
+						}
+					]
 				}}
 				rows={data.variants.rows}
 				addForm={data.variants.addForm}
@@ -266,11 +529,18 @@
 			/>
 		</PageSection>
 
-		<PageSection title="Description" hint="Shown on the product page. Pasted formatting is cleaned on save.">
+		<PageSection
+			title="Description"
+			hint="Shown on the product page. Pasted formatting is cleaned on save."
+		>
 			{#if data.canManage}
 				<form method="POST" action="?/description" use:descEnhance class="grid grid-cols-1 gap-4">
 					<Errors allErrors={$descErrors} />
-					<LanguageTabs form={descForm as never} errors={description.errors as never} fields={['description']}>
+					<LanguageTabs
+						form={descForm as never}
+						errors={description.errors as never}
+						fields={['description']}
+					>
 						{#snippet children({ suffix, language })}
 							<RichEditor
 								name="description{suffix}"
@@ -287,18 +557,51 @@
 			{:else if tr(data.description)}
 				<!-- Sanitised on save (`sanitizeRichHtml`), so it is safe to render. -->
 				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-				<div class="prose prose-sm max-w-none dark:prose-invert">{@html tr(data.description)}</div>
+				<div class="prose prose-sm dark:prose-invert max-w-none">{@html tr(data.description)}</div>
 			{:else}<Empty message="No description yet" />{/if}
 		</PageSection>
 
-		<PageSection title="Where this comes from" hint="The stations and lots the product page names. A bag's own QR page uses its actual roast batch.">
+		<PageSection
+			title="Where this comes from"
+			hint="The stations and lots the product page names. A bag's own QR page uses its actual roast batch."
+		>
 			{#snippet actions()}
 				{#if data.canManage}
-					<FormDialog title="Add an origin" action="?/addOrigin" data={data.originForm} schema={productOriginSchema} resetOnSuccess triggerLabel="Add origin" triggerIcon={Plus} submitIcon={Plus}>
+					<FormDialog
+						title="Add an origin"
+						action="?/addOrigin"
+						data={data.originForm}
+						schema={productOriginSchema}
+						resetOnSuccess
+						triggerLabel="Add origin"
+						triggerIcon={Plus}
+						submitIcon={Plus}
+					>
 						{#snippet fields({ form, errors })}
-							<InputComp label="Station" name="stationId" type="combo" items={data.options.stations} {form} {errors} />
-							<InputComp label="Lot" name="lotId" type="combo" items={data.options.lots} description="A lot fills in its station." {form} {errors} />
-							<InputComp label="Share of a blend (%)" name="sharePercent" type="number" {form} {errors} />
+							<InputComp
+								label="Station"
+								name="stationId"
+								type="combo"
+								items={data.options.stations}
+								{form}
+								{errors}
+							/>
+							<InputComp
+								label="Lot"
+								name="lotId"
+								type="combo"
+								items={data.options.lots}
+								description="A lot fills in its station."
+								{form}
+								{errors}
+							/>
+							<InputComp
+								label="Share of a blend (%)"
+								name="sharePercent"
+								type="number"
+								{form}
+								{errors}
+							/>
 							<InputComp label="Order" name="sortOrder" type="number" {form} {errors} />
 						{/snippet}
 					</FormDialog>
@@ -307,11 +610,16 @@
 			{#if data.origins.length}
 				<DataTable variant="compact" columns={originColumns} data={data.origins} />
 			{:else}
-				<Notice tone="warning">No origin yet: the product page will not say where this coffee comes from.</Notice>
+				<Notice tone="warning">
+					No origin yet: the product page will not say where this coffee comes from.
+				</Notice>
 			{/if}
 		</PageSection>
 
-		<PageSection title="Packed stock" hint="Bags on the shelf by size, roast and packing run — oldest first.">
+		<PageSection
+			title="Packed stock"
+			hint="Bags on the shelf by size, roast and packing run — oldest first."
+		>
 			{#if data.stock.length}
 				<DataTable variant="compact" columns={stockColumns} data={data.stock} />
 			{:else}<Empty message="No packed bags on hand" />{/if}

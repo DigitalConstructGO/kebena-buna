@@ -22,11 +22,16 @@
 	description="Station, region, process and crop year are enough to start; the code is given from the station and year."
 />
 
-<form method="POST" use:enhance class="mt-4 grid grid-cols-1 max-w-3xl gap-6">
+<form method="POST" use:enhance class="mt-4 grid max-w-3xl grid-cols-1 gap-6">
 	<Errors allErrors={$allErrors} />
 	<PageSection title="Lot">
 		<div class="grid grid-cols-1 gap-4">
-			<LotFields form={form as never} errors={errors as never} options={data.options} lowDefault={data.greenLowDefault} />
+			<LotFields
+				form={form as never}
+				errors={errors as never}
+				options={data.options}
+				lowDefault={data.greenLowDefault}
+			/>
 		</div>
 	</PageSection>
 	<Button type="submit" size="lg" class="sm:justify-self-start" disabled={$delayed}>

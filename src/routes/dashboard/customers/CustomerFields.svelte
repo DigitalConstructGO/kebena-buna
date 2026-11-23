@@ -25,10 +25,25 @@
 		{errors}
 	/>
 	<InputComp label="Email" name="email" type="email" {form} {errors} />
-	<InputComp label="Language" name="locale" type="select" items={LOCALES} {form} {errors} required />
+	<InputComp
+		label="Language"
+		name="locale"
+		type="select"
+		items={LOCALES}
+		{form}
+		{errors}
+		required
+	/>
 	<InputComp label="TIN" name="tin" description="For VAT invoices." {form} {errors} />
 	<InputComp label="Business name" name="businessName" {form} {errors} />
 	<InputComp label="Telegram chat id" name="telegramChatId" {form} {errors} />
-	<InputComp label="Source" name="source" type="select" items={choicesOf(CUSTOMER_SOURCES)} {form} {errors} />
+	<InputComp
+		label="Source"
+		name="source"
+		type="select"
+		items={choicesOf(CUSTOMER_SOURCES)}
+		{form}
+		{errors}
+	/>
 </div>
 <InputComp label="Notes" name="notes" type="textarea" rows={3} {form} {errors} />

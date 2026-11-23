@@ -54,7 +54,8 @@ export const actions = {
 	add: async (event) => {
 		const posted = await postedForm(event.request);
 		const form = await superValidate(posted, zod4(sceneSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		try {
 			await saveScene(event, form.data, posted);
 		} catch (err) {

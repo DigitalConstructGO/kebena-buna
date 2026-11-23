@@ -17,9 +17,18 @@ import { AI_CHANNELS } from '#lib/constants.ts';
 const staff = userAlias('staff');
 const FILTERS = ['channel', 'locale', 'handedOff'] as const;
 
-const messages = sql<number>`(select count(*) from ai_message m where m.conversation_id = ${aiConversation.id})`.mapWith(Number);
-const lastText = sql<string | null>`(select m.content from ai_message m where m.conversation_id = ${aiConversation.id} order by m.id desc limit 1)`;
-const SORTS = { startedAt: aiConversation.startedAt, lastMessageAt: aiConversation.lastMessageAt, messages };
+const messages =
+	sql<number>`(select count(*) from ai_message m where m.conversation_id = ${aiConversation.id})`.mapWith(
+		Number
+	);
+const lastText = sql<
+	string | null
+>`(select m.content from ai_message m where m.conversation_id = ${aiConversation.id} order by m.id desc limit 1)`;
+const SORTS = {
+	startedAt: aiConversation.startedAt,
+	lastMessageAt: aiConversation.lastMessageAt,
+	messages
+};
 
 const spec: WhereSpec<(typeof FILTERS)[number]> = {
 	search: (term) =>
@@ -36,12 +45,16 @@ const spec: WhereSpec<(typeof FILTERS)[number]> = {
 				: undefined,
 		locale: (v) => eq(aiConversation.locale, v),
 		handedOff: (v) =>
-			v === 'staff' ? sql`${aiConversation.handedOffTo} is not null` : sql`${aiConversation.handedOffTo} is null`
+			v === 'staff'
+				? sql`${aiConversation.handedOffTo} is not null`
+				: sql`${aiConversation.handedOffTo} is null`
 	}
 };
 
 const joined = <T extends MySqlSelect>(q: T) =>
-	q.leftJoin(customer, eq(aiConversation.customerId, customer.id)).leftJoin(staff, eq(aiConversation.handedOffTo, staff.id));
+	q
+		.leftJoin(customer, eq(aiConversation.customerId, customer.id))
+		.leftJoin(staff, eq(aiConversation.handedOffTo, staff.id));
 
 /** Website › AI conversations: every chat with the agent, on the website and in Telegram. */
 export const load = async ({ url }) => {
@@ -69,17 +82,29 @@ export const load = async ({ url }) => {
 				.$dynamic()
 		)
 			.where(where)
-			.orderBy(...(orderBy(query, SORTS) ?? [desc(aiConversation.lastMessageAt), desc(aiConversation.id)]))
+			.orderBy(
+				...(orderBy(query, SORTS) ?? [desc(aiConversation.lastMessageAt), desc(aiConversation.id)])
+			)
 			.limit(query.limit)
 			.offset(query.offset),
 		joined(db.select({ total: count() }).from(aiConversation).$dynamic()).where(where),
 		facetCounts({
 			channel: () =>
-				joined(db.select({ value: aiConversation.channel, count: count() }).from(aiConversation).$dynamic())
+				joined(
+					db
+						.select({ value: aiConversation.channel, count: count() })
+						.from(aiConversation)
+						.$dynamic()
+				)
 					.where(buildWhere(query, spec, { except: 'channel' }))
 					.groupBy(aiConversation.channel),
 			locale: () =>
-				joined(db.select({ value: aiConversation.locale, count: count() }).from(aiConversation).$dynamic())
+				joined(
+					db
+						.select({ value: aiConversation.locale, count: count() })
+						.from(aiConversation)
+						.$dynamic()
+				)
 					.where(buildWhere(query, spec, { except: 'locale' }))
 					.groupBy(aiConversation.locale),
 			handedOff: () =>

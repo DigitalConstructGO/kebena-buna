@@ -62,10 +62,14 @@ export const load = async ({ locals, url }) => {
 				time: localClock(new Date()),
 				locationId: roastery?.id,
 				roasterId: locals.user?.id,
-				productId: products.some((p) => p.value === wanted('product')) ? wanted('product') : undefined,
-				roastLevelId: roastLevels.some((r) => r.value === wanted('roast')) ? wanted('roast') : undefined,
+				productId: products.some((p) => p.value === wanted('product'))
+					? wanted('product')
+					: undefined,
+				roastLevelId: roastLevels.some((r) => r.value === wanted('roast'))
+					? wanted('roast')
+					: undefined,
 				isToOrder: url.searchParams.get('toOrder') === '1',
-				inputs: [{ lotId: undefined as unknown as number, greenKg: 0 }]
+				inputs: [{ lotId: undefined, greenKg: 0 }]
 			},
 			zod4(roastSchema),
 			{ errors: false }
@@ -77,7 +81,8 @@ export const actions = {
 	default: async (event) => {
 		requirePermission(event.locals, 'stock.manage');
 		const form = await superValidate(event.request, zod4(roastSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { date, time, ...values } = form.data;
 		let batch: { id: number; code: string };
 		try {

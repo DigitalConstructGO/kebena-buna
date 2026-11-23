@@ -19,8 +19,11 @@ import {
 	trackHref,
 	toCheckout
 } from '#lib/server/site.ts';
+import { transfersOn } from '#lib/server/transfers.ts';
+import { completeFreeOrder } from '#lib/server/freeOrders.ts';
+import { DiscountRefused } from '#lib/server/discounts.ts';
 import { membershipSignupSchema } from '#lib/schemas/signup.ts';
-import { m } from '#lib/paraglide/messages.js';
+import { m } from '#lib/i18n.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /** Plans on sale: published, switched on, not deleted. */
@@ -57,12 +60,20 @@ const plansOnSale = () =>
 export const load: PageServerLoad = async ({ url }) => {
 	const plans = await plansOnSale();
 	const asked = Number(url.searchParams.get('plan'));
-	const planId = plans.find((p) => p.id === asked || p.code === url.searchParams.get('plan'))?.id ?? plans[0]?.id;
+	const planId =
+		plans.find((p) => p.id === asked || p.code === url.searchParams.get('plan'))?.id ??
+		plans[0]?.id;
 	const today = localToday();
 	return {
-		plans: plans.map((p) => ({ ...p, price: Number(p.price), shopDiscountPct: Number(p.shopDiscountPct) })),
+		plans: plans.map((p) => ({
+			...p,
+			price: Number(p.price),
+			shopDiscountPct: Number(p.shopDiscountPct)
+		})),
 		today,
 		latestStart: addLocalDays(today, 90),
+		paymentsOn: paymentsOn(),
+		transfersOn: await transfersOn(),
 		form: await superValidate(
 			{ planId, startsOn: today, idempotencyKey: crypto.randomUUID() },
 			zod4(membershipSignupSchema),
@@ -77,12 +88,17 @@ export const actions: Actions = {
 		if (!form.valid) return fail(400, { form });
 		// The spam check: a bot gets the same answer as a person and nothing is written.
 		if (isTrapped(form.data)) return message(form, m.member_thanks());
-		if (floodRefused(event, 'membership')) return message(form, m.site_err_flood(), { status: 429 });
+		if (floodRefused(event, 'membership'))
+			return message(form, m.site_err_flood(), { status: 429 });
 
 		const done = await orderByIdempotencyKey(form.data.idempotencyKey);
 		if (done) redirect(303, trackHref(done));
 
-		const d = { ...form.data, adults: form.data.adults.filter(Boolean), children: form.data.children.filter(Boolean) };
+		const d = {
+			...form.data,
+			adults: form.data.adults.filter(Boolean),
+			children: form.data.children.filter(Boolean)
+		};
 		const [plan] = (await plansOnSale()).filter((p) => p.id === d.planId);
 		if (!plan) return setError(form, 'planId', m.member_err_plan());
 		const today = localToday();
@@ -94,14 +110,16 @@ export const actions: Actions = {
 			return setError(
 				form,
 				'adults._errors',
-				plan.maxAdults > 1 ? m.member_err_adults({ max: plan.maxAdults - 1 }) : m.member_err_single()
+				plan.maxAdults > 1
+					? m.member_err_adults({ max: plan.maxAdults - 1 })
+					: m.member_err_single()
 			);
 		}
 		if (d.children.length > plan.maxChildren) {
 			return setError(form, 'children._errors', m.member_err_children({ max: plan.maxChildren }));
 		}
 
-		let placed: Awaited<ReturnType<typeof createWebOrder>>;
+		let placed: Awaited<ReturnType<typeof createWebOrder>> & { free: boolean };
 		try {
 			placed = await db.transaction(async (tx) => {
 				const customerId = await customerFor(tx, { name: d.name, phone: d.phone, email: d.email });
@@ -125,6 +143,7 @@ export const actions: Actions = {
 					contact: { name: d.name, phone: d.phone, email: d.email },
 					membershipId: term.id,
 					idempotencyKey: d.idempotencyKey,
+					discountCode: d.discountCode,
 					lines: [
 						{
 							itemType: 'membership',
@@ -136,10 +155,15 @@ export const actions: Actions = {
 						}
 					]
 				});
-				await tx.update(membership).set({ orderLineId: order.lineIds[0] }).where(eq(membership.id, term.id));
-				return order;
+				await tx
+					.update(membership)
+					.set({ orderLineId: order.lineIds[0] })
+					.where(eq(membership.id, term.id));
+				// A 100% code: nothing to pay, so the membership starts now.
+				return { ...order, free: order.total < 0.005 && (await completeFreeOrder(tx, order.id)) };
 			});
 		} catch (err) {
+			if (err instanceof DiscountRefused) return setError(form, 'discountCode', err.message);
 			// The same form sent twice at once: the second lands on the first one's order.
 			if (isDuplicateKey(err)) {
 				const again = await orderByIdempotencyKey(d.idempotencyKey);
@@ -148,7 +172,7 @@ export const actions: Actions = {
 			throw err;
 		}
 
-		if (paymentsOn()) {
+		if (paymentsOn() && d.payWith !== 'transfer' && !placed.free) {
 			let checkout: string | null = null;
 			try {
 				checkout = await startPayment(event, placed.id);

@@ -20,7 +20,8 @@ export const actions = {
 	default: async (event) => {
 		const posted = await postedForm(event.request);
 		const form = await superValidate(posted, zod4(postSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		let id: number;
 		try {
 			id = await savePost(event, form.data, posted);
@@ -30,6 +31,10 @@ export const actions = {
 			if (r.field) setError(form, r.field as 'slug', r.text);
 			return message(form, { type: 'error', text: r.text }, { status: 400 });
 		}
-		redirect(`/dashboard/content/posts/${id}`, { type: 'success', message: 'Post created' }, event.cookies);
+		redirect(
+			`/dashboard/content/posts/${id}`,
+			{ type: 'success', message: 'Post created' },
+			event.cookies
+		);
 	}
 };

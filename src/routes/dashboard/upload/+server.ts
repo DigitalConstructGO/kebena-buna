@@ -22,7 +22,10 @@ export const POST = async ({ request, locals }) => {
 		return json({ message: 'Choose a picture to add.' }, { status: 400 });
 	}
 	if (!IMAGE_TYPES.has(file.type)) {
-		return json({ message: 'Only pictures (JPEG, PNG, WebP, AVIF or GIF) can be added.' }, { status: 415 });
+		return json(
+			{ message: 'Only pictures (JPEG, PNG, WebP, AVIF or GIF) can be added.' },
+			{ status: 415 }
+		);
 	}
 	try {
 		const fileName = await saveUploadedFile(file);

@@ -17,7 +17,11 @@ const crud = localizedCrud({
 	moneyFields: ['rate'],
 	/** One default: choosing one takes it off the others. */
 	afterWrite: async (tx, { id, data }) => {
-		if (data.isDefault) await tx.update(taxRate).set({ isDefault: false }).where(and(ne(taxRate.id, id), eq(taxRate.isDefault, true)));
+		if (data.isDefault)
+			await tx
+				.update(taxRate)
+				.set({ isDefault: false })
+				.where(and(ne(taxRate.id, id), eq(taxRate.isDefault, true)));
 	}
 });
 

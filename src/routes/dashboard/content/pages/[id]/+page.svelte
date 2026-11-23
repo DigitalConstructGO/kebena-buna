@@ -37,14 +37,39 @@
 		<Statuses {...badge(p.publishStatus)} />
 	{/snippet}
 	{#snippet actions()}
-		<Button href="/dashboard/content/pages" variant="outline"><ArrowLeft class="size-4" /> Pages</Button>
+		<Button href="/dashboard/content/pages" variant="outline">
+			<ArrowLeft class="size-4" /> Pages
+		</Button>
 		{#if p.publishStatus !== 'published'}
-			<ConfirmAction action="?/status" fields={{ to: 'published' }} label="Publish" icon={Send} title="Publish this page?" description="It appears on the website as last saved." />
+			<ConfirmAction
+				action="?/status"
+				fields={{ to: 'published' }}
+				label="Publish"
+				icon={Send}
+				title="Publish this page?"
+				description="It appears on the website as last saved."
+			/>
 		{:else}
-			<ConfirmAction action="?/status" fields={{ to: 'draft' }} label="Unpublish" icon={EyeOff} variant="outline" title="Take this page off the website?" description="It goes back to draft; nothing is lost." />
+			<ConfirmAction
+				action="?/status"
+				fields={{ to: 'draft' }}
+				label="Unpublish"
+				icon={EyeOff}
+				variant="outline"
+				title="Take this page off the website?"
+				description="It goes back to draft; nothing is lost."
+			/>
 		{/if}
 		{#if p.publishStatus !== 'archived'}
-			<ConfirmAction action="?/status" fields={{ to: 'archived' }} label="Archive" icon={Archive} variant="outline" title="Archive this page?" description="Off the website and out of the menu, kept for reference." />
+			<ConfirmAction
+				action="?/status"
+				fields={{ to: 'archived' }}
+				label="Archive"
+				icon={Archive}
+				variant="outline"
+				title="Archive this page?"
+				description="Off the website and out of the menu, kept for reference."
+			/>
 		{/if}
 		<ConfirmAction
 			action="?/delete"
@@ -57,9 +82,22 @@
 	{/snippet}
 </PageHeader>
 
-<form method="POST" action="?/save" enctype="multipart/form-data" use:enhance class="mt-4 grid grid-cols-1 gap-6">
+<form
+	method="POST"
+	action="?/save"
+	enctype="multipart/form-data"
+	use:enhance
+	class="mt-4 grid grid-cols-1 gap-6"
+>
 	<Errors allErrors={$allErrors} />
-	<DocFields {form} {errors} base="/" picture="heroImage" pictureLabel="Hero picture" stored={p.heroImage ?? ''}>
+	<DocFields
+		{form}
+		{errors}
+		base="/"
+		picture="heroImage"
+		pictureLabel="Hero picture"
+		stored={p.heroImage ?? ''}
+	>
 		{#snippet settings()}
 			<PageSettings {form} {errors} parents={data.parents} />
 		{/snippet}
@@ -78,7 +116,11 @@
 				{ name: 'Address', value: `/${p.slug}` },
 				{ name: 'Parent', value: data.parent?.title ?? '—', href: href('page', data.parent?.id) },
 				...(data.children.length
-					? data.children.map((c, i) => ({ name: i ? '' : 'Child pages', value: c.title, href: href('page', c.id) }))
+					? data.children.map((c, i) => ({
+							name: i ? '' : 'Child pages',
+							value: c.title,
+							href: href('page', c.id)
+						}))
 					: [{ name: 'Child pages', value: '—' }]),
 				{ name: 'Published', value: formatDateTime(p.publishedAt) },
 				{ name: 'Reading time', value: p.minutes ? `${p.minutes} min` : '—' }

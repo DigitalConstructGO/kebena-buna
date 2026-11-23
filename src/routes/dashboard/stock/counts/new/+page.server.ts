@@ -36,14 +36,22 @@ async function itemsOf(stage: StockStage) {
 	}
 	if (stage === 'roasted') {
 		return db
-			.select({ itemId: roastBatch.id, label: sql<string>`concat(${roastBatch.code}, ' · ', ${enOf(roastLevel.name)})` })
+			.select({
+				itemId: roastBatch.id,
+				label: sql<string>`concat(${roastBatch.code}, ' · ', ${enOf(roastLevel.name)})`
+			})
 			.from(roastBatch)
 			.innerJoin(roastLevel, eq(roastBatch.roastLevelId, roastLevel.id))
-			.where(inArray(roastBatch.id, db.select({ id: roastedStock.roastBatchId }).from(roastedStock)))
+			.where(
+				inArray(roastBatch.id, db.select({ id: roastedStock.roastBatchId }).from(roastedStock))
+			)
 			.orderBy(desc(roastBatch.roastedAt));
 	}
 	return db
-		.select({ itemId: packingRun.id, label: sql<string>`concat(${productVariant.sku}, ' · ', ${packingRun.code})` })
+		.select({
+			itemId: packingRun.id,
+			label: sql<string>`concat(${productVariant.sku}, ' · ', ${packingRun.code})`
+		})
 		.from(packingRun)
 		.innerJoin(productVariant, eq(packingRun.variantId, productVariant.id))
 		.where(inArray(packingRun.id, db.select({ id: packedStock.packingRunId }).from(packedStock)))
@@ -61,7 +69,12 @@ export const load = async ({ locals, url }) => {
 	const [items, books] = await Promise.all([itemsOf(stage), balancesAt(db, stage, locationId)]);
 	// What the books hold here first, then the rest — a count finds what is on the shelf.
 	const lines = items
-		.map((i) => ({ itemId: i.itemId, label: i.label, expected: books.get(i.itemId) ?? 0, counted: null }))
+		.map((i) => ({
+			itemId: i.itemId,
+			label: i.label,
+			expected: books.get(i.itemId) ?? 0,
+			counted: null
+		}))
 		.sort((a, b) => Number(b.expected > 0) - Number(a.expected > 0));
 
 	return {
@@ -80,7 +93,8 @@ export const actions = {
 	default: async (event) => {
 		requirePermission(event.locals, 'stock.manage');
 		const form = await superValidate(event.request, zod4(countSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { date, time, lines, ...values } = form.data;
 		let posted: { id: number; changed: number };
 		try {
@@ -88,10 +102,17 @@ export const actions = {
 				const p = await postCount(tx, {
 					...values,
 					countedAt: joinDateTime(date, time),
-					lines: lines.flatMap((l) => (l.counted === null ? [] : [{ itemId: l.itemId, counted: l.counted }])),
+					lines: lines.flatMap((l) =>
+						l.counted === null ? [] : [{ itemId: l.itemId, counted: l.counted }]
+					),
 					userId: event.locals.user?.id
 				});
-				await recordAudit(tx, event, { table: 'stock_count', recordId: p.id, action: 'create', detail: { corrections: p.changed } });
+				await recordAudit(tx, event, {
+					table: 'stock_count',
+					recordId: p.id,
+					action: 'create',
+					detail: { corrections: p.changed }
+				});
 				return p;
 			});
 		} catch (err) {
@@ -103,7 +124,12 @@ export const actions = {
 		}
 		redirect(
 			`/dashboard/stock/counts/${posted.id}`,
-			{ type: 'success', message: posted.changed ? `Count posted: ${posted.changed} correction(s)` : 'Count posted: the books agree' },
+			{
+				type: 'success',
+				message: posted.changed
+					? `Count posted: ${posted.changed} correction(s)`
+					: 'Count posted: the books agree'
+			},
 			event.cookies
 		);
 	}

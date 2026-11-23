@@ -21,7 +21,13 @@
 		fields: [
 			{ name: 'nameEn', label: 'Name (English)', type: 'text' },
 			{ name: 'nameAm', label: 'Name (Amharic)', type: 'text', required: false },
-			{ name: 'nameOm', label: 'Name (Afaan Oromo)', type: 'text', required: false, inTable: false },
+			{
+				name: 'nameOm',
+				label: 'Name (Afaan Oromo)',
+				type: 'text',
+				required: false,
+				inTable: false
+			},
 			{ name: 'nameAr', label: 'Name (Arabic)', type: 'text', required: false, inTable: false },
 			{ name: 'nameIt', label: 'Name (Italian)', type: 'text', required: false, inTable: false },
 			{ name: 'nameFr', label: 'Name (French)', type: 'text', required: false, inTable: false },
@@ -29,9 +35,21 @@
 			{ name: 'fee', label: 'Fee', type: 'money' },
 			{ name: 'currency', label: 'Currency', type: 'text', inTable: false },
 			{ name: 'freeAbove', label: 'Free above', type: 'money', required: false },
-			{ name: 'freeForMembers', label: 'Free for members', type: 'checkbox', trueLabel: 'Yes', falseLabel: 'No' },
+			{
+				name: 'freeForMembers',
+				label: 'Free for members',
+				type: 'checkbox',
+				trueLabel: 'Yes',
+				falseLabel: 'No'
+			},
 			{ name: 'isPickup', label: 'Pickup', type: 'checkbox', trueLabel: 'Yes', falseLabel: 'No' },
-			{ name: 'usesCourier', label: 'Courier', type: 'checkbox', trueLabel: 'Yes', falseLabel: 'No' },
+			{
+				name: 'usesCourier',
+				label: 'Courier',
+				type: 'checkbox',
+				trueLabel: 'Yes',
+				falseLabel: 'No'
+			},
 			{ name: 'transitDays', label: 'Transit days', type: 'number' },
 			{ name: 'sortOrder', label: 'Order', type: 'number' },
 			{ name: 'status', label: 'Status', type: 'boolean' }

@@ -2,7 +2,12 @@
  * Copy and data for the museum home page. The components render whatever
  * is passed in here, so the same shapes carry the real copy and the dev-only
  * stress fixtures (?data=worst | empty | one).
+ *
+ * The words come from Paraglide messages (`home_*`, plus a few shared `site_*` and `contact_*`
+ * keys), so they follow the visitor's language and the dashboard's edits. Photos, links and
+ * numbers stay here in code.
  */
+import { m } from '#lib/i18n.ts';
 
 export type Fact = {
 	/** Counted up on scroll. */
@@ -166,802 +171,815 @@ export type MuseumContent = {
 	footer: FooterContent;
 };
 
-const entrance: EntranceContent = {
-	eyebrow: 'Hall 00 · Entrance',
-	title: 'A living museum of Ethiopian coffee',
-	body: [
-		'Kebena Trading is a family company that has grown and traded coffee in the Jimma zone for over three decades. Before Kebena, the family exported Limu and Jimma coffee as Haider Abamecha Coffee Export.',
-		'This site is our museum. Walk the four halls, from the seed in the highland soil to the coffee in your cup.'
-	],
-	photo: {
-		src: '/halls/drying-beds.webp',
-		alt: 'Raised drying beds of coffee on a green hillside in Jimma, with workers turning the beans',
-		width: 844,
-		height: 649
-	},
-	backdrop: '/hero/museum-soft.jpg',
-	facts: [
-		{ value: 30, suffix: '+ years', note: 'Growing and trading coffee in Jimma' },
-		{ value: 2, suffix: ' estates', note: 'Gera and Djimmah coffee farms' },
-		{ value: 8, suffix: ' washing stations', note: '3 of them RFA-certified' },
-		{ value: 4, suffix: ' dry mills', note: 'Hulling, sorting and grading' }
-	]
-};
+/* ------------------------------------------------------------------ */
+/* The real copy. Every word is a message (`messages/*.json`, editable */
+/* from the dashboard), read when the content is built: the language   */
+/* differs per request, so nothing here runs at module load.           */
+/* ------------------------------------------------------------------ */
 
-const halls: HallsContent = {
-	eyebrow: 'Floor plan',
-	title: 'Four halls, one story',
-	intro: 'Each hall is a stop on the journey our coffee takes. Start anywhere.',
-	halls: [
+/** A message holding several paragraphs, one blank line between them. */
+const paras = (text: string) => text.split(/\n{2,}/);
+
+function entrance(): EntranceContent {
+	return {
+		eyebrow: m.home_entrance_eyebrow(),
+		title: m.home_entrance_title(),
+		body: paras(m.home_entrance_body()),
+		photo: {
+			src: '/halls/drying-beds.webp',
+			alt: m.home_entrance_photo_alt(),
+			width: 844,
+			height: 649
+		},
+		backdrop: '/hero/museum-soft.jpg',
+		facts: [
+			{
+				value: 30,
+				suffix: `+ ${m.home_entrance_fact_years_unit()}`,
+				note: m.home_entrance_fact_years_note()
+			},
+			{
+				value: 2,
+				suffix: ` ${m.home_entrance_fact_estates_unit()}`,
+				note: m.home_entrance_fact_estates_note()
+			},
+			{
+				value: 8,
+				suffix: ` ${m.home_entrance_fact_stations_unit()}`,
+				note: m.home_entrance_fact_stations_note({ count: 3 })
+			},
+			{
+				value: 4,
+				suffix: ` ${m.home_entrance_fact_mills_unit()}`,
+				note: m.home_entrance_fact_mills_note()
+			}
+		]
+	};
+}
+
+function halls(): HallsContent {
+	return {
+		eyebrow: m.home_halls_eyebrow(),
+		title: m.home_halls_title(),
+		intro: m.home_halls_intro(),
+		halls: [
+			{
+				id: 'origin',
+				title: m.home_halls_origin_title(),
+				text: m.home_halls_origin_text(),
+				tagline: m.home_halls_origin_tagline(),
+				href: '#entrance',
+				photo: '/halls/drying-beds.webp'
+			},
+			{
+				id: 'farms',
+				title: m.home_halls_farms_title(),
+				text: m.home_halls_farms_text(),
+				tagline: m.home_halls_farms_tagline(),
+				href: '#farms',
+				photo: '/halls/hall-02.webp'
+			},
+			{
+				id: 'collection',
+				title: m.home_halls_collection_title(),
+				text: m.home_halls_collection_text(),
+				tagline: m.home_halls_collection_tagline(),
+				href: '#collection',
+				photo: '/halls/hall-04.webp'
+			},
+			{
+				id: 'people',
+				title: m.home_halls_people_title(),
+				text: m.home_halls_people_text(),
+				tagline: m.home_halls_people_tagline(),
+				href: '#people',
+				photo: '/halls/hall-05.webp'
+			}
+		]
+	};
+}
+
+function journey(): JourneyContent {
+	return {
+		eyebrow: m.home_journey_eyebrow(),
+		title: m.home_journey_title(),
+		accent: m.home_journey_accent(),
+		steps: [
+			{
+				id: 'harvest',
+				act: m.home_journey_act_farm(),
+				title: m.home_journey_harvest_title(),
+				accent: m.home_journey_harvest_accent(),
+				text: m.home_journey_harvest_text(),
+				photo: { src: '/journey/harvest.webp', alt: m.home_journey_harvest_alt() }
+			},
+			{
+				id: 'drying',
+				title: m.home_journey_drying_title(),
+				accent: m.home_journey_drying_accent(),
+				text: m.home_journey_drying_text(),
+				photo: { src: '/journey/drying.webp', alt: m.home_journey_drying_alt() }
+			},
+			{
+				id: 'sorting',
+				title: m.home_journey_sorting_title(),
+				accent: m.home_journey_sorting_accent(),
+				text: m.home_journey_sorting_text(),
+				photo: { src: '/journey/sorting.webp', alt: m.home_journey_sorting_alt() }
+			},
+			{
+				id: 'roasting',
+				act: m.home_journey_act_ceremony(),
+				wide: true,
+				title: m.home_journey_roasting_title(),
+				accent: m.home_journey_roasting_accent(),
+				text: m.home_journey_roasting_text(),
+				photo: { src: '/journey/roasting.webp', alt: m.home_journey_roasting_alt() }
+			},
+			{
+				id: 'grinding',
+				title: m.home_journey_grinding_title(),
+				accent: m.home_journey_grinding_accent(),
+				text: m.home_journey_grinding_text(),
+				photo: { src: '/journey/grinding.webp', alt: m.home_journey_grinding_alt() }
+			},
+			{
+				id: 'jebena',
+				wide: true,
+				title: m.home_journey_jebena_title(),
+				accent: m.home_journey_jebena_accent(),
+				text: m.home_journey_jebena_text(),
+				photo: { src: '/journey/jebena.webp', alt: m.home_journey_jebena_alt() }
+			},
+			{
+				id: 'cup',
+				title: m.home_journey_cup_title(),
+				accent: m.home_journey_cup_accent(),
+				text: m.home_journey_cup_text(),
+				photo: { src: '/journey/cup.webp', alt: m.home_journey_cup_alt() }
+			}
+		],
+		end: m.home_journey_end(),
+		next: { label: m.home_journey_next(), href: '#visit' }
+	};
+}
+
+function farms(): FarmsContent {
+	const organic = m.home_farms_value_organic();
+	const farmToCup = m.home_farms_value_farm_to_cup();
+	return {
+		eyebrow: m.home_farms_eyebrow(),
+		title: m.home_farms_title(),
+		intro: m.home_farms_intro(),
+		farms: [
+			{
+				id: 'gera',
+				kind: m.home_farms_kind_estate(),
+				gallery: [
+					{ src: '/farms/helix/02-forest.webp', alt: m.home_farms_gera_gallery_1_alt() },
+					{ src: '/farms/helix/03-washed-gera.webp', alt: m.home_farms_gera_gallery_2_alt() },
+					{ src: '/farms/helix/04-harvest.webp', alt: m.home_farms_gera_gallery_3_alt() }
+				],
+				title: m.home_farms_gera_title(),
+				text: m.home_farms_gera_text(),
+				photo: { src: '/farms/helix/01-gera.webp', alt: m.home_farms_gera_alt() },
+				meta: [
+					{ label: m.home_farms_label_region(), value: m.home_farms_gera_region() },
+					{ label: m.home_farms_label_farming(), value: organic },
+					{ label: m.home_farms_label_trace(), value: farmToCup }
+				]
+			},
+			{
+				id: 'djimmah',
+				kind: m.home_farms_kind_estate(),
+				gallery: [
+					{
+						src: '/farms/helix/06-unwashed-djimmah.webp',
+						alt: m.home_farms_djimmah_gallery_1_alt()
+					},
+					{ src: '/farms/helix/07-hall-04.webp', alt: m.home_farms_djimmah_gallery_2_alt() },
+					{ src: '/farms/helix/08-hall-02.webp', alt: m.home_farms_djimmah_gallery_3_alt() }
+				],
+				title: m.home_farms_djimmah_title(),
+				text: m.home_farms_djimmah_text(),
+				photo: { src: '/farms/helix/05-djimmah.webp', alt: m.home_farms_djimmah_alt() },
+				meta: [
+					{ label: m.home_farms_label_region(), value: m.home_farms_djimmah_region() },
+					{ label: m.home_farms_label_farming(), value: organic },
+					{ label: m.home_farms_label_trace(), value: farmToCup }
+				]
+			},
+			{
+				id: 'washing-stations',
+				kind: m.home_farms_kind_stations(),
+				title: m.home_farms_stations_title({ count: 8 }),
+				text: m.home_farms_stations_text(),
+				photo: { src: '/farms/helix/09-drying-beds.webp', alt: m.home_farms_stations_alt() },
+				gallery: [
+					{ src: '/farms/helix/10-drying-beds.webp', alt: m.home_farms_stations_gallery_1_alt() },
+					{ src: '/farms/helix/11-drying.webp', alt: m.home_farms_stations_gallery_2_alt() },
+					{ src: '/farms/helix/12-hall-05.webp', alt: m.home_farms_stations_gallery_3_alt() }
+				],
+				meta: [
+					{ label: m.home_farms_label_districts(), value: m.home_farms_stations_districts() },
+					{
+						label: m.home_farms_label_certified(),
+						value: m.home_farms_stations_certified({ count: 3 })
+					},
+					{ label: m.home_farms_label_process(), value: m.home_farms_stations_process() }
+				]
+			},
+			{
+				id: 'dry-mills',
+				kind: m.home_farms_kind_mills(),
+				title: m.home_farms_mills_title({ count: 4 }),
+				text: m.home_farms_mills_text(),
+				photo: { src: '/farms/helix/13-sorting.webp', alt: m.home_farms_mills_alt() },
+				gallery: [
+					{
+						src: '/farms/helix/14-unwashed-nekemte.webp',
+						alt: m.home_farms_mills_gallery_1_alt()
+					},
+					{ src: '/farms/helix/15-hall-03.webp', alt: m.home_farms_mills_gallery_2_alt() },
+					{ src: '/farms/helix/16-washed-limmu.webp', alt: m.home_farms_mills_gallery_3_alt() }
+				],
+				meta: [
+					{ label: m.home_farms_label_work(), value: m.home_farms_mills_work() },
+					{ label: m.home_farms_label_bound_for(), value: m.home_farms_mills_bound_for() },
+					{ label: m.home_farms_label_trace(), value: m.home_farms_mills_trace() }
+				]
+			}
+		]
+	};
+}
+
+function process(): ProcessContent {
+	return {
+		eyebrow: m.home_process_eyebrow(),
+		title: m.home_process_title(),
+		intro: m.home_process_intro(),
+		readoutLabel: m.home_process_readout_label(),
+		steps: [
+			{
+				id: 'picking',
+				moisture: 65,
+				title: m.home_process_picking_title(),
+				text: m.home_process_picking_text(),
+				photo: { src: '/farms/gera.webp', alt: m.home_process_picking_alt() }
+			},
+			{
+				id: 'washed',
+				moisture: 52,
+				title: m.home_process_washed_title(),
+				text: m.home_process_washed_text(),
+				photo: { src: '/collection/washed-limmu.webp', alt: m.home_process_washed_alt() }
+			},
+			{
+				id: 'sun-dried',
+				moisture: 11.5,
+				title: m.home_process_sun_dried_title(),
+				text: m.home_process_sun_dried_text(),
+				photo: { src: '/journey/drying.webp', alt: m.home_process_sun_dried_alt() }
+			},
+			{
+				id: 'dry-milling',
+				moisture: 10.5,
+				moment: m.home_process_dry_milling_moment(),
+				title: m.home_process_dry_milling_title(),
+				text: m.home_process_dry_milling_text(),
+				photo: { src: '/journey/sorting.webp', alt: m.home_process_dry_milling_alt() }
+			},
+			{
+				id: 'export',
+				moisture: 11,
+				title: m.home_process_export_title(),
+				text: m.home_process_export_text(),
+				photo: { src: '/collection/unwashed-nekemte.webp', alt: m.home_process_export_alt() }
+			}
+		]
+	};
+}
+
+function collection(): CollectionContent {
+	const specs = (origin: string, washed: boolean, grade: [number, number]): MetaItem[] => [
+		{ label: m.home_collection_label_origin(), value: origin },
 		{
-			id: 'origin',
-			title: 'Origin',
-			text: 'Jimma, the birthplace of coffee, and the highlands around it.',
-			tagline: 'Where coffee was first found',
-			href: '#entrance',
-			photo: '/halls/drying-beds.webp'
+			label: m.home_collection_label_process(),
+			value: washed ? m.home_collection_process_washed() : m.home_collection_process_unwashed()
 		},
 		{
-			id: 'farms',
-			title: 'The farms',
-			text: 'Our Gera and Djimmah estates on rich volcanic soil.',
-			tagline: 'Gera and Djimmah estates',
-			href: '#farms',
-			photo: '/halls/hall-02.webp'
-		},
-		{
-			id: 'collection',
-			title: 'The collection',
-			text: 'Specialty, certified and commercial lots.',
-			tagline: 'The lots on display this season',
-			href: '#collection',
-			photo: '/halls/hall-04.webp'
-		},
-		{
-			id: 'people',
-			title: 'The people',
-			text: '10,000 farmers and the families behind them.',
-			tagline: 'Out-growers, staff and families',
-			href: '#people',
-			photo: '/halls/hall-05.webp'
+			label: m.home_collection_label_grade(),
+			value: m.home_collection_grade_range({ from: grade[0], to: grade[1] })
 		}
-	]
-};
-
-const journey: JourneyContent = {
-	eyebrow: 'Interlude · From cherry to cup',
-	title: 'One long,',
-	accent: 'slow pour',
-	steps: [
-		{
-			id: 'harvest',
-			act: 'On the farm',
-			title: 'Picked only when',
-			accent: 'red',
-			text: 'Cherries ripen unevenly, so pickers come back to the same trees again and again, taking only the ripe ones.',
-			photo: {
-				src: '/journey/harvest.webp',
-				alt: 'A hand picking ripe red coffee cherries into a woven basket'
-			}
-		},
-		{
-			id: 'drying',
-			title: 'Dried in the',
-			accent: 'sun',
-			text: 'The cherries are spread on raised beds and turned by hand for two to three weeks, until they are dark and dry.',
-			photo: {
-				src: '/journey/drying.webp',
-				alt: 'Red coffee cherries drying on a raised bed above green hills'
-			}
-		},
-		{
-			id: 'sorting',
-			title: 'Hulled and sorted',
-			accent: 'by hand',
-			text: 'The dry husk comes off to free the green bean inside. Every bean is checked, and the broken ones are set aside.',
-			photo: {
-				src: '/journey/sorting.webp',
-				alt: 'Hands sorting green coffee beans from husks in a woven tray'
-			}
-		},
-		{
-			id: 'roasting',
-			act: 'At the ceremony',
-			wide: true,
-			title: 'Roasted over',
-			accent: 'charcoal',
-			text: 'Green beans crackle in a flat pan over the coals, and the fragrant smoke is carried around the room for the guests.',
-			photo: {
-				src: '/journey/roasting.webp',
-				alt: 'Dark roasted coffee beans in an iron pan over glowing charcoal'
-			}
-		},
-		{
-			id: 'grinding',
-			title: 'Pounded in the',
-			accent: 'mukecha',
-			text: 'The warm beans are crushed in a wooden mortar, just enough for the pot about to be brewed.',
-			photo: {
-				src: '/journey/grinding.webp',
-				alt: 'Roasted coffee beans and fresh grounds in a carved wooden mortar'
-			}
-		},
-		{
-			id: 'jebena',
-			wide: true,
-			title: 'Brewed in the',
-			accent: 'jebena',
-			text: 'The grounds go into the clay pot with water and come to the boil over the coals, then rest so they settle.',
-			photo: {
-				src: '/journey/jebena.webp',
-				alt: 'A black clay jebena on a small charcoal stove in the grass'
-			}
-		},
-		{
-			id: 'cup',
-			title: 'Poured from a',
-			accent: 'height',
-			text: 'The jebena is lifted high and tipped in one thin, steady stream, cup after cup. Abol, then tona, then baraka.',
-			photo: {
-				src: '/journey/cup.webp',
-				alt: 'A white coffee cup with a red tulip pattern, steam rising'
-			}
-		}
-	],
-	end: 'And then, the first sip.',
-	next: { label: 'Come and taste it', href: '#visit' }
-};
-
-const farms: FarmsContent = {
-	eyebrow: 'Hall 02 · The farms',
-	title: 'Two estates in the Jimma highlands',
-	intro:
-		'Rich volcanic soil, generous rain and a temperate climate. We farm both estates organically, and every lot can be traced back to where it grew.',
-	farms: [
-		{
-			id: 'gera',
-			kind: 'Estate',
-			gallery: [
-				{
-					src: '/farms/helix/02-forest.webp',
-					alt: 'Morning light through the forest canopy above coffee shrubs'
+	];
+	return {
+		eyebrow: m.home_collection_eyebrow(),
+		title: m.home_collection_title(),
+		tags: [
+			{ label: m.home_collection_tag_specialty(), tone: 'leaf' },
+			{ label: m.home_collection_tag_certified(), tone: 'sage' },
+			{ label: m.home_collection_tag_commercial(), tone: 'lime' }
+		],
+		cta: { label: m.home_collection_cta({ year: 2026 }), href: '#visit' },
+		lots: [
+			{
+				id: 'unwashed-djimmah',
+				title: m.home_collection_unwashed_djimmah_title(),
+				photo: {
+					src: '/collection/unwashed-djimmah.webp',
+					alt: m.home_collection_unwashed_djimmah_alt()
 				},
-				{
-					src: '/farms/helix/03-washed-gera.webp',
-					alt: 'Cherries ripening from green to red on a Gera branch'
-				},
-				{
-					src: '/farms/helix/04-harvest.webp',
-					alt: 'A picker filling a basket from a tree heavy with cherries, hills behind'
-				}
-			],
-			title: 'Gera Coffee Farm',
-			text: 'An established estate that pairs traditional Ethiopian farming knowledge with modern methods. Known for a rich body, vibrant acidity and complex notes.',
-			photo: {
-				src: '/farms/helix/01-gera.webp',
-				alt: 'A coffee tree heavy with red cherries on the Gera estate, hills behind'
+				specs: specs(m.home_collection_unwashed_djimmah_origin(), false, [1, 5])
 			},
-			meta: [
-				{ label: 'Region', value: 'Gera highlands, Jimma zone' },
-				{ label: 'Farming', value: 'Organic' },
-				{ label: 'Trace', value: 'Farm to cup' }
-			]
-		},
-		{
-			id: 'djimmah',
-			kind: 'Estate',
-			gallery: [
-				{
-					src: '/farms/helix/06-unwashed-djimmah.webp',
-					alt: 'A heap of freshly picked red cherries'
-				},
-				{
-					src: '/farms/helix/07-hall-04.webp',
-					alt: 'Red cherries and glossy leaves on a Djimmah branch'
-				},
-				{
-					src: '/farms/helix/08-hall-02.webp',
-					alt: 'A coffee tree loaded with red cherries on a hillside'
-				}
-			],
-			title: 'Djimmah Coffee Farm',
-			text: 'Every stage is checked here, from planting and harvest to processing and packing. Grown organically, without harmful chemicals.',
-			photo: {
-				src: '/farms/helix/05-djimmah.webp',
-				alt: 'Close-up of ripe red coffee cherries on a branch'
+			{
+				id: 'washed-limmu',
+				title: m.home_collection_washed_limmu_title(),
+				photo: { src: '/collection/washed-limmu.webp', alt: m.home_collection_washed_limmu_alt() },
+				specs: specs(m.home_place_limu(), true, [1, 2])
 			},
-			meta: [
-				{ label: 'Region', value: 'Jimma highlands' },
-				{ label: 'Farming', value: 'Organic' },
-				{ label: 'Trace', value: 'Farm to cup' }
-			]
-		},
-		{
-			id: 'washing-stations',
-			kind: 'Washing stations',
-			title: '8 washing stations',
-			text: 'Washing stations and collection centres across the Limu, Mana and Goma districts, where cherries are pulped, fermented, washed and dried on raised beds. Three of them are RFA-certified.',
-			photo: {
-				src: '/farms/helix/09-drying-beds.webp',
-				alt: 'Long rows of raised drying beds below a forested hill'
+			{
+				id: 'washed-gera',
+				title: m.home_collection_washed_gera_title(),
+				photo: { src: '/collection/washed-gera.webp', alt: m.home_collection_washed_gera_alt() },
+				specs: specs(m.home_place_gera(), true, [1, 2])
 			},
-			gallery: [
-				{
-					src: '/farms/helix/10-drying-beds.webp',
-					alt: 'Workers turning coffee on raised drying beds, forest behind them'
+			{
+				id: 'unwashed-nekemte',
+				title: m.home_collection_unwashed_nekemte_title(),
+				photo: {
+					src: '/collection/unwashed-nekemte.webp',
+					alt: m.home_collection_unwashed_nekemte_alt()
 				},
-				{
-					src: '/farms/helix/11-drying.webp',
-					alt: 'Cherries drying on raised beds in the highlands'
-				},
-				{
-					src: '/farms/helix/12-hall-05.webp',
-					alt: 'A team working along the drying beds at a washing station'
-				}
-			],
-			meta: [
-				{ label: 'Districts', value: 'Limu, Mana and Goma' },
-				{ label: 'Certified', value: '3 RFA-certified' },
-				{ label: 'Process', value: 'Washed and sun-dried' }
-			]
-		},
-		{
-			id: 'dry-mills',
-			kind: 'Dry mills',
-			title: '4 dry mills',
-			text: 'Dried coffee is hulled, sorted by hand and graded here before each lot is bagged and sent to Addis Ababa, traceable to where it grew.',
-			photo: {
-				src: '/farms/helix/13-sorting.webp',
-				alt: 'Hands sorting hulled green beans from their husks in a woven basket'
-			},
-			gallery: [
-				{
-					src: '/farms/helix/14-unwashed-nekemte.webp',
-					alt: 'Woven baskets of cherries lined up for weighing'
-				},
-				{ src: '/farms/helix/15-hall-03.webp', alt: 'Baskets of dried cherries ready for hulling' },
-				{
-					src: '/farms/helix/16-washed-limmu.webp',
-					alt: 'Red cherries on a branch before processing'
-				}
-			],
-			meta: [
-				{ label: 'Work', value: 'Hulling, sorting, grading' },
-				{ label: 'Bound for', value: 'Addis Ababa' },
-				{ label: 'Trace', value: 'Lot to origin' }
-			]
-		}
-	]
-};
-
-const process: ProcessContent = {
-	eyebrow: 'Hall 03 · The process',
-	title: 'From red cherry to green coffee',
-	intro:
-		'Our coffee is prepared washed, unwashed or sun-dried at 8 washing stations and 4 dry mills across the Limu, Mana and Goma districts.',
-	readoutLabel: 'Bean moisture · approx.',
-	steps: [
-		{
-			id: 'picking',
-			moisture: 65,
-			title: 'Picking',
-			text: 'Only ripe red cherries are selected by hand.',
-			photo: { src: '/farms/gera.webp', alt: 'Ripe red cherries on the tree, ready to pick' }
-		},
-		{
-			id: 'washed',
-			moisture: 52,
-			title: 'Washed',
-			text: 'The fruit is removed at a washing station before the beans dry.',
-			photo: {
-				src: '/collection/washed-limmu.webp',
-				alt: 'Red cherries on a branch before washing'
+				specs: specs(m.home_place_nekemte(), false, [1, 5])
 			}
-		},
-		{
-			id: 'sun-dried',
-			moisture: 11.5,
-			title: 'Unwashed and sun-dried',
-			text: 'Whole cherries dry slowly in the sun on raised beds.',
-			photo: { src: '/journey/drying.webp', alt: 'Cherries drying on raised beds in the highlands' }
-		},
-		{
-			id: 'dry-milling',
-			moisture: 10.5,
-			moment: 'Hulled',
-			title: 'Dry milling',
-			text: 'Dried coffee is hulled, sorted and graded at our dry mills.',
-			photo: {
-				src: '/journey/sorting.webp',
-				alt: 'Hands sorting hulled green beans in a woven basket'
+		]
+	};
+}
+
+function atlas(): AtlasContent {
+	const also = m.home_atlas_also_text();
+	return {
+		eyebrow: m.home_collection_eyebrow(),
+		title: m.home_atlas_title(),
+		origins: [
+			{
+				id: 'jimma',
+				altitude: [1400, 2100],
+				harvest: [10, 11, 12, 1],
+				name: m.home_place_jimma(),
+				lat: 7.67,
+				lon: 36.83,
+				text: m.home_atlas_jimma_text()
+			},
+			{
+				id: 'limu',
+				altitude: [1400, 2200],
+				harvest: [10, 11, 12, 1],
+				name: m.home_place_limu(),
+				lat: 8.15,
+				lon: 36.95,
+				text: m.home_atlas_limu_text()
+			},
+			{
+				id: 'gera',
+				altitude: [1800, 2200],
+				harvest: [10, 11, 12, 1],
+				name: m.home_place_gera(),
+				lat: 7.85,
+				lon: 36.3,
+				text: m.home_atlas_gera_text()
+			},
+			{
+				id: 'nekemte',
+				altitude: [1500, 2100],
+				harvest: [10, 11, 12, 1],
+				name: m.home_place_nekemte(),
+				lat: 9.08,
+				lon: 36.55,
+				text: m.home_atlas_nekemte_text()
+			},
+			{
+				id: 'sidama',
+				altitude: [1500, 2200],
+				harvest: [11, 12, 1],
+				name: m.home_place_sidama(),
+				lat: 6.75,
+				lon: 38.5,
+				text: also
+			},
+			{
+				id: 'yirgacheffe',
+				altitude: [1750, 2200],
+				harvest: [10, 11, 12, 1],
+				name: m.home_place_yirgacheffe(),
+				lat: 6.16,
+				lon: 38.2,
+				text: also
+			},
+			{
+				id: 'guji',
+				altitude: [1800, 2300],
+				harvest: [11, 12, 1, 2],
+				name: m.home_place_guji(),
+				lat: 5.7,
+				lon: 38.9,
+				text: also
+			},
+			{
+				id: 'harar',
+				altitude: [1500, 2100],
+				harvest: [10, 11, 12, 1, 2],
+				name: m.home_place_harar(),
+				lat: 9.31,
+				lon: 42.12,
+				text: also
 			}
+		]
+	};
+}
+
+function people(): PeopleContent {
+	return {
+		eyebrow: m.home_people_eyebrow(),
+		lead: { value: 10000, suffix: '', text: m.home_people_lead_text() },
+		stats: [
+			{ value: 5406, suffix: '', label: m.home_people_stat_certified() },
+			{ value: 2000, suffix: '', label: m.home_people_stat_staff() },
+			{ value: 4000, suffix: '+', label: m.home_people_stat_seasonal() }
+		],
+		body: m.home_people_body(),
+		photo: { src: '/people/drying-beds.webp', alt: m.home_people_photo_alt() }
+	};
+}
+
+function archive(): ArchiveContent {
+	return {
+		eyebrow: m.home_archive_eyebrow(),
+		title: m.home_archive_title(),
+		more: m.home_archive_more(),
+		notes: [
+			{
+				id: 'afcce-22',
+				date: '2026-06-09',
+				title: m.home_archive_afcce_title(),
+				href: '#archive'
+			},
+			{ id: 'coe-record', date: '2024-12-25', title: m.home_archive_coe_title(), href: '#archive' },
+			{
+				id: 'production-doubles',
+				date: '2024-12-25',
+				title: m.home_archive_production_title(),
+				href: '#archive'
+			},
+			{ id: 'eudr', date: '2024-12-25', title: m.home_archive_eudr_title(), href: '#archive' }
+		]
+	};
+}
+
+const PHONE = '+251 912 605 824';
+const EMAIL = 'info@kebenageneraltrading.com';
+
+function visit(): VisitContent {
+	return {
+		eyebrow: m.home_visit_eyebrow(),
+		title: m.home_visit_title(),
+		rows: [
+			{ label: m.contact_address(), value: m.contact_address_value() },
+			{ label: m.contact_hours(), value: m.contact_hours_value() },
+			{ label: m.contact_phone(), value: PHONE },
+			{ label: m.contact_email(), value: EMAIL }
+		],
+		directions: {
+			label: m.contact_directions(),
+			href: 'https://www.google.com/maps/search/?api=1&query=Coffee+cup+building+Jimma+Ethiopia'
 		},
-		{
-			id: 'export',
-			moisture: 11,
-			title: 'Export',
-			text: 'Lots leave Addis Ababa fully traceable to their origin.',
-			photo: {
-				src: '/collection/unwashed-nekemte.webp',
-				alt: 'Baskets of coffee cherries lined up for weighing'
+		call: { label: m.home_visit_call(), href: 'tel:+251912605824' },
+		place: { name: m.home_visit_place_name(), area: m.home_visit_place_area() },
+		beats: [m.home_visit_beat_arrive(), m.home_visit_beat_inside()],
+		tags: [
+			m.home_visit_tag_halls(),
+			m.home_visit_tag_tours(),
+			m.home_visit_tag_ceremony(),
+			m.home_visit_tag_tastings(),
+			m.home_visit_tag_events(),
+			m.home_visit_tag_shop()
+		]
+	};
+}
+
+/** The footer under every museum and site page. */
+export function footerContent(): FooterContent {
+	return {
+		brand: m.home_footer_brand(),
+		tagline: m.site_footer_tagline(),
+		columns: [
+			{
+				title: m.site_footer_museum(),
+				links: [
+					{ label: m.home_halls_eyebrow(), href: '/#halls' },
+					{ label: m.home_halls_farms_title(), href: '/#farms' },
+					{ label: m.home_halls_collection_title(), href: '/#collection' },
+					{ label: m.home_archive_eyebrow(), href: '/#archive' },
+					{ label: m.site_nav_history(), href: '/history' },
+					{ label: m.site_footer_kingdoms(), href: '/kingdoms' }
+				]
+			},
+			{
+				title: m.site_nav_visit(),
+				links: [
+					{ label: m.site_footer_tickets(), href: '/visit' },
+					{ label: m.site_nav_experiences(), href: '/experiences' },
+					{ label: m.site_footer_events(), href: '/events' },
+					{ label: m.site_footer_groups(), href: '/groups' },
+					{ label: m.site_footer_membership(), href: '/membership' },
+					{ label: m.site_nav_contact(), href: '/contact' }
+				]
+			},
+			{
+				title: m.site_footer_coffee(),
+				links: [
+					{ label: m.site_nav_shop(), href: '/shop' },
+					{ label: m.site_footer_subscriptions(), href: '/subscriptions' },
+					{ label: m.site_footer_wholesale(), href: '/wholesale' },
+					{ label: m.site_footer_track(), href: '/track' }
+				]
+			},
+			{
+				title: m.home_footer_company(),
+				links: [
+					{ label: m.home_footer_overview(), href: '/#entrance' },
+					{ label: m.home_footer_import(), href: '/#people' },
+					{ label: m.home_footer_social(), href: '/#people' },
+					{ label: m.home_footer_hospital(), href: '#' },
+					{ label: m.home_footer_export(), href: '#' }
+				]
+			},
+			{
+				title: m.home_footer_follow(),
+				// the networks' own names, the same in every language
+				links: [
+					{ label: 'Facebook', href: '#' },
+					{ label: 'Instagram', href: '#' },
+					{ label: 'LinkedIn', href: '#' }
+				]
 			}
-		}
-	]
-};
+		],
+		legal: `© ${m.home_footer_legal_name()} ${m.site_footer_rights()}`,
+		contact: `${m.home_footer_hours()} · ${PHONE}`
+	};
+}
 
-const collection: CollectionContent = {
-	eyebrow: 'Hall 03 · The collection',
-	title: 'The lots on display this season',
-	tags: [
-		{ label: 'Specialty', tone: 'leaf' },
-		{ label: 'Certified', tone: 'sage' },
-		{ label: 'Commercial', tone: 'lime' }
-	],
-	cta: { label: 'Order crop year 2026', href: '#visit' },
-	lots: [
-		{
-			id: 'unwashed-djimmah',
-			title: 'Unwashed Djimmah',
-			photo: {
-				src: '/collection/unwashed-djimmah.webp',
-				alt: 'A basket full of red coffee cherries'
-			},
-			specs: [
-				{ label: 'Origin', value: 'Djimmah (Jimma)' },
-				{ label: 'Process', value: 'Unwashed' },
-				{ label: 'Grade', value: '1 to 5' }
-			]
-		},
-		{
-			id: 'washed-limmu',
-			title: 'Washed Limmu',
-			photo: {
-				src: '/collection/washed-limmu.webp',
-				alt: 'Red cherries and dark leaves on a Limu coffee branch'
-			},
-			specs: [
-				{ label: 'Origin', value: 'Limu' },
-				{ label: 'Process', value: 'Washed' },
-				{ label: 'Grade', value: '1 to 2' }
-			]
-		},
-		{
-			id: 'washed-gera',
-			title: 'Washed Gera',
-			photo: {
-				src: '/collection/washed-gera.webp',
-				alt: 'Cherries ripening from green to red on a Gera branch'
-			},
-			specs: [
-				{ label: 'Origin', value: 'Gera' },
-				{ label: 'Process', value: 'Washed' },
-				{ label: 'Grade', value: '1 to 2' }
-			]
-		},
-		{
-			id: 'unwashed-nekemte',
-			title: 'Unwashed Nekemte',
-			photo: {
-				src: '/collection/unwashed-nekemte.webp',
-				alt: 'Woven baskets of picked cherries from Nekemte'
-			},
-			specs: [
-				{ label: 'Origin', value: 'Nekemte' },
-				{ label: 'Process', value: 'Unwashed' },
-				{ label: 'Grade', value: '1 to 5' }
-			]
-		}
-	]
-};
+/** The whole home page, in the language of the current request. */
+export function museumContent(): MuseumContent {
+	return {
+		entrance: entrance(),
+		halls: halls(),
+		journey: journey(),
+		farms: farms(),
+		process: process(),
+		collection: collection(),
+		atlas: atlas(),
+		people: people(),
+		archive: archive(),
+		visit: visit(),
+		footer: footerContent()
+	};
+}
 
-const atlas: AtlasContent = {
-	eyebrow: 'Hall 03 · The collection',
-	title: 'We also source from these origins',
-	origins: [
-		{
-			id: 'jimma',
-			altitude: [1400, 2100],
-			harvest: [10, 11, 12, 1],
-			name: 'Jimma',
-			lat: 7.67,
-			lon: 36.83,
-			text: 'Home. Our family has grown and traded coffee in the Jimma zone for over three decades.'
-		},
-		{
-			id: 'limu',
-			altitude: [1400, 2200],
-			harvest: [10, 11, 12, 1],
-			name: 'Limu',
-			lat: 8.15,
-			lon: 36.95,
-			text: 'Before Kebena, the family exported Limu and Jimma coffee as Haider Abamecha Coffee Export.'
-		},
-		{
-			id: 'gera',
-			altitude: [1800, 2200],
-			harvest: [10, 11, 12, 1],
-			name: 'Gera',
-			lat: 7.85,
-			lon: 36.3,
-			text: 'Our Gera estate, on rich volcanic soil.'
-		},
-		{
-			id: 'nekemte',
-			altitude: [1500, 2100],
-			harvest: [10, 11, 12, 1],
-			name: 'Nekemte',
-			lat: 9.08,
-			lon: 36.55,
-			text: 'Unwashed Nekemte is part of our collection.'
-		},
-		{
-			id: 'sidama',
-			altitude: [1500, 2200],
-			harvest: [11, 12, 1],
-			name: 'Sidama',
-			lat: 6.75,
-			lon: 38.5,
-			text: 'We also source from this origin.'
-		},
-		{
-			id: 'yirgacheffe',
-			altitude: [1750, 2200],
-			harvest: [10, 11, 12, 1],
-			name: 'Yirgacheffe',
-			lat: 6.16,
-			lon: 38.2,
-			text: 'We also source from this origin.'
-		},
-		{
-			id: 'guji',
-			altitude: [1800, 2300],
-			harvest: [11, 12, 1, 2],
-			name: 'Guji',
-			lat: 5.7,
-			lon: 38.9,
-			text: 'We also source from this origin.'
-		},
-		{
-			id: 'harar',
-			altitude: [1500, 2100],
-			harvest: [10, 11, 12, 1, 2],
-			name: 'Harar',
-			lat: 9.31,
-			lon: 42.12,
-			text: 'We also source from this origin.'
-		}
-	]
-};
-
-const people: PeopleContent = {
-	eyebrow: 'Hall 04 · The people',
-	lead: {
-		value: 10000,
-		suffix: '',
-		text: 'out-grower farmers bring their cherries to Kebena each harvest.'
-	},
-	stats: [
-		{ value: 5406, suffix: '', label: 'RFA-certified farmers' },
-		{ value: 2000, suffix: '', label: 'permanent staff' },
-		{ value: 4000, suffix: '+', label: 'harvest-season workers' }
-	],
-	body: 'We invest in local roads, healthcare and schools. Our operations are certified by RFA and organic standards and follow C.A.F.E. Practices. Through our import arm and our sister company, Care Land General Hospital, we also bring medical equipment to Ethiopia.',
-	photo: {
-		src: '/people/drying-beds.webp',
-		alt: 'Workers turning coffee on raised drying beds, forest behind them'
-	}
-};
-
-const archive: ArchiveContent = {
-	eyebrow: 'Archive',
-	title: 'Notes from the field',
-	more: 'Read note',
-	notes: [
-		{
-			id: 'afcce-22',
-			date: '2026-06-09',
-			title: 'Kebena shows green coffee and import work at the 22nd AFCC&E',
-			href: '#archive'
-		},
-		{
-			id: 'coe-record',
-			date: '2024-12-25',
-			title: 'Ethiopian Cup of Excellence auction sets a new record',
-			href: '#archive'
-		},
-		{
-			id: 'production-doubles',
-			date: '2024-12-25',
-			title: 'Ethiopia doubles coffee production in five years',
-			href: '#archive'
-		},
-		{
-			id: 'eudr',
-			date: '2024-12-25',
-			title: 'How Ethiopian farmers are meeting new EU deforestation rules',
-			href: '#archive'
-		}
-	]
-};
-
-const visit: VisitContent = {
-	eyebrow: 'Plan your visit',
-	title: 'Come and taste the collection',
-	rows: [
-		{
-			label: 'Address',
-			value: 'Kebena Museum, the coffee cup building, Jimma, Oromia, Ethiopia'
-		},
-		{ label: 'Hours', value: 'Monday to Friday, 08:30 to 17:00' },
-		{ label: 'Phone', value: '+251 912 605 824' },
-		{ label: 'Email', value: 'info@kebenageneraltrading.com' }
-	],
-	directions: {
-		label: 'Get directions',
-		href: 'https://www.google.com/maps/search/?api=1&query=Coffee+cup+building+Jimma+Ethiopia'
-	},
-	call: { label: 'Call us', href: 'tel:+251912605824' },
-	place: { name: 'Kebena Museum', area: 'Jimma · Oromia, Ethiopia' },
-	beats: ['In Jimma, where coffee began.', 'Step inside the coffee cup.'],
-	tags: ['The four halls', 'Guided tours', 'Coffee ceremony', 'Tastings', 'Events', 'Coffee shop']
-};
-
-const footer: FooterContent = {
-	brand: 'Kebena',
-	tagline: 'A living museum of Ethiopian coffee.',
-	columns: [
-		{
-			title: 'Museum',
-			links: [
-				{ label: 'Floor plan', href: '/#halls' },
-				{ label: 'The farms', href: '/#farms' },
-				{ label: 'The collection', href: '/#collection' },
-				{ label: 'Archive', href: '/#archive' },
-				{ label: 'History', href: '/history' },
-				{ label: 'Kingdoms', href: '/kingdoms' }
-			]
-		},
-		{
-			title: 'Visit',
-			links: [
-				{ label: 'Tickets', href: '/visit' },
-				{ label: 'Experiences', href: '/experiences' },
-				{ label: 'Events', href: '/events' },
-				{ label: 'Groups and schools', href: '/groups' },
-				{ label: 'Membership', href: '/membership' },
-				{ label: 'Contact', href: '/contact' }
-			]
-		},
-		{
-			title: 'Coffee',
-			links: [
-				{ label: 'Shop', href: '/shop' },
-				{ label: 'Subscriptions', href: '/subscriptions' },
-				{ label: 'Wholesale', href: '/wholesale' },
-				{ label: 'Track an order', href: '/track' }
-			]
-		},
-		{
-			title: 'Company',
-			links: [
-				{ label: 'Overview', href: '/#entrance' },
-				{ label: 'Import', href: '/#people' },
-				{ label: 'Social responsibility', href: '/#people' },
-				{ label: 'Care Land General Hospital', href: '#' },
-				{ label: 'Haider Abamecha Coffee Export', href: '#' }
-			]
-		},
-		{
-			title: 'Follow',
-			links: [
-				{ label: 'Facebook', href: '#' },
-				{ label: 'Instagram', href: '#' },
-				{ label: 'LinkedIn', href: '#' }
-			]
-		}
-	],
-	legal: '© Kebena Trading PLC. All rights reserved.',
-	contact: 'Mon to Fri, 08:30 to 17:00 · +251 912 605 824'
-};
-
+/**
+ * The same content, part by part: each read builds that part in the current language. Prefer
+ * `museumContent()` or `footerContent()`; this stays for older callers (`museum.footer`).
+ */
 export const museum: MuseumContent = {
-	entrance,
-	halls,
-	journey,
-	farms,
-	process,
-	collection,
-	atlas,
-	people,
-	archive,
-	visit,
-	footer
+	get entrance() {
+		return entrance();
+	},
+	get halls() {
+		return halls();
+	},
+	get journey() {
+		return journey();
+	},
+	get farms() {
+		return farms();
+	},
+	get process() {
+		return process();
+	},
+	get collection() {
+		return collection();
+	},
+	get atlas() {
+		return atlas();
+	},
+	get people() {
+		return people();
+	},
+	get archive() {
+		return archive();
+	},
+	get visit() {
+		return visit();
+	},
+	get footer() {
+		return footerContent();
+	}
 };
 
 /* ------------------------------------------------------------------ */
 /* Dev-only stress fixtures. Plausible values, never random filler.    */
 /* ------------------------------------------------------------------ */
 
-const worst: MuseumContent = {
-	...museum,
-	farms: {
-		...farms,
-		title: 'Two organic estates in the Jimma highlands, Gera and Djimmah',
-		farms: [
-			{
-				...farms.farms[0],
-				title: 'Gera Coffee Farm and Washing Station',
-				meta: [...farms.farms[0].meta, { label: 'Altitude', value: '1,900–2,100 m' }]
-			},
-			{
-				...farms.farms[1],
-				photo: { ...farms.farms[1].photo, src: '/farms/missing-photo.jpg' },
-				meta: farms.farms[1].meta.slice(0, 1)
-			}
-		]
-	},
-	process: {
-		...process,
-		steps: [
-			process.steps[0],
-			{
-				...process.steps[1],
-				title: 'Washed, fermented and soaked in channels of spring water',
-				text:
-					process.steps[1].text +
-					' The parchment then rests on raised beds for twelve to fifteen days.'
-			},
-			{ ...process.steps[2], title: 'በፀሐይ ማድረቅ', text: 'ሙሉው ፍሬ በከፍታ አልጋዎች ላይ ቀስ ብሎ ይደርቃል።' },
-			...process.steps.slice(3)
-		]
-	},
-	collection: {
-		...collection,
-		lots: [
-			{
-				...collection.lots[0],
-				title: 'Unwashed Djimmah Grade 5 Natural, Seka Chekorsa',
-				specs: [
-					{ label: 'Origin', value: 'Seka Chekorsa, Djimmah (Jimma)' },
-					...collection.lots[0].specs.slice(1)
-				]
-			},
-			{
-				...collection.lots[1],
-				photo: { ...collection.lots[1].photo, src: '/collection/missing.jpg' }
-			},
-			...collection.lots.slice(2),
-			{ ...collection.lots[0], id: 'extra', title: 'Washed Yirgacheffe' }
-		]
-	},
-	atlas: {
-		...atlas,
-		origins: [
-			...atlas.origins.slice(0, 7),
-			{
-				...atlas.origins[7],
-				name: 'Harar (Eastern Highlands)',
-				text: 'Longberry from the Eastern Highlands, sun-dried on the farm and graded in Dire Dawa before it reaches Addis Ababa.'
-			}
-		]
-	},
-	people: {
-		...people,
-		stats: [...people.stats, { value: 1, suffix: '', label: 'estate hospital' }]
-	},
-	archive: {
-		...archive,
-		notes: [
-			{
-				...archive.notes[0],
-				title:
-					'Kebena shows green coffee, import work and the Care Land medical equipment programme at the 22nd African Fine Coffees Conference & Exhibition'
-			},
-			...archive.notes.slice(1)
-		]
-	},
-	visit: {
-		...visit,
-		rows: visit.rows.map((r) =>
-			r.label === 'Email' ? { ...r, value: 'bartholomew.fitzgerald@kebenageneraltrading.com' } : r
-		)
-	},
-	entrance: {
-		...entrance,
-		// the Amharic edition is coming (paraglide is set up); Ethiopic glyphs are taller than Latin
-		eyebrow: 'Hall 00 · Entrance · መግቢያ',
-		title: 'A living museum of Ethiopian coffee, from Limu and Gera to Seka Chekorsa',
-		body: [entrance.body[0], 'ይህ ድረ-ገጽ የእኛ ሙዚየም ነው። ከደጋው አፈር ዘር እስከ ስኒዎ ቡና ድረስ አምስቱን አዳራሾች ይጎብኙ።'],
-		facts: [
-			{
-				value: 10000,
-				suffix: ' out-grower farmers',
-				note: 'Bringing their cherries to Kebena each harvest across Limu, Gera and Seka'
-			},
-			{ value: 1, suffix: ' estate' },
-			{
-				value: 8,
-				suffix: ' washing stations and collection centres',
-				note: '3 of them RFA-certified'
-			},
-			{ value: 4, suffix: ' dry mills', note: 'Hulling, sorting and grading' }
-		]
-	},
-	halls: {
-		...halls,
-		title: 'Seven halls, one long story from the forest to your cup',
-		intro:
-			'Each hall is a stop on the journey our coffee takes, from the wild forests of Kaffa to the roastery in Addis Ababa. Start anywhere.',
-		halls: [
-			{
-				...halls.halls[0],
-				text: 'Jimma, the birthplace of coffee, and the forested highlands of Limu, Gera and Seka Chekorsa around it.'
-			},
-			{
-				...halls.halls[1],
-				title: 'The farms of Gera and Djimmah',
-				tagline: 'Two organic estates on volcanic soil, 1,900–2,100 m'
-			},
-			{
-				...halls.halls[2],
-				text: 'Specialty, RFA-certified, organic and commercial lots from 8 washing stations and 4 dry mills.',
-				photo: '/halls/missing-photo.jpg'
-			},
-			{
-				...halls.halls[3],
-				text: '10,000 out-grower farmers, 2,000 permanent staff and 4,000+ seasonal workers.'
-			},
-			{
-				id: 'roastery',
-				title: 'The roastery',
-				text: 'Where green coffee becomes the cup.',
-				tagline: 'Roasted in front of you',
-				href: '#roastery',
-				photo: '/halls/hall-03.webp'
-			},
-			{
-				id: 'notes',
-				title: 'Notes',
-				text: '',
-				tagline: '',
-				href: '#notes',
-				photo: '/halls/hall-02.webp'
-			}
-		]
-	},
-	journey: {
-		...journey,
-		steps: [
-			{
-				...journey.steps[0],
-				title: 'Picked one by one, only when the cherry is fully',
-				text:
-					journey.steps[0].text +
-					' In a good year the same tree is visited six or seven times between October and January.'
-			},
-			{
-				...journey.steps[1],
-				photo: { ...journey.steps[1].photo, src: '/journey/missing-photo.jpg' }
-			},
-			{
-				...journey.steps[2],
-				title: 'የቡና ፍሬ',
-				accent: 'መልቀም',
-				text: 'ደረቁ ቅርፊት ተላጦ አረንጓዴው ፍሬ ይወጣል።'
-			},
-			...journey.steps.slice(3)
-		]
-	}
-};
+function worstFrom(base: MuseumContent): MuseumContent {
+	const { entrance, halls, journey, farms, process, collection, atlas, people, archive, visit } =
+		base;
+	return {
+		...base,
+		farms: {
+			...farms,
+			title: 'Two organic estates in the Jimma highlands, Gera and Djimmah',
+			farms: [
+				{
+					...farms.farms[0],
+					title: 'Gera Coffee Farm and Washing Station',
+					meta: [...farms.farms[0].meta, { label: 'Altitude', value: '1,900–2,100 m' }]
+				},
+				{
+					...farms.farms[1],
+					photo: { ...farms.farms[1].photo, src: '/farms/missing-photo.jpg' },
+					meta: farms.farms[1].meta.slice(0, 1)
+				}
+			]
+		},
+		process: {
+			...process,
+			steps: [
+				process.steps[0],
+				{
+					...process.steps[1],
+					title: 'Washed, fermented and soaked in channels of spring water',
+					text:
+						process.steps[1].text +
+						' The parchment then rests on raised beds for twelve to fifteen days.'
+				},
+				{ ...process.steps[2], title: 'በፀሐይ ማድረቅ', text: 'ሙሉው ፍሬ በከፍታ አልጋዎች ላይ ቀስ ብሎ ይደርቃል።' },
+				...process.steps.slice(3)
+			]
+		},
+		collection: {
+			...collection,
+			lots: [
+				{
+					...collection.lots[0],
+					title: 'Unwashed Djimmah Grade 5 Natural, Seka Chekorsa',
+					specs: [
+						{ label: 'Origin', value: 'Seka Chekorsa, Djimmah (Jimma)' },
+						...collection.lots[0].specs.slice(1)
+					]
+				},
+				{
+					...collection.lots[1],
+					photo: { ...collection.lots[1].photo, src: '/collection/missing.jpg' }
+				},
+				...collection.lots.slice(2),
+				{ ...collection.lots[0], id: 'extra', title: 'Washed Yirgacheffe' }
+			]
+		},
+		atlas: {
+			...atlas,
+			origins: [
+				...atlas.origins.slice(0, 7),
+				{
+					...atlas.origins[7],
+					name: 'Harar (Eastern Highlands)',
+					text: 'Longberry from the Eastern Highlands, sun-dried on the farm and graded in Dire Dawa before it reaches Addis Ababa.'
+				}
+			]
+		},
+		people: {
+			...people,
+			stats: [...people.stats, { value: 1, suffix: '', label: 'estate hospital' }]
+		},
+		archive: {
+			...archive,
+			notes: [
+				{
+					...archive.notes[0],
+					title:
+						'Kebena shows green coffee, import work and the Care Land medical equipment programme at the 22nd African Fine Coffees Conference & Exhibition'
+				},
+				...archive.notes.slice(1)
+			]
+		},
+		visit: {
+			...visit,
+			rows: visit.rows.map((r) =>
+				r.value === EMAIL ? { ...r, value: 'bartholomew.fitzgerald@kebenageneraltrading.com' } : r
+			)
+		},
+		entrance: {
+			...entrance,
+			// Ethiopic glyphs are taller than Latin
+			eyebrow: 'Hall 00 · Entrance · መግቢያ',
+			title: 'A living museum of Ethiopian coffee, from Limu and Gera to Seka Chekorsa',
+			body: [
+				entrance.body[0],
+				'ይህ ድረ-ገጽ የእኛ ሙዚየም ነው። ከደጋው አፈር ዘር እስከ ስኒዎ ቡና ድረስ አምስቱን አዳራሾች ይጎብኙ።'
+			],
+			facts: [
+				{
+					value: 10000,
+					suffix: ' out-grower farmers',
+					note: 'Bringing their cherries to Kebena each harvest across Limu, Gera and Seka'
+				},
+				{ value: 1, suffix: ' estate' },
+				{
+					value: 8,
+					suffix: ' washing stations and collection centres',
+					note: '3 of them RFA-certified'
+				},
+				{ value: 4, suffix: ' dry mills', note: 'Hulling, sorting and grading' }
+			]
+		},
+		halls: {
+			...halls,
+			title: 'Seven halls, one long story from the forest to your cup',
+			intro:
+				'Each hall is a stop on the journey our coffee takes, from the wild forests of Kaffa to the roastery in Addis Ababa. Start anywhere.',
+			halls: [
+				{
+					...halls.halls[0],
+					text: 'Jimma, the birthplace of coffee, and the forested highlands of Limu, Gera and Seka Chekorsa around it.'
+				},
+				{
+					...halls.halls[1],
+					title: 'The farms of Gera and Djimmah',
+					tagline: 'Two organic estates on volcanic soil, 1,900–2,100 m'
+				},
+				{
+					...halls.halls[2],
+					text: 'Specialty, RFA-certified, organic and commercial lots from 8 washing stations and 4 dry mills.',
+					photo: '/halls/missing-photo.jpg'
+				},
+				{
+					...halls.halls[3],
+					text: '10,000 out-grower farmers, 2,000 permanent staff and 4,000+ seasonal workers.'
+				},
+				{
+					id: 'roastery',
+					title: 'The roastery',
+					text: 'Where green coffee becomes the cup.',
+					tagline: 'Roasted in front of you',
+					href: '#roastery',
+					photo: '/halls/hall-03.webp'
+				},
+				{
+					id: 'notes',
+					title: 'Notes',
+					text: '',
+					tagline: '',
+					href: '#notes',
+					photo: '/halls/hall-02.webp'
+				}
+			]
+		},
+		journey: {
+			...journey,
+			steps: [
+				{
+					...journey.steps[0],
+					title: 'Picked one by one, only when the cherry is fully',
+					text:
+						journey.steps[0].text +
+						' In a good year the same tree is visited six or seven times between October and January.'
+				},
+				{
+					...journey.steps[1],
+					photo: { ...journey.steps[1].photo, src: '/journey/missing-photo.jpg' }
+				},
+				{
+					...journey.steps[2],
+					title: 'የቡና ፍሬ',
+					accent: 'መልቀም',
+					text: 'ደረቁ ቅርፊት ተላጦ አረንጓዴው ፍሬ ይወጣል።'
+				},
+				...journey.steps.slice(3)
+			]
+		}
+	};
+}
 
 export type DataMode = 'demo' | 'worst' | 'empty' | 'one';
 export const DATA_MODES: DataMode[] = ['demo', 'worst', 'empty', 'one'];
 
+/** The home page's content in the current language; the dev stress fixtures are built on it. */
 export function museumFor(mode: DataMode): MuseumContent {
-	if (mode === 'worst') return worst;
+	const base = museumContent();
+	if (mode === 'worst') return worstFrom(base);
+	const { entrance, halls, journey, farms, process, collection, atlas, people, archive } = base;
 	if (mode === 'empty')
 		return {
-			...museum,
+			...base,
 			entrance: { ...entrance, facts: [] },
 			halls: { ...halls, halls: [] },
 			journey: { ...journey, steps: [] },
@@ -974,7 +992,7 @@ export function museumFor(mode: DataMode): MuseumContent {
 		};
 	if (mode === 'one')
 		return {
-			...museum,
+			...base,
 			entrance: { ...entrance, facts: [{ value: 1, suffix: ' estate', note: 'Gera coffee farm' }] },
 			halls: { ...halls, halls: halls.halls.slice(0, 1) },
 			journey: { ...journey, steps: journey.steps.slice(0, 1) },
@@ -985,5 +1003,5 @@ export function museumFor(mode: DataMode): MuseumContent {
 			people: { ...people, stats: people.stats.slice(0, 1) },
 			archive: { ...archive, notes: archive.notes.slice(0, 1) }
 		};
-	return museum;
+	return base;
 }

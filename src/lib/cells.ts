@@ -36,7 +36,11 @@ import {
 export const sortable =
 	(name: string) =>
 	<T, V>({ column }: HeaderContext<T, V>) =>
-		renderComponent(DataTableSort, { name, onclick: column.getToggleSortingHandler(), direction: column.getIsSorted() });
+		renderComponent(DataTableSort, {
+			name,
+			onclick: column.getToggleSortingHandler(),
+			direction: column.getIsSorted()
+		});
 
 /** A record's name, linked to its page when the viewer may open it (`ENTITIES`). */
 export const link = (

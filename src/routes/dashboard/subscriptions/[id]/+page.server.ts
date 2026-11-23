@@ -59,7 +59,9 @@ async function loadSubscription(raw: string) {
 			price: productVariant.price,
 			roast: enOf(roastLevel.name),
 			grind: enOf(grind.name),
-			address: sql<string | null>`concat(${customerAddress.line1}, coalesce(concat(' · ', ${customerAddress.landmark}), ''))`,
+			address: sql<
+				string | null
+			>`concat(${customerAddress.line1}, coalesce(concat(' · ', ${customerAddress.landmark}), ''))`,
 			zone: enOf(deliveryZone.name)
 		})
 		.from(subscription)
@@ -82,50 +84,51 @@ const skipper = userAlias('skipper');
 export const load = async ({ params, locals }) => {
 	const row = await loadSubscription(params.id);
 	const sub = row.s;
-	const [bundles, deliveries, stamps, variants, roasts, grinds, zones, addresses] = await Promise.all([
-		db
-			.select({
-				id: subscriptionBundle.id,
-				planId: subscriptionBundle.planId,
-				plan: enOf(subscriptionPlan.name),
-				deliveries: subscriptionBundle.deliveries,
-				discountPct: subscriptionBundle.discountPct,
-				pricePerDelivery: subscriptionBundle.pricePerDelivery,
-				orderId: orderLine.orderId,
-				orderNumber: order.number,
-				purchasedAt: subscriptionBundle.purchasedAt
-			})
-			.from(subscriptionBundle)
-			.leftJoin(subscriptionPlan, eq(subscriptionBundle.planId, subscriptionPlan.id))
-			.leftJoin(orderLine, eq(subscriptionBundle.orderLineId, orderLine.id))
-			.leftJoin(order, eq(orderLine.orderId, order.id))
-			.where(eq(subscriptionBundle.subscriptionId, sub.id))
-			.orderBy(asc(subscriptionBundle.purchasedAt)),
-		db
-			.select({
-				id: subscriptionDelivery.id,
-				sequence: subscriptionDelivery.sequence,
-				roastDate: subscriptionDelivery.roastDate,
-				status: subscriptionDelivery.status,
-				orderId: subscriptionDelivery.orderId,
-				orderNumber: order.number,
-				orderStatus: order.status,
-				skippedAt: subscriptionDelivery.skippedAt,
-				skippedById: subscriptionDelivery.skippedBy,
-				skippedBy: skipper.name
-			})
-			.from(subscriptionDelivery)
-			.leftJoin(order, eq(subscriptionDelivery.orderId, order.id))
-			.leftJoin(skipper, eq(subscriptionDelivery.skippedBy, skipper.id))
-			.where(eq(subscriptionDelivery.subscriptionId, sub.id))
-			.orderBy(asc(subscriptionDelivery.sequence)),
-		stampsOf(sub),
-		variantOptions(),
-		roastLevelOptions(),
-		grindOptions(),
-		deliveryZoneOptions(),
-		addressOptions(sub.customerId)
-	]);
+	const [bundles, deliveries, stamps, variants, roasts, grinds, zones, addresses] =
+		await Promise.all([
+			db
+				.select({
+					id: subscriptionBundle.id,
+					planId: subscriptionBundle.planId,
+					plan: enOf(subscriptionPlan.name),
+					deliveries: subscriptionBundle.deliveries,
+					discountPct: subscriptionBundle.discountPct,
+					pricePerDelivery: subscriptionBundle.pricePerDelivery,
+					orderId: orderLine.orderId,
+					orderNumber: order.number,
+					purchasedAt: subscriptionBundle.purchasedAt
+				})
+				.from(subscriptionBundle)
+				.leftJoin(subscriptionPlan, eq(subscriptionBundle.planId, subscriptionPlan.id))
+				.leftJoin(orderLine, eq(subscriptionBundle.orderLineId, orderLine.id))
+				.leftJoin(order, eq(orderLine.orderId, order.id))
+				.where(eq(subscriptionBundle.subscriptionId, sub.id))
+				.orderBy(asc(subscriptionBundle.purchasedAt)),
+			db
+				.select({
+					id: subscriptionDelivery.id,
+					sequence: subscriptionDelivery.sequence,
+					roastDate: subscriptionDelivery.roastDate,
+					status: subscriptionDelivery.status,
+					orderId: subscriptionDelivery.orderId,
+					orderNumber: order.number,
+					orderStatus: order.status,
+					skippedAt: subscriptionDelivery.skippedAt,
+					skippedById: subscriptionDelivery.skippedBy,
+					skippedBy: skipper.name
+				})
+				.from(subscriptionDelivery)
+				.leftJoin(order, eq(subscriptionDelivery.orderId, order.id))
+				.leftJoin(skipper, eq(subscriptionDelivery.skippedBy, skipper.id))
+				.where(eq(subscriptionDelivery.subscriptionId, sub.id))
+				.orderBy(asc(subscriptionDelivery.sequence)),
+			stampsOf(sub),
+			variantOptions(),
+			roastLevelOptions(),
+			grindOptions(),
+			deliveryZoneOptions(),
+			addressOptions(sub.customerId)
+		]);
 	return {
 		sub,
 		info: row,
@@ -149,7 +152,11 @@ export const load = async ({ params, locals }) => {
 			zod4(subscriptionEditSchema),
 			{ errors: false, id: 'edit' }
 		),
-		pauseForm: await superValidate({ pausedUntil: sub.pausedUntil ?? undefined }, zod4(pauseSchema), { errors: false, id: 'pause' }),
+		pauseForm: await superValidate(
+			{ pausedUntil: sub.pausedUntil ?? undefined },
+			zod4(pauseSchema),
+			{ errors: false, id: 'pause' }
+		),
 		cancelForm: await superValidate(zod4(subscriptionCancelSchema), { id: 'cancel' })
 	};
 };
@@ -163,7 +170,9 @@ async function refreshNext(tx: Writer, id: number) {
 	const [next] = await tx
 		.select({ roastDate: subscriptionDelivery.roastDate })
 		.from(subscriptionDelivery)
-		.where(and(eq(subscriptionDelivery.subscriptionId, id), eq(subscriptionDelivery.status, 'scheduled')))
+		.where(
+			and(eq(subscriptionDelivery.subscriptionId, id), eq(subscriptionDelivery.status, 'scheduled'))
+		)
 		.orderBy(asc(subscriptionDelivery.roastDate))
 		.limit(1);
 	const [used] = await tx
@@ -182,9 +191,15 @@ async function refreshNext(tx: Writer, id: number) {
 }
 
 /** The subscription locked for a change, or the reason it cannot take one in its status. */
-async function lockOpen(tx: Writer, id: number, allowed: readonly SubscriptionStatus[], doing: string) {
+async function lockOpen(
+	tx: Writer,
+	id: number,
+	allowed: readonly SubscriptionStatus[],
+	doing: string
+) {
 	const [s] = await tx.select().from(subscription).where(eq(subscription.id, id)).for('update');
-	if (!allowed.includes(s.status)) return { s, refusal: `A ${humanize(s.status).toLowerCase()} subscription cannot be ${doing}` };
+	if (!allowed.includes(s.status))
+		return { s, refusal: `A ${humanize(s.status).toLowerCase()} subscription cannot be ${doing}` };
 	return { s, refusal: null };
 }
 
@@ -230,18 +245,29 @@ export const actions = {
 	edit: async (event) => {
 		requirePermission(event.locals, 'memberships.manage');
 		const form = await superValidate(event.request, zod4(subscriptionEditSchema), { id: 'edit' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { s: before } = await loadSubscription(event.params.id);
 		await db.transaction(async (tx) => {
-			await tx.update(subscription).set({ ...form.data, updatedBy: event.locals.user?.id }).where(eq(subscription.id, before.id));
-			await recordAudit(tx, event, { table: 'subscription', recordId: before.id, action: 'update', before, after: form.data });
+			await tx
+				.update(subscription)
+				.set({ ...form.data, updatedBy: event.locals.user?.id })
+				.where(eq(subscription.id, before.id));
+			await recordAudit(tx, event, {
+				table: 'subscription',
+				recordId: before.id,
+				action: 'update',
+				before,
+				after: form.data
+			});
 		});
 		return message(form, { type: 'success', text: 'Subscription saved' });
 	},
 	pause: async (event) => {
 		requirePermission(event.locals, 'memberships.manage');
 		const form = await superValidate(event.request, zod4(pauseSchema), { id: 'pause' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Choose a date' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Choose a date' }, { status: 400 });
 		const { pausedUntil } = form.data;
 		const today = localToday();
 		const latest = addMonths(today, MAX_PAUSE_MONTHS);
@@ -254,7 +280,10 @@ export const actions = {
 		const refusal = await db.transaction(async (tx) => {
 			const { s, refusal } = await lockOpen(tx, loaded.id, ['active'], 'paused');
 			if (refusal) return refusal;
-			await tx.update(subscription).set({ status: 'paused', pausedUntil, updatedBy: event.locals.user?.id }).where(eq(subscription.id, s.id));
+			await tx
+				.update(subscription)
+				.set({ status: 'paused', pausedUntil, updatedBy: event.locals.user?.id })
+				.where(eq(subscription.id, s.id));
 			// Roast days inside the pause are skipped, not lost: they stay prepaid.
 			await tx
 				.update(subscriptionDelivery)
@@ -268,7 +297,13 @@ export const actions = {
 					)
 				);
 			await refreshNext(tx, s.id);
-			await recordAudit(tx, event, { table: 'subscription', recordId: s.id, action: 'update', before: s, after: { status: 'paused', pausedUntil } });
+			await recordAudit(tx, event, {
+				table: 'subscription',
+				recordId: s.id,
+				action: 'update',
+				before: s,
+				after: { status: 'paused', pausedUntil }
+			});
 			return null;
 		});
 		if (refusal) return message(form, { type: 'error', text: refusal }, { status: 400 });
@@ -280,8 +315,17 @@ export const actions = {
 		const refusal = await db.transaction(async (tx) => {
 			const { s, refusal } = await lockOpen(tx, loaded.id, ['paused'], 'resumed');
 			if (refusal) return refusal;
-			await tx.update(subscription).set({ status: 'active', pausedUntil: null, updatedBy: event.locals.user?.id }).where(eq(subscription.id, s.id));
-			await recordAudit(tx, event, { table: 'subscription', recordId: s.id, action: 'update', before: s, after: { status: 'active', pausedUntil: null } });
+			await tx
+				.update(subscription)
+				.set({ status: 'active', pausedUntil: null, updatedBy: event.locals.user?.id })
+				.where(eq(subscription.id, s.id));
+			await recordAudit(tx, event, {
+				table: 'subscription',
+				recordId: s.id,
+				action: 'update',
+				before: s,
+				after: { status: 'active', pausedUntil: null }
+			});
 			return null;
 		});
 		if (refusal) return { message: { type: 'error', text: refusal } };
@@ -289,15 +333,29 @@ export const actions = {
 	},
 	cancel: async (event) => {
 		requirePermission(event.locals, 'memberships.manage');
-		const form = await superValidate(event.request, zod4(subscriptionCancelSchema), { id: 'cancel' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		const form = await superValidate(event.request, zod4(subscriptionCancelSchema), {
+			id: 'cancel'
+		});
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { s: loaded } = await loadSubscription(event.params.id);
 		const refusal = await db.transaction(async (tx) => {
-			const { s, refusal } = await lockOpen(tx, loaded.id, ['pending_payment', 'active', 'paused'], 'cancelled');
+			const { s, refusal } = await lockOpen(
+				tx,
+				loaded.id,
+				['pending_payment', 'active', 'paused'],
+				'cancelled'
+			);
 			if (refusal) return refusal;
 			await tx
 				.update(subscription)
-				.set({ status: 'cancelled', cancelledAt: new Date(), unusedSettlement: form.data.unusedSettlement, nextRoastDate: null, updatedBy: event.locals.user?.id })
+				.set({
+					status: 'cancelled',
+					cancelledAt: new Date(),
+					unusedSettlement: form.data.unusedSettlement,
+					nextRoastDate: null,
+					updatedBy: event.locals.user?.id
+				})
 				.where(eq(subscription.id, s.id));
 			// Every roast day still to come is off, skipped ones too, so none can be brought back.
 			await tx
@@ -308,11 +366,21 @@ export const actions = {
 						eq(subscriptionDelivery.subscriptionId, s.id),
 						or(
 							eq(subscriptionDelivery.status, 'scheduled'),
-							and(eq(subscriptionDelivery.status, 'skipped'), gt(subscriptionDelivery.roastDate, localToday()))
+							and(
+								eq(subscriptionDelivery.status, 'skipped'),
+								gt(subscriptionDelivery.roastDate, localToday())
+							)
 						)
 					)
 				);
-			await recordAudit(tx, event, { table: 'subscription', recordId: s.id, action: 'update', before: s, after: { status: 'cancelled', unusedSettlement: form.data.unusedSettlement }, detail: form.data.note ? { note: form.data.note } : undefined });
+			await recordAudit(tx, event, {
+				table: 'subscription',
+				recordId: s.id,
+				action: 'update',
+				before: s,
+				after: { status: 'cancelled', unusedSettlement: form.data.unusedSettlement },
+				detail: form.data.note ? { note: form.data.note } : undefined
+			});
 			return null;
 		});
 		if (refusal) return message(form, { type: 'error', text: refusal }, { status: 400 });

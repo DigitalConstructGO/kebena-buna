@@ -35,18 +35,47 @@
 
 	type Schedule = (typeof data.schedules)[number];
 	let editing = $state(false);
-	let seed = $state<Partial<{ id: number; weekday: number; startsAt: string; capacity: number; language: string | null }>>({});
+	let seed = $state<
+		Partial<{
+			id: number;
+			weekday: number;
+			startsAt: string;
+			capacity: number;
+			language: string | null;
+		}>
+	>({});
 	const openSchedule = (s: Schedule | null) => {
 		seed = s
-			? { id: s.id, weekday: s.weekday, startsAt: s.startsAt.slice(0, 5), capacity: s.capacity, language: s.language }
+			? {
+					id: s.id,
+					weekday: s.weekday,
+					startsAt: s.startsAt.slice(0, 5),
+					capacity: s.capacity,
+					language: s.language
+				}
 			: { id: undefined, weekday: 2, startsAt: '10:00', capacity: 12, language: null };
 		editing = true;
 	};
 
 	const scheduleColumns: ColumnDef<Schedule>[] = [
-		{ id: 'weekday', header: 'Day', cell: ({ row }) => (data.canManage ? renderComponent(RowButton, { label: WEEKDAYS[row.original.weekday], onclick: () => openSchedule(row.original) }) : WEEKDAYS[row.original.weekday]) },
+		{
+			id: 'weekday',
+			header: 'Day',
+			cell: ({ row }) =>
+				data.canManage
+					? renderComponent(RowButton, {
+							label: WEEKDAYS[row.original.weekday],
+							onclick: () => openSchedule(row.original)
+						})
+					: WEEKDAYS[row.original.weekday]
+		},
 		{ id: 'startsAt', header: 'Starts', cell: ({ row }) => clock(row.original.startsAt) },
-		{ id: 'capacity', header: 'Places', meta: { align: 'right' }, cell: ({ row }) => row.original.capacity },
+		{
+			id: 'capacity',
+			header: 'Places',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.capacity
+		},
 		{ id: 'language', header: 'Language', cell: ({ row }) => row.original.language ?? 'Any' },
 		{
 			id: 'remove',
@@ -68,28 +97,71 @@
 
 	type Session = (typeof data.sessions)[number];
 	const sessionColumns: ColumnDef<Session>[] = [
-		{ id: 'startsAt', header: 'When', cell: ({ row }) => link('session', row.original.id, dateTime(row.original.startsAt)) },
+		{
+			id: 'startsAt',
+			header: 'When',
+			cell: ({ row }) => link('session', row.original.id, dateTime(row.original.startsAt))
+		},
 		{ id: 'language', header: 'Language', cell: ({ row }) => row.original.language ?? '—' },
-		{ id: 'booked', header: 'Booked', meta: { align: 'right' }, cell: ({ row }) => `${row.original.booked} / ${row.original.capacity}` },
-		{ id: 'state', header: 'Status', cell: ({ row }) => status(row.original.isCancelled ? 'cancelled' : 'scheduled', row.original.isCancelled ? 'Cancelled' : 'Running') }
+		{
+			id: 'booked',
+			header: 'Booked',
+			meta: { align: 'right' },
+			cell: ({ row }) => `${row.original.booked} / ${row.original.capacity}`
+		},
+		{
+			id: 'state',
+			header: 'Status',
+			cell: ({ row }) =>
+				status(
+					row.original.isCancelled ? 'cancelled' : 'scheduled',
+					row.original.isCancelled ? 'Cancelled' : 'Running'
+				)
+		}
 	];
 </script>
 
-<PageHeader title={tr(b.name)} eyebrow="Bookable" description={`${humanize(b.kind)} · ${b.durationMin} minutes · ${humanize(b.pricing)}`}>
+<PageHeader
+	title={tr(b.name)}
+	eyebrow="Bookable"
+	description={`${humanize(b.kind)} · ${b.durationMin} minutes · ${humanize(b.pricing)}`}
+>
 	{#snippet badges()}
 		<Statuses {...badge(b.publishStatus)} />
 		<Statuses {...flag(b.isActive)} />
 	{/snippet}
 	{#snippet actions()}
 		{#if data.canManage}
-			<FormDialog title="Edit {tr(b.name)}" triggerLabel="Edit" action="?/edit" data={data.form} schema={bookableEditSchema} dataType="json">
+			<FormDialog
+				title="Edit {tr(b.name)}"
+				triggerLabel="Edit"
+				action="?/edit"
+				data={data.form}
+				schema={bookableEditSchema}
+				dataType="json"
+			>
 				{#snippet fields({ form, errors })}
 					<BookableFields form={form as never} errors={errors as never} options={data.options} />
 				{/snippet}
 			</FormDialog>
-			<FormDialog title="Image" triggerLabel="Image" action="?/image" data={data.imageForm} schema={imageSchema} multipart>
+			<FormDialog
+				title="Image"
+				triggerLabel="Image"
+				action="?/image"
+				data={data.imageForm}
+				schema={imageSchema}
+				multipart
+			>
 				{#snippet fields({ form, errors })}
-					<InputComp label="Image" name="image" type="file" accept="image/*" image={b.image ? fileUrl(b.image) : ''} {form} {errors} />
+					<InputComp
+						label="Image"
+						name="image"
+						type="file"
+						accept="image/*"
+						image={b.image ? fileUrl(b.image) : ''}
+						{form}
+						{errors}
+					/>
 				{/snippet}
 			</FormDialog>
 			<ConfirmAction
@@ -106,7 +178,11 @@
 
 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[24rem_minmax(0,1fr)]">
 	<PageSection title="Details">
-		{#if b.image}<img src={fileUrl(b.image)} alt="" class="mb-4 max-h-40 rounded-lg object-cover" />{/if}
+		{#if b.image}<img
+				src={fileUrl(b.image)}
+				alt=""
+				class="mb-4 max-h-40 rounded-lg object-cover"
+			/>{/if}
 		<SingleTable
 			singleTable={[
 				{ name: 'Name (Amharic)', value: b.name?.am ?? '—' },
@@ -132,7 +208,13 @@
 					entity: 'Price',
 					plural: 'Prices',
 					fields: [
-						{ name: 'audienceId', label: 'Audience', type: 'reference', display: 'audience', picker: 'select' },
+						{
+							name: 'audienceId',
+							label: 'Audience',
+							type: 'reference',
+							display: 'audience',
+							picker: 'select'
+						},
 						{ name: 'price', label: 'Price', type: 'money' },
 						{ name: 'status', label: 'Status', type: 'boolean' }
 					]
@@ -148,17 +230,37 @@
 			/>
 		</PageSection>
 		{#if !b.isEnquiryOnly}
-			<PageSection title="Weekly times" hint="Sessions are made from these. Click a day to change it.">
+			<PageSection
+				title="Weekly times"
+				hint="Sessions are made from these. Click a day to change it."
+			>
 				{#snippet actions()}
 					{#if data.canManage}
-						<FormDialog title="Make sessions" triggerLabel="Make sessions" action="?/generate" data={data.generateForm} schema={generateSessionsSchema} submitLabel="Make">
+						<FormDialog
+							title="Make sessions"
+							triggerLabel="Make sessions"
+							action="?/generate"
+							data={data.generateForm}
+							schema={generateSessionsSchema}
+							submitLabel="Make"
+						>
 							{#snippet fields({ form, errors })}
-								<InputComp label="For the next (days)" name="days" type="number" description="Closed days and times that already have a session are skipped." {form} {errors} required />
+								<InputComp
+									label="For the next (days)"
+									name="days"
+									type="number"
+									description="Closed days and times that already have a session are skipped."
+									{form}
+									{errors}
+									required
+								/>
 							{/snippet}
 						</FormDialog>
 						<FormDialog
 							title={seed.id ? 'Change weekly time' : 'Add weekly time'}
-							triggerLabel="Add time" triggerIcon={Plus} submitIcon={Plus}
+							triggerLabel="Add time"
+							triggerIcon={Plus}
+							submitIcon={Plus}
 							action="?/schedule"
 							data={data.scheduleForm}
 							schema={bookableScheduleSchema}
@@ -167,10 +269,28 @@
 						>
 							{#snippet fields({ form, errors })}
 								<InputComp type="hidden" name="id" {form} {errors} />
-								<InputComp label="Day" name="weekday" type="select" items={WEEKDAY_CHOICES} {form} {errors} required />
+								<InputComp
+									label="Day"
+									name="weekday"
+									type="select"
+									items={WEEKDAY_CHOICES}
+									{form}
+									{errors}
+									required
+								/>
 								<InputComp label="Starts" name="startsAt" type="time" {form} {errors} required />
 								<InputComp label="Places" name="capacity" type="number" {form} {errors} required />
-								<InputComp label="Language" name="language" type="select" items={[{ value: 'am', name: 'Amharic' }, { value: 'en', name: 'English' }]} {form} {errors} />
+								<InputComp
+									label="Language"
+									name="language"
+									type="select"
+									items={[
+										{ value: 'am', name: 'Amharic' },
+										{ value: 'en', name: 'English' }
+									]}
+									{form}
+									{errors}
+								/>
 							{/snippet}
 						</FormDialog>
 					{/if}

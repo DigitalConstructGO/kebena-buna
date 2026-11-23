@@ -177,7 +177,8 @@ export const actions = {
 	edit: async (event) => {
 		requirePermission(event.locals, 'stock.manage');
 		const form = await superValidate(event.request, zod4(roastEditSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { id, ...values } = form.data;
 		const { batch: before } = await loadBatch(String(id));
 		await db.transaction(async (tx) => {
@@ -185,7 +186,13 @@ export const actions = {
 				.update(roastBatch)
 				.set({ ...values, updatedBy: event.locals.user?.id })
 				.where(eq(roastBatch.id, id));
-			await recordAudit(tx, event, { table: 'roast_batch', recordId: id, action: 'update', before, after: values });
+			await recordAudit(tx, event, {
+				table: 'roast_batch',
+				recordId: id,
+				action: 'update',
+				before,
+				after: values
+			});
 		});
 		return message(form, { type: 'success', text: 'Batch saved' });
 	}

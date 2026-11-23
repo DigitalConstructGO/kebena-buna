@@ -52,7 +52,8 @@ export const actions = {
 	default: async (event) => {
 		requirePermission(event.locals, 'catalog.manage');
 		const form = await superValidate(event.request, zod4(productNewSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 
 		const {
 			roastLevelIds,
@@ -75,7 +76,14 @@ export const actions = {
 				const [res] = await tx.insert(product).values({
 					...packLocalized({ ...values }, PRODUCT_TEXT),
 					description: toRichLocalized(
-						{ descriptionEn, descriptionAm, descriptionOm, descriptionAr, descriptionIt, descriptionFr },
+						{
+							descriptionEn,
+							descriptionAm,
+							descriptionOm,
+							descriptionAr,
+							descriptionIt,
+							descriptionFr
+						},
 						'description'
 					),
 					createdBy: event.locals.user?.id
@@ -88,7 +96,11 @@ export const actions = {
 					packagingIds,
 					defaultPackagingId
 				});
-				await recordAudit(tx, event, { table: 'product', recordId: res.insertId, action: 'create' });
+				await recordAudit(tx, event, {
+					table: 'product',
+					recordId: res.insertId,
+					action: 'create'
+				});
 				return res.insertId;
 			});
 		} catch (err) {

@@ -53,26 +53,49 @@ export const actions = {
 	add: async (event) => {
 		requirePermission(event.locals, 'visits.manage');
 		const form = await superValidate(event.request, zod4(deviceSchema), { id: 'add' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { token, tokenHash } = newToken();
 		await db.transaction(async (tx) => {
 			const [res] = await tx
 				.insert(scannerDevice)
 				.values({ ...form.data, tokenHash, createdBy: event.locals.user?.id });
-			await recordAudit(tx, event, { table: 'scanner_device', recordId: res.insertId, action: 'create' });
+			await recordAudit(tx, event, {
+				table: 'scanner_device',
+				recordId: res.insertId,
+				action: 'create'
+			});
 		});
-		return message(form, { type: 'success', text: `${form.data.name} added`, token, device: form.data.name });
+		return message(form, {
+			type: 'success',
+			text: `${form.data.name} added`,
+			token,
+			device: form.data.name
+		});
 	},
 	edit: async (event) => {
 		requirePermission(event.locals, 'visits.manage');
 		const form = await superValidate(event.request, zod4(deviceEditSchema), { id: 'edit' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { id, ...values } = form.data;
-		const [before] = await db.select().from(scannerDevice).where(and(eq(scannerDevice.id, id), isNull(scannerDevice.deletedAt)));
+		const [before] = await db
+			.select()
+			.from(scannerDevice)
+			.where(and(eq(scannerDevice.id, id), isNull(scannerDevice.deletedAt)));
 		if (!before) return message(form, { type: 'error', text: 'Device not found' }, { status: 404 });
 		await db.transaction(async (tx) => {
-			await tx.update(scannerDevice).set({ ...values, updatedBy: event.locals.user?.id }).where(eq(scannerDevice.id, id));
-			await recordAudit(tx, event, { table: 'scanner_device', recordId: id, action: 'update', before, after: values });
+			await tx
+				.update(scannerDevice)
+				.set({ ...values, updatedBy: event.locals.user?.id })
+				.where(eq(scannerDevice.id, id));
+			await recordAudit(tx, event, {
+				table: 'scanner_device',
+				recordId: id,
+				action: 'update',
+				before,
+				after: values
+			});
 		});
 		return message(form, { type: 'success', text: 'Device saved' });
 	},
@@ -86,8 +109,12 @@ export const actions = {
 			.set({ isActive: false, tokenHash, updatedBy: event.locals.user?.id })
 			.where(and(eq(scannerDevice.id, id), isNull(scannerDevice.deletedAt)));
 		if (!res.affectedRows) return { message: { type: 'error', text: 'Device not found' } };
-		await recordAudit(db, event, { table: 'scanner_device', recordId: id, action: 'update', detail: { revoked: true } });
+		await recordAudit(db, event, {
+			table: 'scanner_device',
+			recordId: id,
+			action: 'update',
+			detail: { revoked: true }
+		});
 		return { message: { type: 'success', text: 'Device revoked: its token no longer works' } };
 	}
 };
-

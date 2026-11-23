@@ -2,7 +2,9 @@
 	import { onMount } from 'svelte';
 	import { setupGsap } from '#lib/gsap.js';
 	import { whenIdle } from '#lib/reveal.js';
+	import ImageViewer from '@nahu/admin-kit/components/ImageViewer.svelte';
 	import type { FarmsContent, Photo } from '#lib/content/museum.js';
+	import { m } from '#lib/i18n.ts';
 
 	let { content }: { content: FarmsContent } = $props();
 	let root: HTMLElement;
@@ -33,14 +35,14 @@
 		const n = panels.length;
 		if (!n) return [];
 		const at = (k: number) => panels[((k % n) + n) % n];
-		const out: { key: string; src: string; alt: string; k: number; j: number }[] = [];
+		const out: { key: string; src: string; at: number; k: number; j: number }[] = [];
 		for (let i = -LEAD; i < n + TAIL; i++) {
 			const p = at(i);
 			for (let k = 0; k < SLICES; k++)
 				out.push({
 					key: `${i}-${k}`,
 					src: p.photo.src,
-					alt: p.photo.alt,
+					at: ((i % n) + n) % n,
 					k,
 					j: i * SLICES + k + 0.5 - SLICES / 2
 				});
@@ -58,27 +60,6 @@
 	let active = $state(0);
 	const current = $derived(content.farms[active]);
 	let pinned: ScrollTrigger | undefined;
-
-	/** A photo lifted off the band to be looked at; `x`/`y` is where it was pressed, so it grows from there. */
-	let lifted = $state<{ src: string; alt: string; x: number; y: number }>();
-	let viewer = $state<HTMLDialogElement>();
-	let liftedAt = 0;
-
-	const lift = (e: MouseEvent, sl: { src: string; alt: string }) => {
-		lifted = {
-			src: sl.src,
-			alt: sl.alt,
-			x: e.clientX - window.innerWidth / 2,
-			y: e.clientY - window.innerHeight / 2
-		};
-		liftedAt = window.scrollY;
-		if (!viewer?.open) viewer?.showModal();
-	};
-	const drop = () => viewer?.close();
-	/** Scrolling on lets the photo go, and the band turns as before. */
-	const onscroll = () => {
-		if (viewer?.open && Math.abs(window.scrollY - liftedAt) > 24) drop();
-	};
 
 	/** Scroll so the part's first photo turns to the front. */
 	const go = (part: number) => {
@@ -190,9 +171,17 @@
 	/** The phone strip shows each photo at most 260px wide; the full 520px file is for the desktop ring. */
 	const stripSet = (src: string) =>
 		`${src.replace(/\.webp$/, '-280.webp')} 280w, ${src.replace(/\.webp$/, '-440.webp')} 440w`;
-</script>
 
-<svelte:window {onscroll} />
+	/** A photo pressed, on the band or a strip, opens its set large, starting on that one. */
+	let shown = $state<{ title: string; photos: Photo[] }>({ title: '', photos: [] });
+	let shownOpen = $state(false);
+	let shownAt = $state(0);
+	function show(title: string, photos: Photo[], at: number) {
+		shown = { title, photos };
+		shownAt = at;
+		shownOpen = true;
+	}
+</script>
 
 <section class="farms" id="farms" bind:this={root} aria-labelledby="farms-title">
 	<header class="head">
@@ -214,7 +203,15 @@
 								style:--j={sl.j}
 								style:--k={sl.k}
 								style:background-image={near ? `url(${ringSrc(sl.src)})` : undefined}
-								onclick={(e) => lift(e, sl)}
+								onclick={() =>
+									show(
+										content.title,
+										panels.map((p) => ({
+											src: p.photo.src,
+											alt: `${content.farms[p.part].title}: ${p.photo.alt}`
+										})),
+										sl.at
+									)}
 							></div>
 						{/each}
 					</div>
@@ -226,17 +223,17 @@
 				<div class="facts">
 					{#key active}
 						<dl class="meta">
-							{#each current.meta as m (m.label)}
+							{#each current.meta as item (item.label)}
 								<div>
-									<dt>{m.label}</dt>
-									<dd>{m.value}</dd>
+									<dt>{item.label}</dt>
+									<dd>{item.value}</dd>
 								</div>
 							{/each}
 						</dl>
 					{/key}
 				</div>
 				<p class="count" aria-hidden="true">
-					<span class="small">{current.kind ?? 'Estate'}</span>
+					<span class="small">{current.kind ?? m.home_farms_kind_estate()}</span>
 					<span class="big">{pad(active + 1)}</span><span class="of">
 						/{pad(content.farms.length)}
 					</span>
@@ -252,7 +249,7 @@
 							aria-current={i === active ? 'true' : undefined}
 							onclick={() => go(i)}
 						>
-							<span class="kind">{farm.kind ?? 'Estate'}</span>
+							<span class="kind">{farm.kind ?? m.home_farms_kind_estate()}</span>
 							<span class="name">{farm.title}</span>
 							<span class="rule" aria-hidden="true"></span>
 							<span class="text">{farm.text}</span>
@@ -281,16 +278,17 @@
 						{#each content.farms as farm, i (farm.id)}
 							<div class={['now-body', { on: i === active }]} aria-hidden={i !== active}>
 								<p class="now-kind">
-									{pad(i + 1)} / {pad(content.farms.length)} · {farm.kind ?? 'Estate'}
+									{pad(i + 1)} / {pad(content.farms.length)} · {farm.kind ??
+										m.home_farms_kind_estate()}
 								</p>
 								<p class="now-name">{farm.title}</p>
 								<p class="now-text">{farm.text}</p>
 								{#if farm.meta.length}
 									<dl class="now-meta">
-										{#each farm.meta as m (m.label)}
+										{#each farm.meta as item (item.label)}
 											<div>
-												<dt>{m.label}</dt>
-												<dd>{tie(m.value)}</dd>
+												<dt>{item.label}</dt>
+												<dd>{tie(item.value)}</dd>
 											</div>
 										{/each}
 									</dl>
@@ -303,51 +301,42 @@
 		{/if}
 	</div>
 
-	<!-- a photo pressed on the band comes forward; a press, Escape or scrolling on sends it back -->
-	<dialog class="viewer" bind:this={viewer} onclick={drop} onclose={() => (lifted = undefined)}>
-		{#if lifted}
-			<img
-				src={lifted.src}
-				alt={lifted.alt}
-				width="520"
-				height="680"
-				style:--x={`${lifted.x}px`}
-				style:--y={`${lifted.y}px`}
-			/>
-			<button type="button" class="shut" aria-label="Close photo">
-				<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M1 1l12 12M13 1L1 13" /></svg>
-			</button>
-		{/if}
-	</dialog>
-
 	<!-- phones, short screens and reduced motion: each part with a strip of its photos -->
 	{#if content.farms.length}
 		<ol class="parts">
 			{#each content.farms as farm, i (farm.id)}
+				{@const photos = [farm.photo, ...(farm.gallery ?? [])]}
 				<li class="part" id={`farm-${farm.id}`}>
 					<div class="strip">
-						{#each [farm.photo, ...(farm.gallery ?? [])] as photo, k (k)}
-							<img
-								src={photo.src.replace(/\.webp$/, '-440.webp')}
-								srcset={stripSet(photo.src)}
-								sizes="min(62vw, 260px)"
-								alt={photo.alt}
-								width="520"
-								height="680"
-								loading="lazy"
-								decoding="async"
-							/>
+						{#each photos as photo, k (k)}
+							<button
+								type="button"
+								class="zoom"
+								aria-label={m.home_farms_view_photos({ title: farm.title })}
+								onclick={() => show(farm.title, photos, k)}
+							>
+								<img
+									src={photo.src.replace(/\.webp$/, '-440.webp')}
+									srcset={stripSet(photo.src)}
+									sizes="min(62vw, 260px)"
+									alt={photo.alt}
+									width="520"
+									height="680"
+									loading="lazy"
+									decoding="async"
+								/>
+							</button>
 						{/each}
 					</div>
-					<p class="kind">{pad(i + 1)} · {farm.kind ?? 'Estate'}</p>
+					<p class="kind">{pad(i + 1)} · {farm.kind ?? m.home_farms_kind_estate()}</p>
 					<h3>{farm.title}</h3>
 					<p class="text">{farm.text}</p>
 					{#if farm.meta.length}
 						<dl class="meta">
-							{#each farm.meta as m (m.label)}
+							{#each farm.meta as item (item.label)}
 								<div>
-									<dt>{m.label}</dt>
-									<dd>{m.value}</dd>
+									<dt>{item.label}</dt>
+									<dd>{item.value}</dd>
 								</div>
 							{/each}
 						</dl>
@@ -357,6 +346,14 @@
 		</ol>
 	{/if}
 </section>
+
+<ImageViewer
+	bind:open={shownOpen}
+	bind:index={shownAt}
+	images={shown.photos.map((p) => p.src)}
+	captions={shown.photos.map((p) => p.alt)}
+	title={shown.title}
+/>
 
 <style>
 	.farms {
@@ -467,88 +464,6 @@
 	.slice {
 		pointer-events: auto;
 		cursor: zoom-in;
-	}
-
-	/* a pressed photo, lifted off the band to the middle of the screen */
-	.viewer {
-		position: fixed;
-		inset: 0;
-		width: 100vw;
-		height: 100vh;
-		height: 100dvh;
-		max-width: none;
-		max-height: none;
-		margin: 0;
-		padding: 0;
-		border: 0;
-		background: none;
-		overflow: hidden;
-		cursor: zoom-out;
-	}
-	.viewer[open] {
-		display: grid;
-		place-items: center;
-	}
-	.viewer::backdrop {
-		background: rgb(25 33 27 / 0.62);
-		backdrop-filter: blur(10px);
-		-webkit-backdrop-filter: blur(10px);
-		animation: dusk 0.35s ease both;
-	}
-	.viewer img {
-		display: block;
-		width: auto;
-		height: min(84vh, 84dvh, 131vw);
-		max-width: 90vw;
-		aspect-ratio: 520 / 680;
-		object-fit: cover;
-		border: 1.5px solid var(--gold);
-		border-radius: 14px;
-		box-shadow: 0 40px 90px -30px rgb(0 0 0 / 0.7);
-		animation: lift 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-	}
-	@keyframes lift {
-		from {
-			opacity: 0;
-			transform: translate(var(--x), var(--y)) scale(0.28) rotate(-4deg);
-		}
-	}
-	@keyframes dusk {
-		from {
-			opacity: 0;
-		}
-	}
-	.shut {
-		position: absolute;
-		top: clamp(16px, 3vh, 28px);
-		right: clamp(16px, 3vw, 32px);
-		display: grid;
-		place-items: center;
-		width: 44px;
-		height: 44px;
-		padding: 0;
-		border: 1px solid var(--hair);
-		border-radius: 50%;
-		background: var(--chrome);
-		color: var(--on-bag);
-		cursor: pointer;
-	}
-	.shut svg {
-		width: 14px;
-		height: 14px;
-		fill: none;
-		stroke: currentColor;
-		stroke-width: 1.6;
-	}
-	.shut:focus-visible {
-		outline: 2px solid var(--gold);
-		outline-offset: 3px;
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.viewer img,
-		.viewer::backdrop {
-			animation: none;
-		}
 	}
 
 	/* a thin paper gap where one photo ends and the next begins */
@@ -949,14 +864,26 @@
 			scroll-snap-type: x mandatory;
 			scrollbar-width: none;
 		}
-		.strip img {
+		.zoom {
 			flex: none;
+			padding: 0;
+			border: 0;
+			background: none;
+			cursor: zoom-in;
+			scroll-snap-align: start;
+		}
+		.zoom:focus-visible {
+			outline: 2px solid var(--color-lime-400);
+			outline-offset: 2px;
+			border-radius: 12px;
+		}
+		.strip img {
+			display: block;
 			width: min(62vw, 260px);
 			height: auto;
 			aspect-ratio: 13 / 17;
 			object-fit: cover;
 			border-radius: 12px;
-			scroll-snap-align: start;
 			background: var(--well);
 		}
 		.part .kind {

@@ -23,7 +23,8 @@ import { nextNumber } from '#lib/server/records.ts';
 import { fromLocal, localDate } from '@nahu/admin-kit/time';
 import { creditBalance } from '#lib/server/customers.ts';
 import { adjustStock } from '#lib/server/stock.ts';
-import { queueOrderMessage } from '#lib/server/orderMessages.ts';
+import { orderUrl, queueOrderMessage } from '#lib/server/orderMessages.ts';
+import { queueMessage } from '#lib/server/notify.ts';
 import { issueOrderTickets } from '#lib/server/tickets.ts';
 import { activateOrderItems } from '#lib/server/activation.ts';
 import type { OrderStatus } from '#lib/constants.ts';
@@ -36,10 +37,17 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
  * Where an order may go next (questionnaire 3.2). Payment moves `pending_payment` on (by a
  * payment, not by hand); cancelling has its own action.
  */
-export function nextStatuses(o: Pick<Order, 'status' | 'deliveryMethod'>, hasRoast: boolean): OrderStatus[] {
+export function nextStatuses(
+	o: Pick<Order, 'status' | 'deliveryMethod'>,
+	hasRoast: boolean
+): OrderStatus[] {
 	switch (o.status) {
 		case 'paid':
-			return hasRoast ? ['roasting', 'packed'] : o.deliveryMethod === 'none' ? ['completed', 'packed'] : ['packed'];
+			return hasRoast
+				? ['roasting', 'packed']
+				: o.deliveryMethod === 'none'
+					? ['completed', 'packed']
+					: ['packed'];
 		case 'roasting':
 			return ['packed'];
 		case 'packed':
@@ -62,10 +70,13 @@ export function nextStatuses(o: Pick<Order, 'status' | 'deliveryMethod'>, hasRoa
 }
 
 /** Cancelling is open until the order has left the building. */
-export const canCancel = (status: string) => ['pending_payment', 'paid', 'roasting', 'packed'].includes(status);
+export const canCancel = (status: string) =>
+	['pending_payment', 'paid', 'roasting', 'packed'].includes(status);
 
 /** The time column a status stamps. */
-const STAMP: Partial<Record<OrderStatus, 'paidAt' | 'dispatchedAt' | 'completedAt' | 'cancelledAt'>> = {
+const STAMP: Partial<
+	Record<OrderStatus, 'paidAt' | 'dispatchedAt' | 'completedAt' | 'cancelledAt'>
+> = {
 	paid: 'paidAt',
 	out_for_delivery: 'dispatchedAt',
 	ready_for_pickup: 'dispatchedAt',
@@ -88,11 +99,18 @@ export async function moveOrder(
 			.where(and(eq(orderLine.orderId, o.id), eq(orderLine.fulfilment, 'roast_to_order')))
 			.limit(1);
 		if (!nextStatuses(o, Boolean(roast)).includes(to)) {
-			throw new WriteRefused('status', `An order that is ${o.status.replaceAll('_', ' ')} cannot go to ${to.replaceAll('_', ' ')}.`);
+			throw new WriteRefused(
+				'status',
+				`An order that is ${o.status.replaceAll('_', ' ')} cannot go to ${to.replaceAll('_', ' ')}.`
+			);
 		}
 	}
 	const stamp = STAMP[to];
-	const values: Partial<Order> = { status: to, updatedBy: event.locals.user?.id ?? null, ...opts.extra };
+	const values: Partial<Order> = {
+		status: to,
+		updatedBy: event.locals.user?.id ?? null,
+		...opts.extra
+	};
 	if (stamp) values[stamp] = new Date();
 	await tx.update(order).set(values).where(eq(order.id, o.id));
 	const queued = await queueOrderMessage(tx, { ...o, ...values }, to);
@@ -104,11 +122,18 @@ export async function moveOrder(
 		notified: Boolean(opts.notified) || queued > 0,
 		changedBy: event.locals.user?.id ?? null
 	});
-	await recordAudit(tx, event, { table: 'orders', recordId: o.id, action: 'update', before: o, after: values });
+	await recordAudit(tx, event, {
+		table: 'orders',
+		recordId: o.id,
+		action: 'update',
+		before: o,
+		after: values
+	});
 }
 
 /** A unique reference of ours for a payment recorded by hand. */
-const manualRef = () => `KC-MAN-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1e6)}`;
+const manualRef = () =>
+	`KC-MAN-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1e6)}`;
 
 /**
  * The next VAT receipt number, in the sequence of the year the money came in (local time):
@@ -126,23 +151,34 @@ type PaymentInput = { provider: string; amount: number; reference?: string | nul
  * its VAT receipt number. The order is re-read locked, so two payments in flight add up and the
  * second cannot pay past the balance or take a second receipt number.
  */
-async function applyOrderPayment(tx: Writer, event: RequestEvent, orderId: number, p: PaymentInput) {
+async function applyOrderPayment(
+	tx: Writer,
+	event: RequestEvent,
+	orderId: number,
+	p: PaymentInput
+) {
 	const [o] = await tx.select().from(order).where(eq(order.id, orderId)).for('update');
 	if (!o) throw new WriteRefused(null, 'Order not found.');
 	if (o.status === 'cancelled') throw new WriteRefused(null, 'A cancelled order takes no payment.');
-	if (o.paymentState === 'refunded') throw new WriteRefused(null, 'This order was refunded; it takes no more payment.');
+	if (o.paymentState === 'refunded')
+		throw new WriteRefused(null, 'This order was refunded; it takes no more payment.');
 	const balance = r2(Number(o.total) - Number(o.amountPaid));
 	if (balance < 0.005) throw new WriteRefused('amount', `${o.number} is already paid in full.`);
-	if (p.amount > balance + 0.005) throw new WriteRefused('amount', `Only ${balance.toFixed(2)} is still owed on ${o.number}.`);
+	if (p.amount > balance + 0.005)
+		throw new WriteRefused('amount', `Only ${balance.toFixed(2)} is still owed on ${o.number}.`);
 	const paid = r2(Number(o.amountPaid) + p.amount);
 	const covered = paid + 0.005 >= Number(o.total);
 	const values: Partial<Order> = { amountPaid: paid };
 	// A refund already made stays on the record: only an unpaid (or failed) order becomes paid.
-	if (covered && (o.paymentState === 'unpaid' || o.paymentState === 'failed')) values.paymentState = 'paid';
+	if (covered && (o.paymentState === 'unpaid' || o.paymentState === 'failed'))
+		values.paymentState = 'paid';
 	if (covered && !o.receiptNumber) values.receiptNumber = await nextReceiptNumber(tx, p.paidAt);
 	await tx.update(order).set(values).where(eq(order.id, o.id));
 	if (covered && o.status === 'pending_payment') {
-		await moveOrder(tx, event, { ...o, ...values }, 'paid', { force: true, note: `Paid by ${p.provider.replaceAll('_', ' ')}` });
+		await moveOrder(tx, event, { ...o, ...values }, 'paid', {
+			force: true,
+			note: `Paid by ${p.provider.replaceAll('_', ' ')}`
+		});
 	}
 	// Paid in full: its entry and event tickets exist from now on, each with its signed QR.
 	if (covered) await issueOrderTickets(tx, o.id);
@@ -178,7 +214,12 @@ async function spendCredit(
 }
 
 /** Money received against an order by hand: a payment row and the order's balance moved on. */
-export async function recordOrderPayment(tx: Writer, event: RequestEvent, o: Order, p: PaymentInput) {
+export async function recordOrderPayment(
+	tx: Writer,
+	event: RequestEvent,
+	o: Order,
+	p: PaymentInput
+) {
 	const locked = await applyOrderPayment(tx, event, o.id, p);
 	const [res] = await tx.insert(payment).values({
 		orderId: o.id,
@@ -191,7 +232,11 @@ export async function recordOrderPayment(tx: Writer, event: RequestEvent, o: Ord
 		paidAt: p.paidAt
 	});
 	if (p.provider === 'store_credit') {
-		await spendCredit(tx, event, locked.customerId, p.amount, { refType: 'payment', refId: res.insertId, note: `Paid ${locked.number}` });
+		await spendCredit(tx, event, locked.customerId, p.amount, {
+			refType: 'payment',
+			refId: res.insertId,
+			note: `Paid ${locked.number}`
+		});
 	}
 	await recordAudit(tx, event, { table: 'payment', recordId: res.insertId, action: 'create' });
 	return res.insertId;
@@ -211,12 +256,102 @@ export async function settleGatewayPayment(
 	const [p] = await tx.select().from(payment).where(eq(payment.id, paymentId)).for('update');
 	if (!p || !p.orderId) throw new WriteRefused(null, 'Payment not found.');
 	if (p.status === 'succeeded') return false;
-	await applyOrderPayment(tx, event, p.orderId, { provider: p.provider, amount: r2(v.amount), paidAt: v.paidAt });
+	await applyOrderPayment(tx, event, p.orderId, {
+		provider: p.provider,
+		amount: r2(v.amount),
+		paidAt: v.paidAt
+	});
 	await tx
 		.update(payment)
-		.set({ status: 'succeeded', amount: r2(v.amount), providerRef: v.providerRef ?? null, response: v.raw, paidAt: v.paidAt })
+		.set({
+			status: 'succeeded',
+			amount: r2(v.amount),
+			providerRef: v.providerRef ?? null,
+			response: v.raw,
+			paidAt: v.paidAt
+		})
 		.where(eq(payment.id, p.id));
 	return true;
+}
+
+/** A buyer's transfer receipt still waiting for staff, locked; refused if it is anything else. */
+async function waitingTransfer(tx: Writer, paymentId: number) {
+	const [p] = await tx.select().from(payment).where(eq(payment.id, paymentId)).for('update');
+	if (!p?.orderId || p.provider !== 'bank_transfer' || !p.receiptFile)
+		throw new WriteRefused(null, 'That is not a transfer receipt.');
+	if (p.status !== 'pending')
+		throw new WriteRefused(null, 'This receipt has already been dealt with.');
+	return p as typeof p & { orderId: number };
+}
+
+/**
+ * Staff found a buyer's transfer on the statement: the receipt's payment becomes `succeeded` and
+ * its order is paid, with tickets and memberships, as a gateway payment would. Paid on the day
+ * staff confirm it, which is when the money is known to be there.
+ */
+export async function confirmTransfer(tx: Writer, event: RequestEvent, paymentId: number) {
+	const p = await waitingTransfer(tx, paymentId);
+	const paidAt = new Date();
+	await applyOrderPayment(tx, event, p.orderId, {
+		provider: p.provider,
+		amount: Number(p.amount),
+		reference: p.reference,
+		paidAt
+	});
+	const values = {
+		status: 'succeeded' as const,
+		paidAt,
+		recordedBy: event.locals.user?.id ?? null
+	};
+	await tx.update(payment).set(values).where(eq(payment.id, p.id));
+	await recordAudit(tx, event, {
+		table: 'payment',
+		recordId: p.id,
+		action: 'update',
+		before: p,
+		after: values
+	});
+	return p.orderId;
+}
+
+/**
+ * Staff could not match a receipt (wrong amount, not on the statement): it is `failed` with the
+ * reason, which the buyer is sent and sees on the order's page, and they can send another.
+ */
+export async function rejectTransfer(
+	tx: Writer,
+	event: RequestEvent,
+	paymentId: number,
+	reason: string
+) {
+	const p = await waitingTransfer(tx, paymentId);
+	const values = {
+		status: 'failed' as const,
+		failureReason: reason.slice(0, 255),
+		recordedBy: event.locals.user?.id ?? null
+	};
+	await tx.update(payment).set(values).where(eq(payment.id, p.id));
+	await recordAudit(tx, event, {
+		table: 'payment',
+		recordId: p.id,
+		action: 'update',
+		before: p,
+		after: values
+	});
+	const [o] = await tx.select().from(order).where(eq(order.id, p.orderId));
+	await queueMessage(
+		tx,
+		'order.receipt_rejected',
+		{ phone: o.contactPhone, email: o.contactEmail, locale: o.locale, customerId: o.customerId },
+		{
+			name: o.contactName,
+			order_number: o.number,
+			reason: values.failureReason,
+			order_url: orderUrl(o)
+		},
+		{ refType: 'order', refId: o.id, dedupe: `payment:${p.id}:rejected` }
+	);
+	return p.orderId;
 }
 
 /**
@@ -231,10 +366,13 @@ export async function recordInvoicePayment(
 ) {
 	const [cur] = await tx.select().from(invoice).where(eq(invoice.id, inv.id)).for('update');
 	if (!cur) throw new WriteRefused(null, 'Invoice not found.');
-	if (cur.status === 'void' || cur.status === 'draft') throw new WriteRefused(null, 'Issue the invoice before recording a payment.');
+	if (cur.status === 'void' || cur.status === 'draft')
+		throw new WriteRefused(null, 'Issue the invoice before recording a payment.');
 	const balance = r2(Number(cur.total) - Number(cur.amountPaid));
-	if (cur.status === 'paid' || balance < 0.005) throw new WriteRefused('amount', `${cur.number} is already paid in full.`);
-	if (p.amount > balance + 0.005) throw new WriteRefused('amount', `Only ${balance.toFixed(2)} is still owed on ${cur.number}.`);
+	if (cur.status === 'paid' || balance < 0.005)
+		throw new WriteRefused('amount', `${cur.number} is already paid in full.`);
+	if (p.amount > balance + 0.005)
+		throw new WriteRefused('amount', `Only ${balance.toFixed(2)} is still owed on ${cur.number}.`);
 	if (cur.orderId) await applyOrderPayment(tx, event, cur.orderId, p);
 	const [res] = await tx.insert(payment).values({
 		invoiceId: cur.id,
@@ -248,13 +386,26 @@ export async function recordInvoicePayment(
 		paidAt: p.paidAt
 	});
 	if (p.provider === 'store_credit') {
-		await spendCredit(tx, event, cur.customerId, p.amount, { refType: 'payment', refId: res.insertId, note: `Paid ${cur.number}` });
+		await spendCredit(tx, event, cur.customerId, p.amount, {
+			refType: 'payment',
+			refId: res.insertId,
+			note: `Paid ${cur.number}`
+		});
 	}
 	const paid = r2(Number(cur.amountPaid) + p.amount);
 	const full = paid + 0.005 >= Number(cur.total);
-	const values = { amountPaid: paid, ...(full ? { status: 'paid' as const, paidAt: p.paidAt } : {}) };
+	const values = {
+		amountPaid: paid,
+		...(full ? { status: 'paid' as const, paidAt: p.paidAt } : {})
+	};
 	await tx.update(invoice).set(values).where(eq(invoice.id, cur.id));
-	await recordAudit(tx, event, { table: 'invoice', recordId: cur.id, action: 'update', before: cur, after: values });
+	await recordAudit(tx, event, {
+		table: 'invoice',
+		recordId: cur.id,
+		action: 'update',
+		before: cur,
+		after: values
+	});
 	return res.insertId;
 }
 
@@ -269,7 +420,10 @@ const OPEN_REFUNDS = ['requested', 'approved', 'processing'] as const;
  */
 export async function refundClaims(tx: Writer, orderId: number) {
 	const pending = await tx
-		.select({ orderLineId: refundLine.orderLineId, quantity: sql<number>`sum(${refundLine.quantity})`.mapWith(Number) })
+		.select({
+			orderLineId: refundLine.orderLineId,
+			quantity: sql<number>`sum(${refundLine.quantity})`.mapWith(Number)
+		})
 		.from(refundLine)
 		.innerJoin(refund, eq(refundLine.refundId, refund.id))
 		.where(and(eq(refund.orderId, orderId), inArray(refund.status, [...OPEN_REFUNDS])))
@@ -278,11 +432,17 @@ export async function refundClaims(tx: Writer, orderId: number) {
 		.select({ amount: sql<number>`coalesce(sum(${refund.amount}), 0)`.mapWith(Number) })
 		.from(refund)
 		.where(and(eq(refund.orderId, orderId), inArray(refund.status, [...LIVE_REFUNDS])));
-	return { pending: new Map(pending.map((r) => [r.orderLineId, r.quantity])), amount: r2(money?.amount ?? 0) };
+	return {
+		pending: new Map(pending.map((r) => [r.orderLineId, r.quantity])),
+		amount: r2(money?.amount ?? 0)
+	};
 }
 
 /** The lines a refund may still cover, with what is left of each once refunds in flight are counted. */
-export function refundable(lines: (typeof orderLine.$inferSelect)[], pending: Map<number, number> = new Map()) {
+export function refundable(
+	lines: (typeof orderLine.$inferSelect)[],
+	pending: Map<number, number> = new Map()
+) {
 	return lines
 		.map((l) => ({ line: l, left: l.quantity - l.refundedQuantity - (pending.get(l.id) ?? 0) }))
 		.filter((l) => l.left > 0);
@@ -301,11 +461,20 @@ export async function requestRefund(
 	tx: Writer,
 	event: RequestEvent,
 	orderId: number,
-	r: { whole: boolean; orderLineId: number | null; quantity: number | null; restock: boolean; toStoreCredit: boolean; feeRetained: number; reason: string }
+	r: {
+		whole: boolean;
+		orderLineId: number | null;
+		quantity: number | null;
+		restock: boolean;
+		toStoreCredit: boolean;
+		feeRetained: number;
+		reason: string;
+	}
 ) {
 	const [o] = await tx.select().from(order).where(eq(order.id, orderId)).for('update');
 	if (!o) throw new WriteRefused(null, 'Order not found.');
-	if (!hasRefundableMoney(o)) throw new WriteRefused(null, 'Nothing paid on this order is left to refund.');
+	if (!hasRefundableMoney(o))
+		throw new WriteRefused(null, 'Nothing paid on this order is left to refund.');
 	const lines = await tx.select().from(orderLine).where(eq(orderLine.orderId, o.id));
 	const claims = await refundClaims(tx, o.id);
 	const open = refundable(lines, claims.pending);
@@ -313,21 +482,32 @@ export async function requestRefund(
 		? open.map((l) => ({ line: l.line, quantity: l.left }))
 		: (() => {
 				const hit = open.find((l) => l.line.id === r.orderLineId);
-				if (!hit) throw new WriteRefused('orderLineId', 'Choose a line that still has something to refund.');
+				if (!hit)
+					throw new WriteRefused(
+						'orderLineId',
+						'Choose a line that still has something to refund.'
+					);
 				const quantity = r.quantity ?? hit.left;
-				if (quantity < 1 || quantity > hit.left) throw new WriteRefused('quantity', `Between 1 and ${hit.left}.`);
+				if (quantity < 1 || quantity > hit.left)
+					throw new WriteRefused('quantity', `Between 1 and ${hit.left}.`);
 				return [{ line: hit.line, quantity }];
 			})();
 	if (!chosen.length) throw new WriteRefused(null, 'Nothing on this order is left to refund.');
-	const amountOf = (l: typeof orderLine.$inferSelect, q: number) => Math.round((Number(l.lineTotal) / l.quantity) * q * 100) / 100;
+	const amountOf = (l: typeof orderLine.$inferSelect, q: number) =>
+		Math.round((Number(l.lineTotal) / l.quantity) * q * 100) / 100;
 	let amount = chosen.reduce((sum, c) => sum + amountOf(c.line, c.quantity), 0);
 	// A whole refund gives back the delivery fee too.
 	if (r.whole) amount += Number(o.deliveryFee);
 	// Never more than was paid, less what other refunds already claim.
 	const left = r2(Number(o.amountPaid) - claims.amount);
-	if (left < 0.005) throw new WriteRefused(null, 'Refunds already asked for cover everything paid on this order.');
+	if (left < 0.005)
+		throw new WriteRefused(null, 'Refunds already asked for cover everything paid on this order.');
 	amount = r2(Math.min(amount, left));
-	if (r.feeRetained > amount) throw new WriteRefused('feeRetained', `The fee kept cannot be more than the refund (${amount.toFixed(2)}).`);
+	if (r.feeRetained > amount)
+		throw new WriteRefused(
+			'feeRetained',
+			`The fee kept cannot be more than the refund (${amount.toFixed(2)}).`
+		);
 	const [gateway] = await tx
 		.select({ id: payment.id })
 		.from(payment)
@@ -352,7 +532,12 @@ export async function requestRefund(
 			restock: r.restock
 		}))
 	);
-	await recordAudit(tx, event, { table: 'refund', recordId: res.insertId, action: 'create', detail: { orderId: o.id, amount } });
+	await recordAudit(tx, event, {
+		table: 'refund',
+		recordId: res.insertId,
+		action: 'create',
+		detail: { orderId: o.id, amount }
+	});
 	return res.insertId;
 }
 
@@ -428,7 +613,8 @@ export async function decideRefund(
 		succeeded: ['approved', 'processing'],
 		failed: ['approved', 'processing']
 	};
-	if (!allowed[to].includes(rf.status)) throw new WriteRefused(null, `A ${rf.status} refund cannot become ${to}.`);
+	if (!allowed[to].includes(rf.status))
+		throw new WriteRefused(null, `A ${rf.status} refund cannot become ${to}.`);
 	const me = event.locals.user?.id ?? null;
 	if (to === 'approved' && rf.requestedBy === me && !event.locals.isSuperAdmin) {
 		throw new WriteRefused(null, 'Someone other than the person who asked must approve a refund.');
@@ -448,7 +634,10 @@ export async function decideRefund(
 		// Checked again here: what was paid back already plus this one may not pass what was paid.
 		const paidBack = r2((done?.amount ?? 0) + Number(rf.amount));
 		if (paidBack > Number(o.amountPaid) + 0.005) {
-			throw new WriteRefused(null, `Only ${Math.max(0, Number(o.amountPaid) - (done?.amount ?? 0)).toFixed(2)} paid on ${o.number} is left to refund.`);
+			throw new WriteRefused(
+				null,
+				`Only ${Math.max(0, Number(o.amountPaid) - (done?.amount ?? 0)).toFixed(2)} paid on ${o.number} is left to refund.`
+			);
 		}
 		const byId = new Map(orderLines.map((l) => [l.id, l]));
 		for (const l of lines) {
@@ -462,7 +651,8 @@ export async function decideRefund(
 		const note = `Refund ${rf.id} on ${o.number}`;
 		for (const l of lines) {
 			const line = byId.get(l.orderLineId)!;
-			if (l.restock && line.itemType === 'product') await restockLine(tx, line, l.quantity, note, me);
+			if (l.restock && line.itemType === 'product')
+				await restockLine(tx, line, l.quantity, note, me);
 			await tx
 				.update(orderLine)
 				.set({
@@ -494,7 +684,13 @@ export async function decideRefund(
 		}
 	}
 	await tx.update(refund).set(values).where(eq(refund.id, rf.id));
-	await recordAudit(tx, event, { table: 'refund', recordId: rf.id, action: 'update', before: rf, after: values });
+	await recordAudit(tx, event, {
+		table: 'refund',
+		recordId: rf.id,
+		action: 'update',
+		before: rf,
+		after: values
+	});
 }
 
 /** A discount form's dates and money as the columns hold them. */

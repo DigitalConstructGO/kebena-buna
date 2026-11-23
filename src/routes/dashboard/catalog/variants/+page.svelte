@@ -33,7 +33,8 @@
 			id: 'compareAtPrice',
 			header: 'Was (ETB)',
 			meta: { align: 'right', class: 'hidden md:table-cell' },
-			cell: ({ row }) => (Number(row.original.compareAtPrice) ? amount(row.original.compareAtPrice) : '—')
+			cell: ({ row }) =>
+				Number(row.original.compareAtPrice) ? amount(row.original.compareAtPrice) : '—'
 		},
 		{
 			id: 'packed',
@@ -45,7 +46,8 @@
 		{
 			id: 'stock',
 			header: 'Stock',
-			cell: ({ row }) => flag(row.original.packed >= row.original.lowAt, 'In stock', `Low (< ${row.original.lowAt})`)
+			cell: ({ row }) =>
+				flag(row.original.packed >= row.original.lowAt, 'In stock', `Low (< ${row.original.lowAt})`)
 		},
 		{ id: 'isActive', header: 'Status', cell: ({ row }) => flag(row.original.isActive) }
 	];

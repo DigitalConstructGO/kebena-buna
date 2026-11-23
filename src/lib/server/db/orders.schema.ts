@@ -30,6 +30,7 @@ import {
 	currency,
 	extra,
 	id,
+	lesserFields,
 	localized,
 	money,
 	percent,
@@ -335,6 +336,23 @@ export const invoice = mysqlTable(
 );
 
 /**
+ * An account a buyer can pay into by hand: a bank account or a wallet (Telebirr, CBE Birr). Shown
+ * on an order's page under "Bank transfer"; the buyer uploads the receipt and staff confirm it
+ * against the statement before the order counts as paid.
+ */
+export const bankAccount = mysqlTable('bank_account', {
+	id: id(),
+	/** As the buyer knows it: "Commercial Bank of Ethiopia", "Telebirr". */
+	bankName: varchar('bank_name', { length: 80 }).notNull(),
+	accountName: varchar('account_name', { length: 120 }).notNull(),
+	accountNumber: varchar('account_number', { length: 40 }).notNull(),
+	/** Branch, SWIFT code, or anything else a buyer abroad needs. */
+	note: varchar('note', { length: 255 }),
+	sortOrder: smallint('sort_order').default(0).notNull(),
+	...lesserFields
+});
+
+/**
  * A payment attempt or a recorded payment. `txRef` is ours and unique, sent to the gateway, so a
  * retried webhook or a double click settles one row. Desk cash and bank transfers are rows here
  * too, recorded by staff, so the daily sales report has one source.
@@ -361,6 +379,15 @@ export const payment = mysqlTable(
 		response: json('response'),
 		/** Bank transfer reference / desk receipt for manual payments. */
 		reference: varchar('reference', { length: 64 }),
+		/** A buyer's transfer: the account they say they paid into. */
+		bankAccountId: int('bank_account_id').references(() => bankAccount.id, {
+			onDelete: 'restrict'
+		}),
+		/**
+		 * A buyer's transfer: their receipt photo or PDF, in the private file store. It waits
+		 * `pending` until staff confirm it (`confirmTransfer`) or turn it down (`rejectTransfer`).
+		 */
+		receiptFile: varchar('receipt_file', { length: 64 }),
 		recordedBy: userRef('recorded_by'),
 		paidAt: datetime('paid_at'),
 		createdAt: datetime('created_at')
@@ -500,6 +527,7 @@ export const invoiceRelations = relations(invoice, ({ one, many }) => ({
 
 export const paymentRelations = relations(payment, ({ one }) => ({
 	order: one(order, { fields: [payment.orderId], references: [order.id] }),
+	bankAccount: one(bankAccount, { fields: [payment.bankAccountId], references: [bankAccount.id] }),
 	invoice: one(invoice, { fields: [payment.invoiceId], references: [invoice.id] })
 }));
 

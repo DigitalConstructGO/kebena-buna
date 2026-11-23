@@ -22,7 +22,9 @@
 	const t = $derived(data.ticket);
 	const href = useLinks();
 	const when = $derived(
-		data.slotStart ? `${formatDate(t.visitDate)} · ${localClock(data.slotStart)}–${localClock(data.slotEnd!)}` : formatDate(t.visitDate)
+		data.slotStart
+			? `${formatDate(t.visitDate)} · ${localClock(data.slotStart)}–${localClock(data.slotEnd!)}`
+			: formatDate(t.visitDate)
 	);
 
 	type Change = (typeof data.changes)[number];
@@ -36,14 +38,23 @@
 			cell: ({ row }) => {
 				const c = row.original;
 				const parts = [
-					c.fromSlot || c.toSlot ? `${slotText(c.fromSlot) ?? '—'} → ${slotText(c.toSlot) ?? '—'}` : null,
+					c.fromSlot || c.toSlot
+						? `${slotText(c.fromSlot) ?? '—'} → ${slotText(c.toSlot) ?? '—'}`
+						: null,
 					c.fromType || c.toType ? `${c.fromType ?? '—'} → ${c.toType ?? '—'}` : null,
-					c.fromAudience !== c.toAudience && (c.fromAudience || c.toAudience) ? `${c.fromAudience ?? '—'} → ${c.toAudience ?? '—'}` : null
+					c.fromAudience !== c.toAudience && (c.fromAudience || c.toAudience)
+						? `${c.fromAudience ?? '—'} → ${c.toAudience ?? '—'}`
+						: null
 				].filter(Boolean);
 				return parts.join('; ') || '—';
 			}
 		},
-		{ id: 'amount', header: 'Amount (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.amount) },
+		{
+			id: 'amount',
+			header: 'Amount (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.amount)
+		},
 		{ id: 'reason', header: 'Reason', cell: ({ row }) => row.original.reason ?? '—' },
 		{ id: 'by', header: 'By', cell: ({ row }) => user(row.original.byId, row.original.by) }
 	];
@@ -51,15 +62,33 @@
 	const scanColumns: ColumnDef<Scan>[] = [
 		{ id: 'at', header: 'Scanned', cell: ({ row }) => dateTime(row.original.scannedAt) },
 		{ id: 'result', header: 'Result', cell: ({ row }) => status(row.original.result) },
-		{ id: 'headcount', header: 'People', meta: { align: 'right' }, cell: ({ row }) => row.original.headcount },
+		{
+			id: 'headcount',
+			header: 'People',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.headcount
+		},
 		{ id: 'device', header: 'Device', cell: ({ row }) => row.original.device ?? 'Desk' },
-		{ id: 'location', header: 'Location', cell: ({ row }) => link('location', row.original.locationId, row.original.location) },
+		{
+			id: 'location',
+			header: 'Location',
+			cell: ({ row }) => link('location', row.original.locationId, row.original.location)
+		},
 		{ id: 'by', header: 'By', cell: ({ row }) => user(row.original.byId, row.original.by) },
-		{ id: 'offline', header: 'Offline', cell: ({ row }) => (row.original.wasOffline ? `Yes, synced ${formatDateTime(row.original.syncedAt)}` : 'No') }
+		{
+			id: 'offline',
+			header: 'Offline',
+			cell: ({ row }) =>
+				row.original.wasOffline ? `Yes, synced ${formatDateTime(row.original.syncedAt)}` : 'No'
+		}
 	];
 </script>
 
-<PageHeader title={t.code} eyebrow={t.eventId ? 'Event ticket' : 'Entry ticket'} description="{data.type} · {data.audience} · {when}">
+<PageHeader
+	title={t.code}
+	eyebrow={t.eventId ? 'Event ticket' : 'Entry ticket'}
+	description="{data.type} · {data.audience} · {when}"
+>
 	{#snippet badges()}
 		<Statuses {...badge(t.status)} />
 	{/snippet}
@@ -71,7 +100,10 @@
 					label="Check in"
 					icon={CircleCheck}
 					title="Check in {t.code}?"
-					description="Admits the whole party ({t.admits - t.checkedIn} {t.admits - t.checkedIn === 1 ? 'person' : 'people'}) now, recorded as a desk scan."
+					description="Admits the whole party ({t.admits - t.checkedIn} {t.admits - t.checkedIn ===
+					1
+						? 'person'
+						: 'people'}) now, recorded as a desk scan."
 				/>
 			{/if}
 			{#if t.visitSlotId}
@@ -101,7 +133,10 @@
 			{/if}
 			<FormDialog
 				title="Cancel {t.code}?"
-				triggerLabel="Cancel ticket" triggerIcon={Ban} submitIcon={Ban} submitVariant="destructive"
+				triggerLabel="Cancel ticket"
+				triggerIcon={Ban}
+				submitIcon={Ban}
+				submitVariant="destructive"
 				submitLabel="Cancel ticket"
 				action="?/cancel"
 				data={data.cancelForm}
@@ -128,10 +163,18 @@
 				{ name: 'Event', value: data.event ?? '—', href: href('event', t.eventId) },
 				{ name: 'Holder', value: t.holderName ?? '—' },
 				{ name: 'Customer', value: data.customer ?? '—', href: href('customer', t.customerId) },
-				{ name: 'Phone', value: data.customerPhone ?? '—', kind: data.customerPhone ? 'phone' : undefined },
+				{
+					name: 'Phone',
+					value: data.customerPhone ?? '—',
+					kind: data.customerPhone ? 'phone' : undefined
+				},
 				{ name: 'Order', value: data.orderNumber ?? '—', href: href('order', t.orderId) },
 				{ name: 'Order line', value: data.lineDescription ?? '—' },
-				{ name: 'Membership', value: data.membershipNumber ?? '—', href: href('membership', t.membershipId) },
+				{
+					name: 'Membership',
+					value: data.membershipNumber ?? '—',
+					href: href('membership', t.membershipId)
+				},
 				{ name: 'Checked in', value: `${t.checkedIn} of ${t.admits}` },
 				{ name: 'First check-in', value: formatDateTime(t.firstCheckedInAt) },
 				{ name: 'Language', value: languageName(t.locale) },
@@ -142,16 +185,24 @@
 	</PageSection>
 	<div class="grid min-w-0 grid-cols-1 content-start gap-6">
 		{#if data.qr}
-			<PageSection title="QR code" hint="Signed: the gate scanner checks it offline. Print or show it to reissue the ticket.">
+			<PageSection
+				title="QR code"
+				hint="Signed: the gate scanner checks it offline. Print or show it to reissue the ticket."
+			>
 				<div class="flex flex-wrap items-center gap-6">
 					<!-- Our own SVG, made by `qrcode` from the signed string. -->
-					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-					<div class="size-48 shrink-0 rounded-lg border bg-white p-2 [&_svg]:size-full">{@html data.qr.svg}</div>
+					<div class="size-48 shrink-0 rounded-lg border bg-white p-2 [&_svg]:size-full">
+						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+						{@html data.qr.svg}
+					</div>
 					<p class="max-w-md font-mono text-xs break-all text-muted-foreground">{data.qr.value}</p>
 				</div>
 			</PageSection>
 		{/if}
-		<PageSection title="Changes" hint="Reschedules, upgrades, cancellations and refunds, with the money moved.">
+		<PageSection
+			title="Changes"
+			hint="Reschedules, upgrades, cancellations and refunds, with the money moved."
+		>
 			{#if data.changes.length}
 				<DataTable variant="compact" columns={changeColumns} data={data.changes} />
 			{:else}<Empty message="Never changed" />{/if}

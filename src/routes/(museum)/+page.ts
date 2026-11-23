@@ -1,2 +1,2 @@
-// the home page is the same for every visitor in a language: build it once as static HTML
-export const prerender = true;
+// Rendered on each request, not prerendered: its words can be edited in Website › Site text.
+export const prerender = false;

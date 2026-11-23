@@ -44,7 +44,9 @@ const spec: WhereSpec<(typeof FILTERS)[number]> = {
 };
 
 const joined = <T extends MySqlSelect>(q: T) =>
-	q.innerJoin(region, eq(station.regionId, region.id)).leftJoin(creator, eq(station.createdBy, creator.id));
+	q
+		.innerJoin(region, eq(station.regionId, region.id))
+		.leftJoin(creator, eq(station.createdBy, creator.id));
 
 export const load = async ({ url, locals }) => {
 	const query = parseTableQuery(url, FILTERS, 20, Object.keys(SORTS));
@@ -99,7 +101,9 @@ export const load = async ({ url, locals }) => {
 		rows,
 		server: { pagination: pagination(query, total), facets, filters: currentQuery(query) },
 		canManage: hasPermission(locals, 'origins.manage'),
-		addForm: await superValidate({ type: 'washing_station' }, zod4(stationSchema), { errors: false }),
+		addForm: await superValidate({ type: 'washing_station' }, zod4(stationSchema), {
+			errors: false
+		}),
 		options: { regions, certifications }
 	};
 };

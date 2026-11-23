@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { setupGsap } from '#lib/gsap.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { CITIES, COUNTRY, JIMMA_ZONE, REGIONS, SIZE, project } from './ethiopia.js';
 	import type { Kingdom } from '#lib/content/story.js';
 
@@ -85,6 +85,7 @@
 	const RIVERS = [
 		{
 			name: 'Didessa',
+			text: m.museum_map_river_didessa,
 			d: curve([
 				[40, 40],
 				[28, 140],
@@ -96,6 +97,7 @@
 		},
 		{
 			name: 'Gibe',
+			text: m.museum_map_river_gibe,
 			d: curve([
 				[470, 22],
 				[540, 70],
@@ -107,6 +109,7 @@
 		},
 		{
 			name: 'Gojeb',
+			text: m.museum_map_river_gojeb,
 			d: curve([
 				[110, 488],
 				[220, 512],
@@ -118,19 +121,40 @@
 		}
 	];
 	const PEOPLES = [
-		{ name: 'Macha Oromo', at: at(104, 30) },
-		{ name: 'Kaffa', at: at(560, 506) }
+		{ name: 'Macha Oromo', text: m.museum_map_people_macha_oromo, at: at(104, 30) },
+		{ name: 'Kaffa', text: m.museum_map_people_kaffa, at: at(560, 506) }
 	];
 
 	const placed = $derived(kingdoms.filter((k) => SHAPES[k.id]));
 
-	/** Region names as they are known today; the source still has SNNP as one region. */
-	const REGION_NAME: Record<string, string> = {
-		'Benishangul Gumz': 'Benishangul-Gumuz',
-		SNNP: 'Central & South Ethiopia',
-		'South West Ethiopia': 'South West',
-		'Addis Ababa': ''
+	/**
+	 * Region names as they are known today, keyed by the source's names; the source still has SNNP
+	 * as one region. Addis Ababa is left unnamed: its city dot says it.
+	 */
+	const REGION_NAME: Record<string, (() => string) | null> = {
+		Tigray: m.museum_map_region_tigray,
+		Afar: m.museum_map_region_afar,
+		Amhara: m.museum_map_region_amhara,
+		Oromia: m.museum_map_region_oromia,
+		Somali: m.museum_map_region_somali,
+		'Benishangul Gumz': m.museum_map_region_benishangul_gumuz,
+		SNNP: m.museum_map_region_central_south,
+		'South West Ethiopia': m.museum_map_region_south_west,
+		Gambela: m.museum_map_region_gambela,
+		Harari: m.museum_map_region_harari,
+		'Dire Dawa': m.museum_map_region_dire_dawa,
+		Sidama: m.museum_map_region_sidama,
+		'Addis Ababa': null
 	};
+	const regionName = (name: string) => {
+		const fn = REGION_NAME[name];
+		return fn === null ? '' : fn ? fn() : name;
+	};
+	const CITY_NAME: Record<string, () => string> = {
+		'Addis Ababa': m.museum_map_city_addis_ababa,
+		Jimma: m.museum_map_city_jimma
+	};
+	const cityName = (name: string) => CITY_NAME[name]?.() ?? name;
 	const SMALL = new Set(['Harari', 'Dire Dawa']);
 	const CALLOUT = [-14, 724] as const;
 
@@ -221,7 +245,7 @@
 
 		<g class="far-labels" aria-hidden="true">
 			{#each REGIONS as r (r.name)}
-				{@const name = REGION_NAME[r.name] ?? r.name}
+				{@const name = regionName(r.name)}
 				{#if name}
 					<text
 						class={['region-label', { small: SMALL.has(r.name) }]}
@@ -236,7 +260,7 @@
 			{#each CITIES as c (c.name)}
 				{#if c.name !== 'Jimma'}
 					<circle class="city" cx={c.at[0]} cy={c.at[1]} r="2" />
-					<text class="city-label" x={c.at[0] + 8} y={c.at[1] + 4}>{c.name}</text>
+					<text class="city-label" x={c.at[0] + 8} y={c.at[1] + 4}>{cityName(c.name)}</text>
 				{/if}
 			{/each}
 			{#if true}
@@ -248,7 +272,7 @@
 					class="leader"
 					d={`M${j[0] - 6} ${j[1] + 8} L${CALLOUT[0] + 40} ${CALLOUT[1] - 26}`}
 				/>
-				<text class="callout" x={CALLOUT[0]} y={CALLOUT[1]}>Jimma</text>
+				<text class="callout" x={CALLOUT[0]} y={CALLOUT[1]}>{cityName('Jimma')}</text>
 				<text class="callout-sub" x={CALLOUT[0]} y={CALLOUT[1] + 22}>{m.story_map_gibe()}</text>
 			{/if}
 		</g>
@@ -278,11 +302,11 @@
 					y={r.label[1]}
 					transform={r.vertical ? `rotate(-90 ${r.label[0]} ${r.label[1]})` : undefined}
 				>
-					{r.name}
+					{r.text()}
 				</text>
 			{/each}
 			{#each PEOPLES as p (p.name)}
-				<text class="people" x={p.at[0]} y={p.at[1]}>{p.name}</text>
+				<text class="people" x={p.at[0]} y={p.at[1]}>{p.text()}</text>
 			{/each}
 		</g>
 	</svg>

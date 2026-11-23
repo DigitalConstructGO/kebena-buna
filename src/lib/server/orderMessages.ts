@@ -4,27 +4,44 @@
  *
  * | Status                       | Template                                         |
  * | ---------------------------- | ------------------------------------------------ |
- * | paid                         | `order.paid`                                     |
+ * | placed on the website        | `order.placed`, with the link to pay and follow it |
+ * | paid                         | `order.paid`, or `order.tickets` when it has tickets |
  * | roasting (roast-to-order)    | `order.roasting`                                 |
  * | out for delivery             | `order.out_for_delivery` (rider) / `order.shipped` (courier) |
  * | ready for pickup             | `order.ready_for_pickup`                         |
  * | delivered / collected        | `order.delivered` / `order.collected`, with the review link |
  */
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
+import { ORIGIN } from '$app/env/private';
 import type { Writer } from '@nahu/admin-kit/server/db';
-import { courier, customer, location, order, user } from '#lib/server/db/schema.ts';
+import { courier, customer, location, order, orderLine, user } from '#lib/server/db/schema.ts';
 import type { Localized } from '#lib/server/db/fields.ts';
 import { queueMessage, type Payload } from '#lib/server/notify.ts';
 import { readSetting } from '#lib/server/stockReads.ts';
 import type { OrderStatus } from '#lib/constants.ts';
+import { siteHref } from '#lib/site/locale.ts';
+import { locales, type Locale } from '#lib/paraglide/runtime.js';
 
 type Order = typeof order.$inferSelect;
 
 const inLocale = (text: Localized | null | undefined, locale: string) =>
 	text?.[locale] || text?.am || text?.en || '';
 
+/**
+ * The order's own page, in its buyer's language, as a full address for a text or an email: its
+ * status, its tickets, and — while unpaid — the ways to pay. Null for an order without a link.
+ */
+export function orderUrl(o: Pick<Order, 'number' | 'payToken' | 'locale'>) {
+	if (!o.payToken) return null;
+	const locale = ((locales as readonly string[]).includes(o.locale) ? o.locale : 'en') as Locale;
+	const path = siteHref(`/track/${encodeURIComponent(o.number)}`, locale);
+	return `${ORIGIN.replace(/\/$/, '')}${path}?k=${encodeURIComponent(o.payToken)}`;
+}
+
 function templateFor(o: Order, to: OrderStatus): string | null {
 	switch (to) {
+		case 'pending_payment':
+			return 'order.placed';
 		case 'paid':
 		case 'roasting':
 		case 'ready_for_pickup':
@@ -43,8 +60,19 @@ function templateFor(o: Order, to: OrderStatus): string | null {
  * were queued (0 for a status that tells the customer nothing, or with no phone or email).
  */
 export async function queueOrderMessage(tx: Writer, o: Order, to: OrderStatus): Promise<number> {
-	const key = templateFor(o, to);
+	let key = templateFor(o, to);
 	if (!key) return 0;
+	// Paid with tickets in it: the message is the tickets, and where their QR codes are.
+	if (key === 'order.paid') {
+		const [entry] = await tx
+			.select({ id: orderLine.id })
+			.from(orderLine)
+			.where(
+				and(eq(orderLine.orderId, o.id), inArray(orderLine.itemType, ['ticket', 'event_ticket']))
+			)
+			.limit(1);
+		if (entry) key = 'order.tickets';
+	}
 	const [c] = await tx
 		.select({ name: customer.name, phone: customer.phone, email: customer.email })
 		.from(customer)
@@ -53,10 +81,14 @@ export async function queueOrderMessage(tx: Writer, o: Order, to: OrderStatus): 
 	const payload: Payload = {
 		name: o.contactName ?? c?.name ?? '',
 		order_number: o.number,
-		total: Number(o.total).toFixed(2)
+		total: Number(o.total).toFixed(2),
+		order_url: orderUrl(o)
 	};
 	if (key === 'order.out_for_delivery' && o.riderId) {
-		const [r] = await tx.select({ name: user.name, phone: user.phoneNumber }).from(user).where(eq(user.id, o.riderId));
+		const [r] = await tx
+			.select({ name: user.name, phone: user.phoneNumber })
+			.from(user)
+			.where(eq(user.id, o.riderId));
 		payload.rider_name = r?.name;
 		payload.rider_phone = r?.phone;
 	}
@@ -68,13 +100,20 @@ export async function queueOrderMessage(tx: Writer, o: Order, to: OrderStatus): 
 				.from(courier)
 				.where(eq(courier.id, o.courierId));
 			payload.courier = cr?.name;
-			if (cr?.template && o.trackingNumber) payload.tracking_url = cr.template.replace('{tracking}', encodeURIComponent(o.trackingNumber));
+			if (cr?.template && o.trackingNumber)
+				payload.tracking_url = cr.template.replace(
+					'{tracking}',
+					encodeURIComponent(o.trackingNumber)
+				);
 		}
 	}
 	if (key === 'order.ready_for_pickup') {
 		payload.pickup_code = o.pickupCode;
 		if (o.pickupLocationId) {
-			const [l] = await tx.select({ name: location.name }).from(location).where(eq(location.id, o.pickupLocationId));
+			const [l] = await tx
+				.select({ name: location.name })
+				.from(location)
+				.where(eq(location.id, o.pickupLocationId));
 			payload.pickup_place = inLocale(l?.name, o.locale);
 		}
 	}
@@ -85,7 +124,12 @@ export async function queueOrderMessage(tx: Writer, o: Order, to: OrderStatus): 
 	return queueMessage(
 		tx,
 		key,
-		{ phone: o.contactPhone ?? c?.phone, email: o.contactEmail ?? c?.email, locale: o.locale, customerId: o.customerId },
+		{
+			phone: o.contactPhone ?? c?.phone,
+			email: o.contactEmail ?? c?.email,
+			locale: o.locale,
+			customerId: o.customerId
+		},
 		payload,
 		{ refType: 'order', refId: o.id, dedupe: `order:${o.id}:${to}` }
 	);

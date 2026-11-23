@@ -7,18 +7,31 @@ import { addLocalDays, localClock, localToday } from '@nahu/admin-kit/time';
 import { db } from '#lib/server/db/index.ts';
 import { visitDay, visitSlot } from '#lib/server/db/schema.ts';
 import { floodRefused, isTrapped, paymentsOn } from '#lib/server/site.ts';
-import { activeAudiences, afterOrder, OrderRefused, placeTicketOrder, ticketTypesFor } from '#lib/server/ticketOrders.ts';
+import { transfersOn } from '#lib/server/transfers.ts';
+import {
+	activeAudiences,
+	afterOrder,
+	OrderRefused,
+	placeTicketOrder,
+	ticketTypesFor
+} from '#lib/server/ticketOrders.ts';
 import { ticketOrderSchema } from '#lib/schemas/siteVisit.ts';
 import { errorPath } from '#lib/site/visit/errorPath.ts';
-import { m } from '#lib/paraglide/messages.js';
+import { m } from '#lib/i18n.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /** Groups of 10 and more book through the request form (6.6), not this checkout. */
 const GROUP_SIZE = 10;
 const DAYS_AHEAD = 30;
 
-const slotFree = sql<number>`greatest(${visitSlot.capacity} - ${visitSlot.sold} - ${visitSlot.held}, 0)`.mapWith(Number);
-const dayFree = sql<number>`greatest(${visitDay.capacity} - ${visitDay.sold} - ${visitDay.held}, 0)`.mapWith(Number);
+const slotFree =
+	sql<number>`greatest(${visitSlot.capacity} - ${visitSlot.sold} - ${visitSlot.held}, 0)`.mapWith(
+		Number
+	);
+const dayFree =
+	sql<number>`greatest(${visitDay.capacity} - ${visitDay.sold} - ${visitDay.held}, 0)`.mapWith(
+		Number
+	);
 
 /** Open days with an arrival slot still to come, and how many places each has left. */
 async function openDays() {
@@ -26,8 +39,13 @@ async function openDays() {
 	const rows = await db
 		.select({
 			date: visitDay.date,
-			free: sql<number>`sum(greatest(${visitSlot.capacity} - ${visitSlot.sold} - ${visitSlot.held}, 0))`.mapWith(Number),
-			dayFree: sql<number>`min(greatest(${visitDay.capacity} - ${visitDay.sold} - ${visitDay.held}, 0))`.mapWith(Number)
+			free: sql<number>`sum(greatest(${visitSlot.capacity} - ${visitSlot.sold} - ${visitSlot.held}, 0))`.mapWith(
+				Number
+			),
+			dayFree:
+				sql<number>`min(greatest(${visitDay.capacity} - ${visitDay.sold} - ${visitDay.held}, 0))`.mapWith(
+					Number
+				)
 		})
 		.from(visitDay)
 		.innerJoin(visitSlot, eq(visitSlot.visitDayId, visitDay.id))
@@ -63,13 +81,19 @@ async function slotsOn(date: string) {
 			)
 		)
 		.orderBy(asc(visitSlot.startsAt));
-	return rows.map((r) => ({ id: r.id, label: localClock(r.startsAt), remaining: Math.min(r.free, r.dayFree) }));
+	return rows.map((r) => ({
+		id: r.id,
+		label: localClock(r.startsAt),
+		remaining: Math.min(r.free, r.dayFree)
+	}));
 }
 
 export const load: PageServerLoad = async ({ url }) => {
 	const audiences = await activeAudiences();
 	const audience =
-		audiences.find((a) => a.code === url.searchParams.get('audience')) ?? audiences.find((a) => a.isDefault) ?? audiences[0];
+		audiences.find((a) => a.code === url.searchParams.get('audience')) ??
+		audiences.find((a) => a.isDefault) ??
+		audiences[0];
 	const days = await openDays();
 	const asked = days.find((d) => d.date === url.searchParams.get('date') && d.free > 0);
 	const date = asked?.date ?? days.find((d) => d.free > 0)?.date ?? null;
@@ -78,7 +102,9 @@ export const load: PageServerLoad = async ({ url }) => {
 		date ? slotsOn(date) : [],
 		audience ? ticketTypesFor(audience.id, null) : []
 	]);
-	const onSale = types.filter((t) => t.minQuantity < GROUP_SIZE).map((t) => ({ ...t, price: Number(t.price) }));
+	const onSale = types
+		.filter((t) => t.minQuantity < GROUP_SIZE)
+		.map((t) => ({ ...t, price: Number(t.price) }));
 
 	const form = await superValidate(
 		{
@@ -93,12 +119,19 @@ export const load: PageServerLoad = async ({ url }) => {
 	return {
 		form,
 		audiences: audiences.map((a) => ({ code: a.code, name: a.name })),
-		audience: audience ? { id: audience.id, code: audience.code, declaration: audience.requiresIdCheck ? audience.declaration : null } : null,
+		audience: audience
+			? {
+					id: audience.id,
+					code: audience.code,
+					declaration: audience.requiresIdCheck ? audience.declaration : null
+				}
+			: null,
 		days,
 		date,
 		slots,
 		types: onSale,
-		paymentsOn: paymentsOn()
+		paymentsOn: paymentsOn(),
+		transfersOn: await transfersOn()
 	};
 };
 
@@ -107,7 +140,8 @@ export const actions: Actions = {
 		const form = await superValidate(event.request, zod4(ticketOrderSchema));
 		if (!form.valid) return fail(400, { form });
 		if (isTrapped(form.data)) return message(form, m.visit_sent());
-		if (floodRefused(event, 'tickets', 4)) return message(form, m.site_err_flood(), { status: 429 });
+		if (floodRefused(event, 'tickets', 4))
+			return message(form, m.site_err_flood(), { status: 429 });
 
 		let placed;
 		try {
@@ -116,6 +150,6 @@ export const actions: Actions = {
 			if (err instanceof OrderRefused) return setError(form, errorPath(err.field), err.message);
 			throw err;
 		}
-		return afterOrder(event, placed);
+		return afterOrder(event, placed, form.data.payWith);
 	}
 };

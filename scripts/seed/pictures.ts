@@ -48,7 +48,10 @@ const PICTURES: Record<string, Picture[]> = {
 		{ src: 'journey/drying.webp', alt: ['Whole cherries drying in the sun'] }
 	],
 	'origins-discovery-set': [
-		{ src: 'collection/unwashed-nekemte.webp', alt: ['Beans from three of our origins', 'ከሦስት መነሻዎቻችን የመጣ ቡና'] },
+		{
+			src: 'collection/unwashed-nekemte.webp',
+			alt: ['Beans from three of our origins', 'ከሦስት መነሻዎቻችን የመጣ ቡና']
+		},
 		{ src: 'collection/washed-limmu.webp', alt: ['Washed Limu'] },
 		{ src: 'collection/washed-gera.webp', alt: ['Washed Gera'] },
 		{ src: 'collection/unwashed-djimmah.webp', alt: ['Unwashed Djimmah'] }
@@ -80,7 +83,8 @@ const EVENTS: Record<string, string> = {
 };
 
 /** The stored name for a design photo: one copy each, however many products use it. */
-const storedName = (src: string) => `seed-${src.replace(/\.[^.]+$/, '').replace(/[^a-z0-9]+/gi, '-')}${extname(src)}`;
+const storedName = (src: string) =>
+	`seed-${src.replace(/\.[^.]+$/, '').replace(/[^a-z0-9]+/gi, '-')}${extname(src)}`;
 
 function store(src: string) {
 	const name = storedName(src);
@@ -95,7 +99,10 @@ export async function seed() {
 	let pictures = 0;
 	let galleries = 0;
 	for (const [slug, list] of Object.entries(PICTURES)) {
-		const [p] = await db.select({ id: s.product.id, image: s.product.image }).from(s.product).where(eq(s.product.slug, slug));
+		const [p] = await db
+			.select({ id: s.product.id, image: s.product.image })
+			.from(s.product)
+			.where(eq(s.product.slug, slug));
 		if (!p) continue;
 		const names = list.map((pic) => store(pic.src));
 
@@ -107,10 +114,19 @@ export async function seed() {
 			pictures++;
 		}
 
-		const gallery = await db.select({ id: s.productImage.id }).from(s.productImage).where(eq(s.productImage.productId, p.id)).limit(1);
+		const gallery = await db
+			.select({ id: s.productImage.id })
+			.from(s.productImage)
+			.where(eq(s.productImage.productId, p.id))
+			.limit(1);
 		if (!gallery.length && list.length > 1) {
 			await db.insert(s.productImage).values(
-				list.slice(1).map((pic, i) => ({ productId: p.id, fileName: names[i + 1], alt: L(...pic.alt), sortOrder: i }))
+				list.slice(1).map((pic, i) => ({
+					productId: p.id,
+					fileName: names[i + 1],
+					alt: L(...pic.alt),
+					sortOrder: i
+				}))
 			);
 			galleries++;
 		}

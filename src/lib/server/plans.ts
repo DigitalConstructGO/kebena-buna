@@ -25,13 +25,24 @@ export async function savePlan(
 				.update(membershipPlan)
 				.set({ ...values, updatedBy: event.locals.user?.id })
 				.where(eq(membershipPlan.id, id));
-			await recordAudit(tx, event, { table: 'membership_plan', recordId: id, action: 'update', before, after: values });
+			await recordAudit(tx, event, {
+				table: 'membership_plan',
+				recordId: id,
+				action: 'update',
+				before,
+				after: values
+			});
 			return id;
 		}
-		const [res] = await tx
-			.insert(membershipPlan)
-			.values({ ...(values as typeof membershipPlan.$inferInsert), createdBy: event.locals.user?.id });
-		await recordAudit(tx, event, { table: 'membership_plan', recordId: res.insertId, action: 'create' });
+		const [res] = await tx.insert(membershipPlan).values({
+			...(values as typeof membershipPlan.$inferInsert),
+			createdBy: event.locals.user?.id
+		});
+		await recordAudit(tx, event, {
+			table: 'membership_plan',
+			recordId: res.insertId,
+			action: 'create'
+		});
 		return res.insertId;
 	});
 }

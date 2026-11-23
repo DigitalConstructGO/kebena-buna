@@ -23,7 +23,13 @@
 		fields: [
 			{ name: 'nameEn', label: 'Name (English)', type: 'text' },
 			{ name: 'nameAm', label: 'Name (Amharic)', type: 'text', required: false },
-			{ name: 'nameOm', label: 'Name (Afaan Oromo)', type: 'text', required: false, inTable: false },
+			{
+				name: 'nameOm',
+				label: 'Name (Afaan Oromo)',
+				type: 'text',
+				required: false,
+				inTable: false
+			},
 			{ name: 'nameAr', label: 'Name (Arabic)', type: 'text', required: false, inTable: false },
 			{ name: 'nameIt', label: 'Name (Italian)', type: 'text', required: false, inTable: false },
 			{ name: 'nameFr', label: 'Name (French)', type: 'text', required: false, inTable: false },
@@ -37,11 +43,46 @@
 				required: false
 			},
 			{ name: 'storyEn', label: 'Story (English)', type: 'textarea', required: false, rows: 4 },
-			{ name: 'storyAm', label: 'Story (Amharic)', type: 'textarea', required: false, rows: 4, inTable: false },
-			{ name: 'storyOm', label: 'Story (Afaan Oromo)', type: 'textarea', required: false, rows: 4, inTable: false },
-			{ name: 'storyAr', label: 'Story (Arabic)', type: 'textarea', required: false, rows: 4, inTable: false },
-			{ name: 'storyIt', label: 'Story (Italian)', type: 'textarea', required: false, rows: 4, inTable: false },
-			{ name: 'storyFr', label: 'Story (French)', type: 'textarea', required: false, rows: 4, inTable: false },
+			{
+				name: 'storyAm',
+				label: 'Story (Amharic)',
+				type: 'textarea',
+				required: false,
+				rows: 4,
+				inTable: false
+			},
+			{
+				name: 'storyOm',
+				label: 'Story (Afaan Oromo)',
+				type: 'textarea',
+				required: false,
+				rows: 4,
+				inTable: false
+			},
+			{
+				name: 'storyAr',
+				label: 'Story (Arabic)',
+				type: 'textarea',
+				required: false,
+				rows: 4,
+				inTable: false
+			},
+			{
+				name: 'storyIt',
+				label: 'Story (Italian)',
+				type: 'textarea',
+				required: false,
+				rows: 4,
+				inTable: false
+			},
+			{
+				name: 'storyFr',
+				label: 'Story (French)',
+				type: 'textarea',
+				required: false,
+				rows: 4,
+				inTable: false
+			},
 			{ name: 'status', label: 'Status', type: 'boolean' }
 		]
 	}}

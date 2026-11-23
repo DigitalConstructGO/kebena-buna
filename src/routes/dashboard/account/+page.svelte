@@ -19,12 +19,18 @@
 	// svelte-ignore state_referenced_locally
 	const pass = createForm(data.passwordForm, changePasswordSchema);
 	const { form: nameData, errors: nameErrors, enhance: nameEnhance, delayed: nameBusy } = name;
-	const { form: passData, errors: passErrors, enhance: passEnhance, delayed: passBusy, allErrors } = pass;
+	const {
+		form: passData,
+		errors: passErrors,
+		enhance: passEnhance,
+		delayed: passBusy,
+		allErrors
+	} = pass;
 </script>
 
 <PageHeader title="My account" description={data.me.email} />
 
-<div class="mt-6 grid grid-cols-1 max-w-4xl gap-6 lg:grid-cols-2">
+<div class="mt-6 grid max-w-4xl grid-cols-1 gap-6 lg:grid-cols-2">
 	<PageSection title="You">
 		<SingleTable
 			singleTable={[
@@ -34,7 +40,14 @@
 			]}
 		/>
 		<form method="POST" action="?/name" use:nameEnhance class="mt-4 grid grid-cols-1 gap-3">
-			<InputComp label="Your name" name="name" form={nameData} errors={nameErrors} required id="account-name" />
+			<InputComp
+				label="Your name"
+				name="name"
+				form={nameData}
+				errors={nameErrors}
+				required
+				id="account-name"
+			/>
 			<Button type="submit" class="justify-self-start" disabled={$nameBusy}>
 				{#if $nameBusy}<LoadingBtn name="Saving" />{:else}<Save class="size-4" /> Save name{/if}
 			</Button>
@@ -43,9 +56,31 @@
 	<PageSection title="Password" hint="Changing it signs your other devices out.">
 		<form method="POST" action="?/password" use:passEnhance class="grid grid-cols-1 gap-3">
 			<Errors allErrors={$allErrors} />
-			<InputComp label="Current password" name="currentPassword" type="password" form={passData} errors={passErrors} required />
-			<InputComp label="New password" name="newPassword" type="password" form={passData} errors={passErrors} required description="At least 10 characters." />
-			<InputComp label="New password again" name="confirm" type="password" form={passData} errors={passErrors} required />
+			<InputComp
+				label="Current password"
+				name="currentPassword"
+				type="password"
+				form={passData}
+				errors={passErrors}
+				required
+			/>
+			<InputComp
+				label="New password"
+				name="newPassword"
+				type="password"
+				form={passData}
+				errors={passErrors}
+				required
+				description="At least 10 characters."
+			/>
+			<InputComp
+				label="New password again"
+				name="confirm"
+				type="password"
+				form={passData}
+				errors={passErrors}
+				required
+			/>
 			<Button type="submit" class="justify-self-start" disabled={$passBusy}>
 				{#if $passBusy}<LoadingBtn name="Changing" />{:else}<KeyRound class="size-4" /> Change password{/if}
 			</Button>

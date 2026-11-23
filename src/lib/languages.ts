@@ -34,4 +34,11 @@ export const LANG_CHOICES = (['am', 'en', 'om', 'ar', 'it', 'fr'] as const).map(
 }));
 
 /** The order a translated value falls back through when the asked language is empty. */
-export const FALLBACK_LANGS = ['en', 'am', 'om', 'ar', 'it', 'fr'] as const satisfies readonly Lang[];
+export const FALLBACK_LANGS = [
+	'en',
+	'am',
+	'om',
+	'ar',
+	'it',
+	'fr'
+] as const satisfies readonly Lang[];

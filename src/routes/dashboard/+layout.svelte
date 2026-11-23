@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { ModeWatcher } from 'mode-watcher';
 	import Coffee from '@lucide/svelte/icons/coffee';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
@@ -42,8 +43,10 @@
 				<span class="truncate text-xs">Kebena General Trading PLC</span>
 			{/snippet}
 			{#snippet logo()}
-				<a href="/dashboard" class="flex items-center gap-3 px-1 py-2">
-					<span class="grid grid-cols-1 size-9 place-items-center rounded-lg bg-primary text-primary-foreground">
+				<a href={resolve('/dashboard')} class="flex items-center gap-3 px-1 py-2">
+					<span
+						class="grid size-9 grid-cols-1 place-items-center rounded-lg bg-primary text-primary-foreground"
+					>
 						<Coffee class="size-5" />
 					</span>
 					<span class="leading-tight">

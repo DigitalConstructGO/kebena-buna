@@ -20,15 +20,20 @@ import { onSale, productImageUrl, tracksStock } from '#lib/server/cart.ts';
 import type { PageServerLoad } from './$types';
 
 /** Bags on hand across a product's variants, less those set aside. */
-const availableOfProduct = sql<number>`(select coalesce(sum(ps.units - ps.reserved_units), 0) from packed_stock ps join product_variant pv on pv.id = ps.variant_id where pv.product_id = \`product\`.\`id\` and pv.deleted_at is null and pv.is_active = 1)`.mapWith(
-	Number
-);
-const availableOfVariant = sql<number>`(select coalesce(sum(ps.units - ps.reserved_units), 0) from packed_stock ps where ps.variant_id = ${productVariant.id})`.mapWith(
-	Number
-);
+const availableOfProduct =
+	sql<number>`(select coalesce(sum(ps.units - ps.reserved_units), 0) from packed_stock ps join product_variant pv on pv.id = ps.variant_id where pv.product_id = \`product\`.\`id\` and pv.deleted_at is null and pv.is_active = 1)`.mapWith(
+		Number
+	);
+const availableOfVariant =
+	sql<number>`(select coalesce(sum(ps.units - ps.reserved_units), 0) from packed_stock ps where ps.variant_id = ${productVariant.id})`.mapWith(
+		Number
+	);
 
 /** A product's default of an option: the one marked so, else the first. */
-const defaultOf = <T extends { productId: number; id: number; isDefault: boolean }>(rows: T[], productId: number) => {
+const defaultOf = <T extends { productId: number; id: number; isDefault: boolean }>(
+	rows: T[],
+	productId: number
+) => {
 	const own = rows.filter((r) => r.productId === productId);
 	return own.find((r) => r.isDefault) ?? own[0] ?? null;
 };
@@ -53,7 +58,12 @@ export const load: PageServerLoad = async () => {
 			.where(onSale)
 			.orderBy(asc(product.sortOrder), asc(product.id)),
 		db
-			.select({ id: productCategory.id, slug: productCategory.slug, name: productCategory.name, description: productCategory.description })
+			.select({
+				id: productCategory.id,
+				slug: productCategory.slug,
+				name: productCategory.name,
+				description: productCategory.description
+			})
 			.from(productCategory)
 			.where(and(eq(productCategory.status, true), isNull(productCategory.deletedAt)))
 			.orderBy(asc(productCategory.sortOrder), asc(productCategory.id))
@@ -79,22 +89,41 @@ export const load: PageServerLoad = async () => {
 					})
 					.from(productVariant)
 					.leftJoin(bagSize, eq(productVariant.bagSizeId, bagSize.id))
-					.where(and(inArray(productVariant.productId, ids), eq(productVariant.isActive, true), isNull(productVariant.deletedAt)))
+					.where(
+						and(
+							inArray(productVariant.productId, ids),
+							eq(productVariant.isActive, true),
+							isNull(productVariant.deletedAt)
+						)
+					)
 					.orderBy(asc(productVariant.sortOrder), asc(bagSize.grams), asc(productVariant.id)),
 				db
-					.select({ productId: productRoastLevel.productId, id: roastLevel.id, name: roastLevel.name, isDefault: productRoastLevel.isDefault })
+					.select({
+						productId: productRoastLevel.productId,
+						id: roastLevel.id,
+						name: roastLevel.name,
+						isDefault: productRoastLevel.isDefault
+					})
 					.from(productRoastLevel)
 					.innerJoin(roastLevel, eq(productRoastLevel.roastLevelId, roastLevel.id))
 					.where(and(inArray(productRoastLevel.productId, ids), isNull(roastLevel.deletedAt)))
 					.orderBy(asc(roastLevel.sortOrder)),
 				db
-					.select({ productId: productGrind.productId, id: grind.id, isDefault: productGrind.isDefault })
+					.select({
+						productId: productGrind.productId,
+						id: grind.id,
+						isDefault: productGrind.isDefault
+					})
 					.from(productGrind)
 					.innerJoin(grind, eq(productGrind.grindId, grind.id))
 					.where(and(inArray(productGrind.productId, ids), isNull(grind.deletedAt)))
 					.orderBy(asc(grind.sortOrder)),
 				db
-					.select({ productId: productPackaging.productId, id: packaging.id, isDefault: productPackaging.isDefault })
+					.select({
+						productId: productPackaging.productId,
+						id: packaging.id,
+						isDefault: productPackaging.isDefault
+					})
 					.from(productPackaging)
 					.innerJoin(packaging, eq(productPackaging.packagingId, packaging.id))
 					.where(and(inArray(productPackaging.productId, ids), isNull(packaging.deletedAt)))
@@ -103,7 +132,10 @@ export const load: PageServerLoad = async () => {
 					.select({ productId: productOrigin.productId, station: station.name })
 					.from(productOrigin)
 					.leftJoin(lot, eq(productOrigin.lotId, lot.id))
-					.leftJoin(station, eq(sql`coalesce(${productOrigin.stationId}, ${lot.stationId})`, station.id))
+					.leftJoin(
+						station,
+						eq(sql`coalesce(${productOrigin.stationId}, ${lot.stationId})`, station.id)
+					)
 					.where(inArray(productOrigin.productId, ids))
 					.orderBy(asc(productOrigin.sortOrder))
 			])
@@ -125,7 +157,13 @@ export const load: PageServerLoad = async () => {
 			soldOut: counted && p.available <= 0,
 			variants: variants
 				.filter((v) => v.productId === p.id)
-				.map((v) => ({ id: v.id, name: v.name, size: v.size, price: Number(v.price), available: counted ? v.available : null })),
+				.map((v) => ({
+					id: v.id,
+					name: v.name,
+					size: v.size,
+					price: Number(v.price),
+					available: counted ? v.available : null
+				})),
 			roast: roast ? { id: roast.id, name: roast.name } : null,
 			grindId: defaultOf(grinds, p.id)?.id ?? null,
 			packagingId: defaultOf(packs, p.id)?.id ?? null,

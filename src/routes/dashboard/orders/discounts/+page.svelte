@@ -17,11 +17,19 @@
 	const usedUp = (row: Row) => !!row.usageLimit && row.usedCount >= row.usageLimit;
 
 	const columns: ColumnDef<Row>[] = [
-		{ id: 'code', accessorKey: 'code', header: sortable('Code'), cell: ({ row }) => link('discount', row.original.id, row.original.code) },
+		{
+			id: 'code',
+			accessorKey: 'code',
+			header: sortable('Code'),
+			cell: ({ row }) => link('discount', row.original.id, row.original.code)
+		},
 		{
 			id: 'value',
 			header: 'Discount',
-			cell: ({ row }) => (row.original.kind === 'percent' ? `${Number(row.original.value)}%` : `ETB ${amount(row.original.value)}`)
+			cell: ({ row }) =>
+				row.original.kind === 'percent'
+					? `${Number(row.original.value)}%`
+					: `ETB ${amount(row.original.value)}`
 		},
 		{
 			id: 'appliesTo',
@@ -29,17 +37,33 @@
 			meta: { class: 'hidden lg:table-cell' },
 			cell: ({ row }) => row.original.appliesTo?.map(humanize).join(', ') || 'Everything'
 		},
-		{ id: 'starts', header: 'From', meta: { class: 'hidden md:table-cell' }, cell: ({ row }) => date(row.original.startsAt) },
+		{
+			id: 'starts',
+			header: 'From',
+			meta: { class: 'hidden md:table-cell' },
+			cell: ({ row }) => date(row.original.startsAt)
+		},
 		{ id: 'expires', header: 'Until', cell: ({ row }) => date(row.original.expiresAt) },
 		{
 			id: 'used',
 			accessorKey: 'usedCount',
 			header: sortable('Used'),
 			meta: { align: 'right' },
-			cell: ({ row }) => `${row.original.usedCount}${row.original.usageLimit ? ` / ${row.original.usageLimit}` : ''}`
+			cell: ({ row }) =>
+				`${row.original.usedCount}${row.original.usageLimit ? ` / ${row.original.usageLimit}` : ''}`
 		},
-		{ id: 'given', header: 'Given (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.given) },
-		{ id: 'createdBy', header: 'Made by', meta: { class: 'hidden xl:table-cell' }, cell: ({ row }) => user(row.original.createdById, row.original.createdBy) },
+		{
+			id: 'given',
+			header: 'Given (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.given)
+		},
+		{
+			id: 'createdBy',
+			header: 'Made by',
+			meta: { class: 'hidden xl:table-cell' },
+			cell: ({ row }) => user(row.original.createdById, row.original.createdBy)
+		},
 		{
 			id: 'state',
 			header: 'Status',
@@ -54,9 +78,23 @@
 	const href = useLinks();
 </script>
 
-<PageHeader title="Discount codes" description="Percent or birr off, with a window, limits and what they apply to.">
+<PageHeader
+	title="Discount codes"
+	description="Percent or birr off, with a window, limits and what they apply to."
+>
 	{#snippet actions()}
-		<FormDialog title="New discount code" triggerLabel="New code" triggerVariant="default" triggerIcon={Plus} submitIcon={Plus} action="?/add" data={data.addForm} schema={discountSchema} dataType="json" resetOnSuccess>
+		<FormDialog
+			title="New discount code"
+			triggerLabel="New code"
+			triggerVariant="default"
+			triggerIcon={Plus}
+			submitIcon={Plus}
+			action="?/add"
+			data={data.addForm}
+			schema={discountSchema}
+			dataType="json"
+			resetOnSuccess
+		>
 			{#snippet fields({ form, errors })}
 				<DiscountFields form={form as never} errors={errors as never} />
 			{/snippet}
@@ -64,4 +102,9 @@
 	{/snippet}
 </PageHeader>
 
-<DataTable rowHref={(row) => href('discount', row.id)} {columns} data={data.rows} fileName="Discount codes" />
+<DataTable
+	rowHref={(row) => href('discount', row.id)}
+	{columns}
+	data={data.rows}
+	fileName="Discount codes"
+/>

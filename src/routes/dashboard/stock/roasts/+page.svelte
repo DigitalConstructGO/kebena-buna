@@ -17,32 +17,87 @@
 		(Number(r.weightLossPct) < data.lossRange.min || Number(r.weightLossPct) > data.lossRange.max);
 
 	const columns: ColumnDef<Row>[] = [
-		{ id: 'code', accessorKey: 'code', header: sortable('Batch'), cell: ({ row }) => link('roastBatch', row.original.id, row.original.code) },
-		{ id: 'roastedAt', accessorKey: 'roastedAt', header: sortable('Roasted'), cell: ({ row }) => dateTime(row.original.roastedAt) },
-		{ id: 'productId', header: 'For', cell: ({ row }) => link('product', row.original.productId, row.original.product) },
+		{
+			id: 'code',
+			accessorKey: 'code',
+			header: sortable('Batch'),
+			cell: ({ row }) => link('roastBatch', row.original.id, row.original.code)
+		},
+		{
+			id: 'roastedAt',
+			accessorKey: 'roastedAt',
+			header: sortable('Roasted'),
+			cell: ({ row }) => dateTime(row.original.roastedAt)
+		},
+		{
+			id: 'productId',
+			header: 'For',
+			cell: ({ row }) => link('product', row.original.productId, row.original.product)
+		},
 		{ id: 'roastLevelId', header: 'Roast', cell: ({ row }) => row.original.roastLevel },
-		{ id: 'machineId', header: 'Machine', meta: { class: 'hidden lg:table-cell' }, cell: ({ row }) => row.original.machine ?? '—' },
-		{ id: 'locationId', header: 'Location', meta: { class: 'hidden xl:table-cell' }, cell: ({ row }) => link('location', row.original.locationId, row.original.location) },
-		{ id: 'greenKgIn', accessorKey: 'greenKgIn', header: sortable('Green in'), meta: { align: 'right' }, cell: ({ row }) => kg(row.original.greenKgIn) },
-		{ id: 'roastedKgOut', accessorKey: 'roastedKgOut', header: sortable('Roasted out'), meta: { align: 'right' }, cell: ({ row }) => kg(row.original.roastedKgOut) },
+		{
+			id: 'machineId',
+			header: 'Machine',
+			meta: { class: 'hidden lg:table-cell' },
+			cell: ({ row }) => row.original.machine ?? '—'
+		},
+		{
+			id: 'locationId',
+			header: 'Location',
+			meta: { class: 'hidden xl:table-cell' },
+			cell: ({ row }) => link('location', row.original.locationId, row.original.location)
+		},
+		{
+			id: 'greenKgIn',
+			accessorKey: 'greenKgIn',
+			header: sortable('Green in'),
+			meta: { align: 'right' },
+			cell: ({ row }) => kg(row.original.greenKgIn)
+		},
+		{
+			id: 'roastedKgOut',
+			accessorKey: 'roastedKgOut',
+			header: sortable('Roasted out'),
+			meta: { align: 'right' },
+			cell: ({ row }) => kg(row.original.roastedKgOut)
+		},
 		{
 			id: 'weightLossPct',
 			accessorKey: 'weightLossPct',
 			header: sortable('Loss'),
 			meta: { align: 'right' },
 			cell: ({ row }) =>
-				offRange(row.original) ? status('failed', pct(row.original.weightLossPct)) : percent(row.original.weightLossPct)
+				offRange(row.original)
+					? status('failed', pct(row.original.weightLossPct))
+					: percent(row.original.weightLossPct)
 		},
-		{ id: 'cuppingScore', accessorKey: 'cuppingScore', header: sortable('Cupping'), meta: { align: 'right', class: 'hidden lg:table-cell' }, cell: ({ row }) => row.original.cuppingScore ?? '—' },
-		{ id: 'roaster', header: 'Roaster', meta: { class: 'hidden md:table-cell' }, cell: ({ row }) => user(row.original.roasterId, row.original.roaster) },
-		{ id: 'isToOrder', header: 'To order', meta: { class: 'hidden xl:table-cell' }, cell: ({ row }) => flag(row.original.isToOrder, 'Roast day', 'Shelf') }
+		{
+			id: 'cuppingScore',
+			accessorKey: 'cuppingScore',
+			header: sortable('Cupping'),
+			meta: { align: 'right', class: 'hidden lg:table-cell' },
+			cell: ({ row }) => row.original.cuppingScore ?? '—'
+		},
+		{
+			id: 'roaster',
+			header: 'Roaster',
+			meta: { class: 'hidden md:table-cell' },
+			cell: ({ row }) => user(row.original.roasterId, row.original.roaster)
+		},
+		{
+			id: 'isToOrder',
+			header: 'To order',
+			meta: { class: 'hidden xl:table-cell' },
+			cell: ({ row }) => flag(row.original.isToOrder, 'Roast day', 'Shelf')
+		}
 	];
 	const href = useLinks();
 </script>
 
 <PageHeader
 	title="Roast batches"
-	description="Every roast, the lots it used and what came out. Loss outside {data.lossRange.min}–{data.lossRange.max}% is flagged."
+	description="Every roast, the lots it used and what came out. Loss outside {data.lossRange
+		.min}–{data.lossRange.max}% is flagged."
 >
 	{#snippet actions()}
 		{#if data.canManage}
@@ -57,7 +112,12 @@
 	data={data.rows}
 	server={data.server}
 	facetKeys={['productId', 'roastLevelId', 'machineId', 'locationId']}
-	facetLabels={{ productId: 'Product', roastLevelId: 'Roast', machineId: 'Machine', locationId: 'Location' }}
+	facetLabels={{
+		productId: 'Product',
+		roastLevelId: 'Roast',
+		machineId: 'Machine',
+		locationId: 'Location'
+	}}
 	dateFilter="Roasted"
 	rowClass={(r) => (offRange(r) ? 'bg-destructive/5' : null)}
 	charts

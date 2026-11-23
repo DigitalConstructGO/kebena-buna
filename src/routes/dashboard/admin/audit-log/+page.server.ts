@@ -71,7 +71,12 @@ export const load = async ({ url }) => {
 					.where(buildWhere(query, spec, { except: 'action' }))
 					.groupBy(auditLog.action),
 			userId: () =>
-				withUser(db.select({ value: auditLog.userId, label: user.name, count: count() }).from(auditLog).$dynamic())
+				withUser(
+					db
+						.select({ value: auditLog.userId, label: user.name, count: count() })
+						.from(auditLog)
+						.$dynamic()
+				)
 					.where(buildWhere(query, spec, { except: 'userId' }))
 					.groupBy(auditLog.userId, user.name)
 		})

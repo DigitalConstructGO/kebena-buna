@@ -12,9 +12,14 @@
 		{
 			id: 'updatedBy',
 			header: 'Changed by',
-			cell: ({ row }) => user(row.original.updatedById as string | null, row.original.updatedBy as string | null)
+			cell: ({ row }) =>
+				user(row.original.updatedById as string | null, row.original.updatedBy as string | null)
 		},
-		{ id: 'updatedAt', header: 'Changed', cell: ({ row }) => dateTime(row.original.updatedAt as string | null) }
+		{
+			id: 'updatedAt',
+			header: 'Changed',
+			cell: ({ row }) => dateTime(row.original.updatedAt as string | null)
+		}
 	];
 </script>
 

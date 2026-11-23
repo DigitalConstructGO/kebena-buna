@@ -10,14 +10,22 @@
 	type Row = (typeof data.rows)[number];
 
 	const columns: ColumnDef<Row>[] = [
-		{ id: 'id', header: 'Refund', cell: ({ row }) => link('refund', row.original.id, `#${row.original.id}`) },
+		{
+			id: 'id',
+			header: 'Refund',
+			cell: ({ row }) => link('refund', row.original.id, `#${row.original.id}`)
+		},
 		{
 			id: 'createdAt',
 			accessorKey: 'createdAt',
 			header: sortable('Asked'),
 			cell: ({ row }) => dateTime(row.original.createdAt)
 		},
-		{ id: 'order', header: 'Order', cell: ({ row }) => link('order', row.original.orderId, row.original.orderNumber) },
+		{
+			id: 'order',
+			header: 'Order',
+			cell: ({ row }) => link('order', row.original.orderId, row.original.orderNumber)
+		},
 		{
 			id: 'customer',
 			header: 'Customer',
@@ -25,7 +33,12 @@
 			cell: ({ row }) => link('customer', row.original.customerId, row.original.customer)
 		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) },
-		{ id: 'reason', header: 'Reason', meta: { class: 'hidden lg:table-cell' }, cell: ({ row }) => longText(row.original.reason) },
+		{
+			id: 'reason',
+			header: 'Reason',
+			meta: { class: 'hidden lg:table-cell' },
+			cell: ({ row }) => longText(row.original.reason)
+		},
 		{
 			id: 'requestedBy',
 			header: 'Asked by',

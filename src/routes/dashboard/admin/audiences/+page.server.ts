@@ -15,7 +15,11 @@ const crud = localizedCrud({
 	localized: ['name', 'declaration'],
 	/** One default: choosing one takes it off the others. */
 	afterWrite: async (tx, { id, data }) => {
-		if (data.isDefault) await tx.update(audience).set({ isDefault: false }).where(and(ne(audience.id, id), eq(audience.isDefault, true)));
+		if (data.isDefault)
+			await tx
+				.update(audience)
+				.set({ isDefault: false })
+				.where(and(ne(audience.id, id), eq(audience.isDefault, true)));
 	}
 });
 

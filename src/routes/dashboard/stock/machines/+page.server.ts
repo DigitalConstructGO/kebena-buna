@@ -24,4 +24,7 @@ const crud = contentCrud({
 });
 
 export const load = () => crud.load();
-export const actions = { ...crud.actions, delete: lookupDeleteAction(roastMachine, 'roasting machine') };
+export const actions = {
+	...crud.actions,
+	delete: lookupDeleteAction(roastMachine, 'roasting machine')
+};

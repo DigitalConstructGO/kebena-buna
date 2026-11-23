@@ -25,17 +25,29 @@
 	description="The product itself; its sizes and prices, origins and photos are added on its page next."
 />
 
-<form method="POST" use:enhance class="mt-4 grid grid-cols-1 max-w-5xl gap-6">
+<form method="POST" use:enhance class="mt-4 grid max-w-5xl grid-cols-1 gap-6">
 	<Errors allErrors={$allErrors} />
 	<PageSection title="Product">
 		<div class="grid grid-cols-1 gap-4">
-			<ProductFields form={form as never} errors={errors as never} options={data.options} lowDefault={data.roastedLowDefault} />
+			<ProductFields
+				form={form as never}
+				errors={errors as never}
+				options={data.options}
+				lowDefault={data.roastedLowDefault}
+			/>
 		</div>
 	</PageSection>
-	<PageSection title="Description" hint="Shown on the product page. Pasted formatting is cleaned on save.">
+	<PageSection
+		title="Description"
+		hint="Shown on the product page. Pasted formatting is cleaned on save."
+	>
 		<LanguageTabs form={form as never} errors={errors as never} fields={['description']}>
 			{#snippet children({ suffix, language })}
-				<RichEditor name="description{suffix}" label="Description ({language})" bind:value={$form[`description${suffix}`]} />
+				<RichEditor
+					name="description{suffix}"
+					label="Description ({language})"
+					bind:value={$form[`description${suffix}`]}
+				/>
 			{/snippet}
 		</LanguageTabs>
 	</PageSection>

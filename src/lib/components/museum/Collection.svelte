@@ -1,11 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { reveal } from '#lib/reveal.js';
+	import ImageViewer from '@nahu/admin-kit/components/ImageViewer.svelte';
 	import type { CollectionContent } from '#lib/content/museum.js';
+	import { m } from '#lib/i18n.ts';
 
 	let { content }: { content: CollectionContent } = $props();
 	let root: HTMLElement;
 	let broken = $state<Record<string, boolean>>({});
+	/** A lot's photo pressed opens the collection's photos large, starting on that one. */
+	let viewerOpen = $state(false);
+	let viewerAt = $state(0);
 
 	onMount(() => reveal(root));
 </script>
@@ -38,19 +43,29 @@
 				<li class="lot" data-reveal>
 					<figure class="photo">
 						{#if !broken[lot.id]}
-							<img
-								src={lot.photo.src}
-								alt={lot.photo.alt}
-								width="282"
-								height="240"
-								loading="lazy"
-								decoding="async"
-								onerror={() => (broken[lot.id] = true)}
-							/>
+							<button
+								type="button"
+								class="zoom"
+								aria-label={m.home_view_larger({ title: lot.title })}
+								onclick={() => {
+									viewerAt = i;
+									viewerOpen = true;
+								}}
+							>
+								<img
+									src={lot.photo.src}
+									alt={lot.photo.alt}
+									width="282"
+									height="240"
+									loading="lazy"
+									decoding="async"
+									onerror={() => (broken[lot.id] = true)}
+								/>
+							</button>
 						{/if}
 					</figure>
 					<div class="placard">
-						<p class="exhibit">Exhibit 04.{i + 1}</p>
+						<p class="exhibit">{m.home_collection_exhibit({ n: `04.${i + 1}` })}</p>
 						<h3>{lot.title}</h3>
 						<dl>
 							{#each lot.specs as s (s.label)}
@@ -66,6 +81,14 @@
 		</ul>
 	{/if}
 </section>
+
+<ImageViewer
+	bind:open={viewerOpen}
+	bind:index={viewerAt}
+	images={content.lots.map((l) => l.photo.src)}
+	captions={content.lots.map((l) => `${l.title}: ${l.photo.alt}`)}
+	title={content.title}
+/>
 
 <style>
 	.collection {
@@ -142,6 +165,19 @@
 		height: 240px;
 		overflow: hidden;
 		background: var(--well);
+	}
+	.zoom {
+		display: block;
+		width: 100%;
+		height: 100%;
+		padding: 0;
+		border: 0;
+		background: none;
+		cursor: zoom-in;
+	}
+	.zoom:focus-visible {
+		outline: 2px solid var(--color-lime-400);
+		outline-offset: -2px;
 	}
 	.photo img {
 		display: block;

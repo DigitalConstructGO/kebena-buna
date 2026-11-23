@@ -12,15 +12,50 @@
 	const SPAM = 50;
 
 	const columns: ColumnDef<Row>[] = [
-		{ id: 'submittedAt', accessorKey: 'submittedAt', header: sortable('Received'), cell: ({ row }) => link('submission', row.original.id, dateTime(row.original.submittedAt)) },
+		{
+			id: 'submittedAt',
+			accessorKey: 'submittedAt',
+			header: sortable('Received'),
+			cell: ({ row }) => link('submission', row.original.id, dateTime(row.original.submittedAt))
+		},
 		{ id: 'formType', header: 'Form', cell: ({ row }) => humanize(row.original.formType) },
-		{ id: 'subject', header: 'Subject', cell: ({ row }) => link('submission', row.original.id, row.original.subject ?? '(no subject)') },
-		{ id: 'name', header: 'From', cell: ({ row }) => link('customer', row.original.customerId, row.original.name) },
-		{ id: 'phone', header: 'Phone', meta: { class: 'hidden md:table-cell' }, cell: ({ row }) => phone(row.original.phone) },
+		{
+			id: 'subject',
+			header: 'Subject',
+			cell: ({ row }) => link('submission', row.original.id, row.original.subject ?? '(no subject)')
+		},
+		{
+			id: 'name',
+			header: 'From',
+			cell: ({ row }) => link('customer', row.original.customerId, row.original.name)
+		},
+		{
+			id: 'phone',
+			header: 'Phone',
+			meta: { class: 'hidden md:table-cell' },
+			cell: ({ row }) => phone(row.original.phone)
+		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) },
-		{ id: 'assignedTo', header: 'Handled by', meta: { class: 'hidden lg:table-cell' }, cell: ({ row }) => user(row.original.assignedTo, row.original.assignee) },
-		{ id: 'rating', accessorKey: 'rating', header: sortable('Rating'), meta: { align: 'right', class: 'hidden lg:table-cell' }, cell: ({ row }) => (row.original.rating ? '★'.repeat(row.original.rating) : '—') },
-		{ id: 'spamScore', accessorKey: 'spamScore', header: sortable('Spam'), meta: { align: 'right', class: 'hidden lg:table-cell' }, cell: ({ row }) => row.original.spamScore ?? '—' }
+		{
+			id: 'assignedTo',
+			header: 'Handled by',
+			meta: { class: 'hidden lg:table-cell' },
+			cell: ({ row }) => user(row.original.assignedTo, row.original.assignee)
+		},
+		{
+			id: 'rating',
+			accessorKey: 'rating',
+			header: sortable('Rating'),
+			meta: { align: 'right', class: 'hidden lg:table-cell' },
+			cell: ({ row }) => (row.original.rating ? '★'.repeat(row.original.rating) : '—')
+		},
+		{
+			id: 'spamScore',
+			accessorKey: 'spamScore',
+			header: sortable('Spam'),
+			meta: { align: 'right', class: 'hidden lg:table-cell' },
+			cell: ({ row }) => row.original.spamScore ?? '—'
+		}
 	];
 	const href = useLinks();
 </script>
@@ -38,7 +73,8 @@
 	facetKeys={['formType', 'status', 'assignedTo']}
 	facetLabels={{ formType: 'Form', status: 'Status', assignedTo: 'Handled by' }}
 	dateFilter="Received"
-	rowClass={(row) => ((row.spamScore ?? 0) >= SPAM ? 'opacity-60' : row.status === 'new' ? 'font-medium' : null)}
+	rowClass={(row) =>
+		(row.spamScore ?? 0) >= SPAM ? 'opacity-60' : row.status === 'new' ? 'font-medium' : null}
 	charts
 	fileName="Inbox"
 />

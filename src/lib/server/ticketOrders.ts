@@ -8,7 +8,14 @@ import { and, asc, eq, gt, isNull, or } from 'drizzle-orm';
 import { redirect, type RequestEvent } from '@sveltejs/kit';
 import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
 import { db } from '#lib/server/db/index.ts';
-import { audience, event, ticketPrice, ticketType, visitDay, visitSlot } from '#lib/server/db/schema.ts';
+import {
+	audience,
+	event,
+	ticketPrice,
+	ticketType,
+	visitDay,
+	visitSlot
+} from '#lib/server/db/schema.ts';
 import type { Localized } from '#lib/server/db/fields.ts';
 import {
 	createWebOrder,
@@ -22,7 +29,8 @@ import {
 } from '#lib/server/site.ts';
 import { holdTicketPlaces } from '#lib/server/tickets.ts';
 import { completeFreeOrder } from '#lib/server/freeOrders.ts';
-import { m } from '#lib/paraglide/messages.js';
+import { DiscountRefused } from '#lib/server/discounts.ts';
+import { m } from '#lib/i18n.ts';
 
 /** A refusal to show under one form field. */
 export class OrderRefused extends Error {
@@ -146,6 +154,7 @@ export type TicketOrderInput = {
 	declared: boolean;
 	marketingConsent: boolean;
 	idempotencyKey?: string | null;
+	discountCode?: string | null;
 };
 
 /**
@@ -161,7 +170,8 @@ export async function placeTicketOrder(evt: RequestEvent, input: TicketOrderInpu
 	const eventId = input.eventId ?? null;
 	const aud = (await activeAudiences()).find((a) => a.id === input.audienceId);
 	if (!aud) throw new OrderRefused('audienceId', m.visit_err_audience());
-	if (aud.requiresIdCheck && !input.declared) throw new OrderRefused('declared', m.visit_err_declare());
+	if (aud.requiresIdCheck && !input.declared)
+		throw new OrderRefused('declared', m.visit_err_declare());
 
 	let slotId: number | null = null;
 	let description: Localized | null = null;
@@ -170,7 +180,8 @@ export async function placeTicketOrder(evt: RequestEvent, input: TicketOrderInpu
 		if (!e) throw new OrderRefused('items', m.events_err_closed());
 		description = e.title;
 	} else {
-		if (!input.slotId || !(await openSlot(input.slotId))) throw new OrderRefused('slotId', m.visit_err_slot());
+		if (!input.slotId || !(await openSlot(input.slotId)))
+			throw new OrderRefused('slotId', m.visit_err_slot());
 		slotId = input.slotId;
 	}
 
@@ -180,7 +191,8 @@ export async function placeTicketOrder(evt: RequestEvent, input: TicketOrderInpu
 	const lines = picked.map((i) => {
 		const t = types.find((x) => x.id === i.ticketTypeId);
 		if (!t) throw new OrderRefused('items', m.visit_err_type());
-		if (i.quantity < t.minQuantity) throw new OrderRefused('items', m.visit_err_min_type({ min: t.minQuantity }));
+		if (i.quantity < t.minQuantity)
+			throw new OrderRefused('items', m.visit_err_min_type({ min: t.minQuantity }));
 		if (t.maxQuantity !== null && i.quantity > t.maxQuantity)
 			throw new OrderRefused('items', m.visit_err_max_type({ max: t.maxQuantity }));
 		return {
@@ -198,10 +210,19 @@ export async function placeTicketOrder(evt: RequestEvent, input: TicketOrderInpu
 
 	try {
 		return await db.transaction(async (tx) => {
-			const customerId = await customerFor(tx, { name: input.name, phone: input.phone, email: input.email });
+			const customerId = await customerFor(tx, {
+				name: input.name,
+				phone: input.phone,
+				email: input.email
+			});
 			await holdTicketPlaces(
 				tx,
-				lines.map((l) => ({ quantity: l.quantity, ticketTypeId: l.ticketTypeId, visitSlotId: l.visitSlotId, eventId: l.eventId })),
+				lines.map((l) => ({
+					quantity: l.quantity,
+					ticketTypeId: l.ticketTypeId,
+					visitSlotId: l.visitSlotId,
+					eventId: l.eventId
+				})),
 				eventId ? 'items' : 'slotId'
 			);
 			const placed = await createWebOrder(tx, evt, {
@@ -210,18 +231,27 @@ export async function placeTicketOrder(evt: RequestEvent, input: TicketOrderInpu
 				lines,
 				deliveryMethod: 'none',
 				residencyDeclared: aud.requiresIdCheck && input.declared,
-				idempotencyKey: input.idempotencyKey
+				idempotencyKey: input.idempotencyKey,
+				discountCode: input.discountCode
 			});
-			if (input.marketingConsent) await recordConsent(tx, evt, customerId, input, 'ticket_checkout');
+			if (input.marketingConsent)
+				await recordConsent(tx, evt, customerId, input, 'ticket_checkout');
 			const free = placed.total < 0.005 && (await completeFreeOrder(tx, placed.id));
 			return { ...placed, free, existing: false };
 		});
 	} catch (err) {
+		if (err instanceof DiscountRefused) throw new OrderRefused('discountCode', err.message);
 		if (err instanceof WriteRefused) {
-			throw new OrderRefused(eventId ? 'items' : 'slotId', eventId ? m.events_err_full() : m.visit_err_full());
+			throw new OrderRefused(
+				eventId ? 'items' : 'slotId',
+				eventId ? m.events_err_full() : m.visit_err_full()
+			);
 		}
 		// The same form sent twice at once: the second finds the first one's order.
-		if ((err as { code?: string })?.code === 'ER_DUP_ENTRY' || (err as { cause?: { code?: string } })?.cause?.code === 'ER_DUP_ENTRY') {
+		if (
+			(err as { code?: string })?.code === 'ER_DUP_ENTRY' ||
+			(err as { cause?: { code?: string } })?.cause?.code === 'ER_DUP_ENTRY'
+		) {
 			const first = await orderByIdempotencyKey(input.idempotencyKey);
 			if (first) return { ...first, id: null, free: false, existing: true };
 		}
@@ -241,14 +271,22 @@ function joinNames(a: Localized, b: Localized): Localized {
 }
 
 /**
- * Where a placed order goes next: Chapa's checkout when there is money to take and Chapa is set
- * up, else the order's own page (its tickets, if it was free; "we will call you", if not).
+ * Where a placed order goes next: Chapa's checkout when there is money to take, Chapa is set up
+ * and the buyer chose to pay online, else the order's own page (its tickets, if it was free; the
+ * bank accounts and receipt upload, for a transfer; "we will call you", if neither is open).
  */
 export async function afterOrder(
 	evt: RequestEvent,
-	placed: { id: number | null; number: string; payToken: string | null; free: boolean; existing: boolean }
+	placed: {
+		id: number | null;
+		number: string;
+		payToken: string | null;
+		free: boolean;
+		existing: boolean;
+	},
+	payWith: 'online' | 'transfer' = 'online'
 ): Promise<never> {
-	if (placed.id && !placed.free && !placed.existing && paymentsOn()) {
+	if (placed.id && !placed.free && !placed.existing && paymentsOn() && payWith === 'online') {
 		let url: string | null = null;
 		try {
 			url = await startPayment(evt, placed.id);

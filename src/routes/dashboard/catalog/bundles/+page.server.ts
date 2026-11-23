@@ -56,13 +56,15 @@ export const actions = {
 	add: async (event) => {
 		requirePermission(event.locals, 'catalog.manage');
 		const form = await superValidate(event.request, zod4(bundleSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		let id: number;
 		try {
 			id = await db.transaction(async (tx) => {
-				const [res] = await tx
-					.insert(bundle)
-					.values({ ...bundleRow({ ...form.data }), createdBy: event.locals.user?.id } as typeof bundle.$inferInsert);
+				const [res] = await tx.insert(bundle).values({
+					...bundleRow({ ...form.data }),
+					createdBy: event.locals.user?.id
+				} as typeof bundle.$inferInsert);
 				await recordAudit(tx, event, { table: 'bundle', recordId: res.insertId, action: 'create' });
 				return res.insertId;
 			});

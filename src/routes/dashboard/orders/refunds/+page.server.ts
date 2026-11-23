@@ -20,7 +20,12 @@ const requester = userAlias('requester');
 const approver = userAlias('approver');
 
 const spec: WhereSpec<(typeof FILTERS)[number]> = {
-	search: (term) => or(like(order.number, `%${term}%`), like(refund.reason, `%${term}%`), like(customer.name, `%${term}%`)),
+	search: (term) =>
+		or(
+			like(order.number, `%${term}%`),
+			like(refund.reason, `%${term}%`),
+			like(customer.name, `%${term}%`)
+		),
 	dateColumn: refund.createdAt,
 	filters: {
 		status: (v) =>
@@ -31,7 +36,9 @@ const spec: WhereSpec<(typeof FILTERS)[number]> = {
 };
 
 const joined = <T extends MySqlSelect>(q: T) =>
-	q.innerJoin(order, eq(refund.orderId, order.id)).innerJoin(customer, eq(order.customerId, customer.id));
+	q
+		.innerJoin(order, eq(refund.orderId, order.id))
+		.innerJoin(customer, eq(order.customerId, customer.id));
 
 export const load = async ({ url }) => {
 	const query = parseTableQuery(url, FILTERS, 20, Object.keys(SORTS));
@@ -74,9 +81,16 @@ export const load = async ({ url }) => {
 		db
 			.select({
 				waiting: sql<number>`sum(${refund.status} = 'requested')`.mapWith(Number),
-				refunded: sql<number>`coalesce(sum(case when ${refund.status} = 'succeeded' then ${refund.amount} end), 0)`.mapWith(Number)
+				refunded:
+					sql<number>`coalesce(sum(case when ${refund.status} = 'succeeded' then ${refund.amount} end), 0)`.mapWith(
+						Number
+					)
 			})
 			.from(refund)
 	]);
-	return { rows, sums, server: { pagination: pagination(query, total), facets, filters: currentQuery(query) } };
+	return {
+		rows,
+		sums,
+		server: { pagination: pagination(query, total), facets, filters: currentQuery(query) }
+	};
 };

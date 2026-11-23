@@ -19,7 +19,10 @@ import { generateDays } from '#lib/server/visits.ts';
 import { generateDaysSchema } from '#lib/schemas/visits.ts';
 
 const FILTERS = ['locationId', 'open'] as const;
-const full = sql<number>`round((${visitDay.sold} + ${visitDay.held}) / nullif(${visitDay.capacity}, 0) * 100)`.mapWith(Number);
+const full =
+	sql<number>`round((${visitDay.sold} + ${visitDay.held}) / nullif(${visitDay.capacity}, 0) * 100)`.mapWith(
+		Number
+	);
 const SORTS = { date: visitDay.date, sold: visitDay.sold, held: visitDay.held, full };
 
 const spec: WhereSpec<(typeof FILTERS)[number]> = {
@@ -46,8 +49,14 @@ export const load = async ({ url, locals }) => {
 				held: visitDay.held,
 				full,
 				isClosed: visitDay.isClosed,
-				slots: sql<number>`(select count(*) from visit_slot vs where vs.visit_day_id = visit_day.id)`.mapWith(Number),
-				closedSlots: sql<number>`(select count(*) from visit_slot vs where vs.visit_day_id = visit_day.id and vs.is_closed)`.mapWith(Number)
+				slots:
+					sql<number>`(select count(*) from visit_slot vs where vs.visit_day_id = visit_day.id)`.mapWith(
+						Number
+					),
+				closedSlots:
+					sql<number>`(select count(*) from visit_slot vs where vs.visit_day_id = visit_day.id and vs.is_closed)`.mapWith(
+						Number
+					)
 			})
 			.from(visitDay)
 			.innerJoin(location, eq(visitDay.locationId, location.id))
@@ -81,9 +90,13 @@ export const load = async ({ url, locals }) => {
 		server: { pagination: pagination(query, total), facets, filters: currentQuery(query) },
 		today: localToday(),
 		canManage: hasPermission(locals, 'visits.manage'),
-		generateForm: await superValidate({ from: localToday(), days: 30, dayCapacity: 400 }, zod4(generateDaysSchema), {
-			errors: false
-		})
+		generateForm: await superValidate(
+			{ from: localToday(), days: 30, dayCapacity: 400 },
+			zod4(generateDaysSchema),
+			{
+				errors: false
+			}
+		)
 	};
 };
 
@@ -92,8 +105,14 @@ export const actions = {
 	generate: async (event) => {
 		requirePermission(event.locals, 'visits.manage');
 		const form = await superValidate(event.request, zod4(generateDaysSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
-		const made = await generateDays(form.data.from, form.data.days, form.data.dayCapacity, event.locals.user?.id);
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		const made = await generateDays(
+			form.data.from,
+			form.data.days,
+			form.data.dayCapacity,
+			event.locals.user?.id
+		);
 		return message(form, {
 			type: 'success',
 			text: made.days

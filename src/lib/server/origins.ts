@@ -3,7 +3,6 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
 import type { Writer } from '@nahu/admin-kit/server/db';
 import {
-	lot,
 	lotCertification,
 	lotVariety,
 	station,
@@ -47,14 +46,16 @@ export async function setLotLinks(
 }
 
 /** Live lots of a station. */
-export const lotCountOfStation = sql<number>`(select count(*) from lot l where l.station_id = \`station\`.\`id\` and l.deleted_at is null)`.mapWith(
-	Number
-);
+export const lotCountOfStation =
+	sql<number>`(select count(*) from lot l where l.station_id = \`station\`.\`id\` and l.deleted_at is null)`.mapWith(
+		Number
+	);
 
 /** Green kg on hand across a station's lots. */
-export const greenKgOfStation = sql<number>`(select coalesce(sum(gs.kg), 0) from green_stock gs join lot l on l.id = gs.lot_id where l.station_id = \`station\`.\`id\`)`.mapWith(
-	Number
-);
+export const greenKgOfStation =
+	sql<number>`(select coalesce(sum(gs.kg), 0) from green_stock gs join lot l on l.id = gs.lot_id where l.station_id = \`station\`.\`id\`)`.mapWith(
+		Number
+	);
 
 /** Replaces a station's certifications with the ticked ones. */
 export async function setStationCertifications(tx: Writer, stationId: number, ids: number[]) {
@@ -69,6 +70,7 @@ export async function setStationCertifications(tx: Writer, stationId: number, id
  * Green kg on hand per lot, qualified by table name: drizzle leaves `${lot.id}` bare in a
  * single-table select, which inside this subquery would read `green_stock.id`.
  */
-export const greenKgOfLot = sql<number>`(select coalesce(sum(gs.kg), 0) from green_stock gs where gs.lot_id = \`lot\`.\`id\`)`.mapWith(
-	Number
-);
+export const greenKgOfLot =
+	sql<number>`(select coalesce(sum(gs.kg), 0) from green_stock gs where gs.lot_id = \`lot\`.\`id\`)`.mapWith(
+		Number
+	);

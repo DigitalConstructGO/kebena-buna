@@ -70,7 +70,7 @@
 </script>
 
 <div class="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_22rem]">
-	<div class="order-2 grid grid-cols-1 min-w-0 gap-6 xl:order-1">
+	<div class="order-2 grid min-w-0 grid-cols-1 gap-6 xl:order-1">
 		<PageSection title="Words">
 			<Card.Root>
 				<Card.Content class="pt-6">
@@ -84,7 +84,13 @@
 						{#snippet children({ lang, suffix, language })}
 							<!-- Typing the English title moves the address along. -->
 							<div oninput={lang === 'en' ? followTitle : undefined} role="presentation">
-								<InputComp label="Title ({language})" name="title{suffix}" {form} {errors} required={lang === 'en'} />
+								<InputComp
+									label="Title ({language})"
+									name="title{suffix}"
+									{form}
+									{errors}
+									required={lang === 'en'}
+								/>
 							</div>
 							{#if summary}
 								<InputComp
@@ -110,9 +116,9 @@
 							<div class="mt-4 grid grid-cols-1 gap-2 border-t pt-4 sm:grid-cols-2">
 								<p class="col-span-full text-sm font-medium">
 									Search engines
-									<span class="font-normal text-muted-foreground"
-										>— optional. Left empty, the title and the start of the text are used.</span
-									>
+									<span class="font-normal text-muted-foreground">
+										— optional. Left empty, the title and the start of the text are used.
+									</span>
 								</p>
 								<InputComp label="SEO title ({language})" name="seoTitle{suffix}" {form} {errors} />
 								<InputComp
@@ -131,7 +137,7 @@
 		</PageSection>
 	</div>
 
-	<div class="order-1 grid grid-cols-1 h-fit gap-6 xl:order-2">
+	<div class="order-1 grid h-fit grid-cols-1 gap-6 xl:order-2">
 		<PageSection title="On the website">
 			<Card.Root>
 				<Card.Content class="grid grid-cols-1 gap-2 pt-6">

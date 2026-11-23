@@ -10,7 +10,14 @@ import { enOf } from '#lib/server/localized.ts';
 import { namesOf, staffOptions, stampsOf } from '#lib/server/people.ts';
 import { postCategoryOptions } from '#lib/server/options.ts';
 import { idParam } from '#lib/server/records.ts';
-import { deleteDoc, docFormValues, minutesOf, refusal, savePost, setPublishStatus } from '#lib/server/content.ts';
+import {
+	deleteDoc,
+	docFormValues,
+	minutesOf,
+	refusal,
+	savePost,
+	setPublishStatus
+} from '#lib/server/content.ts';
 import { postSchema } from '#lib/schemas/content.ts';
 import { PUBLISH_STATUSES } from '#lib/constants.ts';
 
@@ -33,7 +40,10 @@ export const load = async ({ params }) => {
 		stampsOf(p),
 		namesOf([p.authorId]),
 		p.categoryId
-			? db.select({ name: enOf(postCategory.name) }).from(postCategory).where(eq(postCategory.id, p.categoryId))
+			? db
+					.select({ name: enOf(postCategory.name) })
+					.from(postCategory)
+					.where(eq(postCategory.id, p.categoryId))
 			: Promise.resolve([])
 	]);
 	const rest = { ...p, coverImage: undefined };
@@ -66,7 +76,8 @@ export const actions = {
 		const p = await found(event.params.id);
 		const posted = await postedForm(event.request);
 		const form = await superValidate(posted, zod4(postSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		try {
 			await savePost(event, form.data, posted, p.id);
 		} catch (err) {
@@ -87,6 +98,10 @@ export const actions = {
 	delete: async (event) => {
 		const p = await found(event.params.id);
 		await deleteDoc(event, post, 'post', p.id);
-		redirect('/dashboard/content/posts', { type: 'success', message: 'Post deleted' }, event.cookies);
+		redirect(
+			'/dashboard/content/posts',
+			{ type: 'success', message: 'Post deleted' },
+			event.cookies
+		);
 	}
 };

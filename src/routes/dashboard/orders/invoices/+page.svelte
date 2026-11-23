@@ -50,7 +50,12 @@
 			meta: { class: 'hidden md:table-cell' },
 			cell: ({ row }) => date(row.original.issuedAt)
 		},
-		{ id: 'dueOn', accessorKey: 'dueOn', header: sortable('Due'), cell: ({ row }) => date(row.original.dueOn) },
+		{
+			id: 'dueOn',
+			accessorKey: 'dueOn',
+			header: sortable('Due'),
+			cell: ({ row }) => date(row.original.dueOn)
+		},
 		{
 			id: 'total',
 			accessorKey: 'total',

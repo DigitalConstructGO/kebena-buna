@@ -152,7 +152,9 @@ export const hoursSchema = z.object({
 					message: 'Closes after it opens'
 				})
 				.refine(
-					(d) => d.isClosed || (inOrder(d.opensAt, d.lastEntryAt, true) && inOrder(d.lastEntryAt, d.closesAt, true)),
+					(d) =>
+						d.isClosed ||
+						(inOrder(d.opensAt, d.lastEntryAt, true) && inOrder(d.lastEntryAt, d.closesAt, true)),
 					{ path: ['lastEntryAt'], message: 'Last entry falls between opening and closing' }
 				)
 		)
@@ -178,7 +180,8 @@ const calendarFields = z.object({
 	status: boolTrue
 });
 /** Special hours run forwards; a closed day's times are dropped on save. */
-const specialHoursInOrder = (v: z.infer<typeof calendarFields>) => v.isClosed || inOrder(v.opensAt, v.closesAt);
+const specialHoursInOrder = (v: z.infer<typeof calendarFields>) =>
+	v.isClosed || inOrder(v.opensAt, v.closesAt);
 const specialHoursMessage = { path: ['closesAt'], message: 'Closes after it opens' };
 export const calendarSchema = calendarFields.refine(specialHoursInOrder, specialHoursMessage);
 export const calendarEditSchema = calendarFields
@@ -266,8 +269,7 @@ export const settingSchema = z.object({
 });
 
 export const templateSchema = z.object({
-	key: requiredText(64)
-		.regex(/^[a-z0-9_.]+$/, 'Lowercase words joined by dots, like order.paid'),
+	key: requiredText(64).regex(/^[a-z0-9_.]+$/, 'Lowercase words joined by dots, like order.paid'),
 	channel: z.enum(CONTACT_CHANNELS),
 	locale: z.enum(LANGS),
 	subject: optionalText(255),

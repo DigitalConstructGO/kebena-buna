@@ -5,7 +5,15 @@
  * The key is Ed25519, made from `TICKET_QR_SECRET` (or `BETTER_AUTH_SECRET`), so every server
  * instance signs alike with nothing extra to store. Scanners get only the public key.
  */
-import { createHash, createPrivateKey, createPublicKey, randomInt, sign, verify, type KeyObject } from 'node:crypto';
+import {
+	createHash,
+	createPrivateKey,
+	createPublicKey,
+	randomInt,
+	sign,
+	verify,
+	type KeyObject
+} from 'node:crypto';
 import QRCode from 'qrcode';
 import { BETTER_AUTH_SECRET, TICKET_QR_SECRET } from '$app/env/private';
 import { parseTicketQr, qrMessage } from '#lib/ticketQr.ts';
@@ -17,12 +25,20 @@ let keys: { privateKey: KeyObject; publicKey: KeyObject; publicRaw: string } | n
 function keyPair() {
 	if (keys) return keys;
 	const secret = TICKET_QR_SECRET ?? BETTER_AUTH_SECRET;
-	if (!secret) throw new Error('Set TICKET_QR_SECRET (or BETTER_AUTH_SECRET) to sign ticket QR codes.');
+	if (!secret)
+		throw new Error('Set TICKET_QR_SECRET (or BETTER_AUTH_SECRET) to sign ticket QR codes.');
 	const seed = createHash('sha256').update(`kebena-ticket-qr:${secret}`).digest();
-	const privateKey = createPrivateKey({ key: Buffer.concat([PKCS8_ED25519, seed]), format: 'der', type: 'pkcs8' });
+	const privateKey = createPrivateKey({
+		key: Buffer.concat([PKCS8_ED25519, seed]),
+		format: 'der',
+		type: 'pkcs8'
+	});
 	const publicKey = createPublicKey(privateKey);
 	// The SPKI encoding ends with the 32-byte raw key, which is what WebCrypto imports.
-	const publicRaw = publicKey.export({ format: 'der', type: 'spki' }).subarray(-32).toString('base64url');
+	const publicRaw = publicKey
+		.export({ format: 'der', type: 'spki' })
+		.subarray(-32)
+		.toString('base64url');
 	keys = { privateKey, publicKey, publicRaw };
 	return keys;
 }
@@ -41,7 +57,12 @@ export function signTicketQr(t: { code: string; visitDate: string; admits: numbe
 export function readTicketQr(raw: string) {
 	const qr = parseTicketQr(raw);
 	if (!qr) return null;
-	const ok = verify(null, Buffer.from(qr.message), keyPair().publicKey, Buffer.from(qr.signature, 'base64url'));
+	const ok = verify(
+		null,
+		Buffer.from(qr.message),
+		keyPair().publicKey,
+		Buffer.from(qr.signature, 'base64url')
+	);
 	return ok ? qr : null;
 }
 
@@ -50,7 +71,12 @@ export function readTicketQr(raw: string) {
  * cracked phone screen or a creased print, and keeps the signed string to a small grid.
  */
 export function qrSvg(text: string) {
-	return QRCode.toString(text, { type: 'svg', errorCorrectionLevel: 'M', margin: 2, color: { dark: '#19211b', light: '#ffffff' } });
+	return QRCode.toString(text, {
+		type: 'svg',
+		errorCorrectionLevel: 'M',
+		margin: 2,
+		color: { dark: '#19211b', light: '#ffffff' }
+	});
 }
 
 /** Unambiguous letters and digits (no 0/O, 1/I/L): codes get read out and typed at the desk. */

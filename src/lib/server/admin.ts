@@ -92,10 +92,14 @@ async function assignableRole(event: RequestEvent, roleId: number) {
 	const role = await findRole(roleId);
 	if (!role || !role.isActive) throw new WriteRefused('roleId', 'Pick a role that is switched on.');
 	if (event.locals.isSuperAdmin) return role;
-	if (role.name === OWNER) throw new WriteRefused('roleId', 'Only an Owner may make someone an Owner.');
+	if (role.name === OWNER)
+		throw new WriteRefused('roleId', 'Only an Owner may make someone an Owner.');
 	const missing = notHeld(event, await grantedNames(role.id));
 	if (missing.length)
-		throw new WriteRefused('roleId', `This role can do things you cannot (${missing.join(', ')}): ask an Owner.`);
+		throw new WriteRefused(
+			'roleId',
+			`This role can do things you cannot (${missing.join(', ')}): ask an Owner.`
+		);
 	return role;
 }
 
@@ -103,20 +107,28 @@ async function assignableRole(event: RequestEvent, roleId: number) {
 export async function assertMayManageUser(event: RequestEvent, target: { roleId: number | null }) {
 	if (event.locals.isSuperAdmin || target.roleId === null) return;
 	const role = await findRole(target.roleId);
-	if (role?.name === OWNER) throw new WriteRefused(null, "Only an Owner may change an Owner's account.");
+	if (role?.name === OWNER)
+		throw new WriteRefused(null, "Only an Owner may change an Owner's account.");
 	const missing = notHeld(event, await grantedNames(target.roleId));
 	if (missing.length)
-		throw new WriteRefused(null, `This account can do things you cannot (${missing.join(', ')}): ask an Owner.`);
+		throw new WriteRefused(
+			null,
+			`This account can do things you cannot (${missing.join(', ')}): ask an Owner.`
+		);
 }
 
 /** Refuses unless the signed-in user may change `role`: not their own, nothing beyond their own. */
 async function assertMayManageRole(event: RequestEvent, role: { id: number; name: string }) {
 	if (event.locals.isSuperAdmin) return;
 	if (role.name === OWNER) throw new WriteRefused(null, 'Only an Owner may change the Owner role.');
-	if ((await ownRoleId(event)) === role.id) throw new WriteRefused(null, 'You cannot change your own role.');
+	if ((await ownRoleId(event)) === role.id)
+		throw new WriteRefused(null, 'You cannot change your own role.');
 	const missing = notHeld(event, await grantedNames(role.id));
 	if (missing.length)
-		throw new WriteRefused(null, `This role can do things you cannot (${missing.join(', ')}): ask an Owner.`);
+		throw new WriteRefused(
+			null,
+			`This role can do things you cannot (${missing.join(', ')}): ask an Owner.`
+		);
 }
 
 // ── Users ────────────────────────────────────────────────────────────────────────────────────
@@ -163,7 +175,8 @@ export async function addStaff(
 	data: { name: string; email: string; phone?: string | null; roleId: number; password: string }
 ) {
 	const email = data.email.trim().toLowerCase();
-	if (await emailTaken(email)) throw new WriteRefused('email', 'Someone already signs in with this email.');
+	if (await emailTaken(email))
+		throw new WriteRefused('email', 'Someone already signs in with this email.');
 	await assignableRole(event, data.roleId);
 	const id = randomUUID();
 	const hash = await hashPassword(data.password);
@@ -199,7 +212,13 @@ export async function addStaff(
 export async function updateUser(
 	event: RequestEvent,
 	id: string,
-	data: { name: string; phone?: string | null; roleId: number | null; locale: string; isActive: boolean }
+	data: {
+		name: string;
+		phone?: string | null;
+		roleId: number | null;
+		locale: string;
+		isActive: boolean;
+	}
 ) {
 	const found = await findUser(id);
 	if (!found) throw new WriteRefused(null, 'This account no longer exists.');
@@ -217,7 +236,8 @@ export async function updateUser(
 	}
 	const [ownerRole] = await db.select({ id: roles.id }).from(roles).where(eq(roles.name, OWNER));
 	const ownerId = ownerRole?.id ?? null;
-	const losesOwner = ownerId !== null && before.roleId === ownerId && (roleId !== ownerId || !data.isActive);
+	const losesOwner =
+		ownerId !== null && before.roleId === ownerId && (roleId !== ownerId || !data.isActive);
 	const after = {
 		name: data.name,
 		phoneNumber: data.phone ?? null,
@@ -235,7 +255,10 @@ export async function updateUser(
 				.where(and(eq(user.roleId, ownerId), eq(user.isActive, true), isNull(user.deletedAt)))
 				.for('update');
 			if (owners.length <= 1)
-				throw new WriteRefused('roleId', 'This is the only active Owner: give the role to someone else first.');
+				throw new WriteRefused(
+					'roleId',
+					'This is the only active Owner: give the role to someone else first.'
+				);
 		}
 		await tx.update(user).set(after).where(eq(user.id, id));
 		// A switched-off account is signed out everywhere at once.
@@ -287,8 +310,14 @@ export async function listRoles() {
 			name: roles.name,
 			description: roles.description,
 			isActive: roles.isActive,
-			holders: sql<number>`(select count(*) from ${user} where ${user.roleId} = ${roles.id} and ${user.deletedAt} is null)`.mapWith(Number),
-			grants: sql<number>`(select count(*) from ${rolePermissions} where ${rolePermissions.roleId} = ${roles.id} and ${rolePermissions.deletedAt} is null)`.mapWith(Number)
+			holders:
+				sql<number>`(select count(*) from ${user} where ${user.roleId} = ${roles.id} and ${user.deletedAt} is null)`.mapWith(
+					Number
+				),
+			grants:
+				sql<number>`(select count(*) from ${rolePermissions} where ${rolePermissions.roleId} = ${roles.id} and ${rolePermissions.deletedAt} is null)`.mapWith(
+					Number
+				)
 		})
 		.from(roles)
 		.where(notDeleted(roles))
@@ -297,12 +326,18 @@ export async function listRoles() {
 
 export async function findRole(id: number) {
 	if (!Number.isInteger(id)) return null;
-	const [row] = await db.select().from(roles).where(and(eq(roles.id, id), notDeleted(roles)));
+	const [row] = await db
+		.select()
+		.from(roles)
+		.where(and(eq(roles.id, id), notDeleted(roles)));
 	return row ?? null;
 }
 
 export const allPermissions = () =>
-	db.select({ id: permissions.id, name: permissions.name, description: permissions.description }).from(permissions).orderBy(permissions.id);
+	db
+		.select({ id: permissions.id, name: permissions.name, description: permissions.description })
+		.from(permissions)
+		.orderBy(permissions.id);
 
 export async function rolePermissionIds(roleId: number) {
 	const rows = await db
@@ -320,12 +355,22 @@ export async function roleHolders(roleId: number) {
 		.orderBy(user.name);
 }
 
-export async function addRole(event: RequestEvent, data: { name: string; description?: string | null; status: boolean }) {
+export async function addRole(
+	event: RequestEvent,
+	data: { name: string; description?: string | null; status: boolean }
+) {
 	const [taken] = await db.select({ id: roles.id }).from(roles).where(eq(roles.name, data.name));
 	if (taken) throw new WriteRefused('name', 'A role by that name exists.');
 	return db.transaction(async (tx) => {
-		const [res] = await tx.insert(roles).values({ name: data.name, description: data.description ?? null, isActive: data.status });
-		await recordAudit(tx, event, { table: 'roles', recordId: res.insertId, action: 'create', detail: { name: data.name } });
+		const [res] = await tx
+			.insert(roles)
+			.values({ name: data.name, description: data.description ?? null, isActive: data.status });
+		await recordAudit(tx, event, {
+			table: 'roles',
+			recordId: res.insertId,
+			action: 'create',
+			detail: { name: data.name }
+		});
 		return res.insertId;
 	});
 }
@@ -353,21 +398,30 @@ export async function updateRole(
 export async function setRolePermissions(event: RequestEvent, roleId: number, ids: number[]) {
 	const role = await findRole(roleId);
 	if (!role) throw new WriteRefused(null, 'This role no longer exists.');
-	if (role.name === OWNER) throw new WriteRefused(null, 'The Owner role always holds every permission.');
+	if (role.name === OWNER)
+		throw new WriteRefused(null, 'The Owner role always holds every permission.');
 	await assertMayManageRole(event, role);
 	const all = await allPermissions();
 	const known = all.map((p) => p.id);
 	const wanted = [...new Set(ids)].filter((id) => known.includes(id));
-	const missing = notHeld(event, all.filter((p) => wanted.includes(p.id)).map((p) => p.name));
+	const missing = notHeld(
+		event,
+		all.filter((p) => wanted.includes(p.id)).map((p) => p.name)
+	);
 	if (missing.length)
-		throw new WriteRefused(null, `You can only give permissions you hold yourself (not ${missing.join(', ')}).`);
+		throw new WriteRefused(
+			null,
+			`You can only give permissions you hold yourself (not ${missing.join(', ')}).`
+		);
 	const before = await rolePermissionIds(roleId);
 	await db.transaction(async (tx) => {
 		await tx.delete(rolePermissions).where(eq(rolePermissions.roleId, roleId));
 		if (wanted.length)
 			await tx
 				.insert(rolePermissions)
-				.values(wanted.map((permissionId) => ({ roleId, permissionId, createdBy: event.locals.user?.id })));
+				.values(
+					wanted.map((permissionId) => ({ roleId, permissionId, createdBy: event.locals.user?.id }))
+				);
 		await recordAudit(tx, event, {
 			table: 'role_permissions',
 			recordId: roleId,
@@ -385,7 +439,8 @@ export async function deleteRole(event: RequestEvent, id: number) {
 	const role = await findRole(id);
 	if (!role) throw new WriteRefused(null, 'This role no longer exists.');
 	if (role.name === OWNER) throw new WriteRefused(null, 'The Owner role cannot be deleted.');
-	if ((await roleHolders(id)).length) throw new WriteRefused(null, 'Someone still holds this role: give them another first.');
+	if ((await roleHolders(id)).length)
+		throw new WriteRefused(null, 'Someone still holds this role: give them another first.');
 	await db.transaction(async (tx) => {
 		await tx.delete(rolePermissions).where(eq(rolePermissions.roleId, id));
 		await tx.update(roles).set(deletionStamp(event.locals.user?.id)).where(eq(roles.id, id));
@@ -440,7 +495,9 @@ const show = (value: unknown) =>
 		? '∅'
 		: typeof value === 'object'
 			? JSON.stringify(value)
-			: String(value);
+			: // Objects took the branch above; what is left prints as itself.
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
+				String(value);
 
 /** `{ price: [500, 550] }` → one row per field; a create's or a run's detail → its one value. */
 export function changeRows(changes: unknown) {
@@ -454,7 +511,9 @@ export function changeRows(changes: unknown) {
 
 export const summarise = (changes: unknown) =>
 	changeRows(changes)
-		.map((c) => (c.before === null ? `${c.field}: ${c.after}` : `${c.field}: ${c.before} → ${c.after}`))
+		.map((c) =>
+			c.before === null ? `${c.field}: ${c.after}` : `${c.field}: ${c.before} → ${c.after}`
+		)
 		.join('; ');
 
 /** A user's own recent trail, for their page. */
@@ -508,9 +567,13 @@ export const lastSessionOf = async (ids: string[]) =>
 type LocationValues = Record<string, unknown> & { code: string; parentId?: number | null };
 
 export async function saveLocation(event: RequestEvent, values: LocationValues, id?: number) {
-	const [taken] = await db.select({ id: location.id }).from(location).where(eq(location.code, values.code));
+	const [taken] = await db
+		.select({ id: location.id })
+		.from(location)
+		.where(eq(location.code, values.code));
 	if (taken && taken.id !== id) throw new WriteRefused('code', 'Another location has this code.');
-	if (id && values.parentId === id) throw new WriteRefused('parentId', 'A location cannot sit inside itself.');
+	if (id && values.parentId === id)
+		throw new WriteRefused('parentId', 'A location cannot sit inside itself.');
 	const row = packLocalized({ ...values }, ['name']) as Partial<typeof location.$inferInsert>;
 	return db.transaction(async (tx) => {
 		if (!id) {
@@ -521,8 +584,17 @@ export async function saveLocation(event: RequestEvent, values: LocationValues, 
 			return res.insertId;
 		}
 		const [before] = await tx.select().from(location).where(eq(location.id, id));
-		await tx.update(location).set({ ...row, updatedBy: event.locals.user?.id }).where(eq(location.id, id));
-		await recordAudit(tx, event, { table: 'location', recordId: id, action: 'update', before, after: row });
+		await tx
+			.update(location)
+			.set({ ...row, updatedBy: event.locals.user?.id })
+			.where(eq(location.id, id));
+		await recordAudit(tx, event, {
+			table: 'location',
+			recordId: id,
+			action: 'update',
+			before,
+			after: row
+		});
 		return id;
 	});
 }

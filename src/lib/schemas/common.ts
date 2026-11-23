@@ -40,10 +40,7 @@ export const optionalKg = optionalMoney;
 
 export const percentField = z.coerce.number().min(0).max(100).default(0);
 
-export const optionalInt = z.preprocess(
-	blankToNull,
-	z.coerce.number().int().nullable().optional()
-);
+export const optionalInt = z.preprocess(blankToNull, z.coerce.number().int().nullable().optional());
 export const optionalNumber = z.preprocess(blankToNull, z.coerce.number().nullable().optional());
 
 export const sortOrder = z.coerce.number().int().min(0).default(0);

@@ -31,7 +31,11 @@ export const load = async () => {
 		.leftJoin(user, eq(setting.updatedBy, user.id))
 		.orderBy(asc(setting.key));
 	return {
-		rows: rows.map((r) => ({ ...r, id: r.key as unknown as number, value: JSON.stringify(r.value) })),
+		rows: rows.map((r) => ({
+			...r,
+			id: r.key as unknown as number,
+			value: JSON.stringify(r.value)
+		})),
 		addForm: await superValidate(zod4(settingSchema)),
 		editForm: await superValidate(zod4(editSchema)),
 		deleteForm: await superValidate(zod4(idSchema))
@@ -43,8 +47,16 @@ export const actions = {
 		requirePermission(event.locals, 'settings.manage');
 		const form = await superValidate(event.request, zod4(settingSchema));
 		if (!form.valid) return invalid(form);
-		const [taken] = await db.select({ key: setting.key }).from(setting).where(eq(setting.key, form.data.key));
-		if (taken) return message(form, { type: 'error', text: 'That setting exists: edit it instead.' }, { status: 400 });
+		const [taken] = await db
+			.select({ key: setting.key })
+			.from(setting)
+			.where(eq(setting.key, form.data.key));
+		if (taken)
+			return message(
+				form,
+				{ type: 'error', text: 'That setting exists: edit it instead.' },
+				{ status: 400 }
+			);
 		await db.transaction(async (tx) => {
 			await tx.insert(setting).values({
 				key: form.data.key,
@@ -52,7 +64,12 @@ export const actions = {
 				description: form.data.description ?? null,
 				updatedBy: event.locals.user?.id
 			});
-			await recordAudit(tx, event, { table: 'setting', recordId: form.data.key, action: 'create', detail: { value: form.data.value } });
+			await recordAudit(tx, event, {
+				table: 'setting',
+				recordId: form.data.key,
+				action: 'create',
+				detail: { value: form.data.value }
+			});
 		});
 		return message(form, { type: 'success', text: `${form.data.key} added` });
 	},
@@ -62,18 +79,39 @@ export const actions = {
 		if (!form.valid) return invalid(form);
 		const { id, key, value, description } = form.data;
 		const [before] = await db.select().from(setting).where(eq(setting.key, id));
-		if (!before) return message(form, { type: 'error', text: 'This setting no longer exists.' }, { status: 404 });
+		if (!before)
+			return message(
+				form,
+				{ type: 'error', text: 'This setting no longer exists.' },
+				{ status: 404 }
+			);
 		if (key !== id) {
-			const [taken] = await db.select({ key: setting.key }).from(setting).where(eq(setting.key, key));
+			const [taken] = await db
+				.select({ key: setting.key })
+				.from(setting)
+				.where(eq(setting.key, key));
 			if (taken) {
 				setError(form, 'key', 'Another setting has this key');
-				return message(form, { type: 'error', text: 'Another setting has this key: edit that one instead.' }, { status: 400 });
+				return message(
+					form,
+					{ type: 'error', text: 'Another setting has this key: edit that one instead.' },
+					{ status: 400 }
+				);
 			}
 		}
 		const after = { key, value: JSON.parse(value), description: description ?? null };
 		await db.transaction(async (tx) => {
-			await tx.update(setting).set({ ...after, updatedBy: event.locals.user?.id }).where(eq(setting.key, id));
-			await recordAudit(tx, event, { table: 'setting', recordId: key, action: 'update', before, after });
+			await tx
+				.update(setting)
+				.set({ ...after, updatedBy: event.locals.user?.id })
+				.where(eq(setting.key, id));
+			await recordAudit(tx, event, {
+				table: 'setting',
+				recordId: key,
+				action: 'update',
+				before,
+				after
+			});
 		});
 		return message(form, { type: 'success', text: `${key} saved` });
 	},
@@ -85,7 +123,12 @@ export const actions = {
 		if (!row) return fail(404, { message: { type: 'error', text: 'No such setting' } });
 		await db.transaction(async (tx) => {
 			await tx.delete(setting).where(eq(setting.key, key));
-			await recordAudit(tx, event, { table: 'setting', recordId: key, action: 'delete', detail: { value: row.value } });
+			await recordAudit(tx, event, {
+				table: 'setting',
+				recordId: key,
+				action: 'delete',
+				detail: { value: row.value }
+			});
 		});
 		return { message: { type: 'success', text: `${key} removed — the default applies` } };
 	}

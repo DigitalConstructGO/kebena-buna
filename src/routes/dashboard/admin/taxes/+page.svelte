@@ -22,14 +22,32 @@
 		fields: [
 			{ name: 'nameEn', label: 'Name (English)', type: 'text' },
 			{ name: 'nameAm', label: 'Name (Amharic)', type: 'text', required: false },
-			{ name: 'nameOm', label: 'Name (Afaan Oromo)', type: 'text', required: false, inTable: false },
+			{
+				name: 'nameOm',
+				label: 'Name (Afaan Oromo)',
+				type: 'text',
+				required: false,
+				inTable: false
+			},
 			{ name: 'nameAr', label: 'Name (Arabic)', type: 'text', required: false, inTable: false },
 			{ name: 'nameIt', label: 'Name (Italian)', type: 'text', required: false, inTable: false },
 			{ name: 'nameFr', label: 'Name (French)', type: 'text', required: false, inTable: false },
 			{ name: 'code', label: 'Code', type: 'text' },
 			{ name: 'rate', label: 'Rate (%)', type: 'number' },
-			{ name: 'isInclusive', label: 'Prices include it', type: 'checkbox', trueLabel: 'Inclusive', falseLabel: 'Added on top' },
-			{ name: 'isDefault', label: 'Default', type: 'checkbox', trueLabel: 'Default', falseLabel: '—' },
+			{
+				name: 'isInclusive',
+				label: 'Prices include it',
+				type: 'checkbox',
+				trueLabel: 'Inclusive',
+				falseLabel: 'Added on top'
+			},
+			{
+				name: 'isDefault',
+				label: 'Default',
+				type: 'checkbox',
+				trueLabel: 'Default',
+				falseLabel: '—'
+			},
 			{ name: 'status', label: 'Status', type: 'boolean' }
 		]
 	}}

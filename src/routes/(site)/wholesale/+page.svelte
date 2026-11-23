@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { superForm } from 'sveltekit-superforms';
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { tr } from '#lib/format.ts';
 	import { BUSINESS_TYPES } from '#lib/constants.ts';
 	import { INCOTERMS } from '#lib/schemas/siteForms.ts';
@@ -55,7 +55,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.wholesale_title()} · Kebena</title>
+	<title>{m.site_page_title({ title: m.wholesale_title() })}</title>
 	<meta name="description" content={m.wholesale_lede()} />
 </svelte:head>
 
@@ -207,7 +207,7 @@
 						name="city"
 						bind:value={$aForm.city}
 						errors={$aErrors.city}
-						placeholder="Addis Ababa"
+						placeholder={m.wholesale_city_placeholder()}
 						autocomplete="address-level2"
 					/>
 					<Field
@@ -286,14 +286,14 @@
 					name="origin"
 					bind:value={$qForm.origin}
 					errors={$qErrors.origin}
-					placeholder="Limu, Djimmah, Gera…"
+					placeholder={m.wholesale_origin_placeholder()}
 				/>
 				<Field
 					label={m.wholesale_grade()}
 					name="grade"
 					bind:value={$qForm.grade}
 					errors={$qErrors.grade}
-					placeholder="Grade 1"
+					placeholder={m.wholesale_grade_placeholder()}
 				/>
 				<Field
 					label={m.wholesale_bags()}

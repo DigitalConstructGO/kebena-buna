@@ -23,7 +23,14 @@ import {
 
 export const LOCALES = LANG_CHOICES;
 
-export const CUSTOMER_SOURCES = ['web', 'desk', 'telegram', 'newsletter_import', 'wholesale', 'phone'];
+export const CUSTOMER_SOURCES = [
+	'web',
+	'desk',
+	'telegram',
+	'newsletter_import',
+	'wholesale',
+	'phone'
+];
 
 /**
  * A phone stored as E.164: an Ethiopian mobile in any shape people type it (`0911 23 45 67`)

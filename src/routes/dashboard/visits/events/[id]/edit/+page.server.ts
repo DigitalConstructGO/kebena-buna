@@ -38,7 +38,8 @@ export const actions = {
 		const e = await found(req.params.id);
 		const posted = await postedForm(req.request);
 		const form = await superValidate(posted, zod4(eventEditSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		try {
 			await saveEvent(req, form.data, posted, e.id);
 		} catch (err) {
@@ -48,7 +49,11 @@ export const actions = {
 			}
 			if (isDuplicateKey(err)) {
 				setError(form, 'slug', 'Another event has this address');
-				return message(form, { type: 'error', text: 'Another event has this address' }, { status: 400 });
+				return message(
+					form,
+					{ type: 'error', text: 'Another event has this address' },
+					{ status: 400 }
+				);
 			}
 			throw err;
 		}

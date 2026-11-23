@@ -19,9 +19,18 @@
 			header: sortable('Role'),
 			cell: ({ row }) => link('role', row.original.id, row.original.name)
 		},
-		{ id: 'description', header: 'What it is for', cell: ({ row }) => longText(row.original.description, 60) },
+		{
+			id: 'description',
+			header: 'What it is for',
+			cell: ({ row }) => longText(row.original.description, 60)
+		},
 		{ id: 'holders', accessorKey: 'holders', header: sortable('People'), meta: { align: 'right' } },
-		{ id: 'grants', accessorKey: 'grants', header: sortable('Permissions'), meta: { align: 'right' } },
+		{
+			id: 'grants',
+			accessorKey: 'grants',
+			header: sortable('Permissions'),
+			meta: { align: 'right' }
+		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => flag(row.original.isActive) }
 	];
 	const href = useLinks();
@@ -33,11 +42,35 @@
 	description="What each kind of staff member may open and change. Open a role to tick its permissions."
 >
 	{#snippet actions()}
-		<FormDialog title="New role" action="?/add" data={data.addForm} schema={roleSchema} triggerLabel="New role" triggerVariant="default" triggerIcon={Plus} submitIcon={Plus} resetOnSuccess>
+		<FormDialog
+			title="New role"
+			action="?/add"
+			data={data.addForm}
+			schema={roleSchema}
+			triggerLabel="New role"
+			triggerVariant="default"
+			triggerIcon={Plus}
+			submitIcon={Plus}
+			resetOnSuccess
+		>
 			{#snippet fields({ form, errors })}
 				<InputComp label="Name" name="name" {form} {errors} required />
-				<InputComp label="What it is for" name="description" type="textarea" rows={3} {form} {errors} />
-				<InputComp label="Active" name="status" type="checkboxSingle" placeholder="Offered when adding staff" {form} {errors} />
+				<InputComp
+					label="What it is for"
+					name="description"
+					type="textarea"
+					rows={3}
+					{form}
+					{errors}
+				/>
+				<InputComp
+					label="Active"
+					name="status"
+					type="checkboxSingle"
+					placeholder="Offered when adding staff"
+					{form}
+					{errors}
+				/>
 			{/snippet}
 		</FormDialog>
 	{/snippet}

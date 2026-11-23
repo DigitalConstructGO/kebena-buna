@@ -11,7 +11,13 @@ import { invalid } from '#lib/server/admin.ts';
 export const load = async ({ locals }) => {
 	const me = locals.user!;
 	const [row] = await db
-		.select({ name: user.name, email: user.email, role: roles.name, locale: user.locale, createdAt: user.createdAt })
+		.select({
+			name: user.name,
+			email: user.email,
+			role: roles.name,
+			locale: user.locale,
+			createdAt: user.createdAt
+		})
 		.from(user)
 		.leftJoin(roles, eq(user.roleId, roles.id))
 		.where(eq(user.id, me.id));
@@ -46,6 +52,9 @@ export const actions = {
 			return message(form, { type: 'error', text: 'Not changed' }, { status: 400 });
 		}
 		form.data = { currentPassword: '', newPassword: '', confirm: '' };
-		return message(form, { type: 'success', text: 'Password changed; other devices were signed out' });
+		return message(form, {
+			type: 'success',
+			text: 'Password changed; other devices were signed out'
+		});
 	}
 };

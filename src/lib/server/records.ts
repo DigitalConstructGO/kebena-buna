@@ -102,7 +102,11 @@ export function localizedCrud(args: CrudArgs & { localized: string[]; permission
 			return {
 				...data,
 				rows: data.rows.map(
-					(r) => unpackLocalized(r as Record<string, unknown>, localized) as { id: number } & Record<string, unknown>
+					(r) =>
+						unpackLocalized(r as Record<string, unknown>, localized) as { id: number } & Record<
+							string,
+							unknown
+						>
 				)
 			};
 		}

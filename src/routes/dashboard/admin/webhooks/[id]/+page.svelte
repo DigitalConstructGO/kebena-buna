@@ -13,7 +13,11 @@
 	const w = $derived(data.event);
 </script>
 
-<PageHeader title={w.eventType ?? 'Webhook'} eyebrow="{humanize(w.provider)} webhook #{w.id}" description={w.eventId}>
+<PageHeader
+	title={w.eventType ?? 'Webhook'}
+	eyebrow="{humanize(w.provider)} webhook #{w.id}"
+	description={w.eventId}
+>
 	{#snippet badges()}
 		<Statuses {...flag(w.signatureValid, 'Signature valid', 'Signature invalid')} />
 		<Statuses {...flag(Boolean(w.processedAt), 'Processed', 'Not processed')} />
@@ -54,6 +58,10 @@
 		/>
 	</PageSection>
 	<PageSection title="Payload">
-		<pre class="overflow-x-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(w.payload, null, 2)}</pre>
+		<pre class="overflow-x-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(
+				w.payload,
+				null,
+				2
+			)}</pre>
 	</PageSection>
 </div>

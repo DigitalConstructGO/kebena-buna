@@ -21,17 +21,37 @@ export const load = async ({ params, locals }) => {
 	const rf = await loadRefund(params.id);
 	const [[o], lines, [pay], names] = await Promise.all([
 		db
-			.select({ number: order.number, customerId: order.customerId, customer: customer.name, total: order.total, amountPaid: order.amountPaid, amountRefunded: order.amountRefunded, paymentState: order.paymentState })
+			.select({
+				number: order.number,
+				customerId: order.customerId,
+				customer: customer.name,
+				total: order.total,
+				amountPaid: order.amountPaid,
+				amountRefunded: order.amountRefunded,
+				paymentState: order.paymentState
+			})
 			.from(order)
 			.innerJoin(customer, eq(order.customerId, customer.id))
 			.where(eq(order.id, rf.orderId)),
 		db
-			.select({ id: refundLine.id, orderLineId: refundLine.orderLineId, description: orderLine.description, variantId: orderLine.variantId, sku: orderLine.sku, quantity: refundLine.quantity, amount: refundLine.amount, restock: refundLine.restock })
+			.select({
+				id: refundLine.id,
+				orderLineId: refundLine.orderLineId,
+				description: orderLine.description,
+				variantId: orderLine.variantId,
+				sku: orderLine.sku,
+				quantity: refundLine.quantity,
+				amount: refundLine.amount,
+				restock: refundLine.restock
+			})
 			.from(refundLine)
 			.innerJoin(orderLine, eq(refundLine.orderLineId, orderLine.id))
 			.where(eq(refundLine.refundId, rf.id)),
 		rf.paymentId
-			? db.select({ txRef: payment.txRef, provider: payment.provider }).from(payment).where(eq(payment.id, rf.paymentId))
+			? db
+					.select({ txRef: payment.txRef, provider: payment.provider })
+					.from(payment)
+					.where(eq(payment.id, rf.paymentId))
 			: Promise.resolve([]),
 		namesOf([rf.requestedBy, rf.approvedBy])
 	]);
@@ -46,12 +66,14 @@ export const load = async ({ params, locals }) => {
 		approvedBy: rf.approvedBy ? (names[rf.approvedBy] ?? null) : null,
 		canDecide,
 		// The one who asked may not approve, unless they hold every permission.
-		canApprove: canDecide && rf.status === 'requested' && (rf.requestedBy !== me || locals.isSuperAdmin)
+		canApprove:
+			canDecide && rf.status === 'requested' && (rf.requestedBy !== me || locals.isSuperAdmin)
 	};
 };
 
 /** One step of the refund's path, refused with its reason. */
-const step = (to: 'approved' | 'processing' | 'succeeded' | 'failed', done: string) =>
+const step =
+	(to: 'approved' | 'processing' | 'succeeded' | 'failed', done: string) =>
 	async (event: RequestEvent<{ id: string }>) => {
 		requirePermission(event.locals, 'refunds.manage');
 		const rf = await loadRefund(event.params.id);

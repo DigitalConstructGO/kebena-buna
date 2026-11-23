@@ -30,18 +30,29 @@
 </script>
 
 <svelte:head>
-	<title>{data.slips.length === 1 ? `Packing slip ${data.slips[0].number}` : `${data.slips.length} packing slips`}</title>
+	<title
+		>{data.slips.length === 1
+			? `Packing slip ${data.slips[0].number}`
+			: `${data.slips.length} packing slips`}</title
+	>
 </svelte:head>
 
 <div class="min-h-screen bg-white text-black">
 	<div class="mx-auto flex max-w-3xl items-center justify-between gap-2 p-4 print:hidden">
-		<Button variant="outline" onclick={() => history.back()}><ArrowLeft class="size-4" /> Back</Button>
-		<span class="text-sm text-neutral-600">{data.slips.length} {data.slips.length === 1 ? 'slip' : 'slips'}, one per page</span>
+		<Button variant="outline" onclick={() => history.back()}>
+			<ArrowLeft class="size-4" /> Back
+		</Button>
+		<span class="text-sm text-neutral-600">
+			{data.slips.length}
+			{data.slips.length === 1 ? 'slip' : 'slips'}, one per page
+		</span>
 		<Button onclick={() => window.print()}><Printer class="size-4" /> Print</Button>
 	</div>
 
 	{#each data.slips as s (s.id)}
-		<article class="mx-auto flex max-w-3xl break-after-page flex-col gap-5 p-8 text-sm print:p-0 [&:last-child]:break-after-auto">
+		<article
+			class="mx-auto flex max-w-3xl break-after-page flex-col gap-5 p-8 text-sm print:p-0 [&:last-child]:break-after-auto"
+		>
 			<header class="flex items-start justify-between gap-6 border-b border-black pb-3">
 				<div>
 					<p class="text-xl font-bold">{lh.name}</p>
@@ -68,7 +79,9 @@
 					{#each destination(s) as line, i (i)}<p>{line}</p>{/each}
 					{#if s.zone}<p>Zone: {s.zone}</p>{/if}
 					{#if s.rider}<p>Rider: {s.rider}</p>{/if}
-					{#if s.courier}<p>Courier: {s.courier}{s.trackingNumber ? ` · ${s.trackingNumber}` : ''}</p>{/if}
+					{#if s.courier}<p>
+							Courier: {s.courier}{s.trackingNumber ? ` · ${s.trackingNumber}` : ''}
+						</p>{/if}
 				</div>
 			</section>
 
@@ -86,10 +99,14 @@
 				<tbody>
 					{#each s.lines as l, i (i)}
 						<tr class="border-b border-neutral-400 align-top">
-							<td class="py-2 pr-2"><span class="inline-block size-4 border border-black"></span></td>
+							<td class="py-2 pr-2">
+								<span class="inline-block size-4 border border-black"></span>
+							</td>
 							<td class="py-2 pr-2">
 								{l.description}
-								{#if l.sku}<span class="block font-mono text-xs text-neutral-600">{l.sku}</span>{/if}
+								{#if l.sku}<span class="block font-mono text-xs text-neutral-600">
+										{l.sku}
+									</span>{/if}
 							</td>
 							<td class="py-2 pr-2">{l.roast || '—'}</td>
 							<td class="py-2 pr-2">{l.grind || '—'}</td>

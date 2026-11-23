@@ -1,13 +1,15 @@
 /**
- * An order with nothing to pay — under-6 entry, a free event — is complete the moment it is
- * placed: it goes straight to `paid`, gets its confirmation message, and its tickets are issued, so
- * the buyer leaves with QR codes instead of a payment button.
+ * An order with nothing to pay — under-6 entry, a free event, a 100% discount code — is complete
+ * the moment it is placed: it goes straight to `paid`, gets its confirmation message, its tickets
+ * are issued and its memberships and subscriptions start, so the buyer leaves with them instead
+ * of a payment button.
  */
 import { and, eq } from 'drizzle-orm';
 import type { Writer } from '@nahu/admin-kit/server/db';
 import { order, orderStatusHistory } from '#lib/server/db/schema.ts';
 import { queueOrderMessage } from '#lib/server/orderMessages.ts';
 import { issueOrderTickets } from '#lib/server/tickets.ts';
+import { activateOrderItems } from '#lib/server/activation.ts';
 
 /** Marks a zero-total `pending_payment` order paid and issues its tickets. No-op on anything else. */
 export async function completeFreeOrder(tx: Writer, orderId: number) {
@@ -18,7 +20,11 @@ export async function completeFreeOrder(tx: Writer, orderId: number) {
 		.update(order)
 		.set({ status: 'paid', paymentState: 'paid', paidAt })
 		.where(and(eq(order.id, o.id), eq(order.status, 'pending_payment')));
-	const queued = await queueOrderMessage(tx, { ...o, status: 'paid', paymentState: 'paid', paidAt }, 'paid');
+	const queued = await queueOrderMessage(
+		tx,
+		{ ...o, status: 'paid', paymentState: 'paid', paidAt },
+		'paid'
+	);
 	await tx.insert(orderStatusHistory).values({
 		orderId: o.id,
 		fromStatus: 'pending_payment',
@@ -27,5 +33,6 @@ export async function completeFreeOrder(tx: Writer, orderId: number) {
 		notified: queued > 0
 	});
 	await issueOrderTickets(tx, o.id);
+	await activateOrderItems(tx, o.id);
 	return true;
 }

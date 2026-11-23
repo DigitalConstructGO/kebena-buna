@@ -25,12 +25,26 @@
 			.join(', ') || '—';
 
 	const columns: ColumnDef<Row>[] = [
-		{ id: 'name', accessorKey: 'name', header: sortable('Location'), cell: ({ row }) => link('location', row.original.id, row.original.name) },
+		{
+			id: 'name',
+			accessorKey: 'name',
+			header: sortable('Location'),
+			cell: ({ row }) => link('location', row.original.id, row.original.name)
+		},
 		{ id: 'code', accessorKey: 'code', header: sortable('Code') },
 		{ id: 'type', accessorFn: (r) => humanize(r.type), header: 'Type' },
-		{ id: 'parent', header: 'Inside', cell: ({ row }) => link('location', row.original.parentId, row.original.parent) },
+		{
+			id: 'parent',
+			header: 'Inside',
+			cell: ({ row }) => link('location', row.original.parentId, row.original.parent)
+		},
 		{ id: 'does', header: 'Handles', cell: ({ row }) => does(row.original) },
-		{ id: 'status', accessorFn: (r) => (r.isActive ? 'Active' : 'Inactive'), header: 'Status', cell: ({ row }) => flag(row.original.isActive) }
+		{
+			id: 'status',
+			accessorFn: (r) => (r.isActive ? 'Active' : 'Inactive'),
+			header: 'Status',
+			cell: ({ row }) => flag(row.original.isActive)
+		}
 	];
 	const href = useLinks();
 </script>
@@ -41,7 +55,16 @@
 	description="Site A, Site B, the shop, café, roastery and warehouse. A second shop, or splitting tickets per site, is a new row here."
 >
 	{#snippet actions()}
-		<FormDialog title="New location" action="?/add" data={data.addForm} schema={locationSchema} triggerLabel="New location" triggerVariant="default" triggerIcon={Plus} submitIcon={Plus}>
+		<FormDialog
+			title="New location"
+			action="?/add"
+			data={data.addForm}
+			schema={locationSchema}
+			triggerLabel="New location"
+			triggerVariant="default"
+			triggerIcon={Plus}
+			submitIcon={Plus}
+		>
 			{#snippet fields({ form, errors })}
 				<LocationFields form={form as never} errors={errors as never} parents={data.parents} />
 			{/snippet}
@@ -50,5 +73,12 @@
 </PageHeader>
 
 <div class="mt-4">
-	<DataTable rowHref={(row) => href('location', row.id)} {columns} data={data.rows} facetKeys={['type', 'status']} facetLabels={{ type: 'Type', status: 'Status' }} fileName="Locations" />
+	<DataTable
+		rowHref={(row) => href('location', row.id)}
+		{columns}
+		data={data.rows}
+		facetKeys={['type', 'status']}
+		facetLabels={{ type: 'Type', status: 'Status' }}
+		fileName="Locations"
+	/>
 </div>

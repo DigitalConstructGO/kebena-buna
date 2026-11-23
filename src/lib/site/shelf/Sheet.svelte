@@ -8,9 +8,10 @@
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 
-	let { label, onclose, children }: { label?: string; onclose?: () => void; children: Snippet } = $props();
+	let { label, onclose, children }: { label?: string; onclose?: () => void; children: Snippet } =
+		$props();
 
 	let dialog = $state<HTMLDialogElement>();
 

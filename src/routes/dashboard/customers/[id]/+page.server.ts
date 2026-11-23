@@ -271,9 +271,10 @@ export const load = async ({ params, locals }) => {
 				channel: aiConversation.channel,
 				startedAt: aiConversation.startedAt,
 				lastMessageAt: aiConversation.lastMessageAt,
-				messages: sql<number>`(select count(*) from ${aiMessage} m where m.conversation_id = ${aiConversation.id})`.mapWith(
-					Number
-				)
+				messages:
+					sql<number>`(select count(*) from ${aiMessage} m where m.conversation_id = ${aiConversation.id})`.mapWith(
+						Number
+					)
 			})
 			.from(aiConversation)
 			.where(eq(aiConversation.customerId, id))
@@ -373,10 +374,14 @@ export const load = async ({ params, locals }) => {
 	};
 };
 
-const manage = (event: { locals: App.Locals }) => requirePermission(event.locals, 'customers.manage');
+const manage = (event: { locals: App.Locals }) =>
+	requirePermission(event.locals, 'customers.manage');
 
 /** Only one default address: setting one clears the others. */
-async function clearDefault(tx: Parameters<Parameters<typeof db.transaction>[0]>[0], customerId: number) {
+async function clearDefault(
+	tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+	customerId: number
+) {
 	await tx
 		.update(customerAddress)
 		.set({ isDefault: false })
@@ -387,14 +392,19 @@ export const actions = {
 	edit: async (event) => {
 		manage(event);
 		const form = await superValidate(event.request, zod4(customerEditSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		// The record saved is the one in the URL; the form's hidden id is not trusted.
 		const { id: _id, ...values } = form.data;
 		void _id;
 		const before = await loadCustomer(event.params.id);
 		const id = before.id;
 		if (before.anonymizedAt) {
-			return message(form, { type: 'error', text: 'An anonymised customer cannot be edited.' }, { status: 400 });
+			return message(
+				form,
+				{ type: 'error', text: 'An anonymised customer cannot be edited.' },
+				{ status: 400 }
+			);
 		}
 		const known = await customerByPhone(values.phone, id);
 		if (known) {
@@ -407,7 +417,13 @@ export const actions = {
 				.update(customer)
 				.set({ ...values, updatedBy: event.locals.user?.id })
 				.where(eq(customer.id, id));
-			await recordAudit(tx, event, { table: 'customer', recordId: id, action: 'update', before, after: values });
+			await recordAudit(tx, event, {
+				table: 'customer',
+				recordId: id,
+				action: 'update',
+				before,
+				after: values
+			});
 		});
 		return message(form, { type: 'success', text: 'Customer saved' });
 	},
@@ -416,7 +432,8 @@ export const actions = {
 		manage(event);
 		const c = await loadCustomer(event.params.id);
 		const form = await superValidate(event.request, zod4(addressSchema), { id: 'address' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the address' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the address' }, { status: 400 });
 		await db.transaction(async (tx) => {
 			if (form.data.isDefault) await clearDefault(tx, c.id);
 			await tx
@@ -430,7 +447,8 @@ export const actions = {
 		manage(event);
 		const c = await loadCustomer(event.params.id);
 		const form = await superValidate(event.request, zod4(addressEditSchema), { id: 'addressEdit' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the address' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the address' }, { status: 400 });
 		const { id, ...values } = form.data;
 		await db.transaction(async (tx) => {
 			if (values.isDefault) await clearDefault(tx, c.id);
@@ -458,7 +476,8 @@ export const actions = {
 		manage(event);
 		const c = await loadCustomer(event.params.id);
 		const form = await superValidate(event.request, zod4(consentSchema), { id: 'consent' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		await db.insert(marketingConsent).values({
 			customerId: c.id,
 			channel: form.data.channel,
@@ -478,7 +497,8 @@ export const actions = {
 		manage(event);
 		const c = await loadCustomer(event.params.id);
 		const form = await superValidate(event.request, zod4(creditSchema), { id: 'credit' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { direction, amount, expiresAt, ...rest } = form.data;
 		const signed = direction === 'debit' ? -amount : amount;
 		try {
@@ -487,7 +507,10 @@ export const actions = {
 				if (direction === 'debit') {
 					const balance = await creditBalance(tx, c.id);
 					if (amount > balance + 0.005) {
-						throw new WriteRefused('amount', `The balance is ${balance.toFixed(2)}; a debit cannot take it below zero.`);
+						throw new WriteRefused(
+							'amount',
+							`The balance is ${balance.toFixed(2)}; a debit cannot take it below zero.`
+						);
 					}
 				}
 				const [res] = await tx.insert(storeCredit).values({
@@ -510,7 +533,10 @@ export const actions = {
 			if (err.field) setError(form, err.field as never, err.message);
 			return message(form, { type: 'error', text: err.message }, { status: 400 });
 		}
-		return message(form, { type: 'success', text: `${direction === 'debit' ? 'Debit' : 'Credit'} recorded` });
+		return message(form, {
+			type: 'success',
+			text: `${direction === 'debit' ? 'Debit' : 'Credit'} recorded`
+		});
 	},
 
 	anonymise: async (event) => {
@@ -543,7 +569,10 @@ export const actions = {
 			};
 		}
 		await db.transaction(async (tx) => {
-			await tx.update(customer).set(deletionStamp(event.locals.user?.id)).where(eq(customer.id, c.id));
+			await tx
+				.update(customer)
+				.set(deletionStamp(event.locals.user?.id))
+				.where(eq(customer.id, c.id));
 			await recordAudit(tx, event, { table: 'customer', recordId: c.id, action: 'delete' });
 		});
 		redirect(

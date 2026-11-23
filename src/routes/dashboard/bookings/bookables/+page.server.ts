@@ -24,8 +24,13 @@ export const load = async ({ locals }) => {
 			isEnquiryOnly: bookable.isEnquiryOnly,
 			publishStatus: bookable.publishStatus,
 			isActive: bookable.isActive,
-			upcoming: sql<number>`(select count(*) from ${bookingSession} s where s.bookable_id = ${bookable.id} and s.starts_at >= now() and not s.is_cancelled)`.mapWith(Number),
-			open: sql<number>`(select count(*) from ${booking} b where b.bookable_id = ${bookable.id} and b.status in ('new', 'in_progress', 'confirmed') and b.deleted_at is null)`.mapWith(Number)
+			upcoming:
+				sql<number>`(select count(*) from ${bookingSession} s where s.bookable_id = ${bookable.id} and s.starts_at >= now() and not s.is_cancelled)`.mapWith(
+					Number
+				),
+			open: sql<number>`(select count(*) from ${booking} b where b.bookable_id = ${bookable.id} and b.status in ('new', 'in_progress', 'confirmed') and b.deleted_at is null)`.mapWith(
+				Number
+			)
 		})
 		.from(bookable)
 		.leftJoin(location, eq(bookable.locationId, location.id))
@@ -45,21 +50,33 @@ export const actions = {
 	add: async (event) => {
 		requirePermission(event.locals, 'bookings.manage');
 		const form = await superValidate(event.request, zod4(bookableSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		let id: number;
 		try {
 			const [res] = await db.insert(bookable).values({
-				...(packLocalized({ ...form.data }, ['name', 'description']) as unknown as typeof bookable.$inferInsert),
+				...(packLocalized({ ...form.data }, [
+					'name',
+					'description'
+				]) as unknown as typeof bookable.$inferInsert),
 				createdBy: event.locals.user?.id
 			});
 			id = res.insertId;
 		} catch (err) {
 			if (isDuplicateKey(err)) {
 				setError(form, 'slug', 'Another bookable has this slug');
-				return message(form, { type: 'error', text: 'Another bookable has this slug' }, { status: 400 });
+				return message(
+					form,
+					{ type: 'error', text: 'Another bookable has this slug' },
+					{ status: 400 }
+				);
 			}
 			throw err;
 		}
-		redirect(`/dashboard/bookings/bookables/${id}`, { type: 'success', message: 'Added — now set its prices and weekly times' }, event.cookies);
+		redirect(
+			`/dashboard/bookings/bookables/${id}`,
+			{ type: 'success', message: 'Added — now set its prices and weekly times' },
+			event.cookies
+		);
 	}
 };

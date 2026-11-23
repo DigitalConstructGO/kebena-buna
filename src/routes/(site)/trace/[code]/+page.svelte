@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { formatDate, tr } from '#lib/format.ts';
 	import { siteHref } from '#lib/site/locale.ts';
 
@@ -21,13 +21,29 @@
 		farm: m.trace_type_farm
 	};
 	const altitude = (min: number | null, max: number | null) =>
-		min && max && min !== max ? `${min}–${max} m` : min || max ? `${min ?? max} m` : null;
-	const paragraphs = (text: string) => text.split(/\n{2,}|\r\n\r\n/).map((p) => p.trim()).filter(Boolean);
-	const bag = $derived([run.size ? tr(run.size, locale) : null, tr(run.roastLevel, locale), run.grind ? tr(run.grind, locale) : m.trace_whole_bean()].filter(Boolean).join(' · '));
+		min && max && min !== max
+			? m.trace_altitude_value({ value: `${min}–${max}` })
+			: min || max
+				? m.trace_altitude_value({ value: String(min ?? max) })
+				: null;
+	const paragraphs = (text: string) =>
+		text
+			.split(/\n{2,}|\r\n\r\n/)
+			.map((p) => p.trim())
+			.filter(Boolean);
+	const bag = $derived(
+		[
+			run.size ? tr(run.size, locale) : null,
+			tr(run.roastLevel, locale),
+			run.grind ? tr(run.grind, locale) : m.trace_whole_bean()
+		]
+			.filter(Boolean)
+			.join(' · ')
+	);
 </script>
 
 <svelte:head>
-	<title>{m.trace_title({ product: tr(run.product, locale) })} · Kebena</title>
+	<title>{m.site_page_title({ title: m.trace_title({ product: tr(run.product, locale) }) })}</title>
 	<meta name="description" content={m.trace_lede()} />
 </svelte:head>
 
@@ -37,11 +53,22 @@
 		<h1 class="title">{tr(run.product, locale)}</h1>
 		<p class="lede">{bag}</p>
 		<dl class="facts">
-			<div><dt>{m.trace_bag_code()}</dt><dd class="num">{run.code}</dd></div>
-			<div><dt>{m.trace_packed()}</dt><dd>{formatDate(run.packedAt)}</dd></div>
-			{#if run.bestBefore}<div><dt>{m.trace_best_before()}</dt><dd>{formatDate(run.bestBefore)}</dd></div>{/if}
+			<div>
+				<dt>{m.trace_bag_code()}</dt>
+				<dd class="num">{run.code}</dd>
+			</div>
+			<div>
+				<dt>{m.trace_packed()}</dt>
+				<dd>{formatDate(run.packedAt)}</dd>
+			</div>
+			{#if run.bestBefore}<div>
+					<dt>{m.trace_best_before()}</dt>
+					<dd>{formatDate(run.bestBefore)}</dd>
+				</div>{/if}
 		</dl>
-		{#if tr(run.tastingNotes ?? '', locale)}<p class="notes">{tr(run.tastingNotes ?? '', locale)}</p>{/if}
+		{#if tr(run.tastingNotes ?? '', locale)}<p class="notes">
+				{tr(run.tastingNotes ?? '', locale)}
+			</p>{/if}
 	</header>
 
 	<ol class="chain">
@@ -51,10 +78,21 @@
 				<div class="step-body">
 					<p class="label">{STATION[s.type]?.() ?? s.type} · {tr(s.region, locale)}</p>
 					<h2 class="step-title">{tr(s.name, locale)}</h2>
-					{#if s.photo}<img class="photo" src={s.photo} alt={tr(s.name, locale)} loading="lazy" />{/if}
+					{#if s.photo}<img
+							class="photo"
+							src={s.photo}
+							alt={tr(s.name, locale)}
+							loading="lazy"
+						/>{/if}
 					<dl class="facts">
-						{#if altitude(s.altitudeMinM, s.altitudeMaxM)}<div><dt>{m.trace_altitude()}</dt><dd>{altitude(s.altitudeMinM, s.altitudeMaxM)}</dd></div>{/if}
-						{#if s.farmerCount}<div><dt>{m.trace_farmers()}</dt><dd class="num">{s.farmerCount.toLocaleString()}</dd></div>{/if}
+						{#if altitude(s.altitudeMinM, s.altitudeMaxM)}<div>
+								<dt>{m.trace_altitude()}</dt>
+								<dd>{altitude(s.altitudeMinM, s.altitudeMaxM)}</dd>
+							</div>{/if}
+						{#if s.farmerCount}<div>
+								<dt>{m.trace_farmers()}</dt>
+								<dd class="num">{s.farmerCount.toLocaleString()}</dd>
+							</div>{/if}
 					</dl>
 					{#each paragraphs(tr(s.story ?? '', locale)) as p, i (i)}<p class="story">{p}</p>{/each}
 					{#if s.certifications.length}
@@ -79,14 +117,34 @@
 					<h2 class="step-title">{PROCESS[l.process]?.() ?? l.process} · {l.cropYear}</h2>
 					{#if l.photo}<img class="photo" src={l.photo} alt="" loading="lazy" />{/if}
 					<dl class="facts">
-						<div><dt>{m.trace_region()}</dt><dd>{tr(l.region, locale)}</dd></div>
-						{#if l.grade}<div><dt>{m.trace_grade()}</dt><dd>{l.grade}</dd></div>{/if}
-						{#if l.altitudeM}<div><dt>{m.trace_altitude()}</dt><dd>{l.altitudeM} m</dd></div>{/if}
-						{#if l.cuppingScore}<div><dt>{m.trace_cupping()}</dt><dd class="num">{l.cuppingScore}</dd></div>{/if}
-						{#if l.farmerCount}<div><dt>{m.trace_farmers()}</dt><dd class="num">{l.farmerCount.toLocaleString()}</dd></div>{/if}
-						{#if l.varieties.length}<div><dt>{m.trace_varieties()}</dt><dd>{l.varieties.join(', ')}</dd></div>{/if}
+						<div>
+							<dt>{m.trace_region()}</dt>
+							<dd>{tr(l.region, locale)}</dd>
+						</div>
+						{#if l.grade}<div>
+								<dt>{m.trace_grade()}</dt>
+								<dd>{l.grade}</dd>
+							</div>{/if}
+						{#if l.altitudeM}<div>
+								<dt>{m.trace_altitude()}</dt>
+								<dd>{m.trace_altitude_value({ value: l.altitudeM })}</dd>
+							</div>{/if}
+						{#if l.cuppingScore}<div>
+								<dt>{m.trace_cupping()}</dt>
+								<dd class="num">{l.cuppingScore}</dd>
+							</div>{/if}
+						{#if l.farmerCount}<div>
+								<dt>{m.trace_farmers()}</dt>
+								<dd class="num">{l.farmerCount.toLocaleString()}</dd>
+							</div>{/if}
+						{#if l.varieties.length}<div>
+								<dt>{m.trace_varieties()}</dt>
+								<dd>{l.varieties.join(', ')}</dd>
+							</div>{/if}
 					</dl>
-					{#if tr(l.tastingNotes ?? '', locale)}<p class="notes">{tr(l.tastingNotes ?? '', locale)}</p>{/if}
+					{#if tr(l.tastingNotes ?? '', locale)}<p class="notes">
+							{tr(l.tastingNotes ?? '', locale)}
+						</p>{/if}
 					{#each paragraphs(tr(l.story ?? '', locale)) as p, i (i)}<p class="story">{p}</p>{/each}
 					{#if l.certifications.length}
 						<ul class="certs">
@@ -113,7 +171,10 @@
 							<li>
 								<span class="num">{b.code}</span>
 								<span>{formatDate(b.roastedAt)}</span>
-								{#if b.cuppingScore}<span class="muted">{m.trace_cupping()} {b.cuppingScore}</span>{/if}
+								{#if b.cuppingScore}<span class="muted">
+										{m.trace_cupping()}
+										{b.cuppingScore}
+									</span>{/if}
 							</li>
 						{/each}
 					</ul>
@@ -127,7 +188,9 @@
 				<p class="label">{m.trace_packed_label()}</p>
 				<h2 class="step-title">{m.trace_packed_title({ date: formatDate(run.packedAt) })}</h2>
 				<p class="story">{m.trace_packed_story()}</p>
-				<p><a class="btn" href={siteHref(`/shop/${run.productSlug}`, locale)}>{m.trace_buy()}</a></p>
+				<p>
+					<a class="btn" href={siteHref(`/shop/${run.productSlug}`, locale)}>{m.trace_buy()}</a>
+				</p>
 			</div>
 		</li>
 	</ol>

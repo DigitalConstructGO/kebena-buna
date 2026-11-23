@@ -14,9 +14,11 @@ const MODULES: { name: string; load: () => Promise<{ seed: () => Promise<void> }
 	{ name: 'memberships', load: () => import('./memberships.ts') },
 	{ name: 'bookings', load: () => import('./bookings.ts') },
 	{ name: 'wholesale', load: () => import('./wholesale.ts') },
+	{ name: 'bankAccounts', load: () => import('./bankAccounts.ts') },
 	{ name: 'orders', load: () => import('./orders.ts') },
 	{ name: 'content', load: () => import('./content.ts') },
 	{ name: 'system', load: () => import('./system.ts') },
+	{ name: 'paymentMessages', load: () => import('./paymentMessages.ts') },
 	// Last: experiences and events exist once `bookings` and `visits` have run.
 	{ name: 'pictures', load: () => import('./pictures.ts') }
 ];

@@ -19,13 +19,23 @@ import {
 	roastLevel,
 	station
 } from '#lib/server/db/schema.ts';
-import { addChoice, MAX_QTY, onSale, priceCart, productImageUrl, readChoices, tracksStock, writeChoices } from '#lib/server/cart.ts';
-import { m } from '#lib/paraglide/messages.js';
+import {
+	addChoice,
+	MAX_QTY,
+	onSale,
+	priceCart,
+	productImageUrl,
+	readChoices,
+	tracksStock,
+	writeChoices
+} from '#lib/server/cart.ts';
+import { m } from '#lib/i18n.ts';
 import type { Actions, PageServerLoad } from './$types';
 
-const availableOf = sql<number>`(select coalesce(sum(ps.units - ps.reserved_units), 0) from packed_stock ps where ps.variant_id = ${productVariant.id})`.mapWith(
-	Number
-);
+const availableOf =
+	sql<number>`(select coalesce(sum(ps.units - ps.reserved_units), 0) from packed_stock ps where ps.variant_id = ${productVariant.id})`.mapWith(
+		Number
+	);
 
 async function productBySlug(slug: string) {
 	const [p] = await db
@@ -70,7 +80,13 @@ export const load: PageServerLoad = async ({ params }) => {
 			})
 			.from(productVariant)
 			.leftJoin(bagSize, eq(productVariant.bagSizeId, bagSize.id))
-			.where(and(eq(productVariant.productId, p.id), eq(productVariant.isActive, true), isNull(productVariant.deletedAt)))
+			.where(
+				and(
+					eq(productVariant.productId, p.id),
+					eq(productVariant.isActive, true),
+					isNull(productVariant.deletedAt)
+				)
+			)
 			.orderBy(asc(productVariant.sortOrder), asc(bagSize.grams), asc(productVariant.id)),
 		db
 			.select({ fileName: productImage.fileName, alt: productImage.alt })
@@ -78,7 +94,12 @@ export const load: PageServerLoad = async ({ params }) => {
 			.where(eq(productImage.productId, p.id))
 			.orderBy(asc(productImage.sortOrder), asc(productImage.id)),
 		db
-			.select({ id: roastLevel.id, name: roastLevel.name, description: roastLevel.description, isDefault: productRoastLevel.isDefault })
+			.select({
+				id: roastLevel.id,
+				name: roastLevel.name,
+				description: roastLevel.description,
+				isDefault: productRoastLevel.isDefault
+			})
 			.from(productRoastLevel)
 			.innerJoin(roastLevel, eq(productRoastLevel.roastLevelId, roastLevel.id))
 			.where(and(eq(productRoastLevel.productId, p.id), isNull(roastLevel.deletedAt)))
@@ -90,7 +111,12 @@ export const load: PageServerLoad = async ({ params }) => {
 			.where(and(eq(productGrind.productId, p.id), isNull(grind.deletedAt)))
 			.orderBy(asc(grind.sortOrder)),
 		db
-			.select({ id: packaging.id, name: packaging.name, surcharge: packaging.surcharge, isDefault: productPackaging.isDefault })
+			.select({
+				id: packaging.id,
+				name: packaging.name,
+				surcharge: packaging.surcharge,
+				isDefault: productPackaging.isDefault
+			})
 			.from(productPackaging)
 			.innerJoin(packaging, eq(productPackaging.packagingId, packaging.id))
 			.where(and(eq(productPackaging.productId, p.id), isNull(packaging.deletedAt)))
@@ -99,7 +125,10 @@ export const load: PageServerLoad = async ({ params }) => {
 			.select({ station: station.name, lot: lot.code, share: productOrigin.sharePercent })
 			.from(productOrigin)
 			.leftJoin(lot, eq(productOrigin.lotId, lot.id))
-			.leftJoin(station, eq(sql`coalesce(${productOrigin.stationId}, ${lot.stationId})`, station.id))
+			.leftJoin(
+				station,
+				eq(sql`coalesce(${productOrigin.stationId}, ${lot.stationId})`, station.id)
+			)
 			.where(eq(productOrigin.productId, p.id))
 			.orderBy(asc(productOrigin.sortOrder))
 	]);
@@ -122,7 +151,10 @@ export const load: PageServerLoad = async ({ params }) => {
 	};
 };
 
-const optionalId = z.preprocess((v) => (v === '' || v === null || v === undefined ? null : v), z.coerce.number().int().positive().nullable());
+const optionalId = z.preprocess(
+	(v) => (v === '' || v === null || v === undefined ? null : v),
+	z.coerce.number().int().positive().nullable()
+);
 const addSchema = z.object({
 	variantId: z.coerce.number().int().positive(),
 	roastLevelId: optionalId,
@@ -145,9 +177,14 @@ export const actions: Actions = {
 
 		const lines = addChoice(readChoices(cookies), priced.choice);
 		if (priced.available !== null) {
-			const inCart = lines.filter((l) => l.variantId === choice.variantId).reduce((sum, l) => sum + l.quantity, 0);
+			const inCart = lines
+				.filter((l) => l.variantId === choice.variantId)
+				.reduce((sum, l) => sum + l.quantity, 0);
 			if (inCart > priced.available) {
-				return fail(409, { error: priced.available > 0 ? m.shop_only_left({ count: priced.available }) : m.shop_sold_out() });
+				return fail(409, {
+					error:
+						priced.available > 0 ? m.shop_only_left({ count: priced.available }) : m.shop_sold_out()
+				});
 			}
 		}
 		writeChoices(cookies, lines, url.protocol === 'https:');

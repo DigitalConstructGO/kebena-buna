@@ -20,7 +20,8 @@ export const actions = {
 		requirePermission(event.locals, 'wholesale.manage');
 		const posted = await postedForm(event.request);
 		const form = await superValidate(posted, zod4(accountSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 
 		const values: Record<string, unknown> = { ...form.data };
 		let id: number;
@@ -33,7 +34,11 @@ export const actions = {
 					requestedBy: event.locals.user?.id,
 					createdBy: event.locals.user?.id
 				});
-				await recordAudit(tx, event, { table: 'business_account', recordId: res.insertId, action: 'create' });
+				await recordAudit(tx, event, {
+					table: 'business_account',
+					recordId: res.insertId,
+					action: 'create'
+				});
 				return res.insertId;
 			});
 		} catch (err) {
@@ -43,7 +48,11 @@ export const actions = {
 			}
 			if (isDuplicateKey(err)) {
 				setError(form, 'tin', 'A business with this TIN already exists.');
-				return message(form, { type: 'error', text: 'A business with this TIN already exists.' }, { status: 400 });
+				return message(
+					form,
+					{ type: 'error', text: 'A business with this TIN already exists.' },
+					{ status: 400 }
+				);
 			}
 			throw err;
 		}

@@ -41,7 +41,10 @@ export const load = async ({ params }) => {
 			.where(and(eq(page.parentId, p.id), isNull(page.deletedAt)))
 			.orderBy(asc(page.sortOrder)),
 		p.parentId
-			? db.select({ id: page.id, title: enOf(page.title) }).from(page).where(eq(page.id, p.parentId))
+			? db
+					.select({ id: page.id, title: enOf(page.title) })
+					.from(page)
+					.where(eq(page.id, p.parentId))
 			: Promise.resolve([]),
 		pageOptions(p.id),
 		stampsOf(p)
@@ -75,7 +78,8 @@ export const actions = {
 		const p = await found(event.params.id);
 		const posted = await postedForm(event.request);
 		const form = await superValidate(posted, zod4(pageSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		try {
 			await savePage(event, form.data, posted, p.id);
 		} catch (err) {
@@ -96,6 +100,10 @@ export const actions = {
 	delete: async (event) => {
 		const p = await found(event.params.id);
 		await deleteDoc(event, page, 'page', p.id);
-		redirect('/dashboard/content/pages', { type: 'success', message: 'Page deleted' }, event.cookies);
+		redirect(
+			'/dashboard/content/pages',
+			{ type: 'success', message: 'Page deleted' },
+			event.cookies
+		);
 	}
 };

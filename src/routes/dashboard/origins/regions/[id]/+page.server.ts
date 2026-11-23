@@ -42,7 +42,12 @@ export const load = async ({ params, locals }) => {
 	const [path, children, stations, lots, regions] = await Promise.all([
 		pathOf(r),
 		db
-			.select({ id: region.id, name: enOf(region.name), level: region.level, status: region.status })
+			.select({
+				id: region.id,
+				name: enOf(region.name),
+				level: region.level,
+				status: region.status
+			})
 			.from(region)
 			.where(and(eq(region.parentId, r.id), isNull(region.deletedAt)))
 			.orderBy(enOf(region.name)),
@@ -82,11 +87,9 @@ export const load = async ({ params, locals }) => {
 		lots,
 		regions: regions.filter((o) => o.value !== r.id),
 		canManage: hasPermission(locals, 'origins.manage'),
-		editForm: await superValidate(
-			unpackLocalized(r, ['name', 'story']),
-			zod4(regionEditSchema),
-			{ errors: false }
-		)
+		editForm: await superValidate(unpackLocalized(r, ['name', 'story']), zod4(regionEditSchema), {
+			errors: false
+		})
 	};
 };
 
@@ -94,7 +97,8 @@ export const actions = {
 	edit: async (event) => {
 		requirePermission(event.locals, 'origins.manage');
 		const form = await superValidate(event.request, zod4(regionEditSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { id, ...values } = form.data;
 		const r = await loadRegion(id);
 		if (values.parentId) {
@@ -106,7 +110,7 @@ export const actions = {
 		}
 		await db
 			.update(region)
-			.set(packLocalized({ ...values }, ['name', 'story']) as Partial<typeof region.$inferInsert>)
+			.set(packLocalized({ ...values }, ['name', 'story']))
 			.where(eq(region.id, id));
 		return message(form, { type: 'success', text: 'Region saved' });
 	}

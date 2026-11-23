@@ -11,12 +11,21 @@ type Ref = { type: string; id: number; customerId: number | null };
 const TEMPLATES: { key: string; en: [string, string]; am: [string, string] }[] = [
 	{
 		key: 'order.paid',
-		en: ['Your Kebena order {{order_number}}', 'Thank you, {{name}}! We received {{total}} ETB for order {{order_number}}.'],
-		am: ['የቀበና ትዕዛዝ {{order_number}}', 'እናመሰግናለን {{name}}! ለትዕዛዝ {{order_number}} {{total}} ብር ተቀብለናል።']
+		en: [
+			'Your Kebena order {{order_number}}',
+			'Thank you, {{name}}! We received {{total}} ETB for order {{order_number}}.'
+		],
+		am: [
+			'የቀበና ትዕዛዝ {{order_number}}',
+			'እናመሰግናለን {{name}}! ለትዕዛዝ {{order_number}} {{total}} ብር ተቀብለናል።'
+		]
 	},
 	{
 		key: 'order.roasting',
-		en: ['Your coffee is being roasted', '{{name}}, your coffee for order {{order_number}} is being roasted today at the Kebena roastery.'],
+		en: [
+			'Your coffee is being roasted',
+			'{{name}}, your coffee for order {{order_number}} is being roasted today at the Kebena roastery.'
+		],
 		am: ['ቡናዎ እየተቆላ ነው', '{{name}}፣ የትዕዛዝ {{order_number}} ቡናዎ ዛሬ በቀበና እየተቆላ ነው።']
 	},
 	{
@@ -26,68 +35,143 @@ const TEMPLATES: { key: string; en: [string, string]; am: [string, string] }[] =
 	},
 	{
 		key: 'order.shipped',
-		en: ['Order {{order_number}} has shipped', 'Order {{order_number}} is with {{courier}}. Tracking number: {{tracking_number}} {{tracking_url}}'],
-		am: ['ትዕዛዝ {{order_number}} ተልኳል', 'ትዕዛዝ {{order_number}} ለ{{courier}} ተሰጥቷል። መከታተያ ቁጥር፦ {{tracking_number}} {{tracking_url}}']
+		en: [
+			'Order {{order_number}} has shipped',
+			'Order {{order_number}} is with {{courier}}. Tracking number: {{tracking_number}} {{tracking_url}}'
+		],
+		am: [
+			'ትዕዛዝ {{order_number}} ተልኳል',
+			'ትዕዛዝ {{order_number}} ለ{{courier}} ተሰጥቷል። መከታተያ ቁጥር፦ {{tracking_number}} {{tracking_url}}'
+		]
 	},
 	{
 		key: 'order.ready_for_pickup',
-		en: ['Order {{order_number}} is ready', '{{name}}, order {{order_number}} is ready to collect at {{pickup_place}} during opening hours. Show this code: {{pickup_code}}'],
-		am: ['ትዕዛዝ {{order_number}} ዝግጁ ነው', '{{name}}፣ ትዕዛዝ {{order_number}} በ{{pickup_place}} ለመውሰድ ዝግጁ ነው። ይህን ኮድ ያሳዩ፦ {{pickup_code}}']
+		en: [
+			'Order {{order_number}} is ready',
+			'{{name}}, order {{order_number}} is ready to collect at {{pickup_place}} during opening hours. Show this code: {{pickup_code}}'
+		],
+		am: [
+			'ትዕዛዝ {{order_number}} ዝግጁ ነው',
+			'{{name}}፣ ትዕዛዝ {{order_number}} በ{{pickup_place}} ለመውሰድ ዝግጁ ነው። ይህን ኮድ ያሳዩ፦ {{pickup_code}}'
+		]
 	},
 	{
 		key: 'order.delivered',
-		en: ['Enjoy your coffee', 'Thank you, {{name}}! Order {{order_number}} was delivered. Tell us how you liked it: {{review_url}}'],
-		am: ['ቡናዎን ይደሰቱበት', 'እናመሰግናለን {{name}}! ትዕዛዝ {{order_number}} ደርሷል። አስተያየትዎን ያጋሩን፦ {{review_url}}']
+		en: [
+			'Enjoy your coffee',
+			'Thank you, {{name}}! Order {{order_number}} was delivered. Tell us how you liked it: {{review_url}}'
+		],
+		am: [
+			'ቡናዎን ይደሰቱበት',
+			'እናመሰግናለን {{name}}! ትዕዛዝ {{order_number}} ደርሷል። አስተያየትዎን ያጋሩን፦ {{review_url}}'
+		]
 	},
 	{
 		key: 'order.collected',
-		en: ['Enjoy your coffee', 'Thank you, {{name}}, for collecting order {{order_number}}. Tell us how you liked it: {{review_url}}'],
-		am: ['ቡናዎን ይደሰቱበት', 'እናመሰግናለን {{name}}፣ ትዕዛዝ {{order_number}} ስለወሰዱ። አስተያየትዎን ያጋሩን፦ {{review_url}}']
+		en: [
+			'Enjoy your coffee',
+			'Thank you, {{name}}, for collecting order {{order_number}}. Tell us how you liked it: {{review_url}}'
+		],
+		am: [
+			'ቡናዎን ይደሰቱበት',
+			'እናመሰግናለን {{name}}፣ ትዕዛዝ {{order_number}} ስለወሰዱ። አስተያየትዎን ያጋሩን፦ {{review_url}}'
+		]
 	},
 	{
 		key: 'membership.renewal_due',
-		en: ['Your membership ends on {{ends_on}}', '{{name}}, your Kebena membership ends on {{ends_on}}. Renew in one tap: {{pay_url}}'],
+		en: [
+			'Your membership ends on {{ends_on}}',
+			'{{name}}, your Kebena membership ends on {{ends_on}}. Renew in one tap: {{pay_url}}'
+		],
 		am: ['አባልነትዎ በ{{ends_on}} ያበቃል', '{{name}}፣ የቀበና አባልነትዎ በ{{ends_on}} ያበቃል። ለማደስ፦ {{pay_url}}']
 	},
 	{
 		key: 'membership.ending',
-		en: ['Your membership ends on {{ends_on}}', '{{name}}, your Kebena {{plan}} membership ends on {{ends_on}}. You have 7 days of grace to renew: {{pay_url}}'],
-		am: ['አባልነትዎ በ{{ends_on}} ያበቃል', '{{name}}፣ የቀበና {{plan}} አባልነትዎ በ{{ends_on}} ያበቃል። ለማደስ 7 ቀናት አሉዎት፦ {{pay_url}}']
+		en: [
+			'Your membership ends on {{ends_on}}',
+			'{{name}}, your Kebena {{plan}} membership ends on {{ends_on}}. You have 7 days of grace to renew: {{pay_url}}'
+		],
+		am: [
+			'አባልነትዎ በ{{ends_on}} ያበቃል',
+			'{{name}}፣ የቀበና {{plan}} አባልነትዎ በ{{ends_on}} ያበቃል። ለማደስ 7 ቀናት አሉዎት፦ {{pay_url}}'
+		]
 	},
 	{
 		key: 'membership.lapsing',
-		en: ['Last days to renew', '{{name}}, your Kebena {{plan}} membership ended on {{ends_on}} and lapses today. Renew to keep your benefits: {{pay_url}}'],
-		am: ['ለማደስ የመጨረሻ ቀናት', '{{name}}፣ የቀበና {{plan}} አባልነትዎ በ{{ends_on}} አብቅቷል፤ ዛሬ ይቋረጣል። ጥቅሞችዎን ለማቆየት ያድሱ፦ {{pay_url}}']
+		en: [
+			'Last days to renew',
+			'{{name}}, your Kebena {{plan}} membership ended on {{ends_on}} and lapses today. Renew to keep your benefits: {{pay_url}}'
+		],
+		am: [
+			'ለማደስ የመጨረሻ ቀናት',
+			'{{name}}፣ የቀበና {{plan}} አባልነትዎ በ{{ends_on}} አብቅቷል፤ ዛሬ ይቋረጣል። ጥቅሞችዎን ለማቆየት ያድሱ፦ {{pay_url}}'
+		]
 	},
 	{
 		key: 'subscription.top_up',
-		en: ['One delivery left', '{{name}}, one prepaid delivery is left on your coffee subscription {{subscription_number}}. Top up to keep it coming: {{pay_url}}'],
-		am: ['አንድ ማድረሻ ቀርቷል', '{{name}}፣ በቡና ምዝገባዎ {{subscription_number}} አንድ የተከፈለ ማድረሻ ቀርቷል። እንዲቀጥል ይሙሉ፦ {{pay_url}}']
+		en: [
+			'One delivery left',
+			'{{name}}, one prepaid delivery is left on your coffee subscription {{subscription_number}}. Top up to keep it coming: {{pay_url}}'
+		],
+		am: [
+			'አንድ ማድረሻ ቀርቷል',
+			'{{name}}፣ በቡና ምዝገባዎ {{subscription_number}} አንድ የተከፈለ ማድረሻ ቀርቷል። እንዲቀጥል ይሙሉ፦ {{pay_url}}'
+		]
 	},
 	{
 		key: 'invoice.due_soon',
-		en: ['Invoice {{invoice_number}} is due on {{due_on}}', 'Dear {{name}}, a reminder that {{balance}} ETB on invoice {{invoice_number}} is due on {{due_on}}.'],
-		am: ['ደረሰኝ {{invoice_number}} በ{{due_on}} ይከፈላል', 'ውድ {{name}}፣ በደረሰኝ {{invoice_number}} ላይ {{balance}} ብር በ{{due_on}} መከፈል እንዳለበት እናስታውሳለን።']
+		en: [
+			'Invoice {{invoice_number}} is due on {{due_on}}',
+			'Dear {{name}}, a reminder that {{balance}} ETB on invoice {{invoice_number}} is due on {{due_on}}.'
+		],
+		am: [
+			'ደረሰኝ {{invoice_number}} በ{{due_on}} ይከፈላል',
+			'ውድ {{name}}፣ በደረሰኝ {{invoice_number}} ላይ {{balance}} ብር በ{{due_on}} መከፈል እንዳለበት እናስታውሳለን።'
+		]
 	},
 	{
 		key: 'invoice.due_today',
-		en: ['Invoice {{invoice_number}} is due today', 'Dear {{name}}, {{balance}} ETB on invoice {{invoice_number}} is due today.'],
-		am: ['ደረሰኝ {{invoice_number}} ዛሬ ይከፈላል', 'ውድ {{name}}፣ በደረሰኝ {{invoice_number}} ላይ {{balance}} ብር ዛሬ መከፈል አለበት።']
+		en: [
+			'Invoice {{invoice_number}} is due today',
+			'Dear {{name}}, {{balance}} ETB on invoice {{invoice_number}} is due today.'
+		],
+		am: [
+			'ደረሰኝ {{invoice_number}} ዛሬ ይከፈላል',
+			'ውድ {{name}}፣ በደረሰኝ {{invoice_number}} ላይ {{balance}} ብር ዛሬ መከፈል አለበት።'
+		]
 	},
 	{
 		key: 'invoice.overdue',
-		en: ['Invoice {{invoice_number}} is overdue', 'Dear {{name}}, {{balance}} ETB on invoice {{invoice_number}} was due on {{due_on}} and is still open. Please pay or call us on +251 912 605 824.'],
-		am: ['ደረሰኝ {{invoice_number}} ጊዜው አልፏል', 'ውድ {{name}}፣ በደረሰኝ {{invoice_number}} ላይ {{balance}} ብር በ{{due_on}} መከፈል ነበረበት። እባክዎ ይክፈሉ ወይም በ+251 912 605 824 ይደውሉ።']
+		en: [
+			'Invoice {{invoice_number}} is overdue',
+			'Dear {{name}}, {{balance}} ETB on invoice {{invoice_number}} was due on {{due_on}} and is still open. Please pay or call us on +251 912 605 824.'
+		],
+		am: [
+			'ደረሰኝ {{invoice_number}} ጊዜው አልፏል',
+			'ውድ {{name}}፣ በደረሰኝ {{invoice_number}} ላይ {{balance}} ብር በ{{due_on}} መከፈል ነበረበት። እባክዎ ይክፈሉ ወይም በ+251 912 605 824 ይደውሉ።'
+		]
 	},
 	{
 		key: 'booking.confirmed',
-		en: ['Booking {{booking_number}} confirmed', '{{name}}, your {{what}} on {{date}} at {{time}} for {{party}} is confirmed. See you at the museum!'],
-		am: ['ቦታ ማስያዣ {{booking_number}} ተረጋግጧል', '{{name}}፣ {{what}} በ{{date}} {{time}} ለ{{party}} ሰዎች ተረጋግጧል።']
+		en: [
+			'Booking {{booking_number}} confirmed',
+			'{{name}}, your {{what}} on {{date}} at {{time}} for {{party}} is confirmed. See you at the museum!'
+		],
+		am: [
+			'ቦታ ማስያዣ {{booking_number}} ተረጋግጧል',
+			'{{name}}፣ {{what}} በ{{date}} {{time}} ለ{{party}} ሰዎች ተረጋግጧል።'
+		]
 	},
 	{
 		key: 'booking.cancelled',
-		en: ['Booking {{booking_number}} cancelled', '{{name}}, your booking {{booking_number}} for {{what}} is cancelled. Questions? Call +251 912 605 824.'],
-		am: ['ቦታ ማስያዣ {{booking_number}} ተሰርዟል', '{{name}}፣ የ{{what}} ቦታ ማስያዣዎ {{booking_number}} ተሰርዟል። ለጥያቄ፦ +251 912 605 824']
+		en: [
+			'Booking {{booking_number}} cancelled',
+			'{{name}}, your booking {{booking_number}} for {{what}} is cancelled. Questions? Call +251 912 605 824.'
+		],
+		am: [
+			'ቦታ ማስያዣ {{booking_number}} ተሰርዟል',
+			'{{name}}፣ የ{{what}} ቦታ ማስያዣዎ {{booking_number}} ተሰርዟል። ለጥያቄ፦ +251 912 605 824'
+		]
 	}
 ];
 
@@ -95,17 +179,32 @@ const TEMPLATES: { key: string; en: [string, string]; am: [string, string] }[] =
 const STAFF_TEMPLATES: { key: string; en: [string, string]; am: [string, string] }[] = [
 	{
 		key: 'staff.low_stock',
-		en: ['{{count}} items under their low-stock level', '<p>These are under their low-stock level this morning:</p><div style="white-space:pre-line">{{list}}</div>'],
-		am: ['{{count}} ዕቃዎች ከዝቅተኛው ደረጃ በታች ናቸው', '<p>ዛሬ ጠዋት ከዝቅተኛው የክምችት ደረጃ በታች ያሉት፦</p><div style="white-space:pre-line">{{list}}</div>']
+		en: [
+			'{{count}} items under their low-stock level',
+			'<p>These are under their low-stock level this morning:</p><div style="white-space:pre-line">{{list}}</div>'
+		],
+		am: [
+			'{{count}} ዕቃዎች ከዝቅተኛው ደረጃ በታች ናቸው',
+			'<p>ዛሬ ጠዋት ከዝቅተኛው የክምችት ደረጃ በታች ያሉት፦</p><div style="white-space:pre-line">{{list}}</div>'
+		]
 	},
 	{
 		key: 'staff.sales_daily',
-		en: ['Sales for {{date}}: {{sales}} ETB', '<p>{{date}}: {{orders}} paid orders, {{sales}} ETB net of refunds, of which VAT {{vat}} ETB.</p>'],
-		am: ['የ{{date}} ሽያጭ፦ {{sales}} ብር', '<p>{{date}}፦ {{orders}} የተከፈሉ ትዕዛዞች፣ {{sales}} ብር (ተመላሽ ተቀንሶ)፣ ከዚህ ውስጥ ተ.እ.ታ {{vat}} ብር።</p>']
+		en: [
+			'Sales for {{date}}: {{sales}} ETB',
+			'<p>{{date}}: {{orders}} paid orders, {{sales}} ETB net of refunds, of which VAT {{vat}} ETB.</p>'
+		],
+		am: [
+			'የ{{date}} ሽያጭ፦ {{sales}} ብር',
+			'<p>{{date}}፦ {{orders}} የተከፈሉ ትዕዛዞች፣ {{sales}} ብር (ተመላሽ ተቀንሶ)፣ ከዚህ ውስጥ ተ.እ.ታ {{vat}} ብር።</p>'
+		]
 	},
 	{
 		key: 'staff.inbox_stale',
-		en: ['Waiting more than a day', '<p>Still new after 24 hours: {{forms}} form submissions and {{bookings}} bookings. Open the inbox in the dashboard.</p>'],
+		en: [
+			'Waiting more than a day',
+			'<p>Still new after 24 hours: {{forms}} form submissions and {{bookings}} bookings. Open the inbox in the dashboard.</p>'
+		],
 		am: ['ከአንድ ቀን በላይ የቆዩ', '<p>ከ24 ሰዓት በኋላም አዲስ ያሉ፦ {{forms}} ቅጾች እና {{bookings}} ቦታ ማስያዣዎች።</p>']
 	}
 ];
@@ -125,7 +224,14 @@ export async function seed() {
 	// ── Templates ──────────────────────────────────────────────────────────────────────────────
 	for (const t of STAFF_TEMPLATES) {
 		await db.insert(s.notificationTemplate).values(
-			(['en', 'am'] as const).map((locale) => ({ key: t.key, channel: 'email' as const, locale, subject: t[locale][0], body: t[locale][1], createdBy: editor }))
+			(['en', 'am'] as const).map((locale) => ({
+				key: t.key,
+				channel: 'email' as const,
+				locale,
+				subject: t[locale][0],
+				body: t[locale][1],
+				createdBy: editor
+			}))
 		);
 	}
 	for (const t of TEMPLATES) {
@@ -140,25 +246,84 @@ export async function seed() {
 
 	// ── Outbox ─────────────────────────────────────────────────────────────────────────────────
 	const customers = await db
-		.select({ id: s.customer.id, name: s.customer.name, phone: s.customer.phone, email: s.customer.email, locale: s.customer.locale, userId: s.customer.userId })
+		.select({
+			id: s.customer.id,
+			name: s.customer.name,
+			phone: s.customer.phone,
+			email: s.customer.email,
+			locale: s.customer.locale,
+			userId: s.customer.userId
+		})
 		.from(s.customer)
 		.orderBy(asc(s.customer.id));
-	const orders = await db.select({ id: s.order.id, customerId: s.order.customerId, number: s.order.number, total: s.order.total }).from(s.order).limit(60);
-	const bookings = await db.select({ id: s.booking.id, customerId: s.booking.customerId, number: s.booking.number }).from(s.booking).limit(30);
-	const memberships = await db.select({ id: s.membership.id, customerId: s.membership.customerId, number: s.membership.number, endsOn: s.membership.endsOn }).from(s.membership).limit(30);
+	const orders = await db
+		.select({
+			id: s.order.id,
+			customerId: s.order.customerId,
+			number: s.order.number,
+			total: s.order.total
+		})
+		.from(s.order)
+		.limit(60);
+	const bookings = await db
+		.select({ id: s.booking.id, customerId: s.booking.customerId, number: s.booking.number })
+		.from(s.booking)
+		.limit(30);
+	const memberships = await db
+		.select({
+			id: s.membership.id,
+			customerId: s.membership.customerId,
+			number: s.membership.number,
+			endsOn: s.membership.endsOn
+		})
+		.from(s.membership)
+		.limit(30);
 
 	const refs: (Ref & { key: string; payload: Record<string, unknown> })[] = [];
 	for (const o of orders) {
-		refs.push({ type: 'order', id: o.id, customerId: o.customerId, key: 'order.paid', payload: { order_number: o.number, total: o.total } });
-		if (rand() < 0.4) refs.push({ type: 'order', id: o.id, customerId: o.customerId, key: pick(['order.roasting', 'order.out_for_delivery']), payload: { order_number: o.number, rider_phone: '+251911223344' } });
+		refs.push({
+			type: 'order',
+			id: o.id,
+			customerId: o.customerId,
+			key: 'order.paid',
+			payload: { order_number: o.number, total: o.total }
+		});
+		if (rand() < 0.4)
+			refs.push({
+				type: 'order',
+				id: o.id,
+				customerId: o.customerId,
+				key: pick(['order.roasting', 'order.out_for_delivery']),
+				payload: { order_number: o.number, rider_phone: '+251911223344' }
+			});
 	}
-	for (const b of bookings) refs.push({ type: 'booking', id: b.id, customerId: b.customerId, key: 'booking.confirmed', payload: { booking_number: b.number } });
-	for (const m of memberships) refs.push({ type: 'membership', id: m.id, customerId: m.customerId, key: 'membership.renewal_due', payload: { ends_on: m.endsOn } });
+	for (const b of bookings)
+		refs.push({
+			type: 'booking',
+			id: b.id,
+			customerId: b.customerId,
+			key: 'booking.confirmed',
+			payload: { booking_number: b.number }
+		});
+	for (const m of memberships)
+		refs.push({
+			type: 'membership',
+			id: m.id,
+			customerId: m.customerId,
+			key: 'membership.renewal_due',
+			payload: { ends_on: m.endsOn }
+		});
 	// With nothing else seeded yet, the outbox still holds a month of order messages to customers.
 	while (refs.length < 80 && customers.length) {
 		const c = pick(customers);
 		const number = `KC-26-${String(between(1, 400)).padStart(6, '0')}`;
-		refs.push({ type: 'order', id: between(1, 400), customerId: c.id, key: pick(['order.paid', 'order.out_for_delivery']), payload: { order_number: number, total: between(400, 5000) } });
+		refs.push({
+			type: 'order',
+			id: between(1, 400),
+			customerId: c.id,
+			key: pick(['order.paid', 'order.out_for_delivery']),
+			payload: { order_number: number, total: between(400, 5000) }
+		});
 	}
 
 	const byId = new Map(customers.map((c) => [c.id, c]));
@@ -181,7 +346,14 @@ export async function seed() {
 			payload: { name: c.name, ...r.payload },
 			status,
 			attempts: status === 'failed' ? 3 : status === 'queued' ? 0 : 1,
-			lastError: status === 'failed' ? pick(['Gateway timeout (AfroMessage)', 'Invalid phone number', 'SMTP 550: mailbox unavailable']) : null,
+			lastError:
+				status === 'failed'
+					? pick([
+							'Gateway timeout (AfroMessage)',
+							'Invalid phone number',
+							'SMTP 550: mailbox unavailable'
+						])
+					: null,
 			providerRef: status === 'sent' ? `msg_${Math.floor(rand() * 1e9).toString(36)}` : null,
 			dedupeKey: `${r.type}:${r.id}:${r.key}:${channel}:${dedupe++}`,
 			refType: realRef ? r.type : null,
@@ -192,7 +364,11 @@ export async function seed() {
 		});
 	}
 	// A few marketing messages — only to customers whose latest SMS consent is a grant.
-	const consents = await db.select().from(s.marketingConsent).where(eq(s.marketingConsent.channel, 'sms')).orderBy(asc(s.marketingConsent.id));
+	const consents = await db
+		.select()
+		.from(s.marketingConsent)
+		.where(eq(s.marketingConsent.channel, 'sms'))
+		.orderBy(asc(s.marketingConsent.id));
 	const latest = new Map<number, boolean>();
 	for (const c of consents) latest.set(c.customerId, c.granted);
 	const opted = customers.filter((c) => latest.get(c.id)).slice(0, 8);
@@ -216,7 +392,11 @@ export async function seed() {
 	}
 
 	// ── Webhooks ───────────────────────────────────────────────────────────────────────────────
-	const payments = await db.select({ id: s.payment.id, txRef: s.payment.txRef, amount: s.payment.amount }).from(s.payment).where(eq(s.payment.provider, 'chapa')).limit(15);
+	const payments = await db
+		.select({ id: s.payment.id, txRef: s.payment.txRef, amount: s.payment.amount })
+		.from(s.payment)
+		.where(eq(s.payment.provider, 'chapa'))
+		.limit(15);
 	for (let i = 0; i < 15; i++) {
 		const p = payments[i];
 		const txRef = p?.txRef ?? `KC-TX-${between(100000, 999999)}`;
@@ -244,11 +424,26 @@ export async function seed() {
 	}
 
 	// ── Audit trail ────────────────────────────────────────────────────────────────────────────
-	const variants = await db.select({ id: s.productVariant.id, price: s.productVariant.price }).from(s.productVariant).limit(20);
-	const products = await db.select({ id: s.product.id, publishStatus: s.product.publishStatus }).from(s.product).limit(10);
-	const lots = await db.select({ id: s.lot.id, cuppingScore: s.lot.cuppingScore, lowStockKg: s.lot.lowStockKg }).from(s.lot).limit(10);
-	const [vat] = await db.select({ id: s.taxRate.id }).from(s.taxRate).where(eq(s.taxRate.code, 'VAT15'));
-	const roles = await db.select({ id: s.roles.id, name: s.roles.name }).from(s.roles).where(inArray(s.roles.name, ['Shop staff', 'Front desk']));
+	const variants = await db
+		.select({ id: s.productVariant.id, price: s.productVariant.price })
+		.from(s.productVariant)
+		.limit(20);
+	const products = await db
+		.select({ id: s.product.id, publishStatus: s.product.publishStatus })
+		.from(s.product)
+		.limit(10);
+	const lots = await db
+		.select({ id: s.lot.id, cuppingScore: s.lot.cuppingScore, lowStockKg: s.lot.lowStockKg })
+		.from(s.lot)
+		.limit(10);
+	const [vat] = await db
+		.select({ id: s.taxRate.id })
+		.from(s.taxRate)
+		.where(eq(s.taxRate.code, 'VAT15'));
+	const roles = await db
+		.select({ id: s.roles.id, name: s.roles.name })
+		.from(s.roles)
+		.where(inArray(s.roles.name, ['Shop staff', 'Front desk']));
 	const ip = () => pick(['196.188.12.4', '196.189.44.21', '10.0.0.15', '197.156.86.3']);
 
 	const entries: (typeof s.auditLog.$inferInsert)[] = [];
@@ -256,24 +451,97 @@ export async function seed() {
 		const v = pick(variants);
 		const was = Number(v.price);
 		const now = was + pick([50, 100, -50, 150]);
-		entries.push({ userId: pick([owner, manager]), action: 'update', tableName: 'product_variant', recordId: String(v.id), changes: { price: [was.toFixed(2), now.toFixed(2)] }, ipAddress: ip(), createdAt: daysFrom(-between(0, 30), between(8, 18)) });
+		entries.push({
+			userId: pick([owner, manager]),
+			action: 'update',
+			tableName: 'product_variant',
+			recordId: String(v.id),
+			changes: { price: [was.toFixed(2), now.toFixed(2)] },
+			ipAddress: ip(),
+			createdAt: daysFrom(-between(0, 30), between(8, 18))
+		});
 	}
 	for (let i = 0; i < 8 && products.length; i++) {
 		const p = pick(products);
-		entries.push({ userId: editor, action: 'update', tableName: 'product', recordId: String(p.id), changes: pick([{ publishStatus: ['draft', 'published'] }, { summary: [{ en: 'Old copy' }, { en: 'Jasmine, bergamot, honey.' }] }, { sortOrder: [3, 1] }]), ipAddress: ip(), createdAt: daysFrom(-between(0, 30), between(8, 18)) });
+		entries.push({
+			userId: editor,
+			action: 'update',
+			tableName: 'product',
+			recordId: String(p.id),
+			changes: pick([
+				{ publishStatus: ['draft', 'published'] },
+				{ summary: [{ en: 'Old copy' }, { en: 'Jasmine, bergamot, honey.' }] },
+				{ sortOrder: [3, 1] }
+			]),
+			ipAddress: ip(),
+			createdAt: daysFrom(-between(0, 30), between(8, 18))
+		});
 	}
 	for (let i = 0; i < 10 && lots.length; i++) {
 		const l = pick(lots);
 		entries.push(
 			i % 3 === 0
-				? { userId: roaster, action: 'create', tableName: 'lot', recordId: String(l.id), changes: null, ipAddress: ip(), createdAt: daysFrom(-between(10, 30), 9) }
-				: { userId: roaster, action: 'update', tableName: 'lot', recordId: String(l.id), changes: { cuppingScore: [l.cuppingScore, Number(l.cuppingScore ?? 84) + 0.25], lowStockKg: [l.lowStockKg, 50] }, ipAddress: ip(), createdAt: daysFrom(-between(0, 30), between(8, 18)) }
+				? {
+						userId: roaster,
+						action: 'create',
+						tableName: 'lot',
+						recordId: String(l.id),
+						changes: null,
+						ipAddress: ip(),
+						createdAt: daysFrom(-between(10, 30), 9)
+					}
+				: {
+						userId: roaster,
+						action: 'update',
+						tableName: 'lot',
+						recordId: String(l.id),
+						changes: {
+							cuppingScore: [l.cuppingScore, Number(l.cuppingScore ?? 84) + 0.25],
+							lowStockKg: [l.lowStockKg, 50]
+						},
+						ipAddress: ip(),
+						createdAt: daysFrom(-between(0, 30), between(8, 18))
+					}
 		);
 	}
-	if (vat) entries.push({ userId: owner, action: 'update', tableName: 'tax_rate', recordId: String(vat.id), changes: { name: [{ en: 'VAT' }, { en: 'VAT 15%', am: 'ተ.እ.ታ 15%' }] }, ipAddress: ip(), createdAt: daysFrom(-28, 11) });
-	for (const r of roles) entries.push({ userId: owner, action: 'update', tableName: 'role_permissions', recordId: String(r.id), changes: { added: 1, removed: 0 }, ipAddress: ip(), createdAt: daysFrom(-between(5, 25), 15) });
-	entries.push({ userId: owner, action: 'update', tableName: 'setting', recordId: 'delivery.free_above', changes: { value: [2500, 3000] }, ipAddress: ip(), createdAt: daysFrom(-12, 10) });
-	entries.push({ userId: manager, action: 'create', tableName: 'user', recordId: shop, changes: { name: 'Selam Tesfaye', roleId: roles[0]?.id ?? null }, ipAddress: ip(), createdAt: daysFrom(-29, 9) });
+	if (vat)
+		entries.push({
+			userId: owner,
+			action: 'update',
+			tableName: 'tax_rate',
+			recordId: String(vat.id),
+			changes: { name: [{ en: 'VAT' }, { en: 'VAT 15%', am: 'ተ.እ.ታ 15%' }] },
+			ipAddress: ip(),
+			createdAt: daysFrom(-28, 11)
+		});
+	for (const r of roles)
+		entries.push({
+			userId: owner,
+			action: 'update',
+			tableName: 'role_permissions',
+			recordId: String(r.id),
+			changes: { added: 1, removed: 0 },
+			ipAddress: ip(),
+			createdAt: daysFrom(-between(5, 25), 15)
+		});
+	entries.push({
+		userId: owner,
+		action: 'update',
+		tableName: 'setting',
+		recordId: 'delivery.free_above',
+		changes: { value: [2500, 3000] },
+		ipAddress: ip(),
+		createdAt: daysFrom(-12, 10)
+	});
+	entries.push({
+		userId: manager,
+		action: 'create',
+		tableName: 'user',
+		recordId: shop,
+		changes: { name: 'Selam Tesfaye', roleId: roles[0]?.id ?? null },
+		ipAddress: ip(),
+		createdAt: daysFrom(-29, 9)
+	});
 	entries.sort((a, b) => (a.createdAt as Date).getTime() - (b.createdAt as Date).getTime());
 	await db.insert(s.auditLog).values(entries);
 }

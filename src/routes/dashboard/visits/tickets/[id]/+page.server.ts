@@ -132,7 +132,9 @@ export const load = async ({ params, locals }) => {
 					.select({
 						value: visitSlot.id,
 						startsAt: visitSlot.startsAt,
-						free: sql<number>`${visitSlot.capacity} - ${visitSlot.sold} - ${visitSlot.held}`.mapWith(Number)
+						free: sql<number>`${visitSlot.capacity} - ${visitSlot.sold} - ${visitSlot.held}`.mapWith(
+							Number
+						)
 					})
 					.from(visitSlot)
 					.innerJoin(visitDay, eq(visitSlot.visitDayId, visitDay.id))
@@ -140,7 +142,10 @@ export const load = async ({ params, locals }) => {
 						and(
 							gte(visitDay.date, localToday()),
 							gt(visitSlot.endsAt, new Date()),
-							eq(visitDay.locationId, sql`(select d.location_id from visit_slot s join visit_day d on d.id = s.visit_day_id where s.id = ${t.visitSlotId})`),
+							eq(
+								visitDay.locationId,
+								sql`(select d.location_id from visit_slot s join visit_day d on d.id = s.visit_day_id where s.id = ${t.visitSlotId})`
+							),
 							eq(visitSlot.isClosed, false),
 							eq(visitDay.isClosed, false),
 							sql`${visitSlot.capacity} - ${visitSlot.sold} - ${visitSlot.held} >= ${t.admits}`
@@ -172,7 +177,8 @@ export const load = async ({ params, locals }) => {
 
 /** The refusal under its field, or on the form. */
 function refused(form: Parameters<typeof message>[0], err: unknown) {
-	if (err instanceof WriteRefused) return message(form, { type: 'error', text: err.message }, { status: 400 });
+	if (err instanceof WriteRefused)
+		return message(form, { type: 'error', text: err.message }, { status: 400 });
 	throw err;
 }
 
@@ -181,7 +187,8 @@ export const actions = {
 		// Moving a visitor to another slot changes capacity: staff who manage visits, not the scanner.
 		requirePermission(event.locals, 'visits.manage');
 		const form = await superValidate(event.request, zod4(rescheduleSchema), { id: 'reschedule' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		try {
 			await rescheduleTicket(event, idParam(event.params.id), form.data.toSlotId, form.data.reason);
 		} catch (err) {
@@ -192,7 +199,8 @@ export const actions = {
 	cancel: async (event) => {
 		requirePermission(event.locals, 'visits.manage');
 		const form = await superValidate(event.request, zod4(reasonSchema), { id: 'cancel' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		try {
 			await cancelTicket(event, idParam(event.params.id), form.data.reason);
 		} catch (err) {

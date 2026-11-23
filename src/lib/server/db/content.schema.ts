@@ -208,6 +208,22 @@ export const tourHotspot = mysqlTable(
 	(table) => [index('tour_hotspot_scene_idx').on(table.sceneId)]
 );
 
+/**
+ * Staff edits to the public site's words (Website › Site text). The wording itself is written in
+ * `messages/{locale}.json` and compiled by Paraglide; a row here replaces one message in the
+ * languages it lists, and deleting the row puts the written wording back. See `#lib/i18n.ts`.
+ */
+export const siteText = mysqlTable('site_text', {
+	/** The Paraglide message key, e.g. `home_journey_title`. */
+	key: varchar('key', { length: 160 }).primaryKey(),
+	value: localized('value').notNull(),
+	updatedBy: userRef('updated_by'),
+	updatedAt: datetime('updated_at')
+		.notNull()
+		.default(sql`CURRENT_TIMESTAMP`)
+		.$onUpdate(() => new Date())
+});
+
 export const postRelations = relations(post, ({ one }) => ({
 	category: one(postCategory, { fields: [post.categoryId], references: [postCategory.id] })
 }));

@@ -44,14 +44,27 @@ export const load = async ({ locals, url }) => {
 	const [batch] = batchId
 		? await db.select().from(roastBatch).where(eq(roastBatch.id, batchId))
 		: [];
-	const from = roasted.find((r) => r.roastBatchId === batch?.id)?.locationId ??
+	const from =
+		roasted.find((r) => r.roastBatchId === batch?.id)?.locationId ??
 		places.find((p) => p.type === 'roastery')?.id;
 	const shop = places.find((p) => p.type === 'shop')?.id;
 
 	/** Free roasted kg per batch, per location: what each source line may draw. */
 	const free: Record<number, Record<number, number>> = {};
 	for (const r of roasted) (free[r.locationId] ??= {})[r.roastBatchId] = r.free;
-	const batches = [...new Map(roasted.map((r) => [r.roastBatchId, { value: r.roastBatchId, name: r.code, locationId: r.locationId, roastLevelId: r.roastLevelId }])).values()];
+	const batches = [
+		...new Map(
+			roasted.map((r) => [
+				r.roastBatchId,
+				{
+					value: r.roastBatchId,
+					name: r.code,
+					locationId: r.locationId,
+					roastLevelId: r.roastLevelId
+				}
+			])
+		).values()
+	];
 
 	return {
 		options: { locations, variants, roastLevels, grinds, batches },
@@ -67,7 +80,7 @@ export const load = async ({ locals, url }) => {
 					? variants.find((v) => v.productId === batch.productId)?.value
 					: undefined,
 				bestBefore: addLocalDays(localToday(), 180),
-				sources: [{ roastBatchId: batch?.id as number, roastedKg: 0 }]
+				sources: [{ roastBatchId: batch?.id, roastedKg: 0 }]
 			},
 			zod4(packingSchema),
 			{ errors: false }
@@ -79,7 +92,8 @@ export const actions = {
 	default: async (event) => {
 		requirePermission(event.locals, 'stock.manage');
 		const form = await superValidate(event.request, zod4(packingSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { date, time, ...values } = form.data;
 		let run: { id: number; code: string };
 		try {

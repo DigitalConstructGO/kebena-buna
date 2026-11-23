@@ -32,6 +32,7 @@ export default defineConfig({
 				{ match: '/login', strategy: ['cookie', 'baseLocale'] },
 				{ match: '/logout', strategy: ['cookie', 'baseLocale'] },
 				{ match: '/api/:path(.*)?', exclude: true },
+				{ match: '/health/:path(.*)?', exclude: true },
 				{ match: '/media/:path(.*)?', exclude: true }
 			]
 		}),

@@ -4,8 +4,20 @@
  * seed.
  */
 import { and, eq, isNull } from 'drizzle-orm';
-import { db, schema as s, insertId, L, between, pick, rand, daysFrom, isoFrom, shortCode } from './db.ts';
+import {
+	db,
+	schema as s,
+	insertId,
+	L,
+	between,
+	pick,
+	rand,
+	daysFrom,
+	isoFrom,
+	shortCode
+} from './db.ts';
 import { userIdByEmail } from './base.ts';
+import type { SubscriptionDeliveryStatus, SubscriptionStatus } from '../../src/lib/constants.ts';
 
 const addDays = (iso: string, days: number) => {
 	const d = new Date(`${iso}T00:00:00Z`);
@@ -22,7 +34,10 @@ export async function seed() {
 	const manager = await userIdByEmail('manager@kebena.coffee');
 	const desk = await userIdByEmail('desk@kebena.coffee');
 	const shop = await userIdByEmail('shop@kebena.coffee');
-	const [vat] = await db.select({ id: s.taxRate.id }).from(s.taxRate).where(eq(s.taxRate.code, 'VAT15'));
+	const [vat] = await db
+		.select({ id: s.taxRate.id })
+		.from(s.taxRate)
+		.where(eq(s.taxRate.code, 'VAT15'));
 	const [patronBag] = await db
 		.select({ id: s.productVariant.id })
 		.from(s.productVariant)
@@ -30,13 +45,67 @@ export async function seed() {
 
 	// ── Plans ─────────────────────────────────────────────────────────────────────────────────
 	const plan = (values: Record<string, unknown>) =>
-		insertId(s.membershipPlan, { taxRateId: vat.id, publishStatus: 'published', createdBy: manager, ...values });
+		insertId(s.membershipPlan, {
+			taxRateId: vat.id,
+			publishStatus: 'published',
+			createdBy: manager,
+			...values
+		});
 	const plans = {
-		IND: await plan({ code: 'IND', name: L('Individual', 'ግለሰብ'), description: L('A year of free entry for one adult.'), benefits: L('Free entry, 10% off in the shop, free delivery, members-only events.'), price: 1500, shopDiscountPct: 10, sortOrder: 1 }),
-		FAM: await plan({ code: 'FAM', name: L('Family', 'ቤተሰብ'), description: L('Two adults and up to three children.'), benefits: L('One family card admitting five, 10% off, free delivery.'), price: 3500, maxAdults: 2, maxChildren: 3, sharedCardAdmits: 5, shopDiscountPct: 10, sortOrder: 2 }),
-		STU: await plan({ code: 'STU', name: L('Student', 'ተማሪ'), description: L('For full-time students with a valid ID.'), requiresProof: L('Student ID', 'የተማሪ መታወቂያ'), price: 750, shopDiscountPct: 10, sortOrder: 3 }),
-		PAT: await plan({ code: 'PAT', name: L('Patron', 'ደጋፊ'), description: L('Supports the museum; a bag of Limu every month.'), benefits: L('Everything in Family, 15% off, a 250 g bag of specialty coffee every month and a private cupping session once a year.'), price: 10000, maxAdults: 2, maxChildren: 3, sharedCardAdmits: 5, shopDiscountPct: 15, monthlyCoffeeVariantId: patronBag.id, sortOrder: 4 }),
-		CORP: await plan({ code: 'CORP', name: L('Corporate', 'ድርጅት'), price: 25000, maxAdults: 10, publishStatus: 'draft', isActive: false, sortOrder: 5 })
+		IND: await plan({
+			code: 'IND',
+			name: L('Individual', 'ግለሰብ'),
+			description: L('A year of free entry for one adult.'),
+			benefits: L('Free entry, 10% off in the shop, free delivery, members-only events.'),
+			price: 1500,
+			shopDiscountPct: 10,
+			sortOrder: 1
+		}),
+		FAM: await plan({
+			code: 'FAM',
+			name: L('Family', 'ቤተሰብ'),
+			description: L('Two adults and up to three children.'),
+			benefits: L('One family card admitting five, 10% off, free delivery.'),
+			price: 3500,
+			maxAdults: 2,
+			maxChildren: 3,
+			sharedCardAdmits: 5,
+			shopDiscountPct: 10,
+			sortOrder: 2
+		}),
+		STU: await plan({
+			code: 'STU',
+			name: L('Student', 'ተማሪ'),
+			description: L('For full-time students with a valid ID.'),
+			requiresProof: L('Student ID', 'የተማሪ መታወቂያ'),
+			price: 750,
+			shopDiscountPct: 10,
+			sortOrder: 3
+		}),
+		PAT: await plan({
+			code: 'PAT',
+			name: L('Patron', 'ደጋፊ'),
+			description: L('Supports the museum; a bag of Limu every month.'),
+			benefits: L(
+				'Everything in Family, 15% off, a 250 g bag of specialty coffee every month and a private cupping session once a year.'
+			),
+			price: 10000,
+			maxAdults: 2,
+			maxChildren: 3,
+			sharedCardAdmits: 5,
+			shopDiscountPct: 15,
+			monthlyCoffeeVariantId: patronBag.id,
+			sortOrder: 4
+		}),
+		CORP: await plan({
+			code: 'CORP',
+			name: L('Corporate', 'ድርጅት'),
+			price: 25000,
+			maxAdults: 10,
+			publishStatus: 'draft',
+			isActive: false,
+			sortOrder: 5
+		})
 	};
 
 	// ── Memberships ───────────────────────────────────────────────────────────────────────────
@@ -49,7 +118,13 @@ export async function seed() {
 	const nextNumber = () => `KM-26-${String(number++).padStart(4, '0')}`;
 	const CHILDREN = ['Abigail', 'Nathan', 'Kidus', 'Mariam', 'Yohannes', 'Hermela', 'Eyob'];
 
-	async function term(customer: { id: number; name: string | null }, planId: number, startsOn: string, status: string, renews: number | null) {
+	async function term(
+		customer: { id: number; name: string | null },
+		planId: number,
+		startsOn: string,
+		status: string,
+		renews: number | null
+	) {
 		const endsOn = addDays(addMonths(startsOn, 12), -1);
 		const id = await insertId(s.membership, {
 			number: nextNumber(),
@@ -61,15 +136,37 @@ export async function seed() {
 			graceEndsOn: status === 'pending_payment' ? null : addDays(endsOn, 7),
 			renewsMembershipId: renews,
 			cancelledAt: status === 'cancelled' ? daysFrom(-between(5, 60)) : null,
-			cancelReason: status === 'cancelled' ? pick(['Moved abroad', 'Asked for a refund', 'Duplicate purchase']) : null,
+			cancelReason:
+				status === 'cancelled'
+					? pick(['Moved abroad', 'Asked for a refund', 'Duplicate purchase'])
+					: null,
 			createdBy: rand() < 0.5 ? desk : null,
-			createdAt: daysFrom(-between(1, 30) + Math.round((Date.parse(startsOn) - Date.now()) / 86400000))
+			createdAt: daysFrom(
+				-between(1, 30) + Math.round((Date.parse(startsOn) - Date.now()) / 86400000)
+			)
 		});
-		await db.insert(s.membershipMember).values({ membershipId: id, name: customer.name ?? 'Member', cardCode: shortCode(10), createdBy: desk });
+		await db.insert(s.membershipMember).values({
+			membershipId: id,
+			name: customer.name ?? 'Member',
+			cardCode: shortCode(10),
+			createdBy: desk
+		});
 		if (planId === plans.FAM || planId === plans.PAT) {
-			await db.insert(s.membershipMember).values({ membershipId: id, name: `${pick(['Sara', 'Dawit', 'Helen', 'Mesfin'])} ${(customer.name ?? '').split(' ')[1] ?? ''}`.trim(), cardCode: shortCode(10), createdBy: desk });
+			await db.insert(s.membershipMember).values({
+				membershipId: id,
+				name: `${pick(['Sara', 'Dawit', 'Helen', 'Mesfin'])} ${(customer.name ?? '').split(' ')[1] ?? ''}`.trim(),
+				cardCode: shortCode(10),
+				createdBy: desk
+			});
 			for (let c = 0; c < between(1, 3); c++) {
-				await db.insert(s.membershipMember).values({ membershipId: id, name: `${pick(CHILDREN)} ${(customer.name ?? '').split(' ')[1] ?? ''}`.trim(), isChild: true, birthYear: between(2012, 2021), cardCode: shortCode(10), createdBy: desk });
+				await db.insert(s.membershipMember).values({
+					membershipId: id,
+					name: `${pick(CHILDREN)} ${(customer.name ?? '').split(' ')[1] ?? ''}`.trim(),
+					isChild: true,
+					birthYear: between(2012, 2021),
+					cardCode: shortCode(10),
+					createdBy: desk
+				});
 			}
 		}
 		return id;
@@ -95,32 +192,79 @@ export async function seed() {
 	// Renewal chains: three lapsed terms renewed into active ones.
 	for (const old of memberships.filter((m) => m.status === 'lapsed').slice(0, 3)) {
 		const customer = customers.find((c) => c.id === old.customerId)!;
-		const [prev] = await db.select({ endsOn: s.membership.endsOn }).from(s.membership).where(eq(s.membership.id, old.id));
+		const [prev] = await db
+			.select({ endsOn: s.membership.endsOn })
+			.from(s.membership)
+			.where(eq(s.membership.id, old.id));
 		const startsOn = addDays(prev.endsOn!, 1);
-		await term(customer, old.planId, startsOn, Date.parse(startsOn) + 365 * 86400000 > Date.now() ? 'active' : 'lapsed', old.id);
+		await term(
+			customer,
+			old.planId,
+			startsOn,
+			Date.parse(startsOn) + 365 * 86400000 > Date.now() ? 'active' : 'lapsed',
+			old.id
+		);
 	}
 
 	// ── Subscriptions ─────────────────────────────────────────────────────────────────────────
 	const subPlan = {
-		3: await insertId(s.subscriptionPlan, { name: L('3 deliveries', '3 ማድረሻዎች'), deliveries: 3, discountPct: 5, sortOrder: 1, createdBy: manager }),
-		6: await insertId(s.subscriptionPlan, { name: L('6 deliveries', '6 ማድረሻዎች'), deliveries: 6, discountPct: 10, sortOrder: 2, createdBy: manager }),
-		12: await insertId(s.subscriptionPlan, { name: L('12 deliveries', '12 ማድረሻዎች'), deliveries: 12, discountPct: 15, sortOrder: 3, createdBy: manager })
+		3: await insertId(s.subscriptionPlan, {
+			name: L('3 deliveries', '3 ማድረሻዎች'),
+			deliveries: 3,
+			discountPct: 5,
+			sortOrder: 1,
+			createdBy: manager
+		}),
+		6: await insertId(s.subscriptionPlan, {
+			name: L('6 deliveries', '6 ማድረሻዎች'),
+			deliveries: 6,
+			discountPct: 10,
+			sortOrder: 2,
+			createdBy: manager
+		}),
+		12: await insertId(s.subscriptionPlan, {
+			name: L('12 deliveries', '12 ማድረሻዎች'),
+			deliveries: 12,
+			discountPct: 15,
+			sortOrder: 3,
+			createdBy: manager
+		})
 	} as Record<number, number>;
 
 	const variants = await db
-		.select({ id: s.productVariant.id, price: s.productVariant.price, productId: s.productVariant.productId })
+		.select({
+			id: s.productVariant.id,
+			price: s.productVariant.price,
+			productId: s.productVariant.productId
+		})
 		.from(s.productVariant)
 		.innerJoin(s.product, eq(s.productVariant.productId, s.product.id))
 		.where(and(eq(s.product.kind, 'coffee'), isNull(s.productVariant.deletedAt)));
 	const allowed = await db.select().from(s.productRoastLevel);
 	const grinds = await db.select({ id: s.grind.id }).from(s.grind);
-	const zones = await db.select({ id: s.deliveryZone.id, code: s.deliveryZone.code }).from(s.deliveryZone);
-	const addresses = await db.select({ id: s.customerAddress.id, customerId: s.customerAddress.customerId }).from(s.customerAddress);
+	const zones = await db
+		.select({ id: s.deliveryZone.id, code: s.deliveryZone.code })
+		.from(s.deliveryZone);
+	const addresses = await db
+		.select({ id: s.customerAddress.id, customerId: s.customerAddress.customerId })
+		.from(s.customerAddress);
 
 	let subNumber = 1;
 	const owners = customers.slice(5, 27);
-	async function subscription(customerId: number, opts: { membershipId?: number; variantId?: number; status: string; frequency: 'biweekly' | 'monthly'; bundles: number[]; startDays: number }) {
-		const variant = opts.variantId ? variants.find((v) => v.id === opts.variantId)! : pick(variants);
+	async function subscription(
+		customerId: number,
+		opts: {
+			membershipId?: number;
+			variantId?: number;
+			status: SubscriptionStatus;
+			frequency: 'biweekly' | 'monthly';
+			bundles: number[];
+			startDays: number;
+		}
+	) {
+		const variant = opts.variantId
+			? variants.find((v) => v.id === opts.variantId)!
+			: pick(variants);
 		const roasts = allowed.filter((a) => a.productId === variant.productId);
 		const address = addresses.find((a) => a.customerId === customerId);
 		const step = opts.frequency === 'biweekly' ? 14 : 30;
@@ -136,7 +280,9 @@ export async function seed() {
 			grindId: pick(grinds).id,
 			quantity: rand() < 0.8 ? 1 : 2,
 			addressId: address?.id ?? null,
-			deliveryZoneId: address ? pick(zones.filter((z) => z.code !== 'PICKUP')).id : zones.find((z) => z.code === 'PICKUP')!.id,
+			deliveryZoneId: address
+				? pick(zones.filter((z) => z.code !== 'PICKUP')).id
+				: zones.find((z) => z.code === 'PICKUP')!.id,
 			deliveriesPurchased: purchased,
 			pausedUntil: opts.status === 'paused' ? isoFrom(between(10, 40)) : null,
 			cancelledAt: opts.status === 'cancelled' ? daysFrom(-between(3, 30)) : null,
@@ -161,7 +307,11 @@ export async function seed() {
 		for (let seq = 1; seq <= purchased; seq++) {
 			const roastDate = isoFrom(opts.startDays + (seq - 1) * step);
 			const past = Date.parse(roastDate) < Date.now() - 86400000;
-			let status = past ? (rand() < 0.15 ? 'skipped' : 'delivered') : 'scheduled';
+			let status: SubscriptionDeliveryStatus = past
+				? rand() < 0.15
+					? 'skipped'
+					: 'delivered'
+				: 'scheduled';
 			if (!past && opts.status === 'cancelled') status = 'cancelled';
 			if (status === 'delivered' || status === 'skipped') used++;
 			if (status === 'scheduled' && !next) next = roastDate;
@@ -178,11 +328,24 @@ export async function seed() {
 		const finalStatus = opts.status === 'active' && !next ? 'completed' : opts.status;
 		await db
 			.update(s.subscription)
-			.set({ deliveriesUsed: used, nextRoastDate: finalStatus === 'active' || finalStatus === 'paused' ? next : null, status: finalStatus })
+			.set({
+				deliveriesUsed: used,
+				nextRoastDate: finalStatus === 'active' || finalStatus === 'paused' ? next : null,
+				status: finalStatus
+			})
 			.where(eq(s.subscription.id, id));
 	}
 
-	const statuses = ['active', 'active', 'active', 'active', 'paused', 'cancelled', 'pending_payment', 'active'];
+	const statuses: SubscriptionStatus[] = [
+		'active',
+		'active',
+		'active',
+		'active',
+		'paused',
+		'cancelled',
+		'pending_payment',
+		'active'
+	];
 	for (let i = 0; i < 20; i++) {
 		const status = statuses[i % statuses.length];
 		const frequency = rand() < 0.5 ? 'biweekly' : 'monthly';
@@ -193,7 +356,13 @@ export async function seed() {
 	// Patron members get their monthly bag through the subscription engine (7.2), paid by the plan.
 	const patrons = memberships.filter((m) => m.planId === plans.PAT && m.status === 'active');
 	for (const p of patrons) {
-		await subscription(p.customerId, { membershipId: p.id, variantId: patronBag.id, status: 'active', frequency: 'monthly', bundles: [], startDays: -between(20, 120) });
+		await subscription(p.customerId, {
+			membershipId: p.id,
+			variantId: patronBag.id,
+			status: 'active',
+			frequency: 'monthly',
+			bundles: [],
+			startDays: -between(20, 120)
+		});
 	}
-
 }

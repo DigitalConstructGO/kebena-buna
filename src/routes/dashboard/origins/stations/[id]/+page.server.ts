@@ -60,7 +60,11 @@ export const load = async ({ params, locals }) => {
 			.where(and(eq(lot.stationId, s.id), isNull(lot.deletedAt)))
 			.orderBy(desc(lot.cropYear), desc(lot.id)),
 		db
-			.selectDistinct({ id: product.id, name: enOf(product.name), publishStatus: product.publishStatus })
+			.selectDistinct({
+				id: product.id,
+				name: enOf(product.name),
+				publishStatus: product.publishStatus
+			})
 			.from(productOrigin)
 			.innerJoin(product, eq(productOrigin.productId, product.id))
 			.where(and(eq(productOrigin.stationId, s.id), isNull(product.deletedAt))),
@@ -78,7 +82,10 @@ export const load = async ({ params, locals }) => {
 		options: { regions, certifications: certificationList },
 		canManage: hasPermission(locals, 'origins.manage'),
 		editForm: await superValidate(
-			{ ...unpackLocalized(s, ['name', 'story']), certificationIds: certifications.map((c) => c.id) },
+			{
+				...unpackLocalized(s, ['name', 'story']),
+				certificationIds: certifications.map((c) => c.id)
+			},
 			zod4(stationEditSchema),
 			{ errors: false, id: 'edit' }
 		),
@@ -90,7 +97,8 @@ export const actions = {
 	edit: async (event) => {
 		requirePermission(event.locals, 'origins.manage');
 		const form = await superValidate(event.request, zod4(stationEditSchema), { id: 'edit' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { id, certificationIds, ...values } = form.data;
 		const { station: before } = await loadStation(id);
 		const row = packLocalized({ ...values }, ['name', 'story']);
@@ -98,10 +106,19 @@ export const actions = {
 			await db.transaction(async (tx) => {
 				await tx
 					.update(station)
-					.set({ ...(row as Partial<typeof station.$inferInsert>), updatedBy: event.locals.user?.id })
+					.set({
+						...(row as Partial<typeof station.$inferInsert>),
+						updatedBy: event.locals.user?.id
+					})
 					.where(eq(station.id, id));
 				await setStationCertifications(tx, id, certificationIds);
-				await recordAudit(tx, event, { table: 'station', recordId: id, action: 'update', before, after: row });
+				await recordAudit(tx, event, {
+					table: 'station',
+					recordId: id,
+					action: 'update',
+					before,
+					after: row
+				});
 			});
 		} catch (err) {
 			if (isDuplicateKey(err)) {
@@ -123,7 +140,10 @@ export const actions = {
 		}
 		try {
 			const photo = await saveUploadedFile(form.data.photo);
-			await db.update(station).set({ photo, updatedBy: event.locals.user?.id }).where(eq(station.id, s.id));
+			await db
+				.update(station)
+				.set({ photo, updatedBy: event.locals.user?.id })
+				.where(eq(station.id, s.id));
 		} catch (err) {
 			if (err instanceof UploadRefused) {
 				setError(form, 'photo', err.message);
@@ -141,11 +161,19 @@ export const actions = {
 			.from(lot)
 			.where(and(eq(lot.stationId, s.id), isNull(lot.deletedAt)))
 			.limit(1);
-		if (used) return { message: { type: 'error', text: 'This station has lots: switch it off instead.' } };
+		if (used)
+			return { message: { type: 'error', text: 'This station has lots: switch it off instead.' } };
 		await db.transaction(async (tx) => {
-			await tx.update(station).set(deletionStamp(event.locals.user?.id)).where(eq(station.id, s.id));
+			await tx
+				.update(station)
+				.set(deletionStamp(event.locals.user?.id))
+				.where(eq(station.id, s.id));
 			await recordAudit(tx, event, { table: 'station', recordId: s.id, action: 'delete' });
 		});
-		redirect('/dashboard/origins/stations', { type: 'success', message: `${s.code} deleted` }, event.cookies);
+		redirect(
+			'/dashboard/origins/stations',
+			{ type: 'success', message: `${s.code} deleted` },
+			event.cookies
+		);
 	}
 };

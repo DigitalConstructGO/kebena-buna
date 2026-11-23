@@ -19,14 +19,46 @@
 			id: 'preview',
 			header: '',
 			cell: ({ row }) =>
-				renderComponent(LookupFileCell, { name: row.original.preview ?? row.original.panorama, image: true })
+				renderComponent(LookupFileCell, {
+					name: row.original.preview ?? row.original.panorama,
+					image: true
+				})
 		},
-		{ id: 'title', accessorKey: 'title', header: sortable('Scene'), cell: ({ row }) => link('scene', row.original.id, row.original.title) },
-		{ id: 'location', accessorKey: 'location', header: 'Site', cell: ({ row }) => link('location', row.original.locationId, row.original.location) },
-		{ id: 'isStart', header: 'Start', cell: ({ row }) => (row.original.isStart ? flag(true, 'Start scene') : '') },
-		{ id: 'hotspots', accessorKey: 'hotspots', header: sortable('Hotspots'), meta: { align: 'right' } },
-		{ id: 'sortOrder', accessorKey: 'sortOrder', header: sortable('Order'), meta: { align: 'right' } },
-		{ id: 'createdBy', header: 'Added by', meta: { class: 'hidden md:table-cell' }, cell: ({ row }) => user(row.original.createdById, row.original.createdBy) },
+		{
+			id: 'title',
+			accessorKey: 'title',
+			header: sortable('Scene'),
+			cell: ({ row }) => link('scene', row.original.id, row.original.title)
+		},
+		{
+			id: 'location',
+			accessorKey: 'location',
+			header: 'Site',
+			cell: ({ row }) => link('location', row.original.locationId, row.original.location)
+		},
+		{
+			id: 'isStart',
+			header: 'Start',
+			cell: ({ row }) => (row.original.isStart ? flag(true, 'Start scene') : '')
+		},
+		{
+			id: 'hotspots',
+			accessorKey: 'hotspots',
+			header: sortable('Hotspots'),
+			meta: { align: 'right' }
+		},
+		{
+			id: 'sortOrder',
+			accessorKey: 'sortOrder',
+			header: sortable('Order'),
+			meta: { align: 'right' }
+		},
+		{
+			id: 'createdBy',
+			header: 'Added by',
+			meta: { class: 'hidden md:table-cell' },
+			cell: ({ row }) => user(row.original.createdById, row.original.createdBy)
+		},
 		{ id: 'isActive', header: 'Status', cell: ({ row }) => flag(row.original.isActive) }
 	];
 	const href = useLinks();
@@ -39,7 +71,10 @@
 	{#snippet actions()}
 		<FormDialog
 			title="New scene"
-			triggerLabel="New scene" triggerVariant="default" triggerIcon={Plus} submitIcon={Plus}
+			triggerLabel="New scene"
+			triggerVariant="default"
+			triggerIcon={Plus}
+			submitIcon={Plus}
 			action="?/add"
 			data={data.addForm}
 			schema={sceneSchema}
@@ -53,4 +88,11 @@
 	{/snippet}
 </PageHeader>
 
-<DataTable rowHref={(row) => href('scene', row.id)} {columns} data={data.rows} facetKeys={['location']} facetLabels={{ location: 'Site' }} fileName="Tour scenes" />
+<DataTable
+	rowHref={(row) => href('scene', row.id)}
+	{columns}
+	data={data.rows}
+	facetKeys={['location']}
+	facetLabels={{ location: 'Site' }}
+	fileName="Tour scenes"
+/>

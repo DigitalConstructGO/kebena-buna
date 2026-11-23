@@ -24,5 +24,12 @@
 	{errors}
 	required
 />
-<InputComp label="Menu" name="showInMenu" type="checkboxSingle" placeholder="Show it in the menu and footer" {form} {errors} />
+<InputComp
+	label="Menu"
+	name="showInMenu"
+	type="checkboxSingle"
+	placeholder="Show it in the menu and footer"
+	{form}
+	{errors}
+/>
 <InputComp label="Order in the menu" name="sortOrder" type="number" min="0" {form} {errors} />

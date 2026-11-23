@@ -11,12 +11,24 @@
 
 	const state = (r: Row) => (r.error ? 'failed' : r.processedAt ? 'done' : 'pending');
 	const columns: ColumnDef<Row>[] = [
-		{ id: 'receivedAt', header: 'Received', cell: ({ row }) => link('webhook', row.original.id, dateTime(row.original.receivedAt)) },
+		{
+			id: 'receivedAt',
+			header: 'Received',
+			cell: ({ row }) => link('webhook', row.original.id, dateTime(row.original.receivedAt))
+		},
 		{ id: 'provider', header: 'Gateway', cell: ({ row }) => humanize(row.original.provider) },
 		{ id: 'eventType', header: 'Event', cell: ({ row }) => row.original.eventType ?? '—' },
 		{ id: 'eventId', accessorKey: 'eventId', header: 'Gateway event id' },
-		{ id: 'signature', header: 'Signature', cell: ({ row }) => flag(row.original.signatureValid, 'Valid', 'Invalid') },
-		{ id: 'state', header: 'Processed', cell: ({ row }) => status(state(row.original), humanize(state(row.original))) },
+		{
+			id: 'signature',
+			header: 'Signature',
+			cell: ({ row }) => flag(row.original.signatureValid, 'Valid', 'Invalid')
+		},
+		{
+			id: 'state',
+			header: 'Processed',
+			cell: ({ row }) => status(state(row.original), humanize(state(row.original)))
+		},
 		{ id: 'error', header: 'Error', cell: ({ row }) => longText(row.original.error, 30) }
 	];
 	const href = useLinks();

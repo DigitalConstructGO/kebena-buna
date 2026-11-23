@@ -11,14 +11,24 @@
 
 	let { data } = $props();
 	// svelte-ignore state_referenced_locally
-	const { form, errors, enhance, delayed, allErrors } = createForm(data.form, postSchema, { taintedMessage: confirmLeave });
+	const { form, errors, enhance, delayed, allErrors } = createForm(data.form, postSchema, {
+		taintedMessage: confirmLeave
+	});
 </script>
 
 <PageHeader title="New post" description="Write it in English first; the Amharic can follow." />
 
 <form method="POST" enctype="multipart/form-data" use:enhance class="mt-4 grid grid-cols-1 gap-6">
 	<Errors allErrors={$allErrors} />
-	<DocFields {form} {errors} base="/blog/" picture="coverImage" pictureLabel="Cover picture" summary isNew>
+	<DocFields
+		{form}
+		{errors}
+		base="/blog/"
+		picture="coverImage"
+		pictureLabel="Cover picture"
+		summary
+		isNew
+	>
 		{#snippet settings()}
 			<PostSettings {form} {errors} categories={data.categories} authors={data.authors} />
 		{/snippet}

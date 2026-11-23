@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { localizeHref } from '#lib/paraglide/runtime.js';
 	import type { FooterContent } from '#lib/content/museum.js';
+	import { m } from '#lib/i18n.ts';
 
 	let { content }: { content: FooterContent } = $props();
 
@@ -43,11 +44,11 @@
 				<svg viewBox="0 0 12 14" aria-hidden="true">
 					<path d="M6 13 V1.5 M1 6.5 L6 1.5 L11 6.5" />
 				</svg>
-				<span>Back to top</span>
+				<span>{m.home_footer_back_to_top()}</span>
 			</a>
 		</div>
 
-		<nav class="cols" aria-label="Footer">
+		<nav class="cols" aria-label={m.home_footer_nav_label()}>
 			{#each columns as column (column.title)}
 				<div class="col">
 					<h2 class="col-title">{column.title}</h2>

@@ -31,10 +31,16 @@ async function found(raw: string) {
 export const load = async ({ params, locals }) => {
 	requirePermission(locals, 'catalog.manage');
 	const p = await found(params.id);
-	const [categories, taxRates, levels] = await Promise.all([categoryOptions(), taxRateOptions(), stockLevels()]);
+	const [categories, taxRates, levels] = await Promise.all([
+		categoryOptions(),
+		taxRateOptions(),
+		stockLevels()
+	]);
 	return {
 		product: { id: p.id, name: p.name },
-		form: await superValidate({ ...unpackLocalized(p, PRODUCT_TEXT) }, zod4(productEditSchema), { errors: false }),
+		form: await superValidate({ ...unpackLocalized(p, PRODUCT_TEXT) }, zod4(productEditSchema), {
+			errors: false
+		}),
 		options: { categories, taxRates },
 		roastedLowDefault: levels.roastedLow
 	};
@@ -44,7 +50,8 @@ export const actions = {
 	default: async (event) => {
 		requirePermission(event.locals, 'catalog.manage');
 		const form = await superValidate(event.request, zod4(productEditSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		// The product is the one in the URL; the form's own id is not trusted to name it.
 		const before = await found(event.params.id);
 		const id = before.id;
@@ -54,9 +61,18 @@ export const actions = {
 			await db.transaction(async (tx) => {
 				await tx
 					.update(product)
-					.set({ ...(row as Partial<typeof product.$inferInsert>), updatedBy: event.locals.user?.id })
+					.set({
+						...(row as Partial<typeof product.$inferInsert>),
+						updatedBy: event.locals.user?.id
+					})
 					.where(eq(product.id, id));
-				await recordAudit(tx, event, { table: 'product', recordId: id, action: 'update', before, after: row });
+				await recordAudit(tx, event, {
+					table: 'product',
+					recordId: id,
+					action: 'update',
+					before,
+					after: row
+				});
 			});
 		} catch (err) {
 			if (isDuplicateKey(err)) {
@@ -65,6 +81,10 @@ export const actions = {
 			}
 			throw err;
 		}
-		redirect(`/dashboard/catalog/products/${id}`, { type: 'success', message: 'Product saved' }, event.cookies);
+		redirect(
+			`/dashboard/catalog/products/${id}`,
+			{ type: 'success', message: 'Product saved' },
+			event.cookies
+		);
 	}
 };

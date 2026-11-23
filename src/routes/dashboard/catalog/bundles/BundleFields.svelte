@@ -30,8 +30,23 @@
 	<div class="col-span-full">
 		<LanguageTabs {form} {errors} fields={['name', 'summary']}>
 			{#snippet children({ lang, suffix, language })}
-				<InputComp label="Name ({language})" name="name{suffix}" placeholder={lang === 'en' ? '2 kg bundle' : ''} {form} {errors} required={lang === 'en'} />
-				<InputComp label="Summary ({language})" name="summary{suffix}" type="textarea" rows={2} placeholder={lang === 'en' ? 'Any two 1 kg bags, 5% off' : ''} {form} {errors} />
+				<InputComp
+					label="Name ({language})"
+					name="name{suffix}"
+					placeholder={lang === 'en' ? '2 kg bundle' : ''}
+					{form}
+					{errors}
+					required={lang === 'en'}
+				/>
+				<InputComp
+					label="Summary ({language})"
+					name="summary{suffix}"
+					type="textarea"
+					rows={2}
+					placeholder={lang === 'en' ? 'Any two 1 kg bags, 5% off' : ''}
+					{form}
+					{errors}
+				/>
 			{/snippet}
 		</LanguageTabs>
 	</div>
@@ -44,7 +59,15 @@
 		{errors}
 		required
 	/>
-	<InputComp label="Website" name="publishStatus" type="select" items={choicesOf(PUBLISH_STATUSES)} {form} {errors} required />
+	<InputComp
+		label="Website"
+		name="publishStatus"
+		type="select"
+		items={choicesOf(PUBLISH_STATUSES)}
+		{form}
+		{errors}
+		required
+	/>
 	<InputComp label="Deal" name="pricing" type="select" items={PRICINGS} {form} {errors} required />
 	<InputComp
 		label={VALUE_LABEL[String($form.pricing)] ?? 'Value'}
@@ -56,9 +79,32 @@
 		{errors}
 		required
 	/>
-	<InputComp label="Offer starts" name="startsOn" type="date" futureDays description="Empty: from now." {form} {errors} />
-	<InputComp label="Offer ends" name="endsOn" type="date" futureDays description="Empty: no end." {form} {errors} />
-	<InputComp label="Most per order" name="maxPerOrder" type="number" description="Empty: no limit." {form} {errors} />
+	<InputComp
+		label="Offer starts"
+		name="startsOn"
+		type="date"
+		futureDays
+		description="Empty: from now."
+		{form}
+		{errors}
+	/>
+	<InputComp
+		label="Offer ends"
+		name="endsOn"
+		type="date"
+		futureDays
+		description="Empty: no end."
+		{form}
+		{errors}
+	/>
+	<InputComp
+		label="Most per order"
+		name="maxPerOrder"
+		type="number"
+		description="Empty: no limit."
+		{form}
+		{errors}
+	/>
 	<InputComp label="Order in the shop" name="sortOrder" type="number" {form} {errors} />
 </div>
 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -70,7 +116,13 @@
 		{form}
 		{errors}
 	/>
-	<InputComp label="Members only" name="isMemberOnly" type="checkboxSingle" placeholder="Offered only to signed-in members" {form} {errors} />
+	<InputComp
+		label="Members only"
+		name="isMemberOnly"
+		type="checkboxSingle"
+		placeholder="Offered only to signed-in members"
+		{form}
+		{errors}
+	/>
 </div>
-<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-</div>
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2"></div>

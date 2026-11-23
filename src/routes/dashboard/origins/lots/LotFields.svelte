@@ -44,10 +44,34 @@
 {/if}
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 	{#if !locked}
-		<InputComp label="Station" name="stationId" type="combo" items={options.stations} {form} {errors} required />
+		<InputComp
+			label="Station"
+			name="stationId"
+			type="combo"
+			items={options.stations}
+			{form}
+			{errors}
+			required
+		/>
 	{/if}
-	<InputComp label="Region" name="regionId" type="combo" items={options.regions} {form} {errors} required />
-	<InputComp label="Process" name="process" type="select" items={choicesOf(PROCESSING_METHODS)} {form} {errors} required />
+	<InputComp
+		label="Region"
+		name="regionId"
+		type="combo"
+		items={options.regions}
+		{form}
+		{errors}
+		required
+	/>
+	<InputComp
+		label="Process"
+		name="process"
+		type="select"
+		items={choicesOf(PROCESSING_METHODS)}
+		{form}
+		{errors}
+		required
+	/>
 	{#if !locked}
 		<InputComp label="Crop year" name="cropYear" type="number" {form} {errors} required />
 	{/if}
@@ -67,15 +91,30 @@
 	/>
 	<div class="col-span-full">
 		<LanguageTabs {form} {errors} fields={['tastingNotes', 'story']}>
-			{#snippet children({ lang, suffix, language })}
+			{#snippet children({ suffix, language })}
 				<InputComp label="Tasting notes ({language})" name="tastingNotes{suffix}" {form} {errors} />
-				<InputComp label="Story ({language})" name="story{suffix}" type="textarea" rows={3} {form} {errors} />
+				<InputComp
+					label="Story ({language})"
+					name="story{suffix}"
+					type="textarea"
+					rows={3}
+					{form}
+					{errors}
+				/>
 			{/snippet}
 		</LanguageTabs>
 	</div>
 </div>
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-	<InputComp label="Varieties" name="varietyIds" type="checkbox" items={options.varieties} selectAll={false} {form} {errors} />
+	<InputComp
+		label="Varieties"
+		name="varietyIds"
+		type="checkbox"
+		items={options.varieties}
+		selectAll={false}
+		{form}
+		{errors}
+	/>
 	<InputComp
 		label="Certifications"
 		name="certificationIds"

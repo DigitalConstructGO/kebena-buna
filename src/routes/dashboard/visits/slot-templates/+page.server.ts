@@ -34,7 +34,12 @@ export const load = async () => {
 	return {
 		...data,
 		rows: data.rows
-			.map((r) => ({ ...r, weekday: String(r.weekday), startsAt: r.startsAt.slice(0, 5), endsAt: r.endsAt.slice(0, 5) }))
+			.map((r) => ({
+				...r,
+				weekday: String(r.weekday),
+				startsAt: r.startsAt.slice(0, 5),
+				endsAt: r.endsAt.slice(0, 5)
+			}))
 			.sort((a, b) => a.weekday.localeCompare(b.weekday) || a.startsAt.localeCompare(b.startsAt))
 	};
 };

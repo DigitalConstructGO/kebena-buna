@@ -11,7 +11,9 @@
 
 	let { data } = $props();
 	// svelte-ignore state_referenced_locally
-	const { form, errors, enhance, delayed, allErrors } = createForm(data.form, customerSchema, { taintedMessage: confirmLeave });
+	const { form, errors, enhance, delayed, allErrors } = createForm(data.form, customerSchema, {
+		taintedMessage: confirmLeave
+	});
 </script>
 
 <PageHeader
@@ -19,7 +21,7 @@
 	description="A walk-in, a phone order or a group organiser. A phone already on another customer is refused, naming them."
 />
 
-<form method="POST" use:enhance class="mt-4 grid grid-cols-1 max-w-3xl gap-6">
+<form method="POST" use:enhance class="mt-4 grid max-w-3xl grid-cols-1 gap-6">
 	<Errors allErrors={$allErrors} />
 	<PageSection title="Contact">
 		<div class="grid grid-cols-1 gap-4">

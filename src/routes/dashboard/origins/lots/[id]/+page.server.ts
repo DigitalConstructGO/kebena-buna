@@ -169,7 +169,8 @@ export const actions = {
 	edit: async (event) => {
 		requirePermission(event.locals, 'origins.manage');
 		const form = await superValidate(event.request, zod4(lotEditSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		// The lot is the one in the URL; the form's own id is not trusted to name it.
 		const { lot: before } = await loadLot(event.params.id);
 		const id = before.id;
@@ -211,7 +212,8 @@ export const actions = {
 				.from(greenStock)
 				.where(and(eq(greenStock.lotId, l.id), gt(greenStock.kg, 0)))
 				.limit(1);
-			if (held) return 'This lot has coffee on hand: count or adjust it to zero, then switch it off instead.';
+			if (held)
+				return 'This lot has coffee on hand: count or adjust it to zero, then switch it off instead.';
 			const [moved] = await tx
 				.select({ id: stockMovement.id })
 				.from(stockMovement)
@@ -223,6 +225,10 @@ export const actions = {
 			return null;
 		});
 		if (refusal) return { message: { type: 'error', text: refusal } };
-		redirect('/dashboard/origins/lots', { type: 'success', message: `${l.code} deleted` }, event.cookies);
+		redirect(
+			'/dashboard/origins/lots',
+			{ type: 'success', message: `${l.code} deleted` },
+			event.cookies
+		);
 	}
 };

@@ -10,19 +10,59 @@
 	type Row = (typeof data.rows)[number];
 
 	const columns: ColumnDef<Row>[] = [
-		{ id: 'startsAt', accessorKey: 'startsAt', header: sortable('When'), cell: ({ row }) => link('session', row.original.id, dateTime(row.original.startsAt)) },
-		{ id: 'bookableId', header: 'What', cell: ({ row }) => link('bookable', row.original.bookableId, row.original.bookable) },
-		{ id: 'ends', header: 'Until', meta: { class: 'hidden md:table-cell' }, cell: ({ row }) => localClock(row.original.endsAt) },
+		{
+			id: 'startsAt',
+			accessorKey: 'startsAt',
+			header: sortable('When'),
+			cell: ({ row }) => link('session', row.original.id, dateTime(row.original.startsAt))
+		},
+		{
+			id: 'bookableId',
+			header: 'What',
+			cell: ({ row }) => link('bookable', row.original.bookableId, row.original.bookable)
+		},
+		{
+			id: 'ends',
+			header: 'Until',
+			meta: { class: 'hidden md:table-cell' },
+			cell: ({ row }) => localClock(row.original.endsAt)
+		},
 		{ id: 'language', header: 'Language', cell: ({ row }) => row.original.language ?? '—' },
-		{ id: 'booked', accessorKey: 'booked', header: sortable('Booked'), meta: { align: 'right' }, cell: ({ row }) => `${row.original.booked} / ${row.original.capacity}` },
+		{
+			id: 'booked',
+			accessorKey: 'booked',
+			header: sortable('Booked'),
+			meta: { align: 'right' },
+			cell: ({ row }) => `${row.original.booked} / ${row.original.capacity}`
+		},
 		{ id: 'free', accessorKey: 'free', header: sortable('Free'), meta: { align: 'right' } },
-		{ id: 'staff', header: 'Staff', meta: { class: 'hidden lg:table-cell' }, cell: ({ row }) => longText(row.original.staff, 30) },
-		{ id: 'state', header: 'Status', cell: ({ row }) => status(row.original.state === 'upcoming' ? 'scheduled' : row.original.state === 'past' ? 'done' : 'cancelled', row.original.state) }
+		{
+			id: 'staff',
+			header: 'Staff',
+			meta: { class: 'hidden lg:table-cell' },
+			cell: ({ row }) => longText(row.original.staff, 30)
+		},
+		{
+			id: 'state',
+			header: 'Status',
+			cell: ({ row }) =>
+				status(
+					row.original.state === 'upcoming'
+						? 'scheduled'
+						: row.original.state === 'past'
+							? 'done'
+							: 'cancelled',
+					row.original.state
+				)
+		}
 	];
 	const href = useLinks();
 </script>
 
-<PageHeader title="Sessions" description="Each run of a tour, ceremony or cupping, with its places and its guide. Upcoming first." />
+<PageHeader
+	title="Sessions"
+	description="Each run of a tour, ceremony or cupping, with its places and its guide. Upcoming first."
+/>
 
 <DataTable
 	rowHref={(row) => href('session', row.id)}

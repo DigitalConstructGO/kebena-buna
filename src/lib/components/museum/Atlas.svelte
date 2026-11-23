@@ -4,6 +4,8 @@
 	import { whenIdle } from '#lib/reveal.js';
 	import { COUNTRY, REGIONS, SIZE, project } from './ethiopia.js';
 	import type { AtlasContent } from '#lib/content/museum.js';
+	import { m } from '#lib/i18n.ts';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 
 	let { content }: { content: AtlasContent } = $props();
 
@@ -41,27 +43,23 @@
 		return {
 			from,
 			width: to - from,
-			label: `${a[0].toLocaleString('en')} to ${a[1].toLocaleString('en')} m`
+			label: m.home_atlas_altitude_range({
+				low: a[0].toLocaleString('en'),
+				high: a[1].toLocaleString('en')
+			})
 		};
 	});
-	const MONTHS = [
-		'Jan',
-		'Feb',
-		'Mar',
-		'Apr',
-		'May',
-		'Jun',
-		'Jul',
-		'Aug',
-		'Sep',
-		'Oct',
-		'Nov',
-		'Dec'
-	];
+	/** Short month names, January first: a message, or the browser's own if it lost a month. */
+	const months = $derived.by(() => {
+		const list = m.home_atlas_months().split(/\s*[,،]\s*/);
+		if (list.length === 12) return list;
+		const name = new Intl.DateTimeFormat(getLocale(), { month: 'short', timeZone: 'UTC' });
+		return Array.from({ length: 12 }, (_, i) => name.format(Date.UTC(2000, i, 1)));
+	});
 	const season = $derived.by(() => {
 		const h = current.harvest;
 		if (!h?.length) return '';
-		return `${MONTHS[h[0] - 1]} to ${MONTHS[h[h.length - 1] - 1]}`;
+		return m.home_atlas_harvest_range({ from: months[h[0] - 1], to: months[h[h.length - 1] - 1] });
 	});
 
 	/** A name goes to the left of its pin near the east edge, or when a neighbour sits just to its right. */
@@ -217,7 +215,7 @@
 						bind:this={svg}
 						viewBox={FULL}
 						role="img"
-						aria-label={`Map of Ethiopia with ${content.origins.length} coffee origins`}
+						aria-label={m.home_atlas_map_label({ count: content.origins.length })}
 					>
 						<g class="rings" aria-hidden="true">
 							{#each [180, 270, 360, 450] as r (r)}
@@ -272,22 +270,26 @@
 					</svg>
 				</div>
 				<div class="glow" aria-hidden="true"></div>
-				<p class="note">Locations are approximate.</p>
-				<p class="hint" aria-hidden="true">Tap an origin</p>
+				<p class="note">{m.home_atlas_note()}</p>
+				<p class="hint" aria-hidden="true">{m.home_atlas_hint()}</p>
 			</div>
 
 			<div class="panel">
 				{#key active}
 					<div class="detail" aria-live="polite">
-						<p class="count">Origin {pad(active + 1)} / {pad(content.origins.length)}</p>
-						<h3>{current.name}</h3>
-						<p class="coords">{current.lat.toFixed(2)}° N, {current.lon.toFixed(2)}° E</p>
+						<p class="count">
+							{m.home_atlas_count({ n: pad(active + 1), total: pad(content.origins.length) })}
+						</p>
+						<h3 data-no-letter>{current.name}</h3>
+						<p class="coords">
+							{m.home_atlas_coords({ lat: current.lat.toFixed(2), lon: current.lon.toFixed(2) })}
+						</p>
 						<p class="text">{current.text}</p>
 						{#if band || current.harvest?.length}
 							<dl class="facts">
 								{#if band}
 									<div>
-										<dt>Altitude</dt>
+										<dt>{m.home_atlas_altitude()}</dt>
 										<dd>
 											<span class="value">{band.label}</span>
 											<span class="gauge" aria-hidden="true">
@@ -298,12 +300,14 @@
 								{/if}
 								{#if current.harvest?.length}
 									<div>
-										<dt>Harvest</dt>
+										<dt>{m.home_atlas_harvest()}</dt>
 										<dd>
 											<span class="value">{season}</span>
 											<span class="year" aria-hidden="true">
-												{#each MONTHS as mo, n (mo)}
-													<i class={{ ripe: current.harvest.includes(n + 1) }}>{mo[0]}</i>
+												{#each months as mo, n (n)}
+													<i class={{ ripe: current.harvest.includes(n + 1) }}>
+														{mo[0].toUpperCase()}
+													</i>
 												{/each}
 											</span>
 										</dd>
@@ -313,7 +317,7 @@
 						{/if}
 					</div>
 				{/key}
-				<ol class="list" aria-label="Origins">
+				<ol class="list" aria-label={m.home_atlas_list_label()}>
 					{#each content.origins as o, i (o.id)}
 						<li>
 							<button

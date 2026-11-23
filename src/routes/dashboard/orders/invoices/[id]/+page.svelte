@@ -27,13 +27,26 @@
 
 	type Pay = (typeof data.payments)[number];
 	const columns: ColumnDef<Pay>[] = [
-		{ id: 'ref', header: 'Payment', cell: ({ row }) => link('payment', row.original.id, row.original.txRef) },
+		{
+			id: 'ref',
+			header: 'Payment',
+			cell: ({ row }) => link('payment', row.original.id, row.original.txRef)
+		},
 		{ id: 'via', header: 'Via', cell: ({ row }) => humanize(row.original.provider) },
 		{ id: 'reference', header: 'Reference', cell: ({ row }) => row.original.reference ?? '—' },
 		{ id: 'at', header: 'Paid', cell: ({ row }) => dateTime(row.original.paidAt) },
-		{ id: 'by', header: 'Recorded by', cell: ({ row }) => user(row.original.byId, row.original.by) },
+		{
+			id: 'by',
+			header: 'Recorded by',
+			cell: ({ row }) => user(row.original.byId, row.original.by)
+		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) },
-		{ id: 'amount', header: 'Amount (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.amount) }
+		{
+			id: 'amount',
+			header: 'Amount (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.amount)
+		}
 	];
 </script>
 
@@ -44,20 +57,59 @@
 	{#snippet actions()}
 		{#if data.canManage}
 			{#if inv.status === 'draft'}
-				<ConfirmAction action="?/issue" label="Issue" icon={Send} title="Issue {inv.number}?" description="Dated today and due in 30 days unless a due date is set." />
+				<ConfirmAction
+					action="?/issue"
+					label="Issue"
+					icon={Send}
+					title="Issue {inv.number}?"
+					description="Dated today and due in 30 days unless a due date is set."
+				/>
 			{/if}
 			{#if inv.status === 'open' || inv.status === 'overdue'}
-				<FormDialog title="Record a payment" triggerLabel="Record payment" action="?/payment" data={data.paymentForm} schema={paymentSchema}>
+				<FormDialog
+					title="Record a payment"
+					triggerLabel="Record payment"
+					action="?/payment"
+					data={data.paymentForm}
+					schema={paymentSchema}
+				>
 					{#snippet fields({ form, errors })}
-						<InputComp label="Paid by" name="provider" type="select" items={choicesOf(MANUAL_PROVIDERS)} {form} {errors} required />
-						<InputComp label="Amount (ETB)" name="amount" type="number" step="0.01" {form} {errors} required />
-						<InputComp label="Reference" name="reference" placeholder="Bank reference" {form} {errors} />
+						<InputComp
+							label="Paid by"
+							name="provider"
+							type="select"
+							items={choicesOf(MANUAL_PROVIDERS)}
+							{form}
+							{errors}
+							required
+						/>
+						<InputComp
+							label="Amount (ETB)"
+							name="amount"
+							type="number"
+							step="0.01"
+							{form}
+							{errors}
+							required
+						/>
+						<InputComp
+							label="Reference"
+							name="reference"
+							placeholder="Bank reference"
+							{form}
+							{errors}
+						/>
 						<InputComp label="Paid on" name="paidOn" type="date" {form} {errors} required />
 					{/snippet}
 				</FormDialog>
 			{/if}
 			{#if inv.status !== 'paid' && inv.status !== 'void'}
-				<FormDialog title="Edit {inv.number}" action="?/edit" data={data.editForm} schema={invoiceEditSchema}>
+				<FormDialog
+					title="Edit {inv.number}"
+					action="?/edit"
+					data={data.editForm}
+					schema={invoiceEditSchema}
+				>
 					{#snippet fields({ form, errors })}
 						<InputComp label="Billed to" name="billingName" {form} {errors} required />
 						<InputComp label="TIN" name="billingTin" {form} {errors} />
@@ -67,7 +119,14 @@
 					{/snippet}
 				</FormDialog>
 				{#if !Number(inv.amountPaid)}
-					<ConfirmAction action="?/void" label="Void" icon={Ban} variant="destructive" title="Void {inv.number}?" description="A void invoice stays on file under its number, marked void." />
+					<ConfirmAction
+						action="?/void"
+						label="Void"
+						icon={Ban}
+						variant="destructive"
+						title="Void {inv.number}?"
+						description="A void invoice stays on file under its number, marked void."
+					/>
 				{/if}
 			{/if}
 		{/if}
@@ -75,9 +134,38 @@
 </PageHeader>
 
 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-	<StatCard amharicMoney={false} stat={{ key: 'total', label: 'Total', value: Number(inv.total), format: 'money', group: 'invoice' }} />
-	<StatCard amharicMoney={false} stat={{ key: 'paid', label: 'Paid', value: Number(inv.amountPaid), format: 'money', group: 'invoice', tone: 'positive' }} />
-	<StatCard amharicMoney={false} stat={{ key: 'balance', label: 'Balance', value: data.balance, format: 'money', group: 'invoice', tone: late ? 'negative' : data.balance ? 'warning' : 'neutral' }} />
+	<StatCard
+		amharicMoney={false}
+		stat={{
+			key: 'total',
+			label: 'Total',
+			value: Number(inv.total),
+			format: 'money',
+			group: 'invoice'
+		}}
+	/>
+	<StatCard
+		amharicMoney={false}
+		stat={{
+			key: 'paid',
+			label: 'Paid',
+			value: Number(inv.amountPaid),
+			format: 'money',
+			group: 'invoice',
+			tone: 'positive'
+		}}
+	/>
+	<StatCard
+		amharicMoney={false}
+		stat={{
+			key: 'balance',
+			label: 'Balance',
+			value: data.balance,
+			format: 'money',
+			group: 'invoice',
+			tone: late ? 'negative' : data.balance ? 'warning' : 'neutral'
+		}}
+	/>
 </div>
 
 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[24rem_minmax(0,1fr)]">
@@ -87,8 +175,16 @@
 				{ name: 'Billed to', value: inv.billingName },
 				{ name: 'TIN', value: inv.billingTin ?? '—' },
 				{ name: 'Address', value: inv.billingAddress ?? '—' },
-				{ name: 'Customer', value: data.names.customer ?? '—', href: href('customer', inv.customerId) },
-				{ name: 'Business', value: data.names.business ?? '—', href: href('business', inv.businessAccountId) },
+				{
+					name: 'Customer',
+					value: data.names.customer ?? '—',
+					href: href('customer', inv.customerId)
+				},
+				{
+					name: 'Business',
+					value: data.names.business ?? '—',
+					href: href('business', inv.businessAccountId)
+				},
 				{ name: 'Order', value: data.names.orderNumber ?? '—', href: href('order', inv.orderId) },
 				{ name: 'Issued', value: formatDate(inv.issuedAt) },
 				{ name: 'Due', value: formatDate(inv.dueOn) },
@@ -109,7 +205,13 @@
 		</PageSection>
 		{#if data.bookings.length}
 			<PageSection title="Bookings billed here">
-				<SingleTable singleTable={data.bookings.map((b) => ({ name: humanize(b.status), value: b.number, href: href('booking', b.id) }))} />
+				<SingleTable
+					singleTable={data.bookings.map((b) => ({
+						name: humanize(b.status),
+						value: b.number,
+						href: href('booking', b.id)
+					}))}
+				/>
 			</PageSection>
 		{/if}
 	</div>

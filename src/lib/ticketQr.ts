@@ -25,7 +25,8 @@ export function parseTicketQr(raw: string): TicketQr | null {
 	const parts = raw.trim().split('.');
 	if (parts.length !== 5 || parts[0] !== QR_PREFIX) return null;
 	const [, code, day, admits, signature] = parts;
-	if (!/^[A-Z0-9]{4,16}$/.test(code) || !/^\d{8}$/.test(day) || !/^\d{1,4}$/.test(admits)) return null;
+	if (!/^[A-Z0-9]{4,16}$/.test(code) || !/^\d{8}$/.test(day) || !/^\d{1,4}$/.test(admits))
+		return null;
 	return {
 		code,
 		visitDate: `${day.slice(0, 4)}-${day.slice(4, 6)}-${day.slice(6)}`,
@@ -46,7 +47,14 @@ export const qrMessage = (t: { code: string; visitDate: string; admits: number }
 export function ticketCodeOf(raw: string): string {
 	const qr = parseTicketQr(raw);
 	if (qr) return qr.code;
-	return raw.trim().split(/[/?#=]/).filter(Boolean).at(-1)?.toUpperCase() ?? '';
+	return (
+		raw
+			.trim()
+			.split(/[/?#=]/)
+			.filter(Boolean)
+			.at(-1)
+			?.toUpperCase() ?? ''
+	);
 }
 
 const fromBase64url = (s: string) => {
@@ -61,7 +69,13 @@ const fromBase64url = (s: string) => {
  */
 export async function importQrKey(publicKey: string): Promise<CryptoKey | null> {
 	try {
-		return await crypto.subtle.importKey('raw', fromBase64url(publicKey), { name: 'Ed25519' }, false, ['verify']);
+		return await crypto.subtle.importKey(
+			'raw',
+			fromBase64url(publicKey),
+			{ name: 'Ed25519' },
+			false,
+			['verify']
+		);
 	} catch {
 		return null;
 	}

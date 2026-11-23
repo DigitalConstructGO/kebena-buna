@@ -14,9 +14,14 @@ import { customer, notification, user } from '#lib/server/db/schema.ts';
 import { CONTACT_CHANNELS, NOTIFICATION_STATUSES } from '#lib/constants.ts';
 
 const FILTERS = ['status', 'channel', 'templateKey'] as const;
-const SORTS = { scheduledFor: notification.scheduledFor, sentAt: notification.sentAt, attempts: notification.attempts };
+const SORTS = {
+	scheduledFor: notification.scheduledFor,
+	sentAt: notification.sentAt,
+	attempts: notification.attempts
+};
 
-const inList = <T extends readonly string[]>(list: T, v: string): v is T[number] => (list as readonly string[]).includes(v);
+const inList = <T extends readonly string[]>(list: T, v: string): v is T[number] =>
+	(list as readonly string[]).includes(v);
 
 const spec: WhereSpec<(typeof FILTERS)[number]> = {
 	search: (term) =>
@@ -35,13 +40,19 @@ const spec: WhereSpec<(typeof FILTERS)[number]> = {
 };
 
 const joined = <T extends MySqlSelect>(q: T) =>
-	q.leftJoin(customer, eq(notification.customerId, customer.id)).leftJoin(user, eq(notification.userId, user.id));
+	q
+		.leftJoin(customer, eq(notification.customerId, customer.id))
+		.leftJoin(user, eq(notification.userId, user.id));
 
 /** The outbox: every SMS, email and Telegram message, queued, sent or failed. */
 export const load = async ({ url }) => {
 	const query = parseTableQuery(url, FILTERS, 25, Object.keys(SORTS));
 	const where = buildWhere(query, spec);
-	const tally = (column: typeof notification.status | typeof notification.channel | typeof notification.templateKey, key: (typeof FILTERS)[number]) =>
+	const tally = (
+		column:
+			typeof notification.status | typeof notification.channel | typeof notification.templateKey,
+		key: (typeof FILTERS)[number]
+	) =>
 		joined(db.select({ value: column, count: count() }).from(notification).$dynamic())
 			.where(buildWhere(query, spec, { except: key }))
 			.groupBy(column);
@@ -81,5 +92,8 @@ export const load = async ({ url }) => {
 			templateKey: () => tally(notification.templateKey, 'templateKey')
 		})
 	]);
-	return { rows, server: { pagination: pagination(query, total), facets, filters: currentQuery(query) } };
+	return {
+		rows,
+		server: { pagination: pagination(query, total), facets, filters: currentQuery(query) }
+	};
 };

@@ -28,7 +28,14 @@ import {
 	ticket
 } from '#lib/server/db/schema.ts';
 import { enOf } from '#lib/server/localized.ts';
-import { dayLabel, lowStockCount, netSales, netVat, paidDay, soldOrder } from '#lib/server/dashboard.ts';
+import {
+	dayLabel,
+	lowStockCount,
+	netSales,
+	netVat,
+	paidDay,
+	soldOrder
+} from '#lib/server/dashboard.ts';
 import type { ReportChartData, Stat } from '@nahu/admin-kit/components/reports/types';
 
 const n = (v: unknown) => Number(v ?? 0);
@@ -106,8 +113,18 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 			weightLossPct: number | null;
 			lots: string | null;
 		}[],
-		workflow: null as null | { bookings: { status: string; count: number }[]; submissions: { status: string; count: number }[] },
-		discounts: [] as { id: number; code: string; kind: string; uses: number; discount: number; orders: number }[]
+		workflow: null as null | {
+			bookings: { status: string; count: number }[];
+			submissions: { status: string; count: number }[];
+		},
+		discounts: [] as {
+			id: number;
+			code: string;
+			kind: string;
+			uses: number;
+			discount: number;
+			orders: number;
+		}[]
 	};
 
 	const tasks: Promise<void>[] = [];
@@ -117,13 +134,25 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 			(async () => {
 				const [[totals], [refunds], groups, days] = await Promise.all([
 					db
-						.select({ orders: count(), total: netSales(), vat: netVat(), discount: sum(order.discountTotal), delivery: sum(order.deliveryFee) })
+						.select({
+							orders: count(),
+							total: netSales(),
+							vat: netVat(),
+							discount: sum(order.discountTotal),
+							delivery: sum(order.deliveryFee)
+						})
 						.from(order)
 						.where(paidIn),
 					db
 						.select({ amount: sum(refund.amount) })
 						.from(refund)
-						.where(and(eq(refund.status, 'succeeded'), gte(refund.processedAt, start), lt(refund.processedAt, end))),
+						.where(
+							and(
+								eq(refund.status, 'succeeded'),
+								gte(refund.processedAt, start),
+								lt(refund.processedAt, end)
+							)
+						),
 					db
 						.select({
 							itemType: orderLine.itemType,
@@ -142,7 +171,10 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 						.groupBy(paidDay())
 						.orderBy(paidDay())
 				]);
-				const byGroup = new Map<string, { group: string; lines: number; revenue: number; vat: number }>();
+				const byGroup = new Map<
+					string,
+					{ group: string; lines: number; revenue: number; vat: number }
+				>();
 				for (const g of groups) {
 					const name = LINE_GROUP[g.itemType] ?? 'Other';
 					const row = byGroup.get(name) ?? { group: name, lines: 0, revenue: 0, vat: 0 };
@@ -152,15 +184,51 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 					byGroup.set(name, row);
 				}
 				const dayList: string[] = [];
-				for (let d = period.from; d <= period.to && dayList.length < 400; d = addLocalDays(d, 1)) dayList.push(d);
+				for (let d = period.from; d <= period.to && dayList.length < 400; d = addLocalDays(d, 1))
+					dayList.push(d);
 				const totalsByDay = new Map(days.map((d) => [String(d.day).slice(0, 10), d]));
 				out.sales = {
 					stats: [
-						{ key: 'revenue', label: 'Sales (VAT included)', value: n(totals?.total), format: 'money', group: 'sales', tone: 'positive', hint: `${n(totals?.orders)} paid orders, after refunds` },
-						{ key: 'vat', label: 'VAT collected', value: n(totals?.vat), format: 'money', group: 'sales' },
-						{ key: 'net', label: 'Sales before VAT', value: n(totals?.total) - n(totals?.vat), format: 'money', group: 'sales' },
-						{ key: 'discounts', label: 'Discounts given', value: n(totals?.discount), format: 'money', group: 'sales', tone: 'neutral' },
-						{ key: 'refunds', label: 'Refunded', value: n(refunds?.amount), format: 'money', group: 'sales', tone: 'negative', hint: 'Paid back in the period' }
+						{
+							key: 'revenue',
+							label: 'Sales (VAT included)',
+							value: n(totals?.total),
+							format: 'money',
+							group: 'sales',
+							tone: 'positive',
+							hint: `${n(totals?.orders)} paid orders, after refunds`
+						},
+						{
+							key: 'vat',
+							label: 'VAT collected',
+							value: n(totals?.vat),
+							format: 'money',
+							group: 'sales'
+						},
+						{
+							key: 'net',
+							label: 'Sales before VAT',
+							value: n(totals?.total) - n(totals?.vat),
+							format: 'money',
+							group: 'sales'
+						},
+						{
+							key: 'discounts',
+							label: 'Discounts given',
+							value: n(totals?.discount),
+							format: 'money',
+							group: 'sales',
+							tone: 'neutral'
+						},
+						{
+							key: 'refunds',
+							label: 'Refunded',
+							value: n(refunds?.amount),
+							format: 'money',
+							group: 'sales',
+							tone: 'negative',
+							hint: 'Paid back in the period'
+						}
 					],
 					byGroup: [...byGroup.values()].sort((a, b) => b.revenue - a.revenue),
 					byDay: {
@@ -173,7 +241,10 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 						wide: true,
 						labels: dayList.map(dayLabel),
 						series: [
-							{ label: 'Before VAT', data: dayList.map((d) => n(totalsByDay.get(d)?.total) - n(totalsByDay.get(d)?.vat)) },
+							{
+								label: 'Before VAT',
+								data: dayList.map((d) => n(totalsByDay.get(d)?.total) - n(totalsByDay.get(d)?.vat))
+							},
 							{ label: 'VAT', data: dayList.map((d) => n(totalsByDay.get(d)?.vat)) }
 						]
 					}
@@ -184,8 +255,12 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 						product: enOf(product.name),
 						size: sql<string | null>`coalesce(${enOf(bagSize.name)}, ${enOf(productVariant.name)})`,
 						roast: enOf(roastLevel.name),
-						bags: sql<number>`sum(${orderLine.quantity} - ${orderLine.refundedQuantity})`.mapWith(Number),
-						revenue: sql<number>`sum(${orderLine.lineTotal} - ${orderLine.refundedAmount})`.mapWith(Number)
+						bags: sql<number>`sum(${orderLine.quantity} - ${orderLine.refundedQuantity})`.mapWith(
+							Number
+						),
+						revenue: sql<number>`sum(${orderLine.lineTotal} - ${orderLine.refundedAmount})`.mapWith(
+							Number
+						)
 					})
 					.from(orderLine)
 					.innerJoin(order, eq(orderLine.orderId, order.id))
@@ -194,7 +269,13 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 					.leftJoin(bagSize, eq(productVariant.bagSizeId, bagSize.id))
 					.leftJoin(roastLevel, eq(orderLine.roastLevelId, roastLevel.id))
 					.where(and(paidIn, eq(orderLine.itemType, 'product')))
-					.groupBy(orderLine.variantId, product.name, bagSize.name, productVariant.name, roastLevel.name)
+					.groupBy(
+						orderLine.variantId,
+						product.name,
+						bagSize.name,
+						productVariant.name,
+						roastLevel.name
+					)
 					.orderBy(desc(sql`sum(${orderLine.quantity} - ${orderLine.refundedQuantity})`))
 					.limit(15);
 			})()
@@ -215,7 +296,9 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 					})
 					.from(discountRedemption)
 					.innerJoin(discountCode, eq(discountRedemption.discountCodeId, discountCode.id))
-					.where(and(gte(discountRedemption.createdAt, start), lt(discountRedemption.createdAt, end)))
+					.where(
+						and(gte(discountRedemption.createdAt, start), lt(discountRedemption.createdAt, end))
+					)
 					.groupBy(discountCode.id, discountCode.code, discountCode.kind)
 					.orderBy(desc(sql`count(*)`));
 			})()
@@ -225,18 +308,39 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 	if (may('visits.view')) {
 		tasks.push(
 			(async () => {
-				const live = and(gte(ticket.visitDate, period.from), lte(ticket.visitDate, period.to), inArray(ticket.status, ['valid', 'used']));
+				const live = and(
+					gte(ticket.visitDate, period.from),
+					lte(ticket.visitDate, period.to),
+					inArray(ticket.status, ['valid', 'used'])
+				);
 				const [[t], days, byAudience] = await Promise.all([
-					db.select({ tickets: count(), admits: sum(ticket.admits), checkedIn: sum(ticket.checkedIn) }).from(ticket).where(live),
 					db
-						.select({ day: ticket.visitDate, code: audience.code, name: enOf(audience.name), admits: sum(ticket.admits) })
+						.select({
+							tickets: count(),
+							admits: sum(ticket.admits),
+							checkedIn: sum(ticket.checkedIn)
+						})
+						.from(ticket)
+						.where(live),
+					db
+						.select({
+							day: ticket.visitDate,
+							code: audience.code,
+							name: enOf(audience.name),
+							admits: sum(ticket.admits)
+						})
 						.from(ticket)
 						.innerJoin(audience, eq(ticket.audienceId, audience.id))
 						.where(live)
 						.groupBy(ticket.visitDate, audience.code, audience.name)
 						.orderBy(asc(ticket.visitDate)),
 					db
-						.select({ audience: enOf(audience.name), tickets: count(), admits: sum(ticket.admits), checkedIn: sum(ticket.checkedIn) })
+						.select({
+							audience: enOf(audience.name),
+							tickets: count(),
+							admits: sum(ticket.admits),
+							checkedIn: sum(ticket.checkedIn)
+						})
 						.from(ticket)
 						.innerJoin(audience, eq(ticket.audienceId, audience.id))
 						.where(live)
@@ -248,8 +352,22 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 				const nameOf = new Map(days.map((d) => [d.code, d.name || d.code]));
 				out.visits = {
 					stats: [
-						{ key: 'visitors', label: 'Visitors booked', value: n(t?.admits), format: 'count', group: 'visits', hint: `${n(t?.tickets)} tickets` },
-						{ key: 'checkedIn', label: 'Checked in', value: n(t?.checkedIn), format: 'count', group: 'visits', tone: 'positive' },
+						{
+							key: 'visitors',
+							label: 'Visitors booked',
+							value: n(t?.admits),
+							format: 'count',
+							group: 'visits',
+							hint: `${n(t?.tickets)} tickets`
+						},
+						{
+							key: 'checkedIn',
+							label: 'Checked in',
+							value: n(t?.checkedIn),
+							format: 'count',
+							group: 'visits',
+							tone: 'positive'
+						},
 						{
 							key: 'showRate',
 							label: 'Turned up',
@@ -268,10 +386,17 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 						labels: labels.map(dayLabel),
 						series: codes.map((code) => ({
 							label: nameOf.get(code) ?? code,
-							data: labels.map((d) => n(days.find((x) => String(x.day) === d && x.code === code)?.admits))
+							data: labels.map((d) =>
+								n(days.find((x) => String(x.day) === d && x.code === code)?.admits)
+							)
 						}))
 					},
-					byAudience: byAudience.map((a) => ({ audience: a.audience, tickets: n(a.tickets), admits: n(a.admits), checkedIn: n(a.checkedIn) }))
+					byAudience: byAudience.map((a) => ({
+						audience: a.audience,
+						tickets: n(a.tickets),
+						admits: n(a.admits),
+						checkedIn: n(a.checkedIn)
+					}))
 				};
 			})()
 		);
@@ -282,8 +407,16 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 			(async () => {
 				const soon = addLocalDays(localToday(), 30);
 				const [[active], [subs], renewals] = await Promise.all([
-					db.select({ c: count() }).from(membership).where(and(inArray(membership.status, ['active', 'grace']), isNull(membership.deletedAt))),
-					db.select({ c: count() }).from(subscription).where(and(eq(subscription.status, 'active'), isNull(subscription.deletedAt))),
+					db
+						.select({ c: count() })
+						.from(membership)
+						.where(
+							and(inArray(membership.status, ['active', 'grace']), isNull(membership.deletedAt))
+						),
+					db
+						.select({ c: count() })
+						.from(subscription)
+						.where(and(eq(subscription.status, 'active'), isNull(subscription.deletedAt))),
 					db
 						.select({
 							id: membership.id,
@@ -297,14 +430,39 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 						.from(membership)
 						.innerJoin(membershipPlan, eq(membership.planId, membershipPlan.id))
 						.innerJoin(customer, eq(membership.customerId, customer.id))
-						.where(and(inArray(membership.status, ['active', 'grace']), lte(membership.endsOn, soon), isNull(membership.deletedAt)))
+						.where(
+							and(
+								inArray(membership.status, ['active', 'grace']),
+								lte(membership.endsOn, soon),
+								isNull(membership.deletedAt)
+							)
+						)
 						.orderBy(asc(membership.endsOn))
 				]);
 				out.members = {
 					stats: [
-						{ key: 'members', label: 'Active members', value: n(active?.c), format: 'count', group: 'members' },
-						{ key: 'subs', label: 'Active subscriptions', value: n(subs?.c), format: 'count', group: 'members' },
-						{ key: 'renewals', label: 'Renewals due in 30 days', value: renewals.length, format: 'count', group: 'members', tone: renewals.length ? 'warning' : 'neutral' }
+						{
+							key: 'members',
+							label: 'Active members',
+							value: n(active?.c),
+							format: 'count',
+							group: 'members'
+						},
+						{
+							key: 'subs',
+							label: 'Active subscriptions',
+							value: n(subs?.c),
+							format: 'count',
+							group: 'members'
+						},
+						{
+							key: 'renewals',
+							label: 'Renewals due in 30 days',
+							value: renewals.length,
+							format: 'count',
+							group: 'members',
+							tone: renewals.length ? 'warning' : 'neutral'
+						}
 					],
 					renewals
 				};
@@ -315,24 +473,63 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 	if (may('stock.view')) {
 		tasks.push(
 			(async () => {
-				const scalar = async (q: ReturnType<typeof sql>) => n(((await db.execute(q)) as unknown as [Record<string, unknown>[]])[0]?.[0]?.v);
-				const [low, greenKg, roastedKg, packedUnits, greenValue, roastedValue, packedValue] = await Promise.all([
-					lowStockCount(),
-					scalar(sql`select coalesce(sum(kg), 0) v from green_stock`),
-					scalar(sql`select coalesce(sum(kg), 0) v from roasted_stock`),
-					scalar(sql`select coalesce(sum(units), 0) v from packed_stock`),
-					scalar(sql`select coalesce(sum(kg * cost_per_kg), 0) v from green_stock`),
-					// Roasted and packed stock carry the unit cost their roast or packing movement recorded.
-					scalar(sql`select coalesce(sum(rs.kg * coalesce((select max(m.unit_cost) from stock_movement m where m.roast_batch_id = rs.roast_batch_id and m.reason = 'roast_output'), 0)), 0) v from roasted_stock rs`),
-					scalar(sql`select coalesce(sum(ps.units * coalesce((select max(m.unit_cost) from stock_movement m where m.packing_run_id = ps.packing_run_id and m.reason = 'pack_output'), 0)), 0) v from packed_stock ps`)
-				]);
+				const scalar = async (q: ReturnType<typeof sql>) =>
+					n(((await db.execute(q)) as unknown as [Record<string, unknown>[]])[0]?.[0]?.v);
+				const [low, greenKg, roastedKg, packedUnits, greenValue, roastedValue, packedValue] =
+					await Promise.all([
+						lowStockCount(),
+						scalar(sql`select coalesce(sum(kg), 0) v from green_stock`),
+						scalar(sql`select coalesce(sum(kg), 0) v from roasted_stock`),
+						scalar(sql`select coalesce(sum(units), 0) v from packed_stock`),
+						scalar(sql`select coalesce(sum(kg * cost_per_kg), 0) v from green_stock`),
+						// Roasted and packed stock carry the unit cost their roast or packing movement recorded.
+						scalar(
+							sql`select coalesce(sum(rs.kg * coalesce((select max(m.unit_cost) from stock_movement m where m.roast_batch_id = rs.roast_batch_id and m.reason = 'roast_output'), 0)), 0) v from roasted_stock rs`
+						),
+						scalar(
+							sql`select coalesce(sum(ps.units * coalesce((select max(m.unit_cost) from stock_movement m where m.packing_run_id = ps.packing_run_id and m.reason = 'pack_output'), 0)), 0) v from packed_stock ps`
+						)
+					]);
 				out.stock = {
 					stats: [
-						{ key: 'greenKg', label: 'Green coffee (kg)', value: greenKg, format: 'count', group: 'stock' },
-						{ key: 'roastedKg', label: 'Roasted coffee (kg)', value: roastedKg, format: 'count', group: 'stock' },
-						{ key: 'packedUnits', label: 'Packed bags', value: packedUnits, format: 'count', group: 'stock' },
-						{ key: 'low', label: 'Low stock', value: low, format: 'count', group: 'stock', tone: low ? 'warning' : 'positive', hint: 'Lots, roasted coffee and bag sizes under their level' },
-						{ key: 'value', label: 'Stock value', value: greenValue + roastedValue + packedValue, format: 'money', group: 'stock', hint: `Green ${Math.round(greenValue).toLocaleString()} · roasted ${Math.round(roastedValue).toLocaleString()} · packed ${Math.round(packedValue).toLocaleString()}` }
+						{
+							key: 'greenKg',
+							label: 'Green coffee (kg)',
+							value: greenKg,
+							format: 'count',
+							group: 'stock'
+						},
+						{
+							key: 'roastedKg',
+							label: 'Roasted coffee (kg)',
+							value: roastedKg,
+							format: 'count',
+							group: 'stock'
+						},
+						{
+							key: 'packedUnits',
+							label: 'Packed bags',
+							value: packedUnits,
+							format: 'count',
+							group: 'stock'
+						},
+						{
+							key: 'low',
+							label: 'Low stock',
+							value: low,
+							format: 'count',
+							group: 'stock',
+							tone: low ? 'warning' : 'positive',
+							hint: 'Lots, roasted coffee and bag sizes under their level'
+						},
+						{
+							key: 'value',
+							label: 'Stock value',
+							value: greenValue + roastedValue + packedValue,
+							format: 'money',
+							group: 'stock',
+							hint: `Green ${Math.round(greenValue).toLocaleString()} · roasted ${Math.round(roastedValue).toLocaleString()} · packed ${Math.round(packedValue).toLocaleString()}`
+						}
 					]
 				};
 				out.roasts = await db
@@ -344,11 +541,19 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 						greenKgIn: roastBatch.greenKgIn,
 						roastedKgOut: roastBatch.roastedKgOut,
 						weightLossPct: roastBatch.weightLossPct,
-						lots: sql<string | null>`(select group_concat(l.code separator ', ') from roast_batch_input i join lot l on l.id = i.lot_id where i.roast_batch_id = ${roastBatch.id})`
+						lots: sql<
+							string | null
+						>`(select group_concat(l.code separator ', ') from roast_batch_input i join lot l on l.id = i.lot_id where i.roast_batch_id = ${roastBatch.id})`
 					})
 					.from(roastBatch)
 					.innerJoin(roastLevel, eq(roastBatch.roastLevelId, roastLevel.id))
-					.where(and(gte(roastBatch.roastedAt, start), lt(roastBatch.roastedAt, end), isNull(roastBatch.deletedAt)))
+					.where(
+						and(
+							gte(roastBatch.roastedAt, start),
+							lt(roastBatch.roastedAt, end),
+							isNull(roastBatch.deletedAt)
+						)
+					)
 					.orderBy(desc(roastBatch.roastedAt));
 			})()
 		);
@@ -362,14 +567,26 @@ export async function reportData(locals: App.Locals, period: { from: string; to:
 						? db
 								.select({ status: booking.status, count: count() })
 								.from(booking)
-								.where(and(gte(booking.createdAt, start), lt(booking.createdAt, end), isNull(booking.deletedAt)))
+								.where(
+									and(
+										gte(booking.createdAt, start),
+										lt(booking.createdAt, end),
+										isNull(booking.deletedAt)
+									)
+								)
 								.groupBy(booking.status)
 						: Promise.resolve([]),
 					may('inbox.view')
 						? db
 								.select({ status: formSubmission.status, count: count() })
 								.from(formSubmission)
-								.where(and(gte(formSubmission.submittedAt, start), lt(formSubmission.submittedAt, end), isNull(formSubmission.deletedAt)))
+								.where(
+									and(
+										gte(formSubmission.submittedAt, start),
+										lt(formSubmission.submittedAt, end),
+										isNull(formSubmission.deletedAt)
+									)
+								)
 								.groupBy(formSubmission.status)
 						: Promise.resolve([])
 				]);

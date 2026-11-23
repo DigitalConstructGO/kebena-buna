@@ -40,13 +40,22 @@ export const load = async ({ locals }) => {
 		items,
 		locations,
 		canManage: hasPermission(locals, 'stock.manage'),
-		adjustForm: await superValidate({ stage: 'green' as const, reason: 'adjustment' as const, date: today }, zod4(adjustSchema), { errors: false, id: 'adjust' }),
-		transferForm: await superValidate({ stage: 'packed' as const, date: today }, zod4(transferSchema), { errors: false, id: 'transfer' })
+		adjustForm: await superValidate(
+			{ stage: 'green' as const, reason: 'adjustment' as const, date: today },
+			zod4(adjustSchema),
+			{ errors: false, id: 'adjust' }
+		),
+		transferForm: await superValidate(
+			{ stage: 'packed' as const, date: today },
+			zod4(transferSchema),
+			{ errors: false, id: 'transfer' }
+		)
 	};
 };
 
 const refused = (form: Parameters<typeof message>[0], err: unknown) => {
-	if (err instanceof WriteRefused) return message(form, { type: 'error', text: err.message }, { status: 400 });
+	if (err instanceof WriteRefused)
+		return message(form, { type: 'error', text: err.message }, { status: 400 });
 	throw err;
 };
 
@@ -54,7 +63,8 @@ export const actions = {
 	adjust: async (event) => {
 		requirePermission(event.locals, 'stock.manage');
 		const form = await superValidate(event.request, zod4(adjustSchema), { id: 'adjust' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		try {
 			await db.transaction(async (tx) => {
 				await adjustStock(tx, {
@@ -67,7 +77,12 @@ export const actions = {
 					table: 'stock_movement',
 					recordId: `${form.data.stage}:${form.data.itemId}`,
 					action: 'create',
-					detail: { reason: form.data.reason, quantity: form.data.quantity, locationId: form.data.locationId, note: form.data.note }
+					detail: {
+						reason: form.data.reason,
+						quantity: form.data.quantity,
+						locationId: form.data.locationId,
+						note: form.data.note
+					}
 				});
 			});
 		} catch (err) {
@@ -78,7 +93,8 @@ export const actions = {
 	transfer: async (event) => {
 		requirePermission(event.locals, 'stock.manage');
 		const form = await superValidate(event.request, zod4(transferSchema), { id: 'transfer' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		try {
 			await db.transaction((tx) =>
 				transferStock(tx, {

@@ -43,7 +43,13 @@ export async function ageMemberships(): Promise<number> {
 	const [toGrace] = await db
 		.update(membership)
 		.set({ status: 'grace' })
-		.where(and(eq(membership.status, 'active'), lt(membership.endsOn, today), isNull(membership.deletedAt)));
+		.where(
+			and(
+				eq(membership.status, 'active'),
+				lt(membership.endsOn, today),
+				isNull(membership.deletedAt)
+			)
+		);
 	const [toLapsed] = await db
 		.update(membership)
 		.set({ status: 'lapsed' })
@@ -66,7 +72,13 @@ export async function membershipReminders(): Promise<number> {
 		db
 			.select({ id: next.id })
 			.from(next)
-			.where(and(eq(next.renewsMembershipId, membership.id), inArray(next.status, ['pending_payment', 'active']), isNull(next.deletedAt)))
+			.where(
+				and(
+					eq(next.renewsMembershipId, membership.id),
+					inArray(next.status, ['pending_payment', 'active']),
+					isNull(next.deletedAt)
+				)
+			)
 	);
 	let queued = 0;
 	for (const offset of MEMBERSHIP_OFFSETS) {
@@ -102,16 +114,26 @@ export async function membershipReminders(): Promise<number> {
 			const locale = m.locale || 'am';
 			queued += await queueMessage(
 				db,
-				offset < 0 ? 'membership.renewal_due' : offset === 0 ? 'membership.ending' : 'membership.lapsing',
+				offset < 0
+					? 'membership.renewal_due'
+					: offset === 0
+						? 'membership.ending'
+						: 'membership.lapsing',
 				{ phone: m.phone, email: m.email, locale, customerId: m.customerId },
 				{
 					name: m.name,
 					membership_number: m.number,
 					plan: m.plan?.[locale] || m.plan?.am || m.plan?.en || '',
 					ends_on: m.endsOn,
-					pay_url: renewUrl ? `${renewUrl}${renewUrl.includes('?') ? '&' : '?'}m=${encodeURIComponent(m.number)}` : ''
+					pay_url: renewUrl
+						? `${renewUrl}${renewUrl.includes('?') ? '&' : '?'}m=${encodeURIComponent(m.number)}`
+						: ''
 				},
-				{ refType: 'membership', refId: m.id, dedupe: `membership:${m.id}:renewal:${label(offset)}` }
+				{
+					refType: 'membership',
+					refId: m.id,
+					dedupe: `membership:${m.id}:renewal:${label(offset)}`
+				}
 			);
 		}
 	}
@@ -152,7 +174,9 @@ export async function subscriptionTopUps(): Promise<number> {
 			{
 				name: s.name,
 				subscription_number: s.number,
-				pay_url: topUpUrl ? `${topUpUrl}${topUpUrl.includes('?') ? '&' : '?'}s=${encodeURIComponent(s.number)}` : ''
+				pay_url: topUpUrl
+					? `${topUpUrl}${topUpUrl.includes('?') ? '&' : '?'}s=${encodeURIComponent(s.number)}`
+					: ''
 			},
 			// Once per bundle: a top-up raises `purchased`, and the next last delivery reminds again.
 			{ refType: 'subscription', refId: s.id, dedupe: `subscription:${s.id}:top_up:${s.purchased}` }
@@ -166,7 +190,9 @@ export async function markOverdueInvoices(): Promise<number> {
 	const [res] = await db
 		.update(invoice)
 		.set({ status: 'overdue' })
-		.where(and(eq(invoice.status, 'open'), lt(invoice.dueOn, localToday()), isNull(invoice.deletedAt)));
+		.where(
+			and(eq(invoice.status, 'open'), lt(invoice.dueOn, localToday()), isNull(invoice.deletedAt))
+		);
 	return res.affectedRows;
 }
 
@@ -218,4 +244,3 @@ export async function invoiceReminders(): Promise<number> {
 	}
 	return queued;
 }
-

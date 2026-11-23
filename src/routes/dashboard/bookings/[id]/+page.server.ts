@@ -126,7 +126,9 @@ export const load = async ({ params, locals }) => {
 	]);
 	const start = b.confirmedStartsAt ?? row.sessionStartsAt ?? row.slotStartsAt;
 	const startParts = splitDateTime(start);
-	const endParts = start ? splitDateTime(new Date(start.getTime() + row.durationMin * 60000)) : { date: '', time: '' };
+	const endParts = start
+		? splitDateTime(new Date(start.getTime() + row.durationMin * 60000))
+		: { date: '', time: '' };
 	const confirmed = splitDateTime(b.confirmedStartsAt);
 	return {
 		booking: b,
@@ -138,16 +140,39 @@ export const load = async ({ params, locals }) => {
 		people,
 		audiences,
 		canManage: hasPermission(locals, 'bookings.manage'),
-		statusForm: await superValidate({ status: b.status }, zod4(workflowSchema), { errors: false, id: 'status' }),
-		assignForm: await superValidate({ assignedTo: b.assignedTo }, zod4(assignSchema), { errors: false, id: 'assign' }),
+		statusForm: await superValidate({ status: b.status }, zod4(workflowSchema), {
+			errors: false,
+			id: 'status'
+		}),
+		assignForm: await superValidate({ assignedTo: b.assignedTo }, zod4(assignSchema), {
+			errors: false,
+			id: 'assign'
+		}),
 		staffForm: await superValidate(
-			{ role: row.bookableKind === 'ceremony' || row.bookableKind === 'private_event' ? 'host' : 'guide', date: startParts.date || undefined, startsAt: startParts.time || undefined, endsAt: endParts.time || undefined },
+			{
+				role:
+					row.bookableKind === 'ceremony' || row.bookableKind === 'private_event'
+						? 'host'
+						: 'guide',
+				date: startParts.date || undefined,
+				startsAt: startParts.time || undefined,
+				endsAt: endParts.time || undefined
+			},
 			zod4(staffAssignmentSchema),
 			{ errors: false, id: 'staff' }
 		),
-		quoteForm: await superValidate({ quotedAmount: b.quotedAmount, depositAmount: b.depositAmount }, zod4(quoteSchema), { errors: false, id: 'quote' }),
+		quoteForm: await superValidate(
+			{ quotedAmount: b.quotedAmount, depositAmount: b.depositAmount },
+			zod4(quoteSchema),
+			{ errors: false, id: 'quote' }
+		),
 		scheduleForm: await superValidate(
-			{ confirmedDate: confirmed.date || null, confirmedTime: confirmed.time || null, heldPlaces: b.heldPlaces, holdExpiresDate: b.holdExpiresAt ? splitDateTime(b.holdExpiresAt).date : null },
+			{
+				confirmedDate: confirmed.date || null,
+				confirmedTime: confirmed.time || null,
+				heldPlaces: b.heldPlaces,
+				holdExpiresDate: b.holdExpiresAt ? splitDateTime(b.holdExpiresAt).date : null
+			},
 			zod4(scheduleSchema),
 			{ errors: false, id: 'schedule' }
 		),
@@ -192,20 +217,35 @@ export const actions = {
 		let changed: boolean;
 		try {
 			changed = await db.transaction((tx) =>
-				changeWorkflow(tx, { bookingId: b.id }, form.data.status, form.data.note, event.locals.user?.id)
+				changeWorkflow(
+					tx,
+					{ bookingId: b.id },
+					form.data.status,
+					form.data.note,
+					event.locals.user?.id
+				)
 			);
 		} catch (err) {
 			return refused(form, err);
 		}
-		return message(form, { type: changed ? 'success' : 'error', text: changed ? 'Status changed' : 'It already has that status' });
+		return message(form, {
+			type: changed ? 'success' : 'error',
+			text: changed ? 'Status changed' : 'It already has that status'
+		});
 	},
 	assign: async (event) => {
 		requirePermission(event.locals, 'bookings.manage');
 		const form = await superValidate(event.request, zod4(assignSchema), { id: 'assign' });
 		if (!form.valid) return bad(form);
 		const { b } = await loadBooking(event.params.id);
-		await db.update(booking).set({ assignedTo: form.data.assignedTo ?? null, updatedBy: event.locals.user?.id }).where(eq(booking.id, b.id));
-		return message(form, { type: 'success', text: form.data.assignedTo ? 'Assigned' : 'Unassigned' });
+		await db
+			.update(booking)
+			.set({ assignedTo: form.data.assignedTo ?? null, updatedBy: event.locals.user?.id })
+			.where(eq(booking.id, b.id));
+		return message(form, {
+			type: 'success',
+			text: form.data.assignedTo ? 'Assigned' : 'Unassigned'
+		});
 	},
 	staff: async (event) => {
 		requirePermission(event.locals, 'bookings.manage');
@@ -219,9 +259,14 @@ export const actions = {
 	unstaff: async (event) => {
 		requirePermission(event.locals, 'bookings.manage');
 		const { b } = await loadBooking(event.params.id);
-		const id = z.coerce.number().int().safeParse((await event.request.formData()).get('assignmentId'));
+		const id = z.coerce
+			.number()
+			.int()
+			.safeParse((await event.request.formData()).get('assignmentId'));
 		if (!id.success) return { message: { type: 'error', text: 'Which assignment?' } };
-		await db.delete(staffAssignment).where(and(eq(staffAssignment.id, id.data), eq(staffAssignment.bookingId, b.id)));
+		await db
+			.delete(staffAssignment)
+			.where(and(eq(staffAssignment.id, id.data), eq(staffAssignment.bookingId, b.id)));
 		return { message: { type: 'success', text: 'Taken off the booking' } };
 	},
 	quote: async (event) => {
@@ -230,8 +275,17 @@ export const actions = {
 		if (!form.valid) return bad(form);
 		const { b } = await loadBooking(event.params.id);
 		await db.transaction(async (tx) => {
-			await tx.update(booking).set({ ...form.data, updatedBy: event.locals.user?.id }).where(eq(booking.id, b.id));
-			await recordAudit(tx, event, { table: 'booking', recordId: b.id, action: 'update', before: b, after: form.data });
+			await tx
+				.update(booking)
+				.set({ ...form.data, updatedBy: event.locals.user?.id })
+				.where(eq(booking.id, b.id));
+			await recordAudit(tx, event, {
+				table: 'booking',
+				recordId: b.id,
+				action: 'update',
+				before: b,
+				after: form.data
+			});
 		});
 		return message(form, { type: 'success', text: 'Quote saved' });
 	},
@@ -249,13 +303,17 @@ export const actions = {
 				// A confirmed date moved: the staff on the booking move with it.
 				if (b.confirmedStartsAt && confirmedStartsAt) {
 					const before = { startsAt: b.confirmedStartsAt, endsAt: b.confirmedStartsAt };
-					await shiftAssignments(tx, { bookingId: b.id }, before, { startsAt: confirmedStartsAt, endsAt: confirmedStartsAt });
+					await shiftAssignments(tx, { bookingId: b.id }, before, {
+						startsAt: confirmedStartsAt,
+						endsAt: confirmedStartsAt
+					});
 				}
 				await tx
 					.update(booking)
 					.set({
 						confirmedStartsAt,
-						holdExpiresAt: heldPlaces && holdExpiresDate ? joinDateTime(holdExpiresDate, '23:59') : null,
+						holdExpiresAt:
+							heldPlaces && holdExpiresDate ? joinDateTime(holdExpiresDate, '23:59') : null,
 						updatedBy: event.locals.user?.id
 					})
 					.where(eq(booking.id, b.id));
@@ -272,7 +330,10 @@ export const actions = {
 		const { b } = await loadBooking(event.params.id);
 		try {
 			await db.transaction(async (tx) => {
-				await tx.update(booking).set({ ...form.data, updatedBy: event.locals.user?.id }).where(eq(booking.id, b.id));
+				await tx
+					.update(booking)
+					.set({ ...form.data, updatedBy: event.locals.user?.id })
+					.where(eq(booking.id, b.id));
 				// Refuses a party the session has no room for, before the check constraint would.
 				if (b.sessionId) await syncSessionBooked(tx, b.sessionId);
 			});
@@ -289,8 +350,17 @@ export const actions = {
 		await db.transaction(async (tx) => {
 			// Releasing the hold moves the slot's counters back, so it goes through `holdPlaces`.
 			await holdPlaces(tx, b.id, 0);
-			await tx.update(booking).set({ cancelReason: form.data.reason, holdExpiresAt: null }).where(eq(booking.id, b.id));
-			await changeWorkflow(tx, { bookingId: b.id }, 'cancelled', form.data.reason, event.locals.user?.id);
+			await tx
+				.update(booking)
+				.set({ cancelReason: form.data.reason, holdExpiresAt: null })
+				.where(eq(booking.id, b.id));
+			await changeWorkflow(
+				tx,
+				{ bookingId: b.id },
+				'cancelled',
+				form.data.reason,
+				event.locals.user?.id
+			);
 		});
 		return message(form, { type: 'success', text: `${b.number} cancelled` });
 	}

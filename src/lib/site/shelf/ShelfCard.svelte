@@ -61,7 +61,15 @@
 					{#if art}
 						{@render art()}
 					{:else if image}
-						<img class="print" src={image} alt="" loading="lazy" decoding="async" width="480" height="480" />
+						<img
+							class="print"
+							src={image}
+							alt=""
+							loading="lazy"
+							decoding="async"
+							width="480"
+							height="480"
+						/>
 					{/if}
 				</span>
 			</span>
@@ -76,7 +84,9 @@
 		<span class="hint">
 			{#if turns}
 				<svg viewBox="0 0 16 16" aria-hidden="true">
-					<path d="M2.5 8a5.5 5.5 0 0 1 9.6-3.6M13.5 8a5.5 5.5 0 0 1-9.6 3.6M12.5 1.5v3h-3M3.5 14.5v-3h3" />
+					<path
+						d="M2.5 8a5.5 5.5 0 0 1 9.6-3.6M13.5 8a5.5 5.5 0 0 1-9.6 3.6M12.5 1.5v3h-3M3.5 14.5v-3h3"
+					/>
 				</svg>
 			{:else}
 				<svg viewBox="0 0 14 12" aria-hidden="true"><path d="M1 6h11.5M7.5 1l5 5-5 5" /></svg>

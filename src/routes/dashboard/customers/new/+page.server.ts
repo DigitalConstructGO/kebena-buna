@@ -21,7 +21,8 @@ export const actions = {
 	default: async (event) => {
 		requirePermission(event.locals, 'customers.manage');
 		const form = await superValidate(event.request, zod4(customerSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 
 		// One person, one customer: a phone already on someone is refused, naming them.
 		const known = await customerByPhone(form.data.phone);

@@ -25,9 +25,15 @@
 			id: 'event',
 			header: 'Event',
 			meta: { class: 'hidden md:table-cell' },
-			cell: ({ row }) => (row.original.eventId ? link('event', row.original.eventId, row.original.event) : '—')
+			cell: ({ row }) =>
+				row.original.eventId ? link('event', row.original.eventId, row.original.event) : '—'
 		},
-		{ id: 'prices', accessorKey: 'prices', header: 'Prices (ETB)', cell: ({ row }) => row.original.prices || 'No price set' },
+		{
+			id: 'prices',
+			accessorKey: 'prices',
+			header: 'Prices (ETB)',
+			cell: ({ row }) => row.original.prices || 'No price set'
+		},
 		{
 			id: 'admitsPerTicket',
 			accessorKey: 'admitsPerTicket',
@@ -44,9 +50,14 @@
 			id: 'isStaffOnly',
 			header: 'Sold by',
 			meta: { class: 'hidden lg:table-cell' },
-			cell: ({ row }) => (row.original.isStaffOnly ? 'Staff only' : row.original.isMemberOnly ? 'Members' : 'Everyone')
+			cell: ({ row }) =>
+				row.original.isStaffOnly ? 'Staff only' : row.original.isMemberOnly ? 'Members' : 'Everyone'
 		},
-		{ id: 'isActive', header: 'Status', cell: ({ row }) => flag(row.original.isActive, 'On sale', 'Off sale') }
+		{
+			id: 'isActive',
+			header: 'Status',
+			cell: ({ row }) => flag(row.original.isActive, 'On sale', 'Off sale')
+		}
 	];
 	const href = useLinks();
 </script>
@@ -59,18 +70,33 @@
 		{#if data.canManage}
 			<FormDialog
 				title="New ticket type"
-				triggerLabel="New ticket type" triggerVariant="default" triggerIcon={Plus} submitIcon={Plus}
+				triggerLabel="New ticket type"
+				triggerVariant="default"
+				triggerIcon={Plus}
+				submitIcon={Plus}
 				action="?/add"
 				data={data.addForm}
 				schema={ticketTypeSchema}
 				resetOnSuccess
 			>
 				{#snippet fields({ form, errors })}
-					<TicketTypeFields form={form as never} errors={errors as never} taxRates={data.taxRates} events={data.events} />
+					<TicketTypeFields
+						form={form as never}
+						errors={errors as never}
+						taxRates={data.taxRates}
+						events={data.events}
+					/>
 				{/snippet}
 			</FormDialog>
 		{/if}
 	{/snippet}
 </PageHeader>
 
-<DataTable rowHref={(row) => href('ticketType', row.id)} {columns} data={data.rows} facetKeys={['kind']} facetLabels={{ kind: 'For' }} fileName="Ticket types" />
+<DataTable
+	rowHref={(row) => href('ticketType', row.id)}
+	{columns}
+	data={data.rows}
+	facetKeys={['kind']}
+	facetLabels={{ kind: 'For' }}
+	fileName="Ticket types"
+/>

@@ -26,15 +26,33 @@
 					? link('lot', row.original.lotId, row.original.lot)
 					: row.original.roastBatchId
 						? link('roastBatch', row.original.roastBatchId, row.original.batch)
-						: link('packingRun', row.original.packingRunId, `${row.original.sku ?? ''} · ${row.original.run ?? ''}`)
+						: link(
+								'packingRun',
+								row.original.packingRunId,
+								`${row.original.sku ?? ''} · ${row.original.run ?? ''}`
+							)
 		},
 		{ id: 'reason', header: 'Posted as', cell: ({ row }) => humanize(row.original.reason) },
-		{ id: 'qty', header: 'Correction', meta: { align: 'right' }, cell: ({ row }) => qty(row.original.quantity, unit) },
-		{ id: 'value', header: 'Value (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(Number(row.original.quantity) * Number(row.original.unitCost)) }
+		{
+			id: 'qty',
+			header: 'Correction',
+			meta: { align: 'right' },
+			cell: ({ row }) => qty(row.original.quantity, unit)
+		},
+		{
+			id: 'value',
+			header: 'Value (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(Number(row.original.quantity) * Number(row.original.unitCost))
+		}
 	]);
 </script>
 
-<PageHeader title="Count #{c.id}" eyebrow="Stock count" description={`${data.location} · ${humanize(c.stage)} · ${formatDateTime(c.countedAt)}`}>
+<PageHeader
+	title="Count #{c.id}"
+	eyebrow="Stock count"
+	description={`${data.location} · ${humanize(c.stage)} · ${formatDateTime(c.countedAt)}`}
+>
 	{#snippet badges()}
 		<Statuses {...flag(c.isOpening, 'Opening count', 'Periodic count')} />
 		<Statuses {...flag(Boolean(c.postedAt), 'Posted', 'Not posted')} />

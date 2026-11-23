@@ -38,7 +38,12 @@
 	});
 
 	let editOpen = $state(false);
-	let editSeed = $state<{ id: number; name: string; locationId: number | null; isActive: boolean }>();
+	let editSeed = $state<{
+		id: number;
+		name: string;
+		locationId: number | null;
+		isActive: boolean;
+	}>();
 	function edit(r: Row) {
 		editSeed = { id: r.id, name: r.name, locationId: r.locationId, isActive: r.isActive };
 		editOpen = true;
@@ -49,13 +54,36 @@
 			id: 'name',
 			header: 'Device',
 			cell: ({ row }) =>
-				data.canManage ? renderComponent(RowButton, { label: row.original.name, onclick: () => edit(row.original) }) : row.original.name
+				data.canManage
+					? renderComponent(RowButton, {
+							label: row.original.name,
+							onclick: () => edit(row.original)
+						})
+					: row.original.name
 		},
-		{ id: 'location', header: 'Location', cell: ({ row }) => link('location', row.original.locationId, row.original.location) },
+		{
+			id: 'location',
+			header: 'Location',
+			cell: ({ row }) => link('location', row.original.locationId, row.original.location)
+		},
 		{ id: 'lastSyncAt', header: 'Last sync', cell: ({ row }) => dateTime(row.original.lastSyncAt) },
-		{ id: 'scans', header: 'Scans', meta: { align: 'right' }, cell: ({ row }) => row.original.scans },
-		{ id: 'createdBy', header: 'Added by', meta: { class: 'hidden md:table-cell' }, cell: ({ row }) => user(row.original.createdById, row.original.createdBy) },
-		{ id: 'isActive', header: 'Status', cell: ({ row }) => flag(row.original.isActive, 'Active', 'Revoked') },
+		{
+			id: 'scans',
+			header: 'Scans',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.scans
+		},
+		{
+			id: 'createdBy',
+			header: 'Added by',
+			meta: { class: 'hidden md:table-cell' },
+			cell: ({ row }) => user(row.original.createdById, row.original.createdBy)
+		},
+		{
+			id: 'isActive',
+			header: 'Status',
+			cell: ({ row }) => flag(row.original.isActive, 'Active', 'Revoked')
+		},
 		{
 			id: 'revoke',
 			header: '',
@@ -67,7 +95,8 @@
 							icon: Ban,
 							variant: 'ghost',
 							title: `Revoke ${row.original.name}?`,
-							description: 'It is switched off and its token stops working at once. Scans it has not synced yet are lost.',
+							description:
+								'It is switched off and its token stops working at once. Scans it has not synced yet are lost.',
 							fields: { id: row.original.id }
 						})
 					: ''
@@ -87,8 +116,22 @@
 				{/snippet}
 				<form method="POST" action="?/add" use:enhance class="flex flex-col gap-4 p-4">
 					<Errors allErrors={$allErrors} />
-					<InputComp label="Name" name="name" placeholder="Gate tablet 3" {form} {errors} required />
-					<InputComp label="Location" name="locationId" type="select" items={data.locations} {form} {errors} />
+					<InputComp
+						label="Name"
+						name="name"
+						placeholder="Gate tablet 3"
+						{form}
+						{errors}
+						required
+					/>
+					<InputComp
+						label="Location"
+						name="locationId"
+						type="select"
+						items={data.locations}
+						{form}
+						{errors}
+					/>
 					<Button type="submit" disabled={$delayed}>
 						{#if $delayed}<LoadingBtn name="Adding" />{:else}<Plus class="size-4" /> Add device{/if}
 					</Button>
@@ -100,7 +143,10 @@
 
 {#if issued}
 	<Notice tone="warning" title="Token for {issued.device}" class="mt-4">
-		<p>Enter it in the scanner app now. It is shown only this once; a lost token means revoking the device and adding it again.</p>
+		<p>
+			Enter it in the scanner app now. It is shown only this once; a lost token means revoking the
+			device and adding it again.
+		</p>
 		<div class="mt-2 flex items-center gap-2 font-mono text-sm break-all">
 			{issued.token}
 			<Copy data={issued.token} />
@@ -108,12 +154,34 @@
 	</Notice>
 {/if}
 
-<FormDialog title="Edit device" action="?/edit" data={data.editForm} schema={deviceEditSchema} bind:open={editOpen} seed={editSeed} hideTrigger>
+<FormDialog
+	title="Edit device"
+	action="?/edit"
+	data={data.editForm}
+	schema={deviceEditSchema}
+	bind:open={editOpen}
+	seed={editSeed}
+	hideTrigger
+>
 	{#snippet fields({ form: f, errors: e })}
 		<InputComp type="hidden" name="id" form={f} errors={e} />
 		<InputComp label="Name" name="name" form={f} errors={e} required />
-		<InputComp label="Location" name="locationId" type="select" items={data.locations} form={f} errors={e} />
-		<InputComp label="Active" name="isActive" type="checkboxSingle" placeholder="May sync scans" form={f} errors={e} />
+		<InputComp
+			label="Location"
+			name="locationId"
+			type="select"
+			items={data.locations}
+			form={f}
+			errors={e}
+		/>
+		<InputComp
+			label="Active"
+			name="isActive"
+			type="checkboxSingle"
+			placeholder="May sync scans"
+			form={f}
+			errors={e}
+		/>
 	{/snippet}
 </FormDialog>
 

@@ -49,8 +49,18 @@
 		{ id: 'title', header: 'Hotspot', cell: ({ row }) => row.original.title },
 		{ id: 'kind', header: 'Kind', cell: ({ row }) => humanize(row.original.kind) },
 		{ id: 'target', header: 'Opens', cell: ({ row }) => targetOf(row.original) },
-		{ id: 'position', header: 'Yaw / pitch', meta: { align: 'right' }, cell: ({ row }) => `${row.original.yaw}° / ${row.original.pitch}°` },
-		{ id: 'sortOrder', header: 'Order', meta: { align: 'right' }, cell: ({ row }) => row.original.sortOrder },
+		{
+			id: 'position',
+			header: 'Yaw / pitch',
+			meta: { align: 'right' },
+			cell: ({ row }) => `${row.original.yaw}° / ${row.original.pitch}°`
+		},
+		{
+			id: 'sortOrder',
+			header: 'Order',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.sortOrder
+		},
 		{
 			id: 'edit',
 			header: '',
@@ -85,12 +95,26 @@
 		{#if s.isStart}<Statuses status="active" label="Start scene" />{/if}
 	{/snippet}
 	{#snippet actions()}
-		<Button href="/dashboard/content/tour" variant="outline"><ArrowLeft class="size-4" /> Tour</Button>
+		<Button href="/dashboard/content/tour" variant="outline">
+			<ArrowLeft class="size-4" /> Tour
+		</Button>
 		<Button variant="outline" onclick={() => (viewerOpen = true)}>View panorama</Button>
-		<FormDialog title="Edit {s.title}" action="?/edit" data={data.editForm} schema={sceneEditSchema} multipart>
+		<FormDialog
+			title="Edit {s.title}"
+			action="?/edit"
+			data={data.editForm}
+			schema={sceneEditSchema}
+			multipart
+		>
 			{#snippet fields({ form, errors })}
 				<InputComp type="hidden" name="id" {form} {errors} />
-				<SceneFields {form} {errors} locations={data.locations} panorama={s.panorama} preview={s.preview ?? ''} />
+				<SceneFields
+					{form}
+					{errors}
+					locations={data.locations}
+					panorama={s.panorama}
+					preview={s.preview ?? ''}
+				/>
 			{/snippet}
 		</FormDialog>
 		<ConfirmAction
@@ -112,16 +136,35 @@
 			singleTable={[
 				{ name: 'Site', value: s.site, href: href('location', s.locationId) },
 				{ name: 'Address', value: s.slug },
-				{ name: 'Start facing', value: s.initialYaw !== null ? `${s.initialYaw}° yaw, ${s.initialPitch ?? 0}° pitch` : '—' },
+				{
+					name: 'Start facing',
+					value: s.initialYaw !== null ? `${s.initialYaw}° yaw, ${s.initialPitch ?? 0}° pitch` : '—'
+				},
 				{ name: 'Order', value: s.sortOrder },
-				{ name: 'Description', value: (s.description as Record<string, string> | null)?.en ?? '—', long: 40 },
+				{
+					name: 'Description',
+					value: (s.description as Record<string, string> | null)?.en ?? '—',
+					long: 40
+				},
 				...stampRows(data.stamps, href)
 			]}
 		/>
 	</PageSection>
-	<PageSection title="Hotspots" hint="The points visitors click in this scene, and what each one opens.">
+	<PageSection
+		title="Hotspots"
+		hint="The points visitors click in this scene, and what each one opens."
+	>
 		{#snippet actions()}
-			<FormDialog title="Add a hotspot" triggerLabel="Add hotspot" triggerIcon={Plus} submitIcon={Plus} action="?/addHotspot" data={data.addForm} schema={hotspotSchema} resetOnSuccess>
+			<FormDialog
+				title="Add a hotspot"
+				triggerLabel="Add hotspot"
+				triggerIcon={Plus}
+				submitIcon={Plus}
+				action="?/addHotspot"
+				data={data.addForm}
+				schema={hotspotSchema}
+				resetOnSuccess
+			>
 				{#snippet fields({ form, errors, values })}
 					<HotspotFields {form} {errors} kind={String(values.kind)} options={data.options} />
 				{/snippet}

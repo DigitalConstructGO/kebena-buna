@@ -39,9 +39,9 @@
 			in.
 		</p>
 		{#snippet actions()}
-			<Button type="button" size="sm" variant="outline" onclick={() => (closed = shown)}
-				>Done</Button
-			>
+			<Button type="button" size="sm" variant="outline" onclick={() => (closed = shown)}>
+				Done
+			</Button>
 		{/snippet}
 	</Notice>
 {/if}

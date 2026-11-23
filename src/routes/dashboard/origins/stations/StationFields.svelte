@@ -22,18 +22,62 @@
 	<div class="col-span-full">
 		<LanguageTabs {form} {errors} fields={['name', 'story']}>
 			{#snippet children({ lang, suffix, language })}
-				<InputComp label="Name ({language})" name="name{suffix}" {form} {errors} required={lang === 'en'} />
-				<InputComp label="Story ({language})" name="story{suffix}" type="textarea" rows={3} {form} {errors} />
+				<InputComp
+					label="Name ({language})"
+					name="name{suffix}"
+					{form}
+					{errors}
+					required={lang === 'en'}
+				/>
+				<InputComp
+					label="Story ({language})"
+					name="story{suffix}"
+					type="textarea"
+					rows={3}
+					{form}
+					{errors}
+				/>
 			{/snippet}
 		</LanguageTabs>
 	</div>
-	<InputComp label="Code" name="code" description="The station part of lot codes: LIM, MAN, GER." {form} {errors} required />
-	<InputComp label="Type" name="type" type="select" items={choicesOf(STATION_TYPES)} {form} {errors} required />
-	<InputComp label="Region" name="regionId" type="combo" items={options.regions} {form} {errors} required />
+	<InputComp
+		label="Code"
+		name="code"
+		description="The station part of lot codes: LIM, MAN, GER."
+		{form}
+		{errors}
+		required
+	/>
+	<InputComp
+		label="Type"
+		name="type"
+		type="select"
+		items={choicesOf(STATION_TYPES)}
+		{form}
+		{errors}
+		required
+	/>
+	<InputComp
+		label="Region"
+		name="regionId"
+		type="combo"
+		items={options.regions}
+		{form}
+		{errors}
+		required
+	/>
 	<InputComp label="Farmers" name="farmerCount" type="number" {form} {errors} />
 	<InputComp label="Lowest altitude (m)" name="altitudeMinM" type="number" {form} {errors} />
 	<InputComp label="Highest altitude (m)" name="altitudeMaxM" type="number" {form} {errors} />
 	<InputComp label="Latitude" name="latitude" type="number" step="0.000001" {form} {errors} />
 	<InputComp label="Longitude" name="longitude" type="number" step="0.000001" {form} {errors} />
 </div>
-<InputComp label="Certifications" name="certificationIds" type="checkbox" items={options.certifications} selectAll={false} {form} {errors} />
+<InputComp
+	label="Certifications"
+	name="certificationIds"
+	type="checkbox"
+	items={options.certifications}
+	selectAll={false}
+	{form}
+	{errors}
+/>

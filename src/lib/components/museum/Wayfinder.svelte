@@ -1,29 +1,75 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { deLocalizeHref, localizeHref } from '#lib/paraglide/runtime.js';
+	import { m } from '#lib/i18n.ts';
 
 	/**
-	 * Phone navigation as museum wayfinding: a "you are here" sign at the bottom of the
-	 * screen names the room you are standing in; tapping it unfolds the floor plan as
-	 * one route from the entrance to the exit, with the other wings beside it.
+	 * Phone navigation as museum wayfinding: a "you are here" sign at the bottom of the screen
+	 * names the room you are standing in; tapping it unfolds the floor plan as one route from the
+	 * entrance to the exit, with the other wings beside it.
 	 */
 	type Room = { id: string; name: string; note: string; interlude?: boolean };
-	const ROOMS: Room[] = [
-		{ id: 'entrance', name: 'Entrance', note: 'A living museum of coffee' },
-		{ id: 'halls', name: 'Floor plan', note: 'The four halls at a glance' },
+	const ROOMS: Room[] = $derived([
+		{
+			id: 'entrance',
+			name: m.museum_wayfinder_room_entrance_name(),
+			note: m.museum_wayfinder_room_entrance_note()
+		},
+		{
+			id: 'halls',
+			name: m.museum_wayfinder_room_halls_name(),
+			note: m.museum_wayfinder_room_halls_note()
+		},
 		// between the halls, not one of them: it takes no number
-		{ id: 'journey', name: 'The pour', note: 'From cherry to cup', interlude: true },
-		{ id: 'farms', name: 'The farms', note: 'Gera and Djimmah estates' },
-		{ id: 'collection', name: 'The collection', note: 'Lots on display this season' },
-		{ id: 'origins', name: 'Origins', note: 'Where else we source' },
-		{ id: 'people', name: 'The people', note: 'The hands behind the coffee' },
-		{ id: 'archive', name: 'Archive', note: 'Notes from the field' },
-		{ id: 'visit', name: 'Visit', note: 'Come and taste the collection' }
-	];
-	const WINGS = [
-		{ path: '/history', name: 'History', note: 'Coffee and the Jimma tradition' },
-		{ path: '/kingdoms', name: 'Kingdoms', note: 'The five Gibe kingdoms' }
-	] as const;
+		{
+			id: 'journey',
+			name: m.museum_wayfinder_room_journey_name(),
+			note: m.museum_wayfinder_room_journey_note(),
+			interlude: true
+		},
+		{
+			id: 'farms',
+			name: m.museum_wayfinder_room_farms_name(),
+			note: m.museum_wayfinder_room_farms_note()
+		},
+		{
+			id: 'collection',
+			name: m.museum_wayfinder_room_collection_name(),
+			note: m.museum_wayfinder_room_collection_note()
+		},
+		{
+			id: 'origins',
+			name: m.museum_wayfinder_room_origins_name(),
+			note: m.museum_wayfinder_room_origins_note()
+		},
+		{
+			id: 'people',
+			name: m.museum_wayfinder_room_people_name(),
+			note: m.museum_wayfinder_room_people_note()
+		},
+		{
+			id: 'archive',
+			name: m.museum_wayfinder_room_archive_name(),
+			note: m.museum_wayfinder_room_archive_note()
+		},
+		{
+			id: 'visit',
+			name: m.museum_wayfinder_room_visit_name(),
+			note: m.museum_wayfinder_room_visit_note()
+		}
+	]);
+	const WINGS = $derived([
+		{
+			path: '/history',
+			name: m.site_nav_history(),
+			note: m.museum_wayfinder_wing_history_note()
+		},
+		{
+			path: '/kingdoms',
+			name: m.site_footer_kingdoms(),
+			note: m.museum_wayfinder_wing_kingdoms_note()
+		}
+	]);
 
 	const here = $derived(deLocalizeHref(page.url.pathname));
 	const onHome = $derived(here === '/');
@@ -31,8 +77,10 @@
 	const wingHref = (path: string) => localizeHref(path);
 	const pad = (n: number) => String(n).padStart(2, '0');
 	/** Room numbers, counting past the interlude so the halls stay consecutive; null for the interlude. */
-	let count = 0;
-	const NUMS = ROOMS.map((r) => (r.interlude ? null : pad(count++)));
+	const NUMS = $derived.by(() => {
+		let count = 0;
+		return ROOMS.map((r) => (r.interlude ? null : pad(count++)));
+	});
 
 	/** Index of the room in view on the home page; -1 while the opening story plays. */
 	let current = $state(-1);
@@ -46,10 +94,10 @@
 	const wing = $derived(WINGS.find((w) => w.path === here));
 	const label = $derived(
 		wing
-			? { num: 'Wing', name: wing.name }
+			? { num: m.museum_wayfinder_wing(), name: wing.name }
 			: current >= 0
-				? { num: NUMS[current] ?? 'Interlude', name: ROOMS[current].name }
-				: { num: 'Start', name: 'Explore the museum' }
+				? { num: NUMS[current] ?? m.museum_wayfinder_interlude(), name: ROOMS[current].name }
+				: { num: m.museum_wayfinder_start(), name: m.museum_wayfinder_explore() }
 	);
 
 	$effect(() => {
@@ -121,25 +169,27 @@
 </script>
 
 <div class="wayfinder">
-	<button
-		type="button"
-		class={['sign', { compact: onHome && above, away: atFoot }]}
-		bind:this={trigger}
-		aria-label={onHome && current < 0 ? 'Floor plan' : undefined}
-		aria-haspopup="dialog"
-		onclick={open}
-		style:--travelled={onHome ? travelled : 1}
-	>
-		<span class="ring" aria-hidden="true"></span>
-		<span class="where">
-			<span class="num">{label.num}</span>
-			<span class="name">{label.name}</span>
-		</span>
-		<span class="hint">Floor plan</span>
-		<svg class="up" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-			<path d="m3 7.5 3-3 3 3" />
-		</svg>
-	</button>
+	<div class={['dock', { compact: onHome && above, away: atFoot }]}>
+		<button
+			type="button"
+			class={['sign', { compact: onHome && above }]}
+			bind:this={trigger}
+			aria-label={onHome && current < 0 ? m.museum_wayfinder_floor_plan() : undefined}
+			aria-haspopup="dialog"
+			onclick={open}
+			style:--travelled={onHome ? travelled : 1}
+		>
+			<span class="ring" aria-hidden="true"></span>
+			<span class="where">
+				<span class="num">{label.num}</span>
+				<span class="name">{label.name}</span>
+			</span>
+			<span class="hint">{m.museum_wayfinder_floor_plan()}</span>
+			<svg class="up" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+				<path d="m3 7.5 3-3 3 3" />
+			</svg>
+		</button>
+	</div>
 
 	<dialog
 		class="sheet"
@@ -152,17 +202,17 @@
 			<span class="grip" aria-hidden="true"></span>
 			<header class="top">
 				<div>
-					<p class="eyebrow">Floor plan</p>
-					<h2 id="wayfinder-title">Where to next?</h2>
+					<p class="eyebrow">{m.museum_wayfinder_floor_plan()}</p>
+					<h2 id="wayfinder-title">{m.museum_wayfinder_title()}</h2>
 				</div>
-				<button type="button" class="close" aria-label="Close floor plan" onclick={close}>
+				<button type="button" class="close" aria-label={m.museum_wayfinder_close()} onclick={close}>
 					<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
 						<path d="M4 4l8 8M12 4l-8 8" />
 					</svg>
 				</button>
 			</header>
 
-			<nav aria-label="Rooms of the museum">
+			<nav aria-label={m.museum_wayfinder_rooms()}>
 				<ol class="route">
 					{#each ROOMS as r, i (r.id)}
 						{@const isHere = onHome && i === current}
@@ -181,9 +231,11 @@
 								{/if}
 								<span class="text">
 									<span class="name">
-										{r.name}{#if r.interlude}<span class="sr-only">, interlude</span>{/if}
+										{r.name}{#if r.interlude}<span class="sr-only">
+												{m.museum_wayfinder_interlude_sr()}
+											</span>{/if}
 									</span>
-									<span class="note">{isHere ? 'You are here' : r.note}</span>
+									<span class="note">{isHere ? m.museum_wayfinder_here() : r.note}</span>
 								</span>
 							</a>
 							<!-- eslint-enable svelte/no-navigation-without-resolve -->
@@ -192,8 +244,8 @@
 				</ol>
 			</nav>
 
-			<nav class="wings" aria-label="Other wings">
-				<p class="eyebrow">Other wings</p>
+			<nav class="wings" aria-label={m.museum_wayfinder_other_wings()}>
+				<p class="eyebrow">{m.museum_wayfinder_other_wings()}</p>
 				<ul>
 					{#each WINGS as w (w.path)}
 						<li>
@@ -205,7 +257,7 @@
 								onclick={close}
 							>
 								<span class="name">{w.name}</span>
-								<span class="note">{here === w.path ? 'You are here' : w.note}</span>
+								<span class="note">{here === w.path ? m.museum_wayfinder_here() : w.note}</span>
 							</a>
 						</li>
 					{/each}
@@ -225,19 +277,35 @@
 			display: block;
 		}
 	}
-
-	.sign {
+	.dock {
 		position: fixed;
 		z-index: 30;
 		inset-inline: 0;
 		bottom: max(14px, env(safe-area-inset-bottom));
 		width: fit-content;
+		max-width: calc(100vw - 32px);
 		margin-inline: auto;
+		display: flex;
+		align-items: stretch;
+		gap: 8px;
+		transition:
+			translate 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+			opacity 0.3s,
+			visibility 0.3s;
+	}
+	/* at the end of the page the wordmark closes the museum on its own */
+	.dock.away {
+		translate: 0 140%;
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+	}
+	.sign {
 		display: flex;
 		align-items: center;
 		gap: 10px;
+		min-width: 0;
 		min-height: 52px;
-		max-width: calc(100vw - 32px);
 		padding: 8px 16px 8px 10px;
 		border: 1px solid rgb(255 255 255 / 0.12);
 		border-radius: 16px;
@@ -246,20 +314,10 @@
 		-webkit-backdrop-filter: var(--glass-fx);
 		color: var(--color-mist-50);
 		font: inherit;
+		text-decoration: none;
 		cursor: pointer;
 		-webkit-tap-highlight-color: transparent;
-		transition:
-			scale 0.2s,
-			translate 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
-			opacity 0.3s,
-			visibility 0.3s;
-	}
-	/* at the end of the page the wordmark closes the museum on its own */
-	.sign.away {
-		translate: 0 140%;
-		opacity: 0;
-		visibility: hidden;
-		pointer-events: none;
+		transition: scale 0.2s;
 	}
 	.sign:active {
 		scale: 0.97;
@@ -323,7 +381,7 @@
 		stroke-linejoin: round;
 	}
 	/* over the opening story: only the ring and the label, clear of the hero's own controls */
-	.sign.compact {
+	.dock.compact {
 		translate: 0 -68px;
 	}
 	.sign.compact .where {

@@ -10,10 +10,15 @@
 
 	let { data } = $props();
 	// svelte-ignore state_referenced_locally
-	const { form, errors, enhance, delayed, allErrors } = createForm(data.form, eventSchema, { taintedMessage: confirmLeave });
+	const { form, errors, enhance, delayed, allErrors } = createForm(data.form, eventSchema, {
+		taintedMessage: confirmLeave
+	});
 </script>
 
-<PageHeader title="New event" description="Saved as a draft unless you publish it. Ticket types and staff are added on its page." />
+<PageHeader
+	title="New event"
+	description="Saved as a draft unless you publish it. Ticket types and staff are added on its page."
+/>
 
 <form method="POST" enctype="multipart/form-data" use:enhance class="mt-4 grid grid-cols-1 gap-6">
 	<Errors allErrors={$allErrors} />

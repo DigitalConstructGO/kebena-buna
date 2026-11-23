@@ -35,4 +35,7 @@ const crud = localizedCrud({
 });
 
 export const load = () => crud.load();
-export const actions = { ...crud.actions, delete: lookupDeleteAction(calendarException, 'holiday') };
+export const actions = {
+	...crud.actions,
+	delete: lookupDeleteAction(calendarException, 'holiday')
+};

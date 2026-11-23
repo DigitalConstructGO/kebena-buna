@@ -27,7 +27,9 @@ import { enOf } from '#lib/server/localized.ts';
 export async function readSetting<T>(key: string, fallback: T): Promise<T> {
 	const [row] = await db.select({ value: setting.value }).from(setting).where(eq(setting.key, key));
 	const value = row?.value as T | undefined;
-	return value === undefined || value === null || typeof value !== typeof fallback ? fallback : value;
+	return value === undefined || value === null || typeof value !== typeof fallback
+		? fallback
+		: value;
 }
 
 export async function stockLevels() {
@@ -41,7 +43,11 @@ export async function stockLevels() {
 }
 
 /** The unit cost each roast batch and packing run carries on its output movement. */
-const outputCost = (reason: 'roast_output' | 'pack_output', column: 'roast_batch_id' | 'packing_run_id', id: unknown) =>
+const outputCost = (
+	reason: 'roast_output' | 'pack_output',
+	column: 'roast_batch_id' | 'packing_run_id',
+	id: unknown
+) =>
 	sql<number>`(select coalesce(max(m.unit_cost), 0) from ${stockMovement} m where m.reason = ${reason} and m.${sql.raw(column)} = ${id})`.mapWith(
 		Number
 	);
@@ -140,7 +146,9 @@ export type LowStock = {
  * urgent, is listed too. Stocked means a live, active lot; a live, active coffee kept in stock
  * (not roasted to order, not archived) for roasted kg; and that coffee's bag sizes for bags.
  */
-export async function lowStock(levels: Awaited<ReturnType<typeof stockLevels>>): Promise<LowStock[]> {
+export async function lowStock(
+	levels: Awaited<ReturnType<typeof stockLevels>>
+): Promise<LowStock[]> {
 	const stockedCoffee = and(
 		isNull(product.deletedAt),
 		eq(product.isActive, true),
@@ -166,7 +174,9 @@ export async function lowStock(levels: Awaited<ReturnType<typeof stockLevels>>):
 				id: product.id,
 				name: enOf(product.name),
 				level: product.lowStockRoastedKg,
-				have: sql<number>`coalesce(sum(${roastedStock.kg} - ${roastedStock.reservedKg}), 0)`.mapWith(Number)
+				have: sql<number>`coalesce(sum(${roastedStock.kg} - ${roastedStock.reservedKg}), 0)`.mapWith(
+					Number
+				)
 			})
 			.from(product)
 			.leftJoin(roastBatch, eq(roastBatch.productId, product.id))
@@ -179,13 +189,17 @@ export async function lowStock(levels: Awaited<ReturnType<typeof stockLevels>>):
 				id: productVariant.id,
 				name: sql<string>`concat(${enOf(product.name)}, ' — ', coalesce(${enOf(bagSize.name)}, ${enOf(productVariant.name)}, ${productVariant.sku}))`,
 				level: productVariant.lowStockUnits,
-				have: sql<number>`coalesce(sum(${packedStock.units} - ${packedStock.reservedUnits}), 0)`.mapWith(Number)
+				have: sql<number>`coalesce(sum(${packedStock.units} - ${packedStock.reservedUnits}), 0)`.mapWith(
+					Number
+				)
 			})
 			.from(productVariant)
 			.innerJoin(product, eq(productVariant.productId, product.id))
 			.innerJoin(bagSize, eq(productVariant.bagSizeId, bagSize.id))
 			.leftJoin(packedStock, eq(packedStock.variantId, productVariant.id))
-			.where(and(isNull(productVariant.deletedAt), eq(productVariant.isActive, true), stockedCoffee))
+			.where(
+				and(isNull(productVariant.deletedAt), eq(productVariant.isActive, true), stockedCoffee)
+			)
 			.groupBy(productVariant.id)
 			.orderBy(enOf(product.name), productVariant.sortOrder)
 	]);
@@ -193,15 +207,42 @@ export async function lowStock(levels: Awaited<ReturnType<typeof stockLevels>>):
 	const low: LowStock[] = [];
 	for (const l of lots) {
 		const level = Number(l.level ?? levels.greenLow);
-		if (l.have < level) low.push({ kind: 'Green lot', entity: 'lot', id: l.id, name: l.name, have: l.have, level, unit: 'kg' });
+		if (l.have < level)
+			low.push({
+				kind: 'Green lot',
+				entity: 'lot',
+				id: l.id,
+				name: l.name,
+				have: l.have,
+				level,
+				unit: 'kg'
+			});
 	}
 	for (const p of products) {
 		const level = Number(p.level ?? levels.roastedLow);
-		if (p.have < level) low.push({ kind: 'Roasted', entity: 'product', id: p.id, name: p.name, have: p.have, level, unit: 'kg' });
+		if (p.have < level)
+			low.push({
+				kind: 'Roasted',
+				entity: 'product',
+				id: p.id,
+				name: p.name,
+				have: p.have,
+				level,
+				unit: 'kg'
+			});
 	}
 	for (const v of variants) {
 		const level = Number(v.level ?? levels.packedLow);
-		if (v.have < level) low.push({ kind: 'Packed', entity: 'variant', id: v.id, name: v.name, have: v.have, level, unit: 'bags' });
+		if (v.have < level)
+			low.push({
+				kind: 'Packed',
+				entity: 'variant',
+				id: v.id,
+				name: v.name,
+				have: v.have,
+				level,
+				unit: 'bags'
+			});
 	}
 	return low;
 }
@@ -212,7 +253,12 @@ export async function stockItemOptions() {
 		db
 			.selectDistinct({ value: lot.id, name: lot.code })
 			.from(lot)
-			.where(and(isNull(lot.deletedAt), inArray(lot.id, db.select({ id: greenStock.lotId }).from(greenStock))))
+			.where(
+				and(
+					isNull(lot.deletedAt),
+					inArray(lot.id, db.select({ id: greenStock.lotId }).from(greenStock))
+				)
+			)
 			.orderBy(lot.code),
 		db
 			.select({
@@ -221,7 +267,9 @@ export async function stockItemOptions() {
 			})
 			.from(roastBatch)
 			.innerJoin(roastLevel, eq(roastBatch.roastLevelId, roastLevel.id))
-			.where(inArray(roastBatch.id, db.select({ id: roastedStock.roastBatchId }).from(roastedStock)))
+			.where(
+				inArray(roastBatch.id, db.select({ id: roastedStock.roastBatchId }).from(roastedStock))
+			)
 			.orderBy(desc(roastBatch.roastedAt)),
 		db
 			.select({

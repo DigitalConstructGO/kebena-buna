@@ -25,13 +25,22 @@
 
 	type Child = (typeof data.children)[number];
 	const childColumns: ColumnDef<Child>[] = [
-		{ id: 'name', header: 'Location', cell: ({ row }) => link('location', row.original.id, row.original.name) },
+		{
+			id: 'name',
+			header: 'Location',
+			cell: ({ row }) => link('location', row.original.id, row.original.name)
+		},
 		{ id: 'type', header: 'Type', cell: ({ row }) => humanize(row.original.type) }
 	];
 	type Machine = (typeof data.machines)[number];
 	const machineColumns: ColumnDef<Machine>[] = [
 		{ id: 'name', accessorKey: 'name', header: 'Machine' },
-		{ id: 'cap', header: 'Capacity', meta: { align: 'right' }, cell: ({ row }) => kg(row.original.capacityKg) },
+		{
+			id: 'cap',
+			header: 'Capacity',
+			meta: { align: 'right' },
+			cell: ({ row }) => kg(row.original.capacityKg)
+		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => flagCell(row.original.status) }
 	];
 	type Device = (typeof data.devices)[number];
@@ -45,17 +54,30 @@
 		{ id: 'date', header: 'Date', cell: ({ row }) => date(row.original.date) },
 		{ id: 'name', accessorKey: 'name', header: 'What' },
 		{ id: 'closed', header: 'Closed', cell: ({ row }) => yesNo(row.original.isClosed) },
-		{ id: 'scope', header: 'Applies to', cell: ({ row }) => (row.original.everywhere ? 'Every location' : 'This location') }
+		{
+			id: 'scope',
+			header: 'Applies to',
+			cell: ({ row }) => (row.original.everywhere ? 'Every location' : 'This location')
+		}
 	];
 </script>
 
-<PageHeader title={tr(l.name)} eyebrow="Location · {humanize(l.type)}" description={l.address ?? undefined}>
+<PageHeader
+	title={tr(l.name)}
+	eyebrow="Location · {humanize(l.type)}"
+	description={l.address ?? undefined}
+>
 	{#snippet badges()}
 		<Statuses {...flag(l.isActive)} />
 	{/snippet}
 	{#snippet actions()}
 		{#if canEdit}
-			<FormDialog title="Edit {tr(l.name)}" action="?/edit" data={data.editForm} schema={locationSchema}>
+			<FormDialog
+				title="Edit {tr(l.name)}"
+				action="?/edit"
+				data={data.editForm}
+				schema={locationSchema}
+			>
 				{#snippet fields({ form, errors })}
 					<LocationFields form={form as never} errors={errors as never} parents={data.parents} />
 				{/snippet}
@@ -66,9 +88,33 @@
 
 {#if l.holdsStock}
 	<div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-		<StatCard stat={{ key: 'green', label: 'Green coffee (kg)', value: data.stock.green, format: 'count', group: 'stock' }} />
-		<StatCard stat={{ key: 'roasted', label: 'Roasted coffee (kg)', value: data.stock.roasted, format: 'count', group: 'stock' }} />
-		<StatCard stat={{ key: 'packed', label: 'Packed bags', value: data.stock.packed, format: 'count', group: 'stock' }} />
+		<StatCard
+			stat={{
+				key: 'green',
+				label: 'Green coffee (kg)',
+				value: data.stock.green,
+				format: 'count',
+				group: 'stock'
+			}}
+		/>
+		<StatCard
+			stat={{
+				key: 'roasted',
+				label: 'Roasted coffee (kg)',
+				value: data.stock.roasted,
+				format: 'count',
+				group: 'stock'
+			}}
+		/>
+		<StatCard
+			stat={{
+				key: 'packed',
+				label: 'Packed bags',
+				value: data.stock.packed,
+				format: 'count',
+				group: 'stock'
+			}}
+		/>
 	</div>
 {/if}
 
@@ -81,7 +127,11 @@
 				{ name: 'Afaan Oromo name', value: l.name?.om ?? '—' },
 				{ name: 'Arabic name', value: l.name?.ar ?? '—' },
 				{ name: 'Type', value: humanize(l.type) },
-				{ name: 'Inside', value: data.parent?.name ?? '—', href: href('location', data.parent?.id) },
+				{
+					name: 'Inside',
+					value: data.parent?.name ?? '—',
+					href: href('location', data.parent?.id)
+				},
 				{ name: 'Phone', value: l.phone ?? '—', kind: 'phone' },
 				{ name: 'Coordinates', value: l.latitude ? `${l.latitude}, ${l.longitude}` : '—' },
 				{ name: 'Holds stock', value: yesNo(l.holdsStock) },
@@ -97,7 +147,9 @@
 	<div class="grid min-w-0 grid-cols-1 content-start gap-6">
 		<PageSection
 			title="Opening hours"
-			hint={data.hasHours ? 'The weekly pattern; holidays and closures override it.' : 'No hours set yet: save the week to set them.'}
+			hint={data.hasHours
+				? 'The weekly pattern; holidays and closures override it.'
+				: 'No hours set yet: save the week to set them.'}
 		>
 			<HoursEditor data={data.hoursForm} disabled={!canEdit} />
 		</PageSection>

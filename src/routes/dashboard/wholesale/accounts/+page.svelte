@@ -31,7 +31,11 @@
 			meta: { class: 'hidden lg:table-cell' },
 			cell: ({ row }) => phone(row.original.contactPhone)
 		},
-		{ id: 'approvalStatus', header: 'Approval', cell: ({ row }) => status(row.original.approvalStatus) },
+		{
+			id: 'approvalStatus',
+			header: 'Approval',
+			cell: ({ row }) => status(row.original.approvalStatus)
+		},
 		{
 			id: 'expectedMonthlyKg',
 			accessorKey: 'expectedMonthlyKg',

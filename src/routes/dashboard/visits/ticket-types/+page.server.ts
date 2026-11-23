@@ -34,7 +34,11 @@ export const load = async ({ locals }) => {
 			.where(isNull(ticketType.deletedAt))
 			.orderBy(asc(ticketType.eventId), asc(ticketType.sortOrder)),
 		db
-			.select({ ticketTypeId: ticketPrice.ticketTypeId, audience: audience.code, price: ticketPrice.price })
+			.select({
+				ticketTypeId: ticketPrice.ticketTypeId,
+				audience: audience.code,
+				price: ticketPrice.price
+			})
 			.from(ticketPrice)
 			.innerJoin(audience, eq(ticketPrice.audienceId, audience.id))
 			.orderBy(asc(audience.sortOrder)),
@@ -67,7 +71,8 @@ export const actions = {
 	add: async (event) => {
 		requirePermission(event.locals, 'visits.manage');
 		const form = await superValidate(event.request, zod4(ticketTypeSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		if (await ticketTypeCodeTaken(form.data.code, form.data.eventId)) {
 			return message(form, { type: 'error', text: 'That code is already used' }, { status: 400 });
 		}
@@ -75,10 +80,15 @@ export const actions = {
 		try {
 			id = await db.transaction(async (tx) => {
 				const values = packLocalized({ ...form.data }, ['name', 'description', 'requiresProof']);
-				const [res] = await tx
-					.insert(ticketType)
-					.values({ ...(values as unknown as typeof ticketType.$inferInsert), createdBy: event.locals.user?.id });
-				await recordAudit(tx, event, { table: 'ticket_type', recordId: res.insertId, action: 'create' });
+				const [res] = await tx.insert(ticketType).values({
+					...(values as unknown as typeof ticketType.$inferInsert),
+					createdBy: event.locals.user?.id
+				});
+				await recordAudit(tx, event, {
+					table: 'ticket_type',
+					recordId: res.insertId,
+					action: 'create'
+				});
 				return res.insertId;
 			});
 		} catch (err) {
@@ -94,4 +104,3 @@ export const actions = {
 		);
 	}
 };
-

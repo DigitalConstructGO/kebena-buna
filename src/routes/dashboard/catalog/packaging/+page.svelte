@@ -6,7 +6,10 @@
 	let { data } = $props();
 </script>
 
-<PageHeader title="Packaging" description="The standard bag, and options like a gift box with its surcharge." />
+<PageHeader
+	title="Packaging"
+	description="The standard bag, and options like a gift box with its surcharge."
+/>
 
 <LookupPage
 	{data}
@@ -18,7 +21,13 @@
 		fields: [
 			{ name: 'nameEn', label: 'Name (English)', type: 'text' },
 			{ name: 'nameAm', label: 'Name (Amharic)', type: 'text', required: false },
-			{ name: 'nameOm', label: 'Name (Afaan Oromo)', type: 'text', required: false, inTable: false },
+			{
+				name: 'nameOm',
+				label: 'Name (Afaan Oromo)',
+				type: 'text',
+				required: false,
+				inTable: false
+			},
 			{ name: 'nameAr', label: 'Name (Arabic)', type: 'text', required: false, inTable: false },
 			{ name: 'nameIt', label: 'Name (Italian)', type: 'text', required: false, inTable: false },
 			{ name: 'nameFr', label: 'Name (French)', type: 'text', required: false, inTable: false },

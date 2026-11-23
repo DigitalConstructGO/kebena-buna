@@ -59,9 +59,17 @@
 
 	type Member = (typeof data.members)[number];
 	const memberColumns: ColumnDef<Member>[] = $derived([
-		{ id: 'name', header: 'Person', cell: ({ row }) => link('customer', row.original.customerId, row.original.name ?? 'Customer') },
+		{
+			id: 'name',
+			header: 'Person',
+			cell: ({ row }) => link('customer', row.original.customerId, row.original.name ?? 'Customer')
+		},
 		{ id: 'phone', header: 'Phone', cell: ({ row }) => phone(row.original.phone) },
-		{ id: 'role', header: 'Role', cell: ({ row }) => (row.original.isAdmin ? 'Administrator' : 'Orders for it') },
+		{
+			id: 'role',
+			header: 'Role',
+			cell: ({ row }) => (row.original.isAdmin ? 'Administrator' : 'Orders for it')
+		},
 		...(data.canManage
 			? [
 					{
@@ -97,24 +105,55 @@
 	]);
 	type Order = (typeof data.orders)[number];
 	const orderColumns: ColumnDef<Order>[] = [
-		{ id: 'number', header: 'Order', cell: ({ row }) => link('order', row.original.id, row.original.number) },
+		{
+			id: 'number',
+			header: 'Order',
+			cell: ({ row }) => link('order', row.original.id, row.original.number)
+		},
 		{ id: 'placed', header: 'Placed', cell: ({ row }) => dateTime(row.original.placedAt) },
-		{ id: 'by', header: 'Ordered by', cell: ({ row }) => link('customer', row.original.customerId, row.original.customer) },
+		{
+			id: 'by',
+			header: 'Ordered by',
+			cell: ({ row }) => link('customer', row.original.customerId, row.original.customer)
+		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) },
 		{ id: 'payment', header: 'Payment', cell: ({ row }) => status(row.original.paymentState) },
-		{ id: 'total', header: 'Total (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.total) }
+		{
+			id: 'total',
+			header: 'Total (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.total)
+		}
 	];
 	type Invoice = (typeof data.invoices)[number];
 	const invoiceColumns: ColumnDef<Invoice>[] = [
-		{ id: 'number', header: 'Invoice', cell: ({ row }) => link('invoice', row.original.id, row.original.number) },
+		{
+			id: 'number',
+			header: 'Invoice',
+			cell: ({ row }) => link('invoice', row.original.id, row.original.number)
+		},
 		{ id: 'due', header: 'Due', cell: ({ row }) => date(row.original.dueOn) },
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) },
-		{ id: 'total', header: 'Total (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.total) },
-		{ id: 'balance', header: 'Balance (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.balance) }
+		{
+			id: 'total',
+			header: 'Total (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.total)
+		},
+		{
+			id: 'balance',
+			header: 'Balance (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.balance)
+		}
 	];
 </script>
 
-<PageHeader title={a.name} eyebrow="Business account" description={`${humanize(a.type)} · TIN ${a.tin}`}>
+<PageHeader
+	title={a.name}
+	eyebrow="Business account"
+	description={`${humanize(a.type)} · TIN ${a.tin}`}
+>
 	{#snippet badges()}
 		<Statuses {...badge(a.approvalStatus)} />
 		<Statuses {...flagBadge(a.isActive, 'Active', 'Switched off')} />
@@ -133,25 +172,102 @@
 						: 'Approved accounts see wholesale prices and can order.'}
 				>
 					{#snippet fields({ form, errors })}
-						<InputComp label="Decision" name="decision" type="radio" items={[{ value: 'approve', name: 'Approve' }, { value: 'reject', name: 'Reject' }]} {form} {errors} required />
-						<InputComp label="Reason (needed to reject)" name="reason" type="textarea" rows={3} {form} {errors} />
+						<InputComp
+							label="Decision"
+							name="decision"
+							type="radio"
+							items={[
+								{ value: 'approve', name: 'Approve' },
+								{ value: 'reject', name: 'Reject' }
+							]}
+							{form}
+							{errors}
+							required
+						/>
+						<InputComp
+							label="Reason (needed to reject)"
+							name="reason"
+							type="textarea"
+							rows={3}
+							{form}
+							{errors}
+						/>
 					{/snippet}
 				</FormDialog>
 			{/if}
-			<FormDialog title="Credit and discount terms" triggerLabel="Terms" action="?/terms" data={data.termsForm} schema={termsSchema}>
+			<FormDialog
+				title="Credit and discount terms"
+				triggerLabel="Terms"
+				action="?/terms"
+				data={data.termsForm}
+				schema={termsSchema}
+			>
 				{#snippet fields({ form, errors })}
-					<InputComp label="Extra discount (%)" name="discountPct" type="number" step="0.01" description="On top of the quantity tier." {form} {errors} />
-					<InputComp label="Minimum order (kg)" name="minOrderKg" type="number" step="0.001" description="Leave empty to use the shop default from Admin › Settings." {form} {errors} />
-					<InputComp label="Credit approved" name="creditApproved" type="checkboxSingle" placeholder="May order on invoice (an exception)" {form} {errors} />
-					<InputComp label="Credit limit (ETB)" name="creditLimit" type="number" step="0.01" {form} {errors} />
-					<InputComp label="Payment terms (days)" name="paymentTermsDays" type="number" {form} {errors} />
+					<InputComp
+						label="Extra discount (%)"
+						name="discountPct"
+						type="number"
+						step="0.01"
+						description="On top of the quantity tier."
+						{form}
+						{errors}
+					/>
+					<InputComp
+						label="Minimum order (kg)"
+						name="minOrderKg"
+						type="number"
+						step="0.001"
+						description="Leave empty to use the shop default from Admin › Settings."
+						{form}
+						{errors}
+					/>
+					<InputComp
+						label="Credit approved"
+						name="creditApproved"
+						type="checkboxSingle"
+						placeholder="May order on invoice (an exception)"
+						{form}
+						{errors}
+					/>
+					<InputComp
+						label="Credit limit (ETB)"
+						name="creditLimit"
+						type="number"
+						step="0.01"
+						{form}
+						{errors}
+					/>
+					<InputComp
+						label="Payment terms (days)"
+						name="paymentTermsDays"
+						type="number"
+						{form}
+						{errors}
+					/>
 				{/snippet}
 			</FormDialog>
-			<FormDialog title="Edit {a.name}" action="?/edit" data={data.editForm} schema={accountEditSchema} multipart>
+			<FormDialog
+				title="Edit {a.name}"
+				action="?/edit"
+				data={data.editForm}
+				schema={accountEditSchema}
+				multipart
+			>
 				{#snippet fields({ form, errors })}
 					<InputComp type="hidden" name="id" {form} {errors} />
-					<AccountFields form={form as never} errors={errors as never} storedLicence={a.tradeLicenceFile} />
-					<InputComp label="Active" name="isActive" type="checkboxSingle" placeholder="May sign in and order" {form} {errors} />
+					<AccountFields
+						form={form as never}
+						errors={errors as never}
+						storedLicence={a.tradeLicenceFile}
+					/>
+					<InputComp
+						label="Active"
+						name="isActive"
+						type="checkboxSingle"
+						placeholder="May sign in and order"
+						{form}
+						{errors}
+					/>
 				{/snippet}
 			</FormDialog>
 			<ConfirmAction
@@ -168,8 +284,9 @@
 
 {#if a.approvalStatus === 'pending'}
 	<Notice tone="warning" class="mt-4" title="Awaiting approval">
-		Entered {formatDateTime(a.createdAt)}{data.people.requestedBy ? ` by ${data.people.requestedBy}` : ''}. Until approved
-		they see retail prices only.
+		Entered {formatDateTime(a.createdAt)}{data.people.requestedBy
+			? ` by ${data.people.requestedBy}`
+			: ''}. Until approved they see retail prices only.
 	</Notice>
 {:else if a.approvalStatus === 'rejected'}
 	<Notice tone="danger" class="mt-4" title="Rejected {formatDateTime(a.rejectedAt)}">
@@ -178,10 +295,43 @@
 {/if}
 
 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-	<StatCard stat={{ key: 'orders', label: 'Orders', value: data.orders.length, format: 'count', group: 'business' }} />
-	<StatCard stat={{ key: 'owed', label: 'Owed on open invoices', value: data.owed, format: 'money', group: 'business', tone: data.owed > Number(a.creditLimit) && a.creditApproved ? 'negative' : 'neutral' }} />
-	<StatCard stat={{ key: 'limit', label: 'Credit limit', value: Number(a.creditApproved ? a.creditLimit : 0), format: 'money', group: 'business' }} />
-	<StatCard stat={{ key: 'discount', label: 'Extra discount', value: Number(a.discountPct), format: 'percent', group: 'business' }} />
+	<StatCard
+		stat={{
+			key: 'orders',
+			label: 'Orders',
+			value: data.orders.length,
+			format: 'count',
+			group: 'business'
+		}}
+	/>
+	<StatCard
+		stat={{
+			key: 'owed',
+			label: 'Owed on open invoices',
+			value: data.owed,
+			format: 'money',
+			group: 'business',
+			tone: data.owed > Number(a.creditLimit) && a.creditApproved ? 'negative' : 'neutral'
+		}}
+	/>
+	<StatCard
+		stat={{
+			key: 'limit',
+			label: 'Credit limit',
+			value: Number(a.creditApproved ? a.creditLimit : 0),
+			format: 'money',
+			group: 'business'
+		}}
+	/>
+	<StatCard
+		stat={{
+			key: 'discount',
+			label: 'Extra discount',
+			value: Number(a.discountPct),
+			format: 'percent',
+			group: 'business'
+		}}
+	/>
 </div>
 
 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[26rem_minmax(0,1fr)]">
@@ -191,7 +341,11 @@
 				singleTable={[
 					{ name: 'Type', value: humanize(a.type) },
 					{ name: 'Trade licence', value: a.tradeLicenceNumber },
-					{ name: 'Licence file', value: a.tradeLicenceFile ? 'View' : 'Not uploaded', href: a.tradeLicenceFile ? fileUrl(a.tradeLicenceFile) : null },
+					{
+						name: 'Licence file',
+						value: a.tradeLicenceFile ? 'View' : 'Not uploaded',
+						href: a.tradeLicenceFile ? fileUrl(a.tradeLicenceFile) : null
+					},
 					{ name: 'TIN', value: a.tin },
 					{ name: 'VAT number', value: a.vatNumber ?? '—' },
 					{ name: 'Contact', value: a.contactName },
@@ -207,7 +361,12 @@
 				singleTable={[
 					{ name: 'Extra discount', value: pct(a.discountPct) },
 					{ name: 'Minimum order', value: a.minOrderKg ? kg(a.minOrderKg) : 'Setting' },
-					{ name: 'Credit', value: a.creditApproved ? 'active' : 'neutral', label: a.creditApproved ? 'Approved' : 'Prepaid only', kind: 'status' },
+					{
+						name: 'Credit',
+						value: a.creditApproved ? 'active' : 'neutral',
+						label: a.creditApproved ? 'Approved' : 'Prepaid only',
+						kind: 'status'
+					},
 					{ name: 'Credit limit', value: a.creditApproved ? money(a.creditLimit) : '—' },
 					{ name: 'Payment terms', value: a.creditApproved ? `${a.paymentTermsDays} days` : '—' }
 				]}
@@ -216,14 +375,34 @@
 		<PageSection title="Approval">
 			<SingleTable
 				singleTable={[
-					{ name: 'Status', value: a.approvalStatus, label: humanize(a.approvalStatus), kind: 'status' },
-					{ name: 'Entered by', value: data.people.requestedBy ?? '—', href: href('user', a.requestedBy) },
-					{ name: 'Approved by', value: data.people.approvedBy ?? '—', href: href('user', a.approvedBy) },
+					{
+						name: 'Status',
+						value: a.approvalStatus,
+						label: humanize(a.approvalStatus),
+						kind: 'status'
+					},
+					{
+						name: 'Entered by',
+						value: data.people.requestedBy ?? '—',
+						href: href('user', a.requestedBy)
+					},
+					{
+						name: 'Approved by',
+						value: data.people.approvedBy ?? '—',
+						href: href('user', a.approvedBy)
+					},
 					{ name: 'Approved', value: formatDateTime(a.approvedAt) },
-					{ name: 'Rejected by', value: data.people.rejectedBy ?? '—', href: href('user', a.rejectedBy) },
+					{
+						name: 'Rejected by',
+						value: data.people.rejectedBy ?? '—',
+						href: href('user', a.rejectedBy)
+					},
 					{ name: 'Rejected', value: formatDateTime(a.rejectedAt) },
 					{ name: 'Reason', value: a.rejectionReason ?? '—', long: 40 },
-					{ name: 'Overridden', value: a.approvalOverridden ? 'Yes — decided by the person who entered it' : 'No' },
+					{
+						name: 'Overridden',
+						value: a.approvalOverridden ? 'Yes — decided by the person who entered it' : 'No'
+					},
 					...stampRows(data.stamps, href)
 				]}
 			/>
@@ -234,10 +413,34 @@
 		<PageSection title="People who order" hint="Customers who may order for this business.">
 			{#snippet actions()}
 				{#if data.canManage}
-					<FormDialog title="Add a person" triggerLabel="Add person" triggerIcon={Plus} submitIcon={Plus} action="?/addMember" data={data.memberForm} schema={memberSchema} resetOnSuccess>
+					<FormDialog
+						title="Add a person"
+						triggerLabel="Add person"
+						triggerIcon={Plus}
+						submitIcon={Plus}
+						action="?/addMember"
+						data={data.memberForm}
+						schema={memberSchema}
+						resetOnSuccess
+					>
 						{#snippet fields({ form, errors })}
-							<InputComp label="Customer" name="customerId" type="combo" items={data.customers} {form} {errors} required />
-							<InputComp label="Administrator" name="isAdmin" type="checkboxSingle" placeholder="May add and remove people" {form} {errors} />
+							<InputComp
+								label="Customer"
+								name="customerId"
+								type="combo"
+								items={data.customers}
+								{form}
+								{errors}
+								required
+							/>
+							<InputComp
+								label="Administrator"
+								name="isAdmin"
+								type="checkboxSingle"
+								placeholder="May add and remove people"
+								{form}
+								{errors}
+							/>
 						{/snippet}
 					</FormDialog>
 				{/if}
@@ -250,9 +453,22 @@
 		<PageSection title="Addresses">
 			{#snippet actions()}
 				{#if data.canManage}
-					<FormDialog title="Add an address" triggerLabel="Add address" triggerIcon={Plus} submitIcon={Plus} action="?/addAddress" data={data.addressForm} schema={businessAddressSchema} resetOnSuccess>
+					<FormDialog
+						title="Add an address"
+						triggerLabel="Add address"
+						triggerIcon={Plus}
+						submitIcon={Plus}
+						action="?/addAddress"
+						data={data.addressForm}
+						schema={businessAddressSchema}
+						resetOnSuccess
+					>
 						{#snippet fields({ form, errors })}
-							<BusinessAddressFields form={form as never} errors={errors as never} areas={data.areas} />
+							<BusinessAddressFields
+								form={form as never}
+								errors={errors as never}
+								areas={data.areas}
+							/>
 						{/snippet}
 					</FormDialog>
 				{/if}
@@ -273,17 +489,39 @@
 							</p>
 							{#if data.canManage}
 								<div class="mt-2 flex gap-1">
-									<Button size="sm" variant="ghost" onclick={() => { editing = ad; editOpen = true; }}>
+									<Button
+										size="sm"
+										variant="ghost"
+										onclick={() => {
+											editing = ad;
+											editOpen = true;
+										}}
+									>
 										<SquarePen class="size-4" /> Edit
 									</Button>
-									<ConfirmAction action="?/deleteAddress" label="Remove" variant="ghost" title="Remove this address?" description="Past orders keep the address they were delivered to." fields={{ id: ad.id }} />
+									<ConfirmAction
+										action="?/deleteAddress"
+										label="Remove"
+										variant="ghost"
+										title="Remove this address?"
+										description="Past orders keep the address they were delivered to."
+										fields={{ id: ad.id }}
+									/>
 								</div>
 							{/if}
 						</li>
 					{/each}
 				</ul>
 			{:else}<Empty message="No addresses yet" />{/if}
-			<FormDialog title="Edit address" action="?/editAddress" data={data.addressEditForm} schema={businessAddressEditSchema} bind:open={editOpen} seed={addressSeed} hideTrigger>
+			<FormDialog
+				title="Edit address"
+				action="?/editAddress"
+				data={data.addressEditForm}
+				schema={businessAddressEditSchema}
+				bind:open={editOpen}
+				seed={addressSeed}
+				hideTrigger
+			>
 				{#snippet fields({ form, errors })}
 					<InputComp type="hidden" name="id" {form} {errors} />
 					<BusinessAddressFields form={form as never} errors={errors as never} areas={data.areas} />

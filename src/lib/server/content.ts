@@ -10,7 +10,12 @@ import { storeFileFields } from '@nahu/admin-kit/server/files';
 import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
 import { deletionStamp } from '@nahu/admin-kit/server/softDelete';
 import type { Writer } from '@nahu/admin-kit/server/db';
-import { htmlToText, readingMinutes, sanitizeRichHtml, summarize } from '@nahu/admin-kit/server/richText';
+import {
+	htmlToText,
+	readingMinutes,
+	sanitizeRichHtml,
+	summarize
+} from '@nahu/admin-kit/server/richText';
 import { db } from '#lib/server/db/index.ts';
 import { page, post, tourHotspot, tourScene } from '#lib/server/db/schema.ts';
 import type { Block, LocalizedBlocks } from '#lib/server/db/content.schema.ts';
@@ -99,8 +104,12 @@ function freedSlug(table: SlugTable) {
 /** Refuses a parent that is the page itself or sits under it, which would make a loop. */
 async function assertNoParentLoop(tx: Writer, id: number, parentId: number | null | undefined) {
 	const seen = new Set<number>();
-	for (let at = parentId ?? null; at; ) {
-		if (at === id) throw new WriteRefused('parentId', 'A page cannot sit under itself or one of its own children');
+	for (let at = parentId ?? null; at;) {
+		if (at === id)
+			throw new WriteRefused(
+				'parentId',
+				'A page cannot sit under itself or one of its own children'
+			);
 		if (seen.has(at)) break;
 		seen.add(at);
 		const [up] = await tx.select({ parentId: page.parentId }).from(page).where(eq(page.id, at));
@@ -133,11 +142,22 @@ export async function savePage(event: RequestEvent, data: PageForm, posted: Form
 		values.publishedAt = publishedAtFor(values.publishStatus as string, before);
 		const row = values as Partial<typeof page.$inferInsert>;
 		if (before) {
-			await tx.update(page).set({ ...row, updatedBy: userId }).where(eq(page.id, before.id));
-			await recordAudit(tx, event, { table: 'page', recordId: before.id, action: 'update', before, after: row });
+			await tx
+				.update(page)
+				.set({ ...row, updatedBy: userId })
+				.where(eq(page.id, before.id));
+			await recordAudit(tx, event, {
+				table: 'page',
+				recordId: before.id,
+				action: 'update',
+				before,
+				after: row
+			});
 			return before.id;
 		}
-		const [res] = await tx.insert(page).values({ ...(row as typeof page.$inferInsert), createdBy: userId });
+		const [res] = await tx
+			.insert(page)
+			.values({ ...(row as typeof page.$inferInsert), createdBy: userId });
 		await recordAudit(tx, event, { table: 'page', recordId: res.insertId, action: 'create' });
 		return res.insertId;
 	});
@@ -169,11 +189,22 @@ export async function savePost(event: RequestEvent, data: PostForm, posted: Form
 		values.publishedAt = publishedAtFor(values.publishStatus as string, before);
 		const row = values as Partial<typeof post.$inferInsert>;
 		if (before) {
-			await tx.update(post).set({ ...row, updatedBy: userId }).where(eq(post.id, before.id));
-			await recordAudit(tx, event, { table: 'post', recordId: before.id, action: 'update', before, after: row });
+			await tx
+				.update(post)
+				.set({ ...row, updatedBy: userId })
+				.where(eq(post.id, before.id));
+			await recordAudit(tx, event, {
+				table: 'post',
+				recordId: before.id,
+				action: 'update',
+				before,
+				after: row
+			});
 			return before.id;
 		}
-		const [res] = await tx.insert(post).values({ ...(row as typeof post.$inferInsert), createdBy: userId });
+		const [res] = await tx
+			.insert(post)
+			.values({ ...(row as typeof post.$inferInsert), createdBy: userId });
 		await recordAudit(tx, event, { table: 'post', recordId: res.insertId, action: 'create' });
 		return res.insertId;
 	});
@@ -203,7 +234,12 @@ export async function setPublishStatus(
  * Takes a page or post off for good (soft delete). Its address is freed — suffixed with its id — so
  * a new one can use it.
  */
-export async function deleteDoc(event: RequestEvent, table: DocTable, audited: 'page' | 'post', id: number) {
+export async function deleteDoc(
+	event: RequestEvent,
+	table: DocTable,
+	audited: 'page' | 'post',
+	id: number
+) {
 	await db.transaction(async (tx) => {
 		await tx
 			.update(table)
@@ -237,7 +273,7 @@ export async function pageOptions(except?: number) {
 		.where(isNull(page.deletedAt))
 		.orderBy(asc(page.sortOrder));
 	const under = new Set(except ? [except] : []);
-	for (let grew = true; grew; ) {
+	for (let grew = true; grew;) {
 		grew = false;
 		for (const r of rows) {
 			if (r.parentId && under.has(r.parentId) && !under.has(r.value)) {
@@ -267,19 +303,34 @@ export async function saveScene(
 	packLocalized(values, ['title', 'description']);
 	const row = values as Partial<typeof tourScene.$inferInsert>;
 	return db.transaction(async (tx) => {
-		const [before] = id ? await tx.select().from(tourScene).where(eq(tourScene.id, id)).for('update') : [];
+		const [before] = id
+			? await tx.select().from(tourScene).where(eq(tourScene.id, id)).for('update')
+			: [];
 		if (data.isStart) {
 			await tx
 				.update(tourScene)
 				.set({ isStart: false })
-				.where(and(eq(tourScene.locationId, data.locationId), id ? ne(tourScene.id, id) : undefined));
+				.where(
+					and(eq(tourScene.locationId, data.locationId), id ? ne(tourScene.id, id) : undefined)
+				);
 		}
 		if (before) {
-			await tx.update(tourScene).set({ ...row, updatedBy: userId }).where(eq(tourScene.id, before.id));
-			await recordAudit(tx, event, { table: 'tour_scene', recordId: before.id, action: 'update', before, after: row });
+			await tx
+				.update(tourScene)
+				.set({ ...row, updatedBy: userId })
+				.where(eq(tourScene.id, before.id));
+			await recordAudit(tx, event, {
+				table: 'tour_scene',
+				recordId: before.id,
+				action: 'update',
+				before,
+				after: row
+			});
 			return before.id;
 		}
-		const [res] = await tx.insert(tourScene).values({ ...(row as typeof tourScene.$inferInsert), createdBy: userId });
+		const [res] = await tx
+			.insert(tourScene)
+			.values({ ...(row as typeof tourScene.$inferInsert), createdBy: userId });
 		await recordAudit(tx, event, { table: 'tour_scene', recordId: res.insertId, action: 'create' });
 		return res.insertId;
 	});
@@ -306,7 +357,15 @@ const TARGET_OF: Record<string, string | null> = {
 	link: 'url',
 	info: null
 };
-const TARGETS = ['productId', 'lotId', 'stationId', 'bookableId', 'eventId', 'targetSceneId', 'url'];
+const TARGETS = [
+	'productId',
+	'lotId',
+	'stationId',
+	'bookableId',
+	'eventId',
+	'targetSceneId',
+	'url'
+];
 
 /** Adds (no id) or updates a hotspot of a scene. */
 export async function saveHotspot(
@@ -332,10 +391,22 @@ export async function saveHotspot(
 				.update(tourHotspot)
 				.set({ ...row, updatedBy: userId })
 				.where(and(eq(tourHotspot.id, id), eq(tourHotspot.sceneId, data.sceneId)));
-			await recordAudit(tx, event, { table: 'tour_hotspot', recordId: id, action: 'update', before, after: row });
+			await recordAudit(tx, event, {
+				table: 'tour_hotspot',
+				recordId: id,
+				action: 'update',
+				before,
+				after: row
+			});
 		} else {
-			const [res] = await tx.insert(tourHotspot).values({ ...(row as typeof tourHotspot.$inferInsert), createdBy: userId });
-			await recordAudit(tx, event, { table: 'tour_hotspot', recordId: res.insertId, action: 'create' });
+			const [res] = await tx
+				.insert(tourHotspot)
+				.values({ ...(row as typeof tourHotspot.$inferInsert), createdBy: userId });
+			await recordAudit(tx, event, {
+				table: 'tour_hotspot',
+				recordId: res.insertId,
+				action: 'create'
+			});
 		}
 	});
 }

@@ -11,7 +11,12 @@
 	const columns: ColumnDef<Row>[] = [
 		{ id: 'key', accessorKey: 'key', header: sortable('Series') },
 		{ id: 'kind', accessorFn: (r) => kind(r.key), header: 'Document' },
-		{ id: 'nextValue', accessorKey: 'nextValue', header: sortable('Next number'), meta: { align: 'right' } },
+		{
+			id: 'nextValue',
+			accessorKey: 'nextValue',
+			header: sortable('Next number'),
+			meta: { align: 'right' }
+		},
 		{ id: 'used', accessorFn: (r) => r.nextValue - 1, header: 'Issued', meta: { align: 'right' } },
 		{ id: 'updatedAt', header: 'Last issued', cell: ({ row }) => dateTime(row.original.updatedAt) }
 	];
@@ -24,5 +29,11 @@
 />
 
 <div class="mt-4">
-	<DataTable {columns} data={data.rows} facetKeys={['kind']} facetLabels={{ kind: 'Document' }} fileName="Document numbers" />
+	<DataTable
+		{columns}
+		data={data.rows}
+		facetKeys={['kind']}
+		facetLabels={{ kind: 'Document' }}
+		fileName="Document numbers"
+	/>
 </div>

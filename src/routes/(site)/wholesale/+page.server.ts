@@ -6,25 +6,41 @@ import { recordAudit } from '@nahu/admin-kit/server/audit';
 import { isDuplicateKey } from '@nahu/admin-kit/server/dbErrors';
 import { postedForm, storeFileFields, UploadRefused } from '@nahu/admin-kit/server/files';
 import { db } from '#lib/server/db/index.ts';
-import { businessAccount, businessAddress, businessMember, wholesaleTier } from '#lib/server/db/schema.ts';
+import {
+	businessAccount,
+	businessAddress,
+	businessMember,
+	wholesaleTier
+} from '#lib/server/db/schema.ts';
 import { readSetting } from '#lib/server/stockReads.ts';
 import { customerFor, floodRefused, isTrapped, submitForm } from '#lib/server/site.ts';
 import { inboxAction } from '#lib/server/siteForms.ts';
 import { greenQuoteSchema, wholesaleSchema } from '#lib/schemas/siteForms.ts';
-import { m } from '#lib/paraglide/messages.js';
+import { m } from '#lib/i18n.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	const [tiers, minOrderKg] = await Promise.all([
 		db
-			.select({ id: wholesaleTier.id, name: wholesaleTier.name, minKg: wholesaleTier.minKg, maxKg: wholesaleTier.maxKg, discountPct: wholesaleTier.discountPct })
+			.select({
+				id: wholesaleTier.id,
+				name: wholesaleTier.name,
+				minKg: wholesaleTier.minKg,
+				maxKg: wholesaleTier.maxKg,
+				discountPct: wholesaleTier.discountPct
+			})
 			.from(wholesaleTier)
 			.where(and(isNull(wholesaleTier.deletedAt), eq(wholesaleTier.status, true)))
 			.orderBy(asc(wholesaleTier.sortOrder), asc(wholesaleTier.minKg)),
 		readSetting<number>('wholesale.min_order_kg', 5)
 	]);
 	return {
-		tiers: tiers.map((t) => ({ ...t, minKg: Number(t.minKg), maxKg: t.maxKg === null ? null : Number(t.maxKg), discountPct: Number(t.discountPct) })),
+		tiers: tiers.map((t) => ({
+			...t,
+			minKg: Number(t.minKg),
+			maxKg: t.maxKg === null ? null : Number(t.maxKg),
+			discountPct: Number(t.discountPct)
+		})),
 		minOrderKg: Number(minOrderKg),
 		application: await superValidate(zod4(wholesaleSchema), { id: 'application' }),
 		quote: await superValidate(zod4(greenQuoteSchema), { id: 'quote' })
@@ -65,8 +81,14 @@ export const actions: Actions = {
 					approvalStatus: 'pending'
 				});
 				const id = res.insertId;
-				const customerId = await customerFor(tx, { name: d.contactName, phone: d.contactPhone, email: d.contactEmail });
-				await tx.insert(businessMember).values({ businessAccountId: id, customerId, isAdmin: true });
+				const customerId = await customerFor(tx, {
+					name: d.contactName,
+					phone: d.contactPhone,
+					email: d.contactEmail
+				});
+				await tx
+					.insert(businessMember)
+					.values({ businessAccountId: id, customerId, isAdmin: true });
 				if (d.address) {
 					await tx.insert(businessAddress).values({
 						businessAccountId: id,

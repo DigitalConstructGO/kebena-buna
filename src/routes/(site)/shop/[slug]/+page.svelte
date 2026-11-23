@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { money, tr } from '#lib/format.ts';
 	import { siteHref } from '#lib/site/locale.ts';
 	import ImageSelect from '@nahu/admin-kit/formComponents/ImageSelect.svelte';
@@ -51,7 +51,10 @@
 
 <svelte:head>
 	<!-- An SEO title is written whole (it names the brand); otherwise the product's name. -->
-	<title>{(p.seoTitle && tr(p.seoTitle, locale)) || `${tr(p.name, locale)} · Kebena`}</title>
+	<title
+		>{(p.seoTitle && tr(p.seoTitle, locale)) ||
+			m.site_page_title({ title: tr(p.name, locale) })}</title
+	>
 	{#if p.seoDescription || p.summary}
 		<meta name="description" content={tr(p.seoDescription ?? p.summary ?? '', locale)} />
 	{/if}

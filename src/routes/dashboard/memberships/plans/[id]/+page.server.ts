@@ -77,9 +77,26 @@ export const actions = {
 	delete: async (event) => {
 		requirePermission(event.locals, 'memberships.manage');
 		const { plan } = await loadPlan(event.params.id);
-		const [used] = await db.select({ id: membership.id }).from(membership).where(eq(membership.planId, plan.id)).limit(1);
-		if (used) return { message: { type: 'error', text: 'Memberships were sold on this plan: switch it off instead.' } };
-		await db.update(membershipPlan).set(deletionStamp(event.locals.user?.id)).where(eq(membershipPlan.id, plan.id));
-		redirect('/dashboard/memberships/plans', { type: 'success', message: 'Plan deleted' }, event.cookies);
+		const [used] = await db
+			.select({ id: membership.id })
+			.from(membership)
+			.where(eq(membership.planId, plan.id))
+			.limit(1);
+		if (used)
+			return {
+				message: {
+					type: 'error',
+					text: 'Memberships were sold on this plan: switch it off instead.'
+				}
+			};
+		await db
+			.update(membershipPlan)
+			.set(deletionStamp(event.locals.user?.id))
+			.where(eq(membershipPlan.id, plan.id));
+		redirect(
+			'/dashboard/memberships/plans',
+			{ type: 'success', message: 'Plan deleted' },
+			event.cookies
+		);
 	}
 };

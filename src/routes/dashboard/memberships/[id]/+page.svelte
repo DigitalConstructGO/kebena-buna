@@ -37,15 +37,36 @@
 	type Scan = (typeof data.scans)[number];
 	const scanColumns: ColumnDef<Scan>[] = [
 		{ id: 'at', header: 'Scanned', cell: ({ row }) => dateTime(row.original.scannedAt) },
-		{ id: 'member', header: 'Member', cell: ({ row }) => memberName[row.original.memberId ?? 0] ?? '—' },
+		{
+			id: 'member',
+			header: 'Member',
+			cell: ({ row }) => memberName[row.original.memberId ?? 0] ?? '—'
+		},
 		{ id: 'result', header: 'Result', cell: ({ row }) => status(row.original.result) },
-		{ id: 'headcount', header: 'People', meta: { align: 'right' }, cell: ({ row }) => row.original.headcount },
-		{ id: 'location', header: 'Where', cell: ({ row }) => link('location', row.original.locationId, row.original.location) },
-		{ id: 'by', header: 'By', cell: ({ row }) => user(row.original.scannedById, row.original.scannedBy) }
+		{
+			id: 'headcount',
+			header: 'People',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.headcount
+		},
+		{
+			id: 'location',
+			header: 'Where',
+			cell: ({ row }) => link('location', row.original.locationId, row.original.location)
+		},
+		{
+			id: 'by',
+			header: 'By',
+			cell: ({ row }) => user(row.original.scannedById, row.original.scannedBy)
+		}
 	];
 	type Sub = (typeof data.subscriptions)[number];
 	const subColumns: ColumnDef<Sub>[] = [
-		{ id: 'number', header: 'Subscription', cell: ({ row }) => link('subscription', row.original.id, row.original.number) },
+		{
+			id: 'number',
+			header: 'Subscription',
+			cell: ({ row }) => link('subscription', row.original.id, row.original.number)
+		},
 		{ id: 'sku', header: 'Coffee', cell: ({ row }) => row.original.sku },
 		{ id: 'frequency', header: 'Every', cell: ({ row }) => humanize(row.original.frequency) },
 		{ id: 'next', header: 'Next roast', cell: ({ row }) => date(row.original.nextRoastDate) },
@@ -53,22 +74,62 @@
 	];
 </script>
 
-<PageHeader title={m.number} eyebrow="Membership" description={`${data.customer ?? 'Customer'} · ${data.plan}`}>
+<PageHeader
+	title={m.number}
+	eyebrow="Membership"
+	description={`${data.customer ?? 'Customer'} · ${data.plan}`}
+>
 	{#snippet badges()}
 		<Statuses {...badge(m.status)} />
 	{/snippet}
 	{#snippet actions()}
 		{#if data.canManage}
-			<FormDialog title="Edit {m.number}" triggerLabel="Edit term" action="?/term" data={data.termForm} schema={membershipTermSchema}>
+			<FormDialog
+				title="Edit {m.number}"
+				triggerLabel="Edit term"
+				action="?/term"
+				data={data.termForm}
+				schema={membershipTermSchema}
+			>
 				{#snippet fields({ form, errors })}
-					<InputComp label="Plan" name="planId" type="select" items={data.plans} {form} {errors} required />
-					<InputComp label="Status" name="status" type="select" items={choicesOf(MEMBERSHIP_STATUSES)} {form} {errors} required />
+					<InputComp
+						label="Plan"
+						name="planId"
+						type="select"
+						items={data.plans}
+						{form}
+						{errors}
+						required
+					/>
+					<InputComp
+						label="Status"
+						name="status"
+						type="select"
+						items={choicesOf(MEMBERSHIP_STATUSES)}
+						{form}
+						{errors}
+						required
+					/>
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
 						<InputComp label="Starts" name="startsOn" type="date" futureDays {form} {errors} />
 						<InputComp label="Ends" name="endsOn" type="date" futureDays {form} {errors} />
-						<InputComp label="Grace ends" name="graceEndsOn" type="date" futureDays {form} {errors} />
+						<InputComp
+							label="Grace ends"
+							name="graceEndsOn"
+							type="date"
+							futureDays
+							{form}
+							{errors}
+						/>
 					</div>
-					<InputComp label="Renews by" name="renewalMethod" type="select" items={choicesOf(RENEWAL_METHODS)} {form} {errors} />
+					<InputComp
+						label="Renews by"
+						name="renewalMethod"
+						type="select"
+						items={choicesOf(RENEWAL_METHODS)}
+						{form}
+						{errors}
+					/>
 				{/snippet}
 			</FormDialog>
 			{#if m.status === 'pending_payment' || m.status === 'grace' || m.status === 'lapsed'}
@@ -91,9 +152,27 @@
 				/>
 			{/if}
 			{#if m.status !== 'cancelled'}
-				<FormDialog title="Cancel {m.number}" triggerLabel="Cancel" triggerIcon={Ban} submitIcon={Ban} submitVariant="destructive" action="?/cancel" data={data.cancelForm} schema={cancelSchema} submitLabel="Cancel membership">
+				<FormDialog
+					title="Cancel {m.number}"
+					triggerLabel="Cancel"
+					triggerIcon={Ban}
+					submitIcon={Ban}
+					submitVariant="destructive"
+					action="?/cancel"
+					data={data.cancelForm}
+					schema={cancelSchema}
+					submitLabel="Cancel membership"
+				>
 					{#snippet fields({ form, errors })}
-						<InputComp label="Reason" name="reason" type="textarea" rows={3} {form} {errors} required />
+						<InputComp
+							label="Reason"
+							name="reason"
+							type="textarea"
+							rows={3}
+							{form}
+							{errors}
+							required
+						/>
 					{/snippet}
 				</FormDialog>
 			{/if}
@@ -108,15 +187,31 @@
 				singleTable={[
 					{ name: 'Customer', value: data.customer ?? '—', href: href('customer', m.customerId) },
 					{ name: 'Phone', value: data.customerPhone, kind: 'phone' },
-					{ name: 'Plan', value: `${data.plan} · ${money(data.planPrice)}`, href: href('membershipPlan', m.planId) },
+					{
+						name: 'Plan',
+						value: `${data.plan} · ${money(data.planPrice)}`,
+						href: href('membershipPlan', m.planId)
+					},
 					{ name: 'Status', value: m.status, kind: 'status', label: humanize(m.status) },
 					{ name: 'Starts', value: formatDate(m.startsOn) },
 					{ name: 'Ends', value: formatDate(m.endsOn) },
 					{ name: 'Grace ends', value: formatDate(m.graceEndsOn) },
 					{ name: 'Renews by', value: humanize(m.renewalMethod) },
-					{ name: 'Paid on order', value: data.orderNumber ?? '—', href: href('order', data.orderId) },
-					{ name: 'Renews', value: data.renews?.number ?? '—', href: href('membership', data.renews?.id) },
-					...data.renewedBy.map((r) => ({ name: 'Renewed by', value: `${r.number} (${humanize(r.status)})`, href: href('membership', r.id) })),
+					{
+						name: 'Paid on order',
+						value: data.orderNumber ?? '—',
+						href: href('order', data.orderId)
+					},
+					{
+						name: 'Renews',
+						value: data.renews?.number ?? '—',
+						href: href('membership', data.renews?.id)
+					},
+					...data.renewedBy.map((r) => ({
+						name: 'Renewed by',
+						value: `${r.number} (${humanize(r.status)})`,
+						href: href('membership', r.id)
+					})),
 					...(m.cancelledAt
 						? [
 								{ name: 'Cancelled', value: formatDate(m.cancelledAt) },
@@ -137,10 +232,23 @@
 					fields: [
 						{ name: 'name', label: 'Name', type: 'text' },
 						{ name: 'cardCode', label: 'Card code', type: 'text', inForm: false },
-						{ name: 'isChild', label: 'Child', type: 'checkbox', trueLabel: 'Child', falseLabel: 'Adult' },
+						{
+							name: 'isChild',
+							label: 'Child',
+							type: 'checkbox',
+							trueLabel: 'Child',
+							falseLabel: 'Adult'
+						},
 						{ name: 'birthYear', label: 'Birth year', type: 'number', required: false },
 						{ name: 'photo', label: 'Photo', type: 'image', required: false },
-						{ name: 'status', label: 'Card', type: 'boolean', trueLabel: 'Valid', falseLabel: 'Blocked', inTable: true }
+						{
+							name: 'status',
+							label: 'Card',
+							type: 'boolean',
+							trueLabel: 'Valid',
+							falseLabel: 'Blocked',
+							inTable: true
+						}
 					]
 				}}
 				rows={data.members.rows as never}
@@ -158,7 +266,10 @@
 			{:else}<Empty message="No card has been scanned yet" />{/if}
 		</PageSection>
 		{#if data.subscriptions.length}
-			<PageSection title="Monthly coffee" hint="The Patron's bag, sent through the subscription engine.">
+			<PageSection
+				title="Monthly coffee"
+				hint="The Patron's bag, sent through the subscription engine."
+			>
 				<DataTable variant="compact" columns={subColumns} data={data.subscriptions} />
 			</PageSection>
 		{/if}

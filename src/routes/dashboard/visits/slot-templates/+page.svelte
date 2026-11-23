@@ -25,7 +25,14 @@
 		plural: 'Slot pattern',
 		fields: [
 			{ name: 'weekday', label: 'Day', type: 'select', choices: WEEKDAY_CHOICES },
-			{ name: 'locationId', label: 'Location', type: 'reference', options: 'locationList', display: 'location', picker: 'select' },
+			{
+				name: 'locationId',
+				label: 'Location',
+				type: 'reference',
+				options: 'locationList',
+				display: 'location',
+				picker: 'select'
+			},
 			{ name: 'startsAt', label: 'Starts', type: time },
 			{ name: 'endsAt', label: 'Ends', type: time },
 			{ name: 'capacity', label: 'Capacity', type: 'number' },

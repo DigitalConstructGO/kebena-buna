@@ -91,5 +91,8 @@ export function renderTemplate(template: string, payload: Payload, escape = fals
 }
 
 function escapeHtml(text: string) {
-	return text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+	return text.replace(
+		/[&<>"']/g,
+		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!
+	);
 }

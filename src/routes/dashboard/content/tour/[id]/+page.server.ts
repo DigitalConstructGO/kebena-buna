@@ -95,16 +95,27 @@ export const load = async ({ params }) => {
 		})),
 		stamps,
 		locations,
-		options: { products, lots, stations, bookables, events, scenes: scenes.filter((o) => o.value !== s.id) },
+		options: {
+			products,
+			lots,
+			stations,
+			bookables,
+			events,
+			scenes: scenes.filter((o) => o.value !== s.id)
+		},
 		editForm: await superValidate(
 			unpackLocalized(rest, ['title', 'description']),
 			zod4(sceneEditSchema),
 			{ errors: false, id: 'scene' }
 		),
-		addForm: await superValidate({ sceneId: s.id, kind: 'info', yaw: 0, pitch: 0 }, zod4(hotspotSchema), {
-			errors: false,
-			id: 'addHotspot'
-		}),
+		addForm: await superValidate(
+			{ sceneId: s.id, kind: 'info', yaw: 0, pitch: 0 },
+			zod4(hotspotSchema),
+			{
+				errors: false,
+				id: 'addHotspot'
+			}
+		),
 		hotspotForm: await superValidate({ sceneId: s.id }, zod4(hotspotEditSchema), {
 			errors: false,
 			id: 'editHotspot'
@@ -140,7 +151,8 @@ export const actions = {
 		const { scene: s } = await found(event.params.id);
 		const posted = await postedForm(event.request);
 		const form = await superValidate(posted, zod4(sceneEditSchema), { id: 'scene' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		try {
 			await saveScene(event, form.data, posted, s.id);
 		} catch (err) {
@@ -174,6 +186,10 @@ export const actions = {
 	delete: async (event) => {
 		const { scene: s } = await found(event.params.id);
 		await deleteScene(event, s.id);
-		redirect('/dashboard/content/tour', { type: 'success', message: 'Scene deleted' }, event.cookies);
+		redirect(
+			'/dashboard/content/tour',
+			{ type: 'success', message: 'Scene deleted' },
+			event.cookies
+		);
 	}
 };

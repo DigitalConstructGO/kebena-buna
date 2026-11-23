@@ -7,7 +7,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { money, tr } from '#lib/format.ts';
 	import { siteHref } from '#lib/site/locale.ts';
 	import Pouch from '#lib/components/museum/Pouch.svelte';
@@ -87,7 +87,11 @@
 	};
 </script>
 
-<Sheet bind:this={sheet} label={held ? tr(held.name, locale) : undefined} onclose={() => (held = undefined)}>
+<Sheet
+	bind:this={sheet}
+	label={held ? tr(held.name, locale) : undefined}
+	onclose={() => (held = undefined)}
+>
 	{#if held}
 		{@const name = tr(held.name, locale)}
 		{#if held.kind === 'coffee'}
@@ -118,7 +122,7 @@
 		{/if}
 
 		<div class="about">
-			<p class="pk-label">{held.kind === 'coffee' ? 'Kebena Coffee' : m.shop_label()}</p>
+			<p class="pk-label">{held.kind === 'coffee' ? m.shop_brand_coffee() : m.shop_label()}</p>
 			<h3>{name}</h3>
 			{#if summary}<p class="sub">{summary}</p>{/if}
 			{#if notes.length}
@@ -134,9 +138,19 @@
 			{#if held.roastToOrder}<p class="sub small">{m.shop_roast_note()}</p>{/if}
 
 			{#if held.variants.length > 1}
-				<div class="sizes" role="group" aria-label={held.variants.some((v) => v.size) ? m.shop_size() : m.shop_option()}>
+				<div
+					class="sizes"
+					role="group"
+					aria-label={held.variants.some((v) => v.size) ? m.shop_size() : m.shop_option()}
+				>
 					{#each held.variants as v (v.id)}
-						<button type="button" class={{ on: v.id === variantId }} aria-pressed={v.id === variantId} disabled={!onSale(v)} onclick={() => pickSize(v.id)}>
+						<button
+							type="button"
+							class={{ on: v.id === variantId }}
+							aria-pressed={v.id === variantId}
+							disabled={!onSale(v)}
+							onclick={() => pickSize(v.id)}
+						>
 							{sizeOf(v)}
 						</button>
 					{/each}
@@ -152,7 +166,9 @@
 						failed = undefined;
 						return async ({ result, update }) => {
 							if (result.type === 'success') added = true;
-							else if (result.type === 'failure') failed = (result.data as { error?: string } | undefined)?.error ?? m.shop_add_invalid();
+							else if (result.type === 'failure')
+								failed =
+									(result.data as { error?: string } | undefined)?.error ?? m.shop_add_invalid();
 							// Stay on the shelf: SvelteKit 3 otherwise follows the post to the product's page.
 							await update({ reset: false, navigate: false });
 							adding = false;
@@ -172,7 +188,9 @@
 						</a>
 					{:else}
 						<button class="go" disabled={adding || !onSale(variant)}>
-							<span>{onSale(variant) ? `${m.shop_add()} · ${money(variant.price)}` : m.shop_sold_out()}</span>
+							<span>
+								{onSale(variant) ? `${m.shop_add()} · ${money(variant.price)}` : m.shop_sold_out()}
+							</span>
 							<svg viewBox="0 0 14 12" aria-hidden="true"><path d="M1 6h11.5M7.5 1l5 5-5 5" /></svg>
 						</button>
 					{/if}

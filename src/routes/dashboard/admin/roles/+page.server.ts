@@ -19,6 +19,9 @@ export const actions = {
 		} catch (err) {
 			return refusedForm(form, err);
 		}
-		return message(form, { type: 'success', text: `${form.data.name} added — now tick what it may do` });
+		return message(form, {
+			type: 'success',
+			text: `${form.data.name} added — now tick what it may do`
+		});
 	}
 };

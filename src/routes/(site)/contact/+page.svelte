@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { superForm } from 'sveltekit-superforms';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import Field from '#lib/site/Field.svelte';
 	import Trap from '#lib/site/Trap.svelte';
 	import Consent from '#lib/site/Consent.svelte';
@@ -42,7 +42,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.contact_title()} · Kebena</title>
+	<title>{m.site_page_title({ title: m.contact_title() })}</title>
 	<meta name="description" content={m.contact_lede()} />
 </svelte:head>
 
@@ -244,7 +244,7 @@
 		m.site_nav_shop(),
 		m.site_footer_membership()
 	]}
-	place={{ name: 'Kebena Museum', area: 'Jimma · Oromia' }}
+	place={{ name: m.contact_place_name(), area: m.contact_place_area() }}
 	rows={[
 		{ label: m.contact_address(), value: m.contact_address_value() },
 		{ label: m.contact_hours(), value: m.contact_hours_value() },

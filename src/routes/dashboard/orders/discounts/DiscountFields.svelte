@@ -16,11 +16,49 @@
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 	<InputComp label="Code" name="code" placeholder="WELCOME10" {form} {errors} required />
-	<InputComp label="Kind" name="kind" type="select" items={choicesOf(DISCOUNT_KINDS)} {form} {errors} required />
-	<InputComp label="Value" name="value" type="number" step="0.01" description="Percent, or birr off" {form} {errors} required />
-	<InputComp label="Minimum order (ETB)" name="minOrderAmount" type="number" step="0.01" {form} {errors} />
-	<InputComp label="Most it takes off (ETB)" name="maxDiscountAmount" type="number" step="0.01" {form} {errors} />
-	<InputComp label="Uses in all" name="usageLimit" type="number" description="Empty: no limit" {form} {errors} />
+	<InputComp
+		label="Kind"
+		name="kind"
+		type="select"
+		items={choicesOf(DISCOUNT_KINDS)}
+		{form}
+		{errors}
+		required
+	/>
+	<InputComp
+		label="Value"
+		name="value"
+		type="number"
+		step="0.01"
+		description="Percent, or birr off"
+		{form}
+		{errors}
+		required
+	/>
+	<InputComp
+		label="Minimum order (ETB)"
+		name="minOrderAmount"
+		type="number"
+		step="0.01"
+		{form}
+		{errors}
+	/>
+	<InputComp
+		label="Most it takes off (ETB)"
+		name="maxDiscountAmount"
+		type="number"
+		step="0.01"
+		{form}
+		{errors}
+	/>
+	<InputComp
+		label="Uses in all"
+		name="usageLimit"
+		type="number"
+		description="Empty: no limit"
+		{form}
+		{errors}
+	/>
 	<InputComp label="Uses per customer" name="perCustomerLimit" type="number" {form} {errors} />
 	<InputComp label="Starts" name="startsOn" type="date" futureDays {form} {errors} />
 	<InputComp label="Expires" name="expiresOn" type="date" futureDays {form} {errors} />
@@ -35,4 +73,11 @@
 	{form}
 	{errors}
 />
-<InputComp label="Active" name="isActive" type="checkboxSingle" placeholder="Accepted at checkout" {form} {errors} />
+<InputComp
+	label="Active"
+	name="isActive"
+	type="checkboxSingle"
+	placeholder="Accepted at checkout"
+	{form}
+	{errors}
+/>

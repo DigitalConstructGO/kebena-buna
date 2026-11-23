@@ -13,4 +13,7 @@ const crud = localizedCrud({
 });
 
 export const load = () => crud.load();
-export const actions = { ...crud.actions, delete: lookupDeleteAction(wholesaleTier, 'quantity tier') };
+export const actions = {
+	...crud.actions,
+	delete: lookupDeleteAction(wholesaleTier, 'quantity tier')
+};

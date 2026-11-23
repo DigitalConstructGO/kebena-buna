@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { superForm } from 'sveltekit-superforms';
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { tr } from '#lib/format.ts';
 	import { siteHref } from '#lib/site/locale.ts';
 	import { pictureOf } from '#lib/site/visit/pictures.ts';
@@ -33,7 +33,7 @@
 		`${siteHref(`/events/${e.slug}`, locale)}?audience=${encodeURIComponent(audience)}`;
 </script>
 
-<svelte:head><title>{tr(e.title, locale)} · Kebena</title></svelte:head>
+<svelte:head><title>{m.site_page_title({ title: tr(e.title, locale) })}</title></svelte:head>
 
 <div class="page">
 	<header class="head">
@@ -94,6 +94,8 @@
 					types={data.types}
 					declaration={data.audience.declaration}
 					paymentsOn={data.paymentsOn}
+					transfersOn={data.transfersOn}
+					itemType="event_ticket"
 					heading={m.events_tickets()}
 					action="?/buy"
 				/>

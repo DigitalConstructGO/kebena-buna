@@ -25,12 +25,14 @@ const spec: WhereSpec<(typeof FILTERS)[number]> = {
 	dateColumn: bookingSession.startsAt,
 	filters: {
 		bookableId: (v) => eq(bookingSession.bookableId, Number(v)),
-		state: (v) => (['cancelled', 'upcoming', 'past'].includes(v) ? sql`${state} = ${v}` : undefined),
+		state: (v) =>
+			['cancelled', 'upcoming', 'past'].includes(v) ? sql`${state} = ${v}` : undefined,
 		language: (v) => eq(bookingSession.language, v)
 	}
 };
 
-const joined = <T extends MySqlSelect>(q: T) => q.innerJoin(bookable, eq(bookingSession.bookableId, bookable.id));
+const joined = <T extends MySqlSelect>(q: T) =>
+	q.innerJoin(bookable, eq(bookingSession.bookableId, bookable.id));
 
 export const load = async ({ url }) => {
 	const query = parseTableQuery(url, FILTERS, 20, Object.keys(SORTS));
@@ -50,7 +52,9 @@ export const load = async ({ url }) => {
 					free,
 					state,
 					notes: bookingSession.notes,
-					staff: sql<string | null>`(select group_concat(u.name separator ', ') from ${staffAssignment} sa join user u on u.id = sa.user_id where sa.session_id = ${bookingSession.id})`
+					staff: sql<
+						string | null
+					>`(select group_concat(u.name separator ', ') from ${staffAssignment} sa join user u on u.id = sa.user_id where sa.session_id = ${bookingSession.id})`
 				})
 				.from(bookingSession)
 				.$dynamic()
@@ -69,7 +73,12 @@ export const load = async ({ url }) => {
 		joined(db.select({ total: count() }).from(bookingSession).$dynamic()).where(where),
 		facetCounts({
 			bookableId: () =>
-				joined(db.select({ value: bookable.id, label: enOf(bookable.name), count: count() }).from(bookingSession).$dynamic())
+				joined(
+					db
+						.select({ value: bookable.id, label: enOf(bookable.name), count: count() })
+						.from(bookingSession)
+						.$dynamic()
+				)
 					.where(buildWhere(query, spec, { except: 'bookableId' }))
 					.groupBy(bookable.id),
 			state: () =>
@@ -77,10 +86,18 @@ export const load = async ({ url }) => {
 					.where(buildWhere(query, spec, { except: 'state' }))
 					.groupBy(state),
 			language: () =>
-				joined(db.select({ value: bookingSession.language, count: count() }).from(bookingSession).$dynamic())
+				joined(
+					db
+						.select({ value: bookingSession.language, count: count() })
+						.from(bookingSession)
+						.$dynamic()
+				)
 					.where(buildWhere(query, spec, { except: 'language' }))
 					.groupBy(bookingSession.language)
 		})
 	]);
-	return { rows, server: { pagination: pagination(query, total), facets, filters: currentQuery(query) } };
+	return {
+		rows,
+		server: { pagination: pagination(query, total), facets, filters: currentQuery(query) }
+	};
 };

@@ -14,4 +14,7 @@ const crud = contentCrud({
 });
 
 export const load = () => crud.load();
-export const actions = { ...crud.actions, delete: lookupDeleteAction(notificationTemplate, 'template') };
+export const actions = {
+	...crud.actions,
+	delete: lookupDeleteAction(notificationTemplate, 'template')
+};

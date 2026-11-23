@@ -3,6 +3,7 @@
 	import { setupGsap } from '#lib/gsap.js';
 	import { whenIdle } from '#lib/reveal.js';
 	import type { ProcessContent } from '#lib/content/museum.js';
+	import { m } from '#lib/i18n.ts';
 
 	let { content }: { content: ProcessContent } = $props();
 
@@ -307,12 +308,12 @@
 				{#if start !== undefined}
 					<p class="gauge">
 						<span class="value">{fmt(start)}</span><span class="unit">%</span>
-						<small>{content.readoutLabel ?? 'Moisture'}</small>
+						<small>{content.readoutLabel ?? m.home_process_moisture()}</small>
 					</p>
 				{/if}
 			</div>
 
-			<nav class="meter" aria-label="Process steps">
+			<nav class="meter" aria-label={m.home_process_steps_label()}>
 				<span class="meter-track" aria-hidden="true"><span class="meter-fill"></span></span>
 				<ol>
 					{#each content.steps as s, i (s.id)}
@@ -347,7 +348,9 @@
 					/>
 					<p class="num">
 						<span class="dot" aria-hidden="true"></span>{pad(i + 1)} <span>/ {pad(total)}</span>
-						{#if s.moisture !== undefined}<span class="m">{fmt(s.moisture)}% moisture</span>{/if}
+						{#if s.moisture !== undefined}<span class="m">
+								{m.home_process_moisture_value({ value: fmt(s.moisture) })}
+							</span>{/if}
 					</p>
 					<h3>{s.title}</h3>
 					<p class="text">{s.text}</p>

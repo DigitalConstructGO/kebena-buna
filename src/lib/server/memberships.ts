@@ -42,13 +42,20 @@ async function documentNumber(
 
 export const nextMembershipNumber = (tx: Writer) =>
 	documentNumber(tx, 'KM', 'membership', async (n) =>
-		Boolean((await tx.select({ id: membership.id }).from(membership).where(eq(membership.number, n)))[0])
+		Boolean(
+			(await tx.select({ id: membership.id }).from(membership).where(eq(membership.number, n)))[0]
+		)
 	);
 
 export const nextSubscriptionNumber = (tx: Writer) =>
 	documentNumber(tx, 'KS', 'subscription', async (n) =>
 		Boolean(
-			(await tx.select({ id: subscription.id }).from(subscription).where(eq(subscription.number, n)))[0]
+			(
+				await tx
+					.select({ id: subscription.id })
+					.from(subscription)
+					.where(eq(subscription.number, n))
+			)[0]
 		)
 	);
 
@@ -87,7 +94,11 @@ export async function termDates(planId: number, startsOn: string) {
  * Refuses a named person the plan has no room for: its `maxAdults` / `maxChildren` count the
  * membership's active members, leaving out `exceptMemberId` (the one being edited).
  */
-export async function checkMemberRoom(membershipId: number, isChild: boolean, exceptMemberId?: number) {
+export async function checkMemberRoom(
+	membershipId: number,
+	isChild: boolean,
+	exceptMemberId?: number
+) {
 	const [plan] = await db
 		.select({ maxAdults: membershipPlan.maxAdults, maxChildren: membershipPlan.maxChildren })
 		.from(membership)
@@ -109,7 +120,12 @@ export async function checkMemberRoom(membershipId: number, isChild: boolean, ex
 	const max = isChild ? plan.maxChildren : plan.maxAdults;
 	if (n >= max) {
 		const who = isChild ? (max === 1 ? 'child' : 'children') : max === 1 ? 'adult' : 'adults';
-		throw new WriteRefused('isChild', max ? `The plan covers ${max} ${who}, and ${n} are on it already` : `The plan covers no ${who}`);
+		throw new WriteRefused(
+			'isChild',
+			max
+				? `The plan covers ${max} ${who}, and ${n} are on it already`
+				: `The plan covers no ${who}`
+		);
 	}
 }
 
@@ -159,7 +175,12 @@ export async function createMembership(
 		: [];
 	if (carried.length) {
 		await tx.insert(membershipMember).values(
-			carried.map((p) => ({ ...p, membershipId: res.insertId, cardCode: cardCode(), createdBy: userId }))
+			carried.map((p) => ({
+				...p,
+				membershipId: res.insertId,
+				cardCode: cardCode(),
+				createdBy: userId
+			}))
 		);
 	} else {
 		const [c] = await tx

@@ -24,7 +24,12 @@ import { userAlias } from '#lib/server/people.ts';
 
 const packer = userAlias('packer');
 const FILTERS = ['productId', 'roastLevelId', 'locationId'] as const;
-const SORTS = { code: packingRun.code, packedAt: packingRun.packedAt, units: packingRun.units, bestBefore: packingRun.bestBefore };
+const SORTS = {
+	code: packingRun.code,
+	packedAt: packingRun.packedAt,
+	units: packingRun.units,
+	bestBefore: packingRun.bestBefore
+};
 
 const spec: WhereSpec<(typeof FILTERS)[number]> = {
 	search: (term) => or(like(packingRun.code, `%${term}%`), like(productVariant.sku, `%${term}%`)),
@@ -81,17 +86,32 @@ export const load = async ({ url, locals }) => {
 		base(db.select({ total: count() }).from(packingRun).$dynamic()).where(where),
 		facetCounts({
 			productId: () =>
-				base(db.select({ value: product.id, label: enOf(product.name), count: count() }).from(packingRun).$dynamic())
+				base(
+					db
+						.select({ value: product.id, label: enOf(product.name), count: count() })
+						.from(packingRun)
+						.$dynamic()
+				)
 					.innerJoin(product, eq(productVariant.productId, product.id))
 					.where(facet('productId'))
 					.groupBy(product.id, product.name),
 			roastLevelId: () =>
-				base(db.select({ value: roastLevel.id, label: enOf(roastLevel.name), count: count() }).from(packingRun).$dynamic())
+				base(
+					db
+						.select({ value: roastLevel.id, label: enOf(roastLevel.name), count: count() })
+						.from(packingRun)
+						.$dynamic()
+				)
 					.innerJoin(roastLevel, eq(packingRun.roastLevelId, roastLevel.id))
 					.where(facet('roastLevelId'))
 					.groupBy(roastLevel.id, roastLevel.name),
 			locationId: () =>
-				base(db.select({ value: location.id, label: enOf(location.name), count: count() }).from(packingRun).$dynamic())
+				base(
+					db
+						.select({ value: location.id, label: enOf(location.name), count: count() })
+						.from(packingRun)
+						.$dynamic()
+				)
 					.innerJoin(location, eq(packingRun.locationId, location.id))
 					.where(facet('locationId'))
 					.groupBy(location.id, location.name)

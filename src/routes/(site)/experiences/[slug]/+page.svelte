@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { superForm } from 'sveltekit-superforms';
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { money, tr } from '#lib/format.ts';
 	import { siteHref } from '#lib/site/locale.ts';
 	import { pictureOf } from '#lib/site/visit/pictures.ts';
@@ -53,7 +53,7 @@
 	);
 </script>
 
-<svelte:head><title>{tr(x.name, locale)} · Kebena</title></svelte:head>
+<svelte:head><title>{m.site_page_title({ title: tr(x.name, locale) })}</title></svelte:head>
 
 <div class="page">
 	<header class="head">

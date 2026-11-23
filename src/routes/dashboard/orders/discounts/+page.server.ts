@@ -25,7 +25,10 @@ export const load = async () => {
 			usageLimit: discountCode.usageLimit,
 			usedCount: discountCode.usedCount,
 			isActive: discountCode.isActive,
-			given: sql<number>`(select coalesce(sum(${discountRedemption.amount}), 0) from ${discountRedemption} where ${discountRedemption.discountCodeId} = ${discountCode.id})`.mapWith(Number),
+			given:
+				sql<number>`(select coalesce(sum(${discountRedemption.amount}), 0) from ${discountRedemption} where ${discountRedemption.discountCodeId} = ${discountCode.id})`.mapWith(
+					Number
+				),
 			createdById: discountCode.createdBy,
 			createdBy: creator.name
 		})
@@ -35,7 +38,9 @@ export const load = async () => {
 		.orderBy(desc(discountCode.id));
 	return {
 		rows,
-		addForm: await superValidate({ kind: 'percent', isActive: true }, zod4(discountSchema), { errors: false })
+		addForm: await superValidate({ kind: 'percent', isActive: true }, zod4(discountSchema), {
+			errors: false
+		})
 	};
 };
 
@@ -43,7 +48,8 @@ export const actions = {
 	add: async (event) => {
 		requirePermission(event.locals, 'discounts.manage');
 		const form = await superValidate(event.request, zod4(discountSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		if (form.data.kind === 'percent' && form.data.value > 100) {
 			setError(form, 'value', 'A percentage is at most 100');
 			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
@@ -55,7 +61,11 @@ export const actions = {
 					appliesTo: form.data.appliesTo.length ? form.data.appliesTo : null,
 					createdBy: event.locals.user?.id
 				});
-				await recordAudit(tx, event, { table: 'discount_code', recordId: res.insertId, action: 'create' });
+				await recordAudit(tx, event, {
+					table: 'discount_code',
+					recordId: res.insertId,
+					action: 'create'
+				});
 			});
 		} catch (err) {
 			if (!isDuplicateKey(err)) throw err;

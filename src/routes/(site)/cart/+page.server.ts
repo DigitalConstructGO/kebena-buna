@@ -1,13 +1,25 @@
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod/v4';
-import { lineKey, MAX_QTY, priceCart, readChoices, shortLines, writeChoices } from '#lib/server/cart.ts';
-import { m } from '#lib/paraglide/messages.js';
+import {
+	lineKey,
+	MAX_QTY,
+	priceCart,
+	readChoices,
+	shortLines,
+	writeChoices
+} from '#lib/server/cart.ts';
+import { m } from '#lib/i18n.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ cookies, url }) => {
 	const cart = await priceCart(readChoices(cookies));
 	// Something left the shop or changed its options: the cookie follows what is shown.
-	if (cart.changed) writeChoices(cookies, cart.lines.map((l) => l.choice), url.protocol === 'https:');
+	if (cart.changed)
+		writeChoices(
+			cookies,
+			cart.lines.map((l) => l.choice),
+			url.protocol === 'https:'
+		);
 	const short = new Set(shortLines(cart.lines).map((l) => l.key));
 	return {
 		lines: cart.lines.map((l) => ({
@@ -30,7 +42,10 @@ export const load: PageServerLoad = async ({ cookies, url }) => {
 	};
 };
 
-const updateSchema = z.object({ key: z.string().max(60), quantity: z.coerce.number().int().min(0).max(MAX_QTY) });
+const updateSchema = z.object({
+	key: z.string().max(60),
+	quantity: z.coerce.number().int().min(0).max(MAX_QTY)
+});
 
 export const actions: Actions = {
 	/** A new count for one line; 0 takes it out. */

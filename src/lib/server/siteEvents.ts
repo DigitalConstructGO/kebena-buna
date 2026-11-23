@@ -33,7 +33,13 @@ const shown = () =>
 		gt(event.endsAt, new Date())
 	);
 
-type Row = { startsAt: Date; registrationClosesAt: Date | null; capacity: number; registered: number; visibility: string };
+type Row = {
+	startsAt: Date;
+	registrationClosesAt: Date | null;
+	capacity: number;
+	registered: number;
+	visibility: string;
+};
 
 /** Registration is open: public, not started, before its closing time, and not full. */
 export const registrationOpen = (e: Row, now = new Date()) =>
@@ -46,9 +52,19 @@ export const registrationOpen = (e: Row, now = new Date()) =>
 async function fromPrices(ids: number[]) {
 	if (!ids.length) return new Map<number, number>();
 	const rows = await db
-		.select({ eventId: ticketType.eventId, from: sql<number>`min(${ticketPrice.price})`.mapWith(Number) })
+		.select({
+			eventId: ticketType.eventId,
+			from: sql<number>`min(${ticketPrice.price})`.mapWith(Number)
+		})
 		.from(ticketType)
-		.innerJoin(ticketPrice, and(eq(ticketPrice.ticketTypeId, ticketType.id), eq(ticketPrice.status, true), isNull(ticketPrice.deletedAt)))
+		.innerJoin(
+			ticketPrice,
+			and(
+				eq(ticketPrice.ticketTypeId, ticketType.id),
+				eq(ticketPrice.status, true),
+				isNull(ticketPrice.deletedAt)
+			)
+		)
 		.where(
 			and(
 				inArray(ticketType.eventId, ids),

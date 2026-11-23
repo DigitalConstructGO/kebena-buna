@@ -19,8 +19,21 @@
 			const ctx = gsap.context(() => {
 				gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
 					const scrollTrigger = { trigger: shelf, start: 'top 82%', once: true };
-					gsap.from('.card', { autoAlpha: 0, y: 70, duration: 0.9, ease: 'power3.out', stagger: 0.14, scrollTrigger });
-					gsap.from('.spin', { rotationY: -70, duration: 1.3, ease: 'power3.out', stagger: 0.14, scrollTrigger });
+					gsap.from('.card', {
+						autoAlpha: 0,
+						y: 70,
+						duration: 0.9,
+						ease: 'power3.out',
+						stagger: 0.14,
+						scrollTrigger
+					});
+					gsap.from('.spin', {
+						rotationY: -70,
+						duration: 1.3,
+						ease: 'power3.out',
+						stagger: 0.14,
+						scrollTrigger
+					});
 				});
 			}, shelf);
 			return () => ctx.revert();

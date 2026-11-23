@@ -14,7 +14,11 @@
 	import { badge } from '#lib/status.ts';
 	import { stampRows, useLinks } from '#lib/links.ts';
 	import { WORKFLOW_STATUSES } from '#lib/constants.ts';
-	import { assignSchema, submissionToBookingSchema, workflowSchema } from '#lib/schemas/bookings.ts';
+	import {
+		assignSchema,
+		submissionToBookingSchema,
+		workflowSchema
+	} from '#lib/schemas/bookings.ts';
 
 	let { data } = $props();
 	const f = $derived(data.submission);
@@ -23,48 +27,114 @@
 	const extra = $derived(
 		Object.entries((f.data ?? {}) as Record<string, unknown>).map(([key, value]) => ({
 			name: humanize(key.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()),
-			value: Array.isArray(value) ? value.join(', ') : typeof value === 'object' && value ? JSON.stringify(value) : String(value ?? '—')
+			value: Array.isArray(value)
+				? value.join(', ')
+				: typeof value === 'object' && value
+					? JSON.stringify(value)
+					: String((value as string | number | boolean | null | undefined) ?? '—')
 		}))
 	);
 
 	type History = (typeof data.history)[number];
 	const historyColumns: ColumnDef<History>[] = [
 		{ id: 'at', header: 'When', cell: ({ row }) => dateTime(row.original.createdAt) },
-		{ id: 'from', header: 'From', cell: ({ row }) => (row.original.fromStatus ? status(row.original.fromStatus) : '—') },
+		{
+			id: 'from',
+			header: 'From',
+			cell: ({ row }) => (row.original.fromStatus ? status(row.original.fromStatus) : '—')
+		},
 		{ id: 'to', header: 'To', cell: ({ row }) => status(row.original.toStatus) },
 		{ id: 'note', header: 'Note', cell: ({ row }) => row.original.note ?? '—' },
-		{ id: 'by', header: 'By', cell: ({ row }) => (row.original.changedById ? user(row.original.changedById, row.original.changedBy) : 'Website') }
+		{
+			id: 'by',
+			header: 'By',
+			cell: ({ row }) =>
+				row.original.changedById
+					? user(row.original.changedById, row.original.changedBy)
+					: 'Website'
+		}
 	];
 	type Booking = (typeof data.bookings)[number];
 	const bookingColumns: ColumnDef<Booking>[] = [
-		{ id: 'number', header: 'Booking', cell: ({ row }) => link('booking', row.original.id, row.original.number) },
+		{
+			id: 'number',
+			header: 'Booking',
+			cell: ({ row }) => link('booking', row.original.id, row.original.number)
+		},
 		{ id: 'what', header: 'What', cell: ({ row }) => row.original.bookable },
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) }
 	];
 </script>
 
-<PageHeader title={f.subject ?? humanize(f.formType)} eyebrow={humanize(f.formType)} description={`${f.name ?? 'Anonymous'} · ${formatDateTime(f.submittedAt)}`}>
+<PageHeader
+	title={f.subject ?? humanize(f.formType)}
+	eyebrow={humanize(f.formType)}
+	description={`${f.name ?? 'Anonymous'} · ${formatDateTime(f.submittedAt)}`}
+>
 	{#snippet badges()}
 		<Statuses {...badge(f.status)} />
 	{/snippet}
 	{#snippet actions()}
 		{#if data.canManage}
-			<FormDialog title="Move this submission" triggerLabel="Change status" action="?/status" data={data.statusForm} schema={workflowSchema}>
+			<FormDialog
+				title="Move this submission"
+				triggerLabel="Change status"
+				action="?/status"
+				data={data.statusForm}
+				schema={workflowSchema}
+			>
 				{#snippet fields({ form, errors })}
-					<InputComp label="Status" name="status" type="select" items={choicesOf(WORKFLOW_STATUSES)} {form} {errors} required />
+					<InputComp
+						label="Status"
+						name="status"
+						type="select"
+						items={choicesOf(WORKFLOW_STATUSES)}
+						{form}
+						{errors}
+						required
+					/>
 					<InputComp label="Note" name="note" type="textarea" rows={2} {form} {errors} />
 				{/snippet}
 			</FormDialog>
-			<FormDialog title="Who handles this" triggerLabel="Assign" action="?/assign" data={data.assignForm} schema={assignSchema}>
+			<FormDialog
+				title="Who handles this"
+				triggerLabel="Assign"
+				action="?/assign"
+				data={data.assignForm}
+				schema={assignSchema}
+			>
 				{#snippet fields({ form, errors })}
-					<InputComp label="Handled by" name="assignedTo" type="select" items={data.people} {form} {errors} />
+					<InputComp
+						label="Handled by"
+						name="assignedTo"
+						type="select"
+						items={data.people}
+						{form}
+						{errors}
+					/>
 				{/snippet}
 			</FormDialog>
 		{/if}
 		{#if data.canBook && data.canCreateBooking && !data.bookings.length}
-			<FormDialog title="Make a booking" triggerLabel="Make booking" action="?/book" data={data.bookingForm} schema={submissionToBookingSchema} submitLabel="Make booking" description="With this submission's contact details. You can set the date and staff on the booking.">
+			<FormDialog
+				title="Make a booking"
+				triggerLabel="Make booking"
+				action="?/book"
+				data={data.bookingForm}
+				schema={submissionToBookingSchema}
+				submitLabel="Make booking"
+				description="With this submission's contact details. You can set the date and staff on the booking."
+			>
 				{#snippet fields({ form, errors })}
-					<InputComp label="What" name="bookableId" type="select" items={data.bookables} {form} {errors} required />
+					<InputComp
+						label="What"
+						name="bookableId"
+						type="select"
+						items={data.bookables}
+						{form}
+						{errors}
+						required
+					/>
 					<InputComp label="People" name="partySize" type="number" {form} {errors} required />
 				{/snippet}
 			</FormDialog>
@@ -73,7 +143,9 @@
 </PageHeader>
 
 {#if (f.spamScore ?? 0) >= 50}
-	<Notice tone="warning" class="mt-4" title="Probably spam">Its spam score is {f.spamScore}. Decline it if it is.</Notice>
+	<Notice tone="warning" class="mt-4" title="Probably spam">
+		Its spam score is {f.spamScore}. Decline it if it is.
+	</Notice>
 {/if}
 
 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[26rem_minmax(0,1fr)]">
@@ -103,7 +175,9 @@
 				singleTable={[
 					{ name: 'Subject', value: f.subject ?? '—' },
 					{ name: 'Message', value: f.message ?? '—', long: 200 },
-					...(f.rating ? [{ name: 'Rating', value: `${'★'.repeat(f.rating)} (${f.rating}/5)` }] : []),
+					...(f.rating
+						? [{ name: 'Rating', value: `${'★'.repeat(f.rating)} (${f.rating}/5)` }]
+						: []),
 					...(f.visitDate ? [{ name: 'Visit date', value: formatDate(f.visitDate) }] : []),
 					...extra
 				]}

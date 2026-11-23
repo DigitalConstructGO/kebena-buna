@@ -10,7 +10,6 @@ import {
 	orderLine,
 	packedStock,
 	setting,
-	product,
 	productGrind,
 	productPackaging,
 	productRoastLevel,
@@ -19,24 +18,29 @@ import {
 } from '#lib/server/db/schema.ts';
 
 /** Live variants of a product. */
-export const variantCountOf = sql<number>`(select count(*) from product_variant pv where pv.product_id = \`product\`.\`id\` and pv.deleted_at is null)`.mapWith(
-	Number
-);
+export const variantCountOf =
+	sql<number>`(select count(*) from product_variant pv where pv.product_id = \`product\`.\`id\` and pv.deleted_at is null)`.mapWith(
+		Number
+	);
 
 /** The cheapest live variant's price — "from ETB 450". */
-export const fromPriceOf = sql<number | null>`(select min(pv.price) from product_variant pv where pv.product_id = \`product\`.\`id\` and pv.deleted_at is null and pv.is_active = 1)`.mapWith(
+export const fromPriceOf = sql<
+	number | null
+>`(select min(pv.price) from product_variant pv where pv.product_id = \`product\`.\`id\` and pv.deleted_at is null and pv.is_active = 1)`.mapWith(
 	(v) => (v === null ? null : Number(v))
 );
 
 /** Packed bags on hand across every variant and location. */
-export const packedUnitsOfProduct = sql<number>`(select coalesce(sum(ps.units), 0) from packed_stock ps join product_variant pv on pv.id = ps.variant_id where pv.product_id = \`product\`.\`id\`)`.mapWith(
-	Number
-);
+export const packedUnitsOfProduct =
+	sql<number>`(select coalesce(sum(ps.units), 0) from packed_stock ps join product_variant pv on pv.id = ps.variant_id where pv.product_id = \`product\`.\`id\`)`.mapWith(
+		Number
+	);
 
 /** Packed bags of one variant, across locations. */
-export const packedUnitsOfVariant = sql<number>`(select coalesce(sum(ps.units), 0) from packed_stock ps where ps.variant_id = \`product_variant\`.\`id\`)`.mapWith(
-	Number
-);
+export const packedUnitsOfVariant =
+	sql<number>`(select coalesce(sum(ps.units), 0) from packed_stock ps where ps.variant_id = \`product_variant\`.\`id\`)`.mapWith(
+		Number
+	);
 
 /** Replaces one of a product's allowed-option lists, marking the default. */
 async function setLinks(
@@ -67,9 +71,23 @@ export async function setProductOptions(
 		defaultPackagingId?: number | null;
 	}
 ) {
-	await setLinks(tx, productRoastLevel, 'roastLevelId', productId, o.roastLevelIds, o.defaultRoastLevelId);
+	await setLinks(
+		tx,
+		productRoastLevel,
+		'roastLevelId',
+		productId,
+		o.roastLevelIds,
+		o.defaultRoastLevelId
+	);
 	await setLinks(tx, productGrind, 'grindId', productId, o.grindIds, o.defaultGrindId);
-	await setLinks(tx, productPackaging, 'packagingId', productId, o.packagingIds, o.defaultPackagingId);
+	await setLinks(
+		tx,
+		productPackaging,
+		'packagingId',
+		productId,
+		o.packagingIds,
+		o.defaultPackagingId
+	);
 }
 
 /** The product the variant belongs to, or undefined when either is deleted. */
@@ -122,26 +140,53 @@ export async function variantsInUse(
 			)
 		)
 		.limit(1);
-	if (sub) return { sold: false, text: `Subscription ${sub.number} still sends it: change or end that first.` };
+	if (sub)
+		return {
+			sold: false,
+			text: `Subscription ${sub.number} still sends it: change or end that first.`
+		};
 	const [plan] = await tx
 		.select({ id: membershipPlan.id })
 		.from(membershipPlan)
-		.where(and(inArray(membershipPlan.monthlyCoffeeVariantId, variantIds), isNull(membershipPlan.deletedAt)))
+		.where(
+			and(
+				inArray(membershipPlan.monthlyCoffeeVariantId, variantIds),
+				isNull(membershipPlan.deletedAt)
+			)
+		)
 		.limit(1);
-	if (plan) return { sold: false, text: "A membership plan's monthly coffee is this size: choose another there first." };
+	if (plan)
+		return {
+			sold: false,
+			text: "A membership plan's monthly coffee is this size: choose another there first."
+		};
 	const [inBundle] = await tx
 		.select({ slug: bundle.slug })
 		.from(bundleItem)
 		.innerJoin(bundle, eq(bundleItem.bundleId, bundle.id))
-		.where(and(inArray(bundleItem.variantId, variantIds), isNull(bundleItem.deletedAt), isNull(bundle.deletedAt)))
+		.where(
+			and(
+				inArray(bundleItem.variantId, variantIds),
+				isNull(bundleItem.deletedAt),
+				isNull(bundle.deletedAt)
+			)
+		)
 		.limit(1);
-	if (inBundle) return { sold: false, text: `The ${inBundle.slug} bundle holds it: take it out of the bundle first.` };
+	if (inBundle)
+		return {
+			sold: false,
+			text: `The ${inBundle.slug} bundle holds it: take it out of the bundle first.`
+		};
 	const [held] = await tx
 		.select({ id: packedStock.id })
 		.from(packedStock)
 		.where(and(inArray(packedStock.variantId, variantIds), gt(packedStock.units, 0)))
 		.limit(1);
-	if (held) return { sold: false, text: 'There are bags of it on hand: sell, use or count them out first.' };
+	if (held)
+		return {
+			sold: false,
+			text: 'There are bags of it on hand: sell, use or count them out first.'
+		};
 	return null;
 }
 

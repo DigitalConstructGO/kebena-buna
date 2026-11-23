@@ -18,7 +18,8 @@ export const variables = defineEnvVars({
 	},
 	SMTP_URL: {
 		schema: optional,
-		description: 'Mail server, e.g. `smtps://user:pass@mail.example.com:465`. Unset: emails fail with a reason.'
+		description:
+			'Mail server, e.g. `smtps://user:pass@mail.example.com:465`. Unset: emails fail with a reason.'
 	},
 	SMTP_FROM: {
 		schema: optional,
@@ -36,14 +37,22 @@ export const variables = defineEnvVars({
 	},
 	CHAPA_SECRET_KEY: {
 		schema: optional,
-		description: 'Chapa secret key. Unset: web orders wait for staff to take payment, and no "Pay now" button is shown.'
+		description:
+			'Chapa secret key. Unset: web orders wait for staff to take payment, and no "Pay now" button is shown.'
 	},
 	CHAPA_WEBHOOK_SECRET: {
 		schema: optional,
-		description: 'Signs Chapa webhooks to `/api/payments/chapa`. Unset: webhooks are accepted, then verified with Chapa anyway.'
+		description:
+			'Signs Chapa webhooks to `/api/payments/chapa`. Unset: webhooks are accepted, then verified with Chapa anyway.'
+	},
+	FILES_DIR: {
+		schema: optional,
+		description:
+			"Where uploads are written and served from (the kit's `files.ts`). Unset: `.tempFiles` in the working directory. Declared here, or `$env/dynamic/private` never hands it to the kit."
 	},
 	JOBS_ENABLED: {
 		schema: (value) => value !== 'false',
-		description: '`false`: this server runs no background jobs (the sender, hold release). On by default.'
+		description:
+			'`false`: this server runs no background jobs (the sender, hold release). On by default.'
 	}
 });

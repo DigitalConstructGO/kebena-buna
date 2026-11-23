@@ -15,7 +15,12 @@
 			id: 'scheduledFor',
 			accessorKey: 'scheduledFor',
 			header: sortable('Due'),
-			cell: ({ row }) => link('notification', row.original.id, `#${row.original.id} · ${dateTime(row.original.scheduledFor)}`)
+			cell: ({ row }) =>
+				link(
+					'notification',
+					row.original.id,
+					`#${row.original.id} · ${dateTime(row.original.scheduledFor)}`
+				)
 		},
 		{ id: 'templateKey', accessorKey: 'templateKey', header: 'Message' },
 		{ id: 'channel', header: 'Channel', cell: ({ row }) => humanize(row.original.channel) },
@@ -24,7 +29,11 @@
 			header: 'To',
 			cell: ({ row }) =>
 				row.original.customerId
-					? link('customer', row.original.customerId, row.original.customer ?? row.original.recipient)
+					? link(
+							'customer',
+							row.original.customerId,
+							row.original.customer ?? row.original.recipient
+						)
 					: row.original.userId
 						? user(row.original.userId, row.original.userName ?? row.original.recipient)
 						: row.original.recipient
@@ -41,7 +50,12 @@
 			}
 		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) },
-		{ id: 'attempts', accessorKey: 'attempts', header: sortable('Tries'), meta: { align: 'right' } },
+		{
+			id: 'attempts',
+			accessorKey: 'attempts',
+			header: sortable('Tries'),
+			meta: { align: 'right' }
+		},
 		{
 			id: 'sentAt',
 			accessorKey: 'sentAt',
@@ -49,7 +63,12 @@
 			meta: { class: 'hidden lg:table-cell' },
 			cell: ({ row }) => dateTime(row.original.sentAt)
 		},
-		{ id: 'error', header: 'Error', meta: { class: 'hidden lg:table-cell' }, cell: ({ row }) => longText(row.original.lastError, 25) }
+		{
+			id: 'error',
+			header: 'Error',
+			meta: { class: 'hidden lg:table-cell' },
+			cell: ({ row }) => longText(row.original.lastError, 25)
+		}
 	];
 	const href = useLinks();
 </script>

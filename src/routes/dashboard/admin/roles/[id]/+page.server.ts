@@ -85,6 +85,10 @@ export const actions = {
 		} catch (err) {
 			return refusedPlain(err);
 		}
-		redirect('/dashboard/admin/roles', { type: 'success', message: `The ${role.name} role was deleted` }, event.cookies);
+		redirect(
+			'/dashboard/admin/roles',
+			{ type: 'success', message: `The ${role.name} role was deleted` },
+			event.cookies
+		);
 	}
 };

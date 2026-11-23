@@ -26,8 +26,7 @@ export function tr(value: Localized | string, locale = 'en'): string {
 }
 
 /** "ETB 1,500.00". */
-export const money = (amount: number | string | null | undefined) =>
-	formatETB(Number(amount ?? 0));
+export const money = (amount: number | string | null | undefined) => formatETB(Number(amount ?? 0));
 
 /** "1,500.00" — an amount in a column already headed in birr. */
 export const amount = (value: number | string | null | undefined) =>
@@ -95,7 +94,16 @@ export const choicesOf = (values: readonly string[]) =>
 /** "Yes" / "No". */
 export const yesNo = (value: boolean | null | undefined) => (value ? 'Yes' : 'No');
 
-export const WEEKDAYS = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+export const WEEKDAYS = [
+	'',
+	'Monday',
+	'Tuesday',
+	'Wednesday',
+	'Thursday',
+	'Friday',
+	'Saturday',
+	'Sunday'
+];
 
 /** ISO weekday choices, 1 Monday … 7 Sunday. */
 export const WEEKDAY_CHOICES = WEEKDAYS.slice(1).map((name, i) => ({ value: String(i + 1), name }));

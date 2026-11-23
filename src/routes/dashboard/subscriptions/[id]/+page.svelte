@@ -34,11 +34,34 @@
 
 	type Bundle = (typeof data.bundles)[number];
 	const bundleColumns: ColumnDef<Bundle>[] = [
-		{ id: 'plan', header: 'Bundle', cell: ({ row }) => row.original.plan ?? `${row.original.deliveries} deliveries` },
-		{ id: 'deliveries', header: 'Deliveries', meta: { align: 'right' }, cell: ({ row }) => row.original.deliveries },
-		{ id: 'discount', header: 'Discount', meta: { align: 'right' }, cell: ({ row }) => percent(row.original.discountPct) },
-		{ id: 'price', header: 'Per delivery (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.pricePerDelivery) },
-		{ id: 'order', header: 'Order', cell: ({ row }) => link('order', row.original.orderId, row.original.orderNumber) },
+		{
+			id: 'plan',
+			header: 'Bundle',
+			cell: ({ row }) => row.original.plan ?? `${row.original.deliveries} deliveries`
+		},
+		{
+			id: 'deliveries',
+			header: 'Deliveries',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.deliveries
+		},
+		{
+			id: 'discount',
+			header: 'Discount',
+			meta: { align: 'right' },
+			cell: ({ row }) => percent(row.original.discountPct)
+		},
+		{
+			id: 'price',
+			header: 'Per delivery (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.pricePerDelivery)
+		},
+		{
+			id: 'order',
+			header: 'Order',
+			cell: ({ row }) => link('order', row.original.orderId, row.original.orderNumber)
+		},
 		{ id: 'at', header: 'Bought', cell: ({ row }) => dateTime(row.original.purchasedAt) }
 	];
 
@@ -50,12 +73,18 @@
 		{ id: 'sequence', header: '#', cell: ({ row }) => row.original.sequence },
 		{ id: 'roastDate', header: 'Roast day', cell: ({ row }) => date(row.original.roastDate) },
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) },
-		{ id: 'order', header: 'Order', cell: ({ row }) => link('order', row.original.orderId, row.original.orderNumber) },
+		{
+			id: 'order',
+			header: 'Order',
+			cell: ({ row }) => link('order', row.original.orderId, row.original.orderNumber)
+		},
 		{
 			id: 'skipped',
 			header: 'Skipped by',
 			cell: ({ row }) =>
-				row.original.skippedAt ? user(row.original.skippedById, row.original.skippedBy ?? 'Customer') : '—'
+				row.original.skippedAt
+					? user(row.original.skippedById, row.original.skippedBy ?? 'Customer')
+					: '—'
 		},
 		{
 			id: 'action',
@@ -67,7 +96,10 @@
 							label: row.original.status === 'scheduled' ? 'Skip' : 'Bring back',
 							icon: row.original.status === 'scheduled' ? SkipForward : Undo2,
 							variant: 'ghost',
-							title: row.original.status === 'scheduled' ? `Skip the ${formatDate(row.original.roastDate)} delivery?` : `Send the ${formatDate(row.original.roastDate)} delivery after all?`,
+							title:
+								row.original.status === 'scheduled'
+									? `Skip the ${formatDate(row.original.roastDate)} delivery?`
+									: `Send the ${formatDate(row.original.roastDate)} delivery after all?`,
 							description: 'A skipped delivery stays prepaid and is not lost.',
 							fields: { deliveryId: row.original.id }
 						})
@@ -76,38 +108,151 @@
 	];
 </script>
 
-<PageHeader title={sub.number} eyebrow="Subscription" description={`${data.info.customer ?? 'Customer'} · ${sub.quantity} × ${info.product} ${info.size ?? ''}`}>
+<PageHeader
+	title={sub.number}
+	eyebrow="Subscription"
+	description={`${data.info.customer ?? 'Customer'} · ${sub.quantity} × ${info.product} ${info.size ?? ''}`}
+>
 	{#snippet badges()}
 		<Statuses {...badge(sub.status)} />
 	{/snippet}
 	{#snippet actions()}
 		{#if data.canManage && sub.status !== 'cancelled' && sub.status !== 'completed'}
-			<FormDialog title="Change {sub.number}" triggerLabel="Change" action="?/edit" data={data.editForm} schema={subscriptionEditSchema}>
+			<FormDialog
+				title="Change {sub.number}"
+				triggerLabel="Change"
+				action="?/edit"
+				data={data.editForm}
+				schema={subscriptionEditSchema}
+			>
 				{#snippet fields({ form, errors })}
-					<InputComp label="Coffee" name="variantId" type="combo" items={data.options.variants} {form} {errors} required />
+					<InputComp
+						label="Coffee"
+						name="variantId"
+						type="combo"
+						items={data.options.variants}
+						{form}
+						{errors}
+						required
+					/>
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<InputComp label="Roast" name="roastLevelId" type="select" items={data.options.roasts} {form} {errors} required />
-						<InputComp label="Grind" name="grindId" type="select" items={data.options.grinds} {form} {errors} />
-						<InputComp label="Bags each time" name="quantity" type="number" {form} {errors} required />
-						<InputComp label="Every" name="frequency" type="select" items={choicesOf(SUBSCRIPTION_FREQUENCIES)} {form} {errors} required />
-						<InputComp label="Address" name="addressId" type="select" items={data.options.addresses} {form} {errors} />
-						<InputComp label="Delivery zone" name="deliveryZoneId" type="select" items={data.options.zones} {form} {errors} />
+						<InputComp
+							label="Roast"
+							name="roastLevelId"
+							type="select"
+							items={data.options.roasts}
+							{form}
+							{errors}
+							required
+						/>
+						<InputComp
+							label="Grind"
+							name="grindId"
+							type="select"
+							items={data.options.grinds}
+							{form}
+							{errors}
+						/>
+						<InputComp
+							label="Bags each time"
+							name="quantity"
+							type="number"
+							{form}
+							{errors}
+							required
+						/>
+						<InputComp
+							label="Every"
+							name="frequency"
+							type="select"
+							items={choicesOf(SUBSCRIPTION_FREQUENCIES)}
+							{form}
+							{errors}
+							required
+						/>
+						<InputComp
+							label="Address"
+							name="addressId"
+							type="select"
+							items={data.options.addresses}
+							{form}
+							{errors}
+						/>
+						<InputComp
+							label="Delivery zone"
+							name="deliveryZoneId"
+							type="select"
+							items={data.options.zones}
+							{form}
+							{errors}
+						/>
 					</div>
-					<InputComp label="Next roast day" name="nextRoastDate" type="date" futureDays {form} {errors} />
+					<InputComp
+						label="Next roast day"
+						name="nextRoastDate"
+						type="date"
+						futureDays
+						{form}
+						{errors}
+					/>
 				{/snippet}
 			</FormDialog>
 			{#if sub.status === 'paused'}
-				<ConfirmAction action="?/resume" label="Resume" icon={Play} title="Resume {sub.number}?" description="Deliveries already skipped for the pause stay skipped." />
+				<ConfirmAction
+					action="?/resume"
+					label="Resume"
+					icon={Play}
+					title="Resume {sub.number}?"
+					description="Deliveries already skipped for the pause stay skipped."
+				/>
 			{:else if sub.status === 'active'}
-				<FormDialog title="Pause {sub.number}" triggerLabel="Pause" action="?/pause" data={data.pauseForm} schema={pauseSchema} submitLabel="Pause">
+				<FormDialog
+					title="Pause {sub.number}"
+					triggerLabel="Pause"
+					action="?/pause"
+					data={data.pauseForm}
+					schema={pauseSchema}
+					submitLabel="Pause"
+				>
 					{#snippet fields({ form, errors })}
-						<InputComp label="Paused until" name="pausedUntil" type="date" futureDays oldDays={false} description="Up to three months. Roast days up to this date are skipped and stay prepaid." {form} {errors} required />
+						<InputComp
+							label="Paused until"
+							name="pausedUntil"
+							type="date"
+							futureDays
+							oldDays={false}
+							description="Up to three months. Roast days up to this date are skipped and stay prepaid."
+							{form}
+							{errors}
+							required
+						/>
 					{/snippet}
 				</FormDialog>
 			{/if}
-			<FormDialog title="Cancel {sub.number}" triggerLabel="Cancel" triggerIcon={Ban} submitIcon={Ban} submitVariant="destructive" action="?/cancel" data={data.cancelForm} schema={subscriptionCancelSchema} submitLabel="Cancel subscription">
+			<FormDialog
+				title="Cancel {sub.number}"
+				triggerLabel="Cancel"
+				triggerIcon={Ban}
+				submitIcon={Ban}
+				submitVariant="destructive"
+				action="?/cancel"
+				data={data.cancelForm}
+				schema={subscriptionCancelSchema}
+				submitLabel="Cancel subscription"
+			>
 				{#snippet fields({ form, errors })}
-					<InputComp label="Unused deliveries become" name="unusedSettlement" type="select" items={[{ value: 'refund', name: 'A refund' }, { value: 'store_credit', name: 'Store credit' }]} {form} {errors} required />
+					<InputComp
+						label="Unused deliveries become"
+						name="unusedSettlement"
+						type="select"
+						items={[
+							{ value: 'refund', name: 'A refund' },
+							{ value: 'store_credit', name: 'Store credit' }
+						]}
+						{form}
+						{errors}
+						required
+					/>
 					<InputComp label="Note" name="note" type="textarea" rows={2} {form} {errors} />
 				{/snippet}
 			</FormDialog>
@@ -116,9 +261,28 @@
 </PageHeader>
 
 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-	<StatCard stat={{ key: 'bought', label: 'Deliveries bought', value: sub.deliveriesPurchased, format: 'count', group: 'sub' }} />
-	<StatCard stat={{ key: 'used', label: 'Used', value: sub.deliveriesUsed, format: 'count', group: 'sub' }} />
-	<StatCard stat={{ key: 'left', label: 'Left', value: sub.deliveriesPurchased - sub.deliveriesUsed, format: 'count', group: 'sub', tone: open && sub.deliveriesPurchased - sub.deliveriesUsed <= 1 ? 'warning' : 'positive' }} />
+	<StatCard
+		stat={{
+			key: 'bought',
+			label: 'Deliveries bought',
+			value: sub.deliveriesPurchased,
+			format: 'count',
+			group: 'sub'
+		}}
+	/>
+	<StatCard
+		stat={{ key: 'used', label: 'Used', value: sub.deliveriesUsed, format: 'count', group: 'sub' }}
+	/>
+	<StatCard
+		stat={{
+			key: 'left',
+			label: 'Left',
+			value: sub.deliveriesPurchased - sub.deliveriesUsed,
+			format: 'count',
+			group: 'sub',
+			tone: open && sub.deliveriesPurchased - sub.deliveriesUsed <= 1 ? 'warning' : 'positive'
+		}}
+	/>
 </div>
 
 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[24rem_minmax(0,1fr)]">
@@ -127,8 +291,16 @@
 			singleTable={[
 				{ name: 'Customer', value: info.customer ?? '—', href: href('customer', sub.customerId) },
 				{ name: 'Phone', value: info.customerPhone, kind: 'phone' },
-				{ name: 'Membership', value: info.membership ?? '—', href: href('membership', sub.membershipId) },
-				{ name: 'Coffee', value: `${info.product} · ${info.size ?? ''} (${info.sku})`, href: href('variant', sub.variantId) },
+				{
+					name: 'Membership',
+					value: info.membership ?? '—',
+					href: href('membership', sub.membershipId)
+				},
+				{
+					name: 'Coffee',
+					value: `${info.product} · ${info.size ?? ''} (${info.sku})`,
+					href: href('variant', sub.variantId)
+				},
 				{ name: 'Roast', value: info.roast },
 				{ name: 'Grind', value: info.grind ?? '—' },
 				{ name: 'Bags each time', value: sub.quantity },
@@ -148,9 +320,17 @@
 		/>
 	</PageSection>
 	<div class="grid min-w-0 grid-cols-1 content-start gap-6">
-		<PageSection title="Deliveries" hint="One per roast day. Each becomes a zero-priced order when its roast day comes.">
+		<PageSection
+			title="Deliveries"
+			hint="One per roast day. Each becomes a zero-priced order when its roast day comes."
+		>
 			{#if data.deliveries.length}
-				<DataTable variant="compact" columns={deliveryColumns} data={data.deliveries} defaultPageSize={12} />
+				<DataTable
+					variant="compact"
+					columns={deliveryColumns}
+					data={data.deliveries}
+					defaultPageSize={12}
+				/>
 			{:else}<Empty message="No deliveries scheduled" />{/if}
 		</PageSection>
 		<PageSection title="Bundles bought">

@@ -34,7 +34,12 @@ import {
 } from './fields';
 import { taxRate } from './system.schema';
 import { lot, station } from './origins.schema';
-import { BUNDLE_PRICINGS, FULFILMENT_MODES, PRODUCT_KINDS, PUBLISH_STATUSES } from '../../constants';
+import {
+	BUNDLE_PRICINGS,
+	FULFILMENT_MODES,
+	PRODUCT_KINDS,
+	PUBLISH_STATUSES
+} from '../../constants';
 
 /** Specialty, Certified, Commercial — and Merchandise, Bundles. */
 export const productCategory = mysqlTable('product_category', {
@@ -296,10 +301,7 @@ export const bundleItem = mysqlTable(
 		index('bundle_item_bundle_idx').on(table.bundleId),
 		index('bundle_item_variant_idx').on(table.variantId),
 		check('bundle_item_qty_chk', sql`${table.quantity} > 0`),
-		check(
-			'bundle_item_kind_chk',
-			sql`(${table.variantId} is null) <> (${table.bagSizeId} is null)`
-		)
+		check('bundle_item_kind_chk', sql`(${table.variantId} is null) <> (${table.bagSizeId} is null)`)
 	]
 );
 

@@ -24,27 +24,41 @@
 			header: sortable('Visit'),
 			cell: ({ row }) =>
 				row.original.dayId
-					? link('visitDay', row.original.dayId, `${date(row.original.visitDate)} · ${localClock(row.original.slotStart!)}`)
+					? link(
+							'visitDay',
+							row.original.dayId,
+							`${date(row.original.visitDate)} · ${localClock(row.original.slotStart!)}`
+						)
 					: date(row.original.visitDate)
 		},
 		{
 			id: 'event',
 			header: 'Event',
 			meta: { class: 'hidden lg:table-cell' },
-			cell: ({ row }) => (row.original.eventId ? link('event', row.original.eventId, row.original.event) : 'Entry')
+			cell: ({ row }) =>
+				row.original.eventId ? link('event', row.original.eventId, row.original.event) : 'Entry'
 		},
 		{
 			id: 'ticketTypeId',
 			header: 'Type',
 			cell: ({ row }) => link('ticketType', row.original.ticketTypeId, row.original.ticketType)
 		},
-		{ id: 'audienceId', header: 'Audience', meta: { class: 'hidden md:table-cell' }, cell: ({ row }) => row.original.audience },
+		{
+			id: 'audienceId',
+			header: 'Audience',
+			meta: { class: 'hidden md:table-cell' },
+			cell: ({ row }) => row.original.audience
+		},
 		{
 			id: 'holder',
 			header: 'Holder',
 			cell: ({ row }) =>
 				row.original.customerId
-					? link('customer', row.original.customerId, row.original.customer ?? row.original.holderName)
+					? link(
+							'customer',
+							row.original.customerId,
+							row.original.customer ?? row.original.holderName
+						)
 					: (row.original.holderName ?? '—')
 		},
 		{

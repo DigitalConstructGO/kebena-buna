@@ -5,7 +5,7 @@
  */
 import { z } from 'zod/v4';
 import { BUSINESS_TYPES } from '#lib/constants.ts';
-import { m } from '#lib/paraglide/messages.js';
+import { m } from '#lib/i18n.ts';
 import {
 	siteCount,
 	siteDate,
@@ -32,7 +32,8 @@ export const enquirySchema = z
 		...siteFormBase
 	})
 	.superRefine((v, ctx) => {
-		if (!v.email && !v.phone) ctx.addIssue({ code: 'custom', path: ['email'], message: m.contact_err_reach() });
+		if (!v.email && !v.phone)
+			ctx.addIssue({ code: 'custom', path: ['email'], message: m.contact_err_reach() });
 	});
 
 export const feedbackSchema = z.object({
@@ -95,7 +96,11 @@ export const wholesaleSchema = z.object({
 	contactEmail: siteOptionalEmail,
 	expectedMonthlyKg: z.preprocess(
 		blankToNull,
-		z.coerce.number({ error: () => m.site_err_number() }).min(0, { error: () => m.site_err_min({ min: 0 }) }).nullable().optional()
+		z.coerce
+			.number({ error: () => m.site_err_number() })
+			.min(0, { error: () => m.site_err_min({ min: 0 }) })
+			.nullable()
+			.optional()
 	),
 	city: siteOptionalText(64),
 	address: siteOptionalText(255),

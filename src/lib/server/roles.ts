@@ -14,7 +14,11 @@ export type RoleDefinition = {
  * Owner edits them in Admin › Roles and boot never touches their grants again.
  */
 export const DEFAULT_ROLES: readonly RoleDefinition[] = [
-	{ name: OWNER, description: 'Everything, including users, roles and settings', permissions: 'all' },
+	{
+		name: OWNER,
+		description: 'Everything, including users, roles and settings',
+		permissions: 'all'
+	},
 	{
 		name: 'Manager',
 		description: 'Orders, refunds, stock, tickets, bookings, members and reports',
@@ -59,7 +63,14 @@ export const DEFAULT_ROLES: readonly RoleDefinition[] = [
 	{
 		name: 'Roaster',
 		description: 'Lots, green and roasted stock, roast batches',
-		permissions: ['origins.view', 'origins.manage', 'stock.view', 'stock.manage', 'catalog.view', 'reports.view']
+		permissions: [
+			'origins.view',
+			'origins.manage',
+			'stock.view',
+			'stock.manage',
+			'catalog.view',
+			'reports.view'
+		]
 	},
 	{
 		name: 'Front desk',

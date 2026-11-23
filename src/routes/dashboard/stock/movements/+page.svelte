@@ -27,11 +27,20 @@
 	};
 
 	const columns: ColumnDef<Row>[] = [
-		{ id: 'occurredAt', accessorKey: 'occurredAt', header: sortable('When'), cell: ({ row }) => dateTime(row.original.occurredAt) },
+		{
+			id: 'occurredAt',
+			accessorKey: 'occurredAt',
+			header: sortable('When'),
+			cell: ({ row }) => dateTime(row.original.occurredAt)
+		},
 		{ id: 'stage', header: 'Stage', cell: ({ row }) => humanize(row.original.stage) },
 		{ id: 'reason', header: 'Reason', cell: ({ row }) => humanize(row.original.reason) },
 		{ id: 'item', header: 'What', cell: ({ row }) => item(row.original) },
-		{ id: 'locationId', header: 'Location', cell: ({ row }) => link('location', row.original.locationId, row.original.location) },
+		{
+			id: 'locationId',
+			header: 'Location',
+			cell: ({ row }) => link('location', row.original.locationId, row.original.location)
+		},
 		{
 			id: 'quantity',
 			accessorKey: 'quantity',
@@ -39,10 +48,31 @@
 			meta: { align: 'right' },
 			cell: ({ row }) => qty(row.original.quantity, row.original.stage === 'packed' ? 'bags' : 'kg')
 		},
-		{ id: 'unitCost', accessorKey: 'unitCost', header: sortable('Unit cost (ETB)'), meta: { align: 'right', class: 'hidden lg:table-cell' }, cell: ({ row }) => amount(row.original.unitCost) },
-		{ id: 'source', header: 'Document', meta: { class: 'hidden md:table-cell' }, cell: ({ row }) => source(row.original) },
-		{ id: 'note', header: 'Note', meta: { class: 'hidden xl:table-cell' }, cell: ({ row }) => longText(row.original.note) },
-		{ id: 'by', header: 'By', meta: { class: 'hidden lg:table-cell' }, cell: ({ row }) => user(row.original.byId, row.original.by) }
+		{
+			id: 'unitCost',
+			accessorKey: 'unitCost',
+			header: sortable('Unit cost (ETB)'),
+			meta: { align: 'right', class: 'hidden lg:table-cell' },
+			cell: ({ row }) => amount(row.original.unitCost)
+		},
+		{
+			id: 'source',
+			header: 'Document',
+			meta: { class: 'hidden md:table-cell' },
+			cell: ({ row }) => source(row.original)
+		},
+		{
+			id: 'note',
+			header: 'Note',
+			meta: { class: 'hidden xl:table-cell' },
+			cell: ({ row }) => longText(row.original.note)
+		},
+		{
+			id: 'by',
+			header: 'By',
+			meta: { class: 'hidden lg:table-cell' },
+			cell: ({ row }) => user(row.original.byId, row.original.by)
+		}
 	];
 </script>
 

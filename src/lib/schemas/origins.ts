@@ -79,7 +79,10 @@ export const stationSchema = z.object({
 	storyFr: amText(5000),
 	certificationIds: z.array(z.coerce.number().int()).default([])
 });
-export const stationEditSchema = stationSchema.extend({ id: z.coerce.number(), isActive: boolTrue });
+export const stationEditSchema = stationSchema.extend({
+	id: z.coerce.number(),
+	isActive: boolTrue
+});
 export const stationPhotoSchema = z.object({ photo: z.file().optional() });
 
 export const regionSchema = z.object({

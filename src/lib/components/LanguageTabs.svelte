@@ -148,10 +148,14 @@
 					<span
 						class={[
 							'rounded-full px-1.5 text-xs tabular-nums',
-							s.count === fields.length ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+							s.count === fields.length
+								? 'bg-primary/10 text-primary'
+								: 'bg-muted text-muted-foreground'
 						]}
-						aria-label="{s.count} of {fields.length} filled">{s.count}/{fields.length}</span
+						aria-label="{s.count} of {fields.length} filled"
 					>
+						{s.count}/{fields.length}
+					</span>
 				{/if}
 			</button>
 		{/each}

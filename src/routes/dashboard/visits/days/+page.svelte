@@ -12,7 +12,8 @@
 	let { data } = $props();
 	type Row = (typeof data.rows)[number];
 
-	const weekday = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' });
+	const weekday = (iso: string) =>
+		new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' });
 
 	const columns: ColumnDef<Row>[] = [
 		{
@@ -20,7 +21,11 @@
 			accessorKey: 'date',
 			header: sortable('Date'),
 			cell: ({ row }) =>
-				link('visitDay', row.original.id, `${weekday(row.original.date)} ${formatDate(row.original.date)}${row.original.date === data.today ? ' (today)' : ''}`)
+				link(
+					'visitDay',
+					row.original.id,
+					`${weekday(row.original.date)} ${formatDate(row.original.date)}${row.original.date === data.today ? ' (today)' : ''}`
+				)
 		},
 		{
 			id: 'locationId',
@@ -28,17 +33,40 @@
 			meta: { class: 'hidden md:table-cell' },
 			cell: ({ row }) => link('location', row.original.locationId, row.original.location)
 		},
-		{ id: 'capacity', header: 'Capacity', meta: { align: 'right' }, cell: ({ row }) => row.original.capacity },
+		{
+			id: 'capacity',
+			header: 'Capacity',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.capacity
+		},
 		{ id: 'sold', accessorKey: 'sold', header: sortable('Sold'), meta: { align: 'right' } },
-		{ id: 'held', accessorKey: 'held', header: sortable('Held'), meta: { align: 'right', class: 'hidden md:table-cell' } },
-		{ id: 'full', accessorKey: 'full', header: sortable('Full'), meta: { align: 'right' }, cell: ({ row }) => percent(row.original.full) },
+		{
+			id: 'held',
+			accessorKey: 'held',
+			header: sortable('Held'),
+			meta: { align: 'right', class: 'hidden md:table-cell' }
+		},
+		{
+			id: 'full',
+			accessorKey: 'full',
+			header: sortable('Full'),
+			meta: { align: 'right' },
+			cell: ({ row }) => percent(row.original.full)
+		},
 		{
 			id: 'slots',
 			header: 'Slots',
 			meta: { align: 'right', class: 'hidden lg:table-cell' },
-			cell: ({ row }) => (row.original.closedSlots ? `${row.original.slots} (${row.original.closedSlots} closed)` : row.original.slots)
+			cell: ({ row }) =>
+				row.original.closedSlots
+					? `${row.original.slots} (${row.original.closedSlots} closed)`
+					: row.original.slots
 		},
-		{ id: 'open', header: 'Status', cell: ({ row }) => flag(!row.original.isClosed, 'Open', 'Closed') }
+		{
+			id: 'open',
+			header: 'Status',
+			cell: ({ row }) => flag(!row.original.isClosed, 'Open', 'Closed')
+		}
 	];
 	const href = useLinks();
 </script>
@@ -60,8 +88,26 @@
 			>
 				{#snippet fields({ form, errors })}
 					<InputComp label="From" name="from" type="date" futureDays {form} {errors} required />
-					<InputComp label="Number of days" name="days" type="number" min={1} max={120} {form} {errors} required />
-					<InputComp label="Day capacity" name="dayCapacity" type="number" min={1} description="The cap across all of a day's slots." {form} {errors} required />
+					<InputComp
+						label="Number of days"
+						name="days"
+						type="number"
+						min={1}
+						max={120}
+						{form}
+						{errors}
+						required
+					/>
+					<InputComp
+						label="Day capacity"
+						name="dayCapacity"
+						type="number"
+						min={1}
+						description="The cap across all of a day's slots."
+						{form}
+						{errors}
+						required
+					/>
 				{/snippet}
 			</FormDialog>
 		{/if}

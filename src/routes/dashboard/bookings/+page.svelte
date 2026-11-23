@@ -9,15 +9,33 @@
 	type Row = (typeof data.rows)[number];
 
 	const columns: ColumnDef<Row>[] = [
-		{ id: 'number', accessorKey: 'number', header: sortable('Booking'), cell: ({ row }) => link('booking', row.original.id, row.original.number) },
-		{ id: 'bookableId', header: 'What', cell: ({ row }) => link('bookable', row.original.bookableId, row.original.bookable) },
+		{
+			id: 'number',
+			accessorKey: 'number',
+			header: sortable('Booking'),
+			cell: ({ row }) => link('booking', row.original.id, row.original.number)
+		},
+		{
+			id: 'bookableId',
+			header: 'What',
+			cell: ({ row }) => link('bookable', row.original.bookableId, row.original.bookable)
+		},
 		{
 			id: 'contact',
 			header: 'Who',
 			cell: ({ row }) =>
-				link('customer', row.original.customerId, row.original.organisationName ?? row.original.contactName)
+				link(
+					'customer',
+					row.original.customerId,
+					row.original.organisationName ?? row.original.contactName
+				)
 		},
-		{ id: 'partySize', accessorKey: 'partySize', header: sortable('People'), meta: { align: 'right' } },
+		{
+			id: 'partySize',
+			accessorKey: 'partySize',
+			header: sortable('People'),
+			meta: { align: 'right' }
+		},
 		{
 			id: 'when',
 			accessorKey: 'when',
@@ -30,8 +48,19 @@
 						: 'To be agreed'
 		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) },
-		{ id: 'assignedTo', header: 'Handled by', meta: { class: 'hidden md:table-cell' }, cell: ({ row }) => user(row.original.assignedTo, row.original.assignee) },
-		{ id: 'createdAt', accessorKey: 'createdAt', header: sortable('Received'), meta: { class: 'hidden lg:table-cell' }, cell: ({ row }) => dateTime(row.original.createdAt) }
+		{
+			id: 'assignedTo',
+			header: 'Handled by',
+			meta: { class: 'hidden md:table-cell' },
+			cell: ({ row }) => user(row.original.assignedTo, row.original.assignee)
+		},
+		{
+			id: 'createdAt',
+			accessorKey: 'createdAt',
+			header: sortable('Received'),
+			meta: { class: 'hidden lg:table-cell' },
+			cell: ({ row }) => dateTime(row.original.createdAt)
+		}
 	];
 	const href = useLinks();
 </script>

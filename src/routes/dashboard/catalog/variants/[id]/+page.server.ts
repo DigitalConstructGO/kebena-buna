@@ -126,7 +126,9 @@ export const load = async ({ params, locals }) => {
 			db
 				.select({ id: membershipPlan.id, name: enOf(membershipPlan.name) })
 				.from(membershipPlan)
-				.where(and(eq(membershipPlan.monthlyCoffeeVariantId, v.id), isNull(membershipPlan.deletedAt))),
+				.where(
+					and(eq(membershipPlan.monthlyCoffeeVariantId, v.id), isNull(membershipPlan.deletedAt))
+				),
 			db
 				.select({
 					id: auditLog.id,
@@ -192,7 +194,8 @@ export const actions = {
 	edit: async (event) => {
 		requirePermission(event.locals, 'catalog.manage');
 		const form = await superValidate(event.request, zod4(variantEditSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		// The size is the one in the URL; the form's own id is not trusted to name it.
 		const { variant: before } = await loadVariant(event.params.id);
 		const id = before.id;
@@ -202,7 +205,10 @@ export const actions = {
 			await db.transaction(async (tx) => {
 				await tx
 					.update(productVariant)
-					.set({ ...(row as Partial<typeof productVariant.$inferInsert>), updatedBy: event.locals.user?.id })
+					.set({
+						...(row as Partial<typeof productVariant.$inferInsert>),
+						updatedBy: event.locals.user?.id
+					})
 					.where(eq(productVariant.id, id));
 				await recordAudit(tx, event, {
 					table: 'product_variant',
@@ -214,7 +220,11 @@ export const actions = {
 			});
 		} catch (err) {
 			if (isDuplicateKey(err)) {
-				setError(form, 'sku', 'Another size has this SKU, or the product already has this bag size.');
+				setError(
+					form,
+					'sku',
+					'Another size has this SKU, or the product already has this bag size.'
+				);
 				return message(form, { type: 'error', text: 'Already taken' }, { status: 400 });
 			}
 			throw err;

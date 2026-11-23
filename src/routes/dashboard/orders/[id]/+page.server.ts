@@ -3,11 +3,13 @@ import { and, asc, desc, eq, isNull, notInArray } from 'drizzle-orm';
 import { message, setError, superValidate, type SuperValidated } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
+import { bad, ok, parse } from '@nahu/admin-kit/server/actionResults';
 import { hasPermission, requirePermission } from '@nahu/admin-kit/server/permissions';
 import { recordAudit } from '@nahu/admin-kit/server/audit';
 import { fromLocal, localClock, localToday } from '@nahu/admin-kit/time';
 import { db } from '#lib/server/db/index.ts';
 import {
+	bankAccount,
 	bookable,
 	bundle,
 	booking,
@@ -41,28 +43,36 @@ import { courierOptions } from '#lib/server/options.ts';
 import { idParam } from '#lib/server/records.ts';
 import {
 	canCancel,
+	confirmTransfer,
 	hasRefundableMoney,
 	moveOrder,
 	nextStatuses,
 	recordOrderPayment,
 	refundable,
 	refundClaims,
+	rejectTransfer,
 	requestRefund
 } from '#lib/server/orders.ts';
 import { cancelTicket } from '#lib/server/visits.ts';
+import { releaseDiscount } from '#lib/server/discounts.ts';
 import { changeWorkflow } from '#lib/server/bookings.ts';
 import {
 	cancelSchema,
 	orderDeliverySchema,
 	orderStatusSchema,
 	paymentSchema,
-	refundRequestSchema
+	receiptSchema,
+	refundRequestSchema,
+	rejectReceiptSchema
 } from '#lib/schemas/orders.ts';
 import { tr } from '#lib/format.ts';
 
 async function loadOrder(raw: string) {
 	const id = idParam(raw, 'Order');
-	const [o] = await db.select().from(order).where(and(eq(order.id, id), isNull(order.deletedAt)));
+	const [o] = await db
+		.select()
+		.from(order)
+		.where(and(eq(order.id, id), isNull(order.deletedAt)));
 	if (!o) error(404, 'Order not found');
 	return o;
 }
@@ -95,15 +105,27 @@ function soldAs(l: {
 			return { entity: 'variant', id: l.variantId, name: l.sku ?? 'Variant' };
 		case 'ticket':
 		case 'ticket_upgrade':
-			return { entity: 'ticketType', id: l.ticketTypeId, name: t(l.ticketTypeName) || 'Ticket type' };
+			return {
+				entity: 'ticketType',
+				id: l.ticketTypeId,
+				name: t(l.ticketTypeName) || 'Ticket type'
+			};
 		case 'event_ticket':
 			return { entity: 'event', id: l.eventId, name: t(l.eventTitle) || 'Event' };
 		case 'booking':
 			return { entity: 'bookable', id: l.bookableId, name: t(l.bookableName) || 'Booking' };
 		case 'membership':
-			return { entity: 'membershipPlan', id: l.membershipPlanId, name: t(l.planName) || 'Membership' };
+			return {
+				entity: 'membershipPlan',
+				id: l.membershipPlanId,
+				name: t(l.planName) || 'Membership'
+			};
 		case 'subscription_bundle':
-			return { entity: 'subscription', id: l.subscriptionId, name: l.subscriptionNumber ?? 'Subscription' };
+			return {
+				entity: 'subscription',
+				id: l.subscriptionId,
+				name: l.subscriptionNumber ?? 'Subscription'
+			};
 		default:
 			return null;
 	}
@@ -199,6 +221,10 @@ export const load = async ({ params, locals }) => {
 				amount: payment.amount,
 				txRef: payment.txRef,
 				reference: payment.reference,
+				receiptFile: payment.receiptFile,
+				bankName: bankAccount.bankName,
+				accountNumber: bankAccount.accountNumber,
+				failureReason: payment.failureReason,
 				invoiceId: payment.invoiceId,
 				paidAt: payment.paidAt,
 				createdAt: payment.createdAt,
@@ -207,6 +233,7 @@ export const load = async ({ params, locals }) => {
 			})
 			.from(payment)
 			.leftJoin(recorder, eq(payment.recordedBy, recorder.id))
+			.leftJoin(bankAccount, eq(payment.bankAccountId, bankAccount.id))
 			.where(eq(payment.orderId, o.id))
 			.orderBy(desc(payment.createdAt)),
 		db
@@ -258,7 +285,10 @@ export const load = async ({ params, locals }) => {
 	// Where it is collected, or where it was sold / ships from.
 	const placeId = o.pickupLocationId ?? o.locationId;
 	const pickup = placeId
-		? await db.select({ id: location.id, name: enOf(location.name) }).from(location).where(eq(location.id, placeId))
+		? await db
+				.select({ id: location.id, name: enOf(location.name) })
+				.from(location)
+				.where(eq(location.id, placeId))
 		: [];
 
 	const lines = lineRows.map((r) => ({
@@ -290,11 +320,15 @@ export const load = async ({ params, locals }) => {
 
 	return {
 		order: o,
-		related: related!,
+		related: related,
 		place: pickup[0] ?? null,
 		lines,
 		history,
 		payments,
+		// Buyers' transfer receipts nobody has checked yet: confirm or reject each.
+		receipts: payments.filter(
+			(p) => p.provider === 'bank_transfer' && p.status === 'pending' && p.receiptFile
+		),
 		refunds,
 		invoices,
 		tickets,
@@ -315,7 +349,10 @@ export const load = async ({ params, locals }) => {
 		},
 		canManage: hasPermission(locals, 'orders.manage'),
 		canRefund: hasPermission(locals, 'refunds.manage'),
-		statusForm: await superValidate({ status: next[0] }, zod4(orderStatusSchema), { id: 'status', errors: false }),
+		statusForm: await superValidate({ status: next[0] }, zod4(orderStatusSchema), {
+			id: 'status',
+			errors: false
+		}),
 		deliveryForm: await superValidate(
 			{
 				riderId: o.riderId,
@@ -337,7 +374,11 @@ export const load = async ({ params, locals }) => {
 			{ id: 'payment', errors: false }
 		),
 		cancelForm: await superValidate(zod4(cancelSchema), { id: 'cancel', errors: false }),
-		refundForm: await superValidate({ whole: false }, zod4(refundRequestSchema), { id: 'refund', errors: false })
+		rejectForm: await superValidate(zod4(rejectReceiptSchema), { id: 'reject', errors: false }),
+		refundForm: await superValidate({ whole: false }, zod4(refundRequestSchema), {
+			id: 'refund',
+			errors: false
+		})
 	};
 };
 
@@ -353,33 +394,48 @@ export const actions = {
 	status: async (event) => {
 		requirePermission(event.locals, 'orders.manage');
 		const form = await superValidate(event.request, zod4(orderStatusSchema), { id: 'status' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const o = await loadOrder(event.params.id);
 		try {
 			await db.transaction((tx) =>
-				moveOrder(tx, event, o, form.data.status, { note: form.data.note, notified: form.data.notified })
+				moveOrder(tx, event, o, form.data.status, {
+					note: form.data.note,
+					notified: form.data.notified
+				})
 			);
 		} catch (err) {
 			return refused(form, err);
 		}
-		return message(form, { type: 'success', text: `Order is now ${form.data.status.replaceAll('_', ' ')}` });
+		return message(form, {
+			type: 'success',
+			text: `Order is now ${form.data.status.replaceAll('_', ' ')}`
+		});
 	},
 	delivery: async (event) => {
 		requirePermission(event.locals, 'orders.manage');
 		const form = await superValidate(event.request, zod4(orderDeliverySchema), { id: 'delivery' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const o = await loadOrder(event.params.id);
 		const values = { ...form.data, updatedBy: event.locals.user?.id ?? null };
 		await db.transaction(async (tx) => {
 			await tx.update(order).set(values).where(eq(order.id, o.id));
-			await recordAudit(tx, event, { table: 'orders', recordId: o.id, action: 'update', before: o, after: values });
+			await recordAudit(tx, event, {
+				table: 'orders',
+				recordId: o.id,
+				action: 'update',
+				before: o,
+				after: values
+			});
 		});
 		return message(form, { type: 'success', text: 'Delivery details saved' });
 	},
 	payment: async (event) => {
 		requirePermission(event.locals, 'orders.manage');
 		const form = await superValidate(event.request, zod4(paymentSchema), { id: 'payment' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const o = await loadOrder(event.params.id);
 		try {
 			await db.transaction((tx) =>
@@ -395,10 +451,50 @@ export const actions = {
 		}
 		return message(form, { type: 'success', text: 'Payment recorded' });
 	},
+	/** A buyer's transfer receipt matched on the statement: the order is paid. */
+	confirmReceipt: async (event) => {
+		requirePermission(event.locals, 'orders.manage');
+		const p = await parse(event.request, receiptSchema);
+		if ('error' in p) return p.error;
+		const o = await loadOrder(event.params.id);
+		try {
+			await db.transaction(async (tx) => {
+				const orderId = await confirmTransfer(tx, event, p.data.paymentId);
+				if (orderId !== o.id)
+					throw new WriteRefused(null, 'That receipt belongs to another order.');
+			});
+		} catch (err) {
+			if (err instanceof WriteRefused) return bad(err.message, 409);
+			throw err;
+		}
+		return ok('Receipt confirmed — the order is paid');
+	},
+	/** A receipt that does not match: turned down with the reason the buyer will read. */
+	rejectReceipt: async (event) => {
+		requirePermission(event.locals, 'orders.manage');
+		const form = await superValidate(event.request, zod4(rejectReceiptSchema), { id: 'reject' });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		const o = await loadOrder(event.params.id);
+		try {
+			await db.transaction(async (tx) => {
+				const orderId = await rejectTransfer(tx, event, form.data.paymentId, form.data.reason);
+				if (orderId !== o.id)
+					throw new WriteRefused(null, 'That receipt belongs to another order.');
+			});
+		} catch (err) {
+			return refused(form, err);
+		}
+		return message(form, {
+			type: 'success',
+			text: 'Receipt rejected — the buyer can send another'
+		});
+	},
 	cancel: async (event) => {
 		requirePermission(event.locals, 'orders.manage');
 		const form = await superValidate(event.request, zod4(cancelSchema), { id: 'cancel' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const o = await loadOrder(event.params.id);
 		const userId = event.locals.user?.id;
 		const note = `${o.number} cancelled: ${form.data.reason}`.slice(0, 255);
@@ -406,28 +502,51 @@ export const actions = {
 			await db.transaction(async (tx) => {
 				// Re-read locked, so a double-submitted cancel happens once.
 				const [cur] = await tx.select().from(order).where(eq(order.id, o.id)).for('update');
-				if (!canCancel(cur.status)) throw new WriteRefused(null, 'This order has left the building and cannot be cancelled.');
+				if (!canCancel(cur.status))
+					throw new WriteRefused(null, 'This order has left the building and cannot be cancelled.');
 				await moveOrder(tx, event, cur, 'cancelled', {
 					force: true,
 					note: form.data.reason,
 					extra: { cancelReason: form.data.reason }
 				});
+				// A discount code it used counts again.
+				await releaseDiscount(tx, o.id);
 				// What the order bought goes with it: its bookings stop holding their place…
 				const bookings = await tx
 					.select({ id: booking.id })
 					.from(booking)
-					.where(and(eq(booking.orderId, o.id), notInArray(booking.status, ['cancelled', 'declined', 'done']), isNull(booking.deletedAt)));
-				for (const b of bookings) await changeWorkflow(tx, { bookingId: b.id }, 'cancelled', note, userId);
+					.where(
+						and(
+							eq(booking.orderId, o.id),
+							notInArray(booking.status, ['cancelled', 'declined', 'done']),
+							isNull(booking.deletedAt)
+						)
+					);
+				for (const b of bookings)
+					await changeWorkflow(tx, { bookingId: b.id }, 'cancelled', note, userId);
 				// …and its memberships end.
 				const memberships = await tx
 					.select({ m: membership })
 					.from(membership)
 					.innerJoin(orderLine, eq(membership.orderLineId, orderLine.id))
-					.where(and(eq(orderLine.orderId, o.id), notInArray(membership.status, ['cancelled', 'lapsed'])));
+					.where(
+						and(eq(orderLine.orderId, o.id), notInArray(membership.status, ['cancelled', 'lapsed']))
+					);
 				for (const { m } of memberships) {
-					const values = { status: 'cancelled' as const, cancelledAt: new Date(), cancelReason: note, updatedBy: userId };
+					const values = {
+						status: 'cancelled' as const,
+						cancelledAt: new Date(),
+						cancelReason: note,
+						updatedBy: userId
+					};
 					await tx.update(membership).set(values).where(eq(membership.id, m.id));
-					await recordAudit(tx, event, { table: 'membership', recordId: m.id, action: 'update', before: m, after: values });
+					await recordAudit(tx, event, {
+						table: 'membership',
+						recordId: m.id,
+						action: 'update',
+						before: m,
+						after: values
+					});
 				}
 			});
 		} catch (err) {
@@ -455,7 +574,8 @@ export const actions = {
 	refund: async (event) => {
 		requirePermission(event.locals, 'refunds.manage');
 		const form = await superValidate(event.request, zod4(refundRequestSchema), { id: 'refund' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const o = await loadOrder(event.params.id);
 		try {
 			await db.transaction((tx) =>

@@ -15,7 +15,14 @@ import {
 	sortOrder
 } from '#lib/schemas/common.ts';
 
-export const PAGE_TEMPLATES = ['default', 'history', 'origins', 'health', 'visit', 'contact'] as const;
+export const PAGE_TEMPLATES = [
+	'default',
+	'history',
+	'origins',
+	'health',
+	'visit',
+	'contact'
+] as const;
 
 /** An address no longer than its column holds (a deleted row's gets `~id` within that length). */
 const slugOf = (max: number) => slug.max(max, `At most ${max} characters`);

@@ -42,7 +42,10 @@ const joined = <T extends MySqlSelect>(q: T) =>
 		.leftJoin(bookingSession, eq(staffAssignment.sessionId, bookingSession.id))
 		.leftJoin(booking, eq(staffAssignment.bookingId, booking.id))
 		.leftJoin(eventTable, eq(staffAssignment.eventId, eventTable.id))
-		.leftJoin(bookable, sql`${bookable.id} = coalesce(${bookingSession.bookableId}, ${booking.bookableId})`);
+		.leftJoin(
+			bookable,
+			sql`${bookable.id} = coalesce(${bookingSession.bookableId}, ${booking.bookableId})`
+		);
 
 export const load = async ({ url }) => {
 	const query = parseTableQuery(url, FILTERS, 20, Object.keys(SORTS));
@@ -77,14 +80,27 @@ export const load = async ({ url }) => {
 		joined(db.select({ total: count() }).from(staffAssignment).$dynamic()).where(where),
 		facetCounts({
 			userId: () =>
-				joined(db.select({ value: staffer.id, label: staffer.name, count: count() }).from(staffAssignment).$dynamic())
+				joined(
+					db
+						.select({ value: staffer.id, label: staffer.name, count: count() })
+						.from(staffAssignment)
+						.$dynamic()
+				)
 					.where(buildWhere(query, spec, { except: 'userId' }))
 					.groupBy(staffer.id, staffer.name),
 			role: () =>
-				joined(db.select({ value: staffAssignment.role, count: count() }).from(staffAssignment).$dynamic())
+				joined(
+					db
+						.select({ value: staffAssignment.role, count: count() })
+						.from(staffAssignment)
+						.$dynamic()
+				)
 					.where(buildWhere(query, spec, { except: 'role' }))
 					.groupBy(staffAssignment.role)
 		})
 	]);
-	return { rows, server: { pagination: pagination(query, total), facets, filters: currentQuery(query) } };
+	return {
+		rows,
+		server: { pagination: pagination(query, total), facets, filters: currentQuery(query) }
+	};
 };

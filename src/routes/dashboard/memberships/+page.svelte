@@ -51,7 +51,8 @@
 			id: 'endsOn',
 			accessorKey: 'endsOn',
 			header: sortable('Ends'),
-			cell: ({ row }) => (dueSoon(row.original) ? `${date(row.original.endsOn)} · renew` : date(row.original.endsOn))
+			cell: ({ row }) =>
+				dueSoon(row.original) ? `${date(row.original.endsOn)} · renew` : date(row.original.endsOn)
 		},
 		{
 			id: 'members',
@@ -83,7 +84,10 @@
 		{#if data.canManage}
 			<FormDialog
 				title="New membership"
-				triggerLabel="New membership" triggerVariant="default" triggerIcon={Plus} submitIcon={Plus}
+				triggerLabel="New membership"
+				triggerVariant="default"
+				triggerIcon={Plus}
+				submitIcon={Plus}
 				action="?/add"
 				data={data.newForm}
 				schema={newMembershipSchema}
@@ -91,10 +95,41 @@
 				description="Starts awaiting payment, with the customer as its first member."
 			>
 				{#snippet fields({ form, errors })}
-					<InputComp label="Customer" name="customerId" type="combo" items={data.customers} {form} {errors} required />
-					<InputComp label="Plan" name="planId" type="select" items={data.plans} {form} {errors} required />
-					<InputComp label="Starts" name="startsOn" type="date" futureDays {form} {errors} required />
-					<InputComp label="Renews by" name="renewalMethod" type="select" items={choicesOf(RENEWAL_METHODS)} {form} {errors} />
+					<InputComp
+						label="Customer"
+						name="customerId"
+						type="combo"
+						items={data.customers}
+						{form}
+						{errors}
+						required
+					/>
+					<InputComp
+						label="Plan"
+						name="planId"
+						type="select"
+						items={data.plans}
+						{form}
+						{errors}
+						required
+					/>
+					<InputComp
+						label="Starts"
+						name="startsOn"
+						type="date"
+						futureDays
+						{form}
+						{errors}
+						required
+					/>
+					<InputComp
+						label="Renews by"
+						name="renewalMethod"
+						type="select"
+						items={choicesOf(RENEWAL_METHODS)}
+						{form}
+						{errors}
+					/>
 				{/snippet}
 			</FormDialog>
 		{/if}

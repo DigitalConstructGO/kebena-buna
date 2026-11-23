@@ -31,14 +31,18 @@ const spec: WhereSpec<(typeof FILTERS)[number]> = {
 		),
 	dateColumn: payment.createdAt,
 	filters: {
-		provider: (v) => (oneOf(PAYMENT_PROVIDERS, v) ? eq(payment.provider, oneOf(PAYMENT_PROVIDERS, v)!) : undefined),
-		status: (v) => (oneOf(PAYMENT_STATUSES, v) ? eq(payment.status, oneOf(PAYMENT_STATUSES, v)!) : undefined)
+		provider: (v) =>
+			oneOf(PAYMENT_PROVIDERS, v) ? eq(payment.provider, oneOf(PAYMENT_PROVIDERS, v)!) : undefined,
+		status: (v) =>
+			oneOf(PAYMENT_STATUSES, v) ? eq(payment.status, oneOf(PAYMENT_STATUSES, v)!) : undefined
 	}
 };
 
 /** Search reaches the order and invoice numbers, so every query joins them. */
 const joined = <T extends MySqlSelect>(q: T) =>
-	q.leftJoin(order, eq(payment.orderId, order.id)).leftJoin(invoice, eq(payment.invoiceId, invoice.id));
+	q
+		.leftJoin(order, eq(payment.orderId, order.id))
+		.leftJoin(invoice, eq(payment.invoiceId, invoice.id));
 
 export const load = async ({ url }) => {
 	const query = parseTableQuery(url, FILTERS, 20, Object.keys(SORTS));
@@ -85,8 +89,13 @@ export const load = async ({ url }) => {
 		joined(
 			db
 				.select({
-					received: sql<number>`coalesce(sum(case when ${payment.status} = 'succeeded' then ${payment.amount} end), 0)`.mapWith(Number),
-					fees: sql<number>`coalesce(sum(case when ${payment.status} = 'succeeded' then ${payment.fee} end), 0)`.mapWith(Number)
+					received:
+						sql<number>`coalesce(sum(case when ${payment.status} = 'succeeded' then ${payment.amount} end), 0)`.mapWith(
+							Number
+						),
+					fees: sql<number>`coalesce(sum(case when ${payment.status} = 'succeeded' then ${payment.fee} end), 0)`.mapWith(
+						Number
+					)
 				})
 				.from(payment)
 				.$dynamic()

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { getFlash } from 'sveltekit-flash-message';
 	import { toast } from 'svelte-sonner';
@@ -8,11 +9,17 @@
 	// the body font, preloaded so the first paint uses it instead of swapping a moment later
 	import interLatin from '@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2?url';
 	import { SITE_URL } from '#lib/site/seo.ts';
+	import { m, setSiteText } from '#lib/i18n.ts';
 	import './layout.css';
 	import favicon from '#lib/assets/favicon.svg';
 	import type { LayoutProps } from './$types';
 
-	let { children }: LayoutProps = $props();
+	let { data, children }: LayoutProps = $props();
+
+	// Staff edits to the site's words (Website › Site text), in place before any page renders and
+	// refreshed when a save invalidates the layout.
+	setSiteText(untrack(() => data.siteText));
+	$effect.pre(() => setSiteText(data.siteText));
 
 	// Orders, receipts and Chapa are dated in the Gregorian calendar; every kit date input can still
 	// be switched to the Ethiopian one by the person using it.
@@ -54,8 +61,12 @@
 		{#each alternates as a (a.locale)}
 			<link rel="alternate" hreflang={a.locale} href={a.href} />
 		{/each}
-		<link rel="alternate" hreflang="x-default" href={SITE_URL + localizeHref(base, { locale: baseLocale })} />
-		<meta property="og:site_name" content="Kebena Buna" />
+		<link
+			rel="alternate"
+			hreflang="x-default"
+			href={SITE_URL + localizeHref(base, { locale: baseLocale })}
+		/>
+		<meta property="og:site_name" content={m.site_og_site_name()} />
 		<meta property="og:type" content="website" />
 		<meta property="og:url" content={SITE_URL + page.url.pathname} />
 		<meta property="og:image" content={SITE_URL + '/hero/museum.webp'} />
@@ -64,7 +75,12 @@
 	{/if}
 </svelte:head>
 
-<Toaster position="bottom-right" richColors closeButton />
+<Toaster
+	position="bottom-right"
+	richColors
+	closeButton
+	containerAriaLabel={m.site_notifications()}
+/>
 
 {@render children()}
 

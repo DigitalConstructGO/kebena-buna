@@ -30,7 +30,10 @@ export const load = async () => {
 			isPickupPoint: location.isPickupPoint,
 			admitsVisitors: location.admitsVisitors,
 			isActive: location.isActive,
-			children: sql<number>`(select count(*) from location c where c.parent_id = ${location.id} and c.deleted_at is null)`.mapWith(Number)
+			children:
+				sql<number>`(select count(*) from location c where c.parent_id = ${location.id} and c.deleted_at is null)`.mapWith(
+					Number
+				)
 		})
 		.from(location)
 		.leftJoin(parent, eq(location.parentId, parent.id))
@@ -39,7 +42,9 @@ export const load = async () => {
 	return {
 		rows,
 		parents: await locationOptions(),
-		addForm: await superValidate({ type: 'shop', isActive: true }, zod4(locationSchema), { errors: false })
+		addForm: await superValidate({ type: 'shop', isActive: true }, zod4(locationSchema), {
+			errors: false
+		})
 	};
 };
 
@@ -54,6 +59,10 @@ export const actions = {
 		} catch (err) {
 			return refusedForm(form, err);
 		}
-		redirect(`/dashboard/admin/locations/${id}`, { type: 'success', message: 'Location added' }, event.cookies);
+		redirect(
+			`/dashboard/admin/locations/${id}`,
+			{ type: 'success', message: 'Location added' },
+			event.cookies
+		);
 	}
 };

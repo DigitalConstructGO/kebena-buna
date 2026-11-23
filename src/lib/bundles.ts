@@ -48,13 +48,17 @@ export function spreadSaving(lineTotals: number[], saving: number): number[] {
 /** "5% off", "ETB 200.00 off", "ETB 4,500.00 for the lot". */
 export function describeRule(rule: BundleRule): string {
 	const value = Number(rule.value);
-	if (rule.pricing === 'percent_off') return `${value.toLocaleString('en-US', { maximumFractionDigits: 2 })}% off`;
+	if (rule.pricing === 'percent_off')
+		return `${value.toLocaleString('en-US', { maximumFractionDigits: 2 })}% off`;
 	if (rule.pricing === 'amount_off') return `${money(value)} off`;
 	return `${money(value)} for the lot`;
 }
 
 /** Whether today is inside the bundle's window; an open end is no limit. */
-export function inWindow(b: { startsAt: Date | string | null; endsAt: Date | string | null }, now = new Date()) {
+export function inWindow(
+	b: { startsAt: Date | string | null; endsAt: Date | string | null },
+	now = new Date()
+) {
 	if (b.startsAt && new Date(b.startsAt) > now) return false;
 	if (b.endsAt && new Date(b.endsAt) < now) return false;
 	return true;

@@ -2,7 +2,7 @@
 	import { onMount, tick } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import Wayfinder from './Wayfinder.svelte';
 	import {
 		deLocalizeHref,
@@ -234,7 +234,7 @@
 
 <header class={['nav', { tucked }]}>
 	<div class="lead">
-		<a class="brand pill" href={localizeHref('/')} aria-label="Kebena Buna, home">
+		<a class="brand pill" href={localizeHref('/')} aria-label={m.site_home_label()}>
 			<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
 				<ellipse cx="12" cy="12" rx="7" ry="10" fill="currentColor" transform="rotate(28 12 12)" />
 				<path
@@ -244,7 +244,7 @@
 					fill="none"
 				/>
 			</svg>
-			<span>Kebena</span>
+			<span>{m.museum_nav_brand()}</span>
 		</a>
 		<a
 			class="quick pill"
@@ -315,7 +315,7 @@
 			type="button"
 			class="theme pill"
 			aria-pressed={dark}
-			aria-label="Dark mode"
+			aria-label={m.museum_nav_dark_mode()}
 			onclick={toggleTheme}
 		>
 			<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
@@ -443,7 +443,7 @@
 					<svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
 						<path d="M15.5 12.4A6.5 6.5 0 0 1 7.6 4.5a6.5 6.5 0 1 0 7.9 7.9Z" />
 					</svg>
-					Dark mode
+					{m.museum_nav_dark_mode()}
 				</button>
 			</div>
 		</aside>

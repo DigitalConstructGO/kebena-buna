@@ -23,11 +23,18 @@ export const load = async ({ params, locals }) => {
 	const row = await found(params.id);
 	const c = row.conversation;
 	const [messages, names] = await Promise.all([
-		db.select().from(aiMessage).where(eq(aiMessage.conversationId, c.id)).orderBy(asc(aiMessage.id)),
+		db
+			.select()
+			.from(aiMessage)
+			.where(eq(aiMessage.conversationId, c.id))
+			.orderBy(asc(aiMessage.id)),
 		namesOf([c.handedOffTo])
 	]);
 	const tokens = messages.reduce(
-		(sum, m) => ({ input: sum.input + (m.inputTokens ?? 0), output: sum.output + (m.outputTokens ?? 0) }),
+		(sum, m) => ({
+			input: sum.input + (m.inputTokens ?? 0),
+			output: sum.output + (m.outputTokens ?? 0)
+		}),
 		{ input: 0, output: 0 }
 	);
 	return {
@@ -55,10 +62,15 @@ export const actions = {
 		if (c.handedOffTo && c.handedOffTo !== userId) {
 			const names = await namesOf([c.handedOffTo]);
 			const who = names[c.handedOffTo] ?? 'Someone else';
-			return fail(409, { message: { type: 'error', text: `${who} has taken over this chat already` } });
+			return fail(409, {
+				message: { type: 'error', text: `${who} has taken over this chat already` }
+			});
 		}
 		await db.transaction(async (tx) => {
-			await tx.update(aiConversation).set({ handedOffTo: userId }).where(eq(aiConversation.id, c.id));
+			await tx
+				.update(aiConversation)
+				.set({ handedOffTo: userId })
+				.where(eq(aiConversation.id, c.id));
 			await recordAudit(tx, event, {
 				table: 'ai_conversation',
 				recordId: c.id,

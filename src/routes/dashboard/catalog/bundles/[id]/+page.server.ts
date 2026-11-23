@@ -17,7 +17,13 @@ import { unpackLocalized } from '#lib/server/localized.ts';
 import { stampsOf } from '#lib/server/people.ts';
 import { idParam } from '#lib/server/records.ts';
 import { bagSizeOptions, categoryOptions, variantOptions } from '#lib/server/options.ts';
-import { BUNDLE_TEXT, bundleContents, bundleRow, bundleSold, bundleTotals } from '#lib/server/bundles.ts';
+import {
+	BUNDLE_TEXT,
+	bundleContents,
+	bundleRow,
+	bundleSold,
+	bundleTotals
+} from '#lib/server/bundles.ts';
 import {
 	bundleEditSchema,
 	bundleImageSchema,
@@ -28,12 +34,16 @@ import { PUBLISH_STATUSES } from '#lib/constants.ts';
 
 async function loadBundle(raw: string | number) {
 	const id = idParam(String(raw), 'Bundle');
-	const [b] = await db.select().from(bundle).where(and(eq(bundle.id, id), isNull(bundle.deletedAt)));
+	const [b] = await db
+		.select()
+		.from(bundle)
+		.where(and(eq(bundle.id, id), isNull(bundle.deletedAt)));
 	if (!b) error(404, 'Bundle not found');
 	return b;
 }
 
-const owner = async (event: { params: { id?: string } }) => (await loadBundle(event.params.id ?? '')).id;
+const owner = async (event: { params: { id?: string } }) =>
+	(await loadBundle(event.params.id ?? '')).id;
 
 /** What the bundle holds. An exact size must be a live one; a slot names a bag size to fill. */
 const items = childCrud({
@@ -49,7 +59,9 @@ const items = childCrud({
 			const [v] = await db
 				.select({ id: productVariant.id })
 				.from(productVariant)
-				.where(and(eq(productVariant.id, Number(values.variantId)), isNull(productVariant.deletedAt)));
+				.where(
+					and(eq(productVariant.id, Number(values.variantId)), isNull(productVariant.deletedAt))
+				);
 			if (!v) throw new WriteRefused('variantId', 'That size has been deleted.');
 			values.bagSizeId = null;
 			values.categoryId = null;
@@ -60,39 +72,42 @@ const items = childCrud({
 
 export const load = async ({ params, locals }) => {
 	const b = await loadBundle(params.id);
-	const [itemSection, contents, sales, [sums], stamps, variants, bagSizes, categories] = await Promise.all([
-		items.load(b.id),
-		bundleContents([b.id]),
-		db
-			.select({
-				orderId: order.id,
-				number: order.number,
-				placedAt: order.placedAt,
-				status: order.status,
-				bags: sql<number>`sum(${orderLine.quantity})`.mapWith(Number),
-				list: sql<number>`sum(${orderLine.unitPrice} * ${orderLine.quantity})`.mapWith(Number),
-				discount: sql<number>`sum(${orderLine.discountAmount})`.mapWith(Number),
-				total: sql<number>`sum(${orderLine.lineTotal})`.mapWith(Number)
-			})
-			.from(orderLine)
-			.innerJoin(order, eq(orderLine.orderId, order.id))
-			.where(eq(orderLine.bundleId, b.id))
-			.groupBy(order.id, orderLine.bundleGroup)
-			.orderBy(desc(order.placedAt))
-			.limit(25),
-		db
-			.select({
-				sold: sql<number>`count(distinct ${orderLine.orderId}, ${orderLine.bundleGroup})`.mapWith(Number),
-				sales: sql<number>`coalesce(sum(${orderLine.lineTotal}), 0)`.mapWith(Number),
-				given: sql<number>`coalesce(sum(${orderLine.discountAmount}), 0)`.mapWith(Number)
-			})
-			.from(orderLine)
-			.where(eq(orderLine.bundleId, b.id)),
-		stampsOf(b),
-		variantOptions(),
-		bagSizeOptions(),
-		categoryOptions()
-	]);
+	const [itemSection, contents, sales, [sums], stamps, variants, bagSizes, categories] =
+		await Promise.all([
+			items.load(b.id),
+			bundleContents([b.id]),
+			db
+				.select({
+					orderId: order.id,
+					number: order.number,
+					placedAt: order.placedAt,
+					status: order.status,
+					bags: sql<number>`sum(${orderLine.quantity})`.mapWith(Number),
+					list: sql<number>`sum(${orderLine.unitPrice} * ${orderLine.quantity})`.mapWith(Number),
+					discount: sql<number>`sum(${orderLine.discountAmount})`.mapWith(Number),
+					total: sql<number>`sum(${orderLine.lineTotal})`.mapWith(Number)
+				})
+				.from(orderLine)
+				.innerJoin(order, eq(orderLine.orderId, order.id))
+				.where(eq(orderLine.bundleId, b.id))
+				.groupBy(order.id, orderLine.bundleGroup)
+				.orderBy(desc(order.placedAt))
+				.limit(25),
+			db
+				.select({
+					sold: sql<number>`count(distinct ${orderLine.orderId}, ${orderLine.bundleGroup})`.mapWith(
+						Number
+					),
+					sales: sql<number>`coalesce(sum(${orderLine.lineTotal}), 0)`.mapWith(Number),
+					given: sql<number>`coalesce(sum(${orderLine.discountAmount}), 0)`.mapWith(Number)
+				})
+				.from(orderLine)
+				.where(eq(orderLine.bundleId, b.id)),
+			stampsOf(b),
+			variantOptions(),
+			bagSizeOptions(),
+			categoryOptions()
+		]);
 	const byId = new Map(contents.map((c) => [c.id, c]));
 
 	return {
@@ -115,7 +130,7 @@ export const load = async ({ params, locals }) => {
 			})
 		},
 		sales,
-		sums: sums!,
+		sums: sums,
 		stamps,
 		options: { variants, bagSizes, categories },
 		canManage: hasPermission(locals, 'catalog.manage'),
@@ -138,7 +153,8 @@ export const actions = {
 	edit: async (event) => {
 		requirePermission(event.locals, 'catalog.manage');
 		const form = await superValidate(event.request, zod4(bundleEditSchema), { id: 'edit' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		// The bundle is the one in the URL; the form's own id is not trusted to name it.
 		const before = await loadBundle(event.params.id);
 		const { id: _id, ...data } = form.data;
@@ -147,7 +163,13 @@ export const actions = {
 		try {
 			await db.transaction(async (tx) => {
 				await tx.update(bundle).set(values).where(eq(bundle.id, before.id));
-				await recordAudit(tx, event, { table: 'bundle', recordId: before.id, action: 'update', before, after: values });
+				await recordAudit(tx, event, {
+					table: 'bundle',
+					recordId: before.id,
+					action: 'update',
+					before,
+					after: values
+				});
 			});
 		} catch (err) {
 			if (!isDuplicateKey(err)) throw err;
@@ -168,7 +190,10 @@ export const actions = {
 				setError(form, 'image', 'Choose a picture');
 				return message(form, { type: 'error', text: 'Choose a picture' }, { status: 400 });
 			}
-			await db.update(bundle).set({ image, updatedBy: event.locals.user?.id }).where(eq(bundle.id, b.id));
+			await db
+				.update(bundle)
+				.set({ image, updatedBy: event.locals.user?.id })
+				.where(eq(bundle.id, b.id));
 		} catch (err) {
 			if (err instanceof UploadRefused) {
 				setError(form, 'image', err.message);
@@ -186,16 +211,31 @@ export const actions = {
 		if (!(PUBLISH_STATUSES as readonly string[]).includes(to)) return fail(400);
 		const publishStatus = to as (typeof PUBLISH_STATUSES)[number];
 		if (publishStatus === 'published') {
-			const { bags, problems } = bundleTotals({ pricing: b.pricing, value: Number(b.value) }, await bundleContents([b.id]));
+			const { bags, problems } = bundleTotals(
+				{ pricing: b.pricing, value: Number(b.value) },
+				await bundleContents([b.id])
+			);
 			if (!bags) return bad('Put something in the bundle before publishing it.');
 			if (problems.length) return bad(`Fix what is in it first. ${problems[0]}.`);
 		}
 		await db.transaction(async (tx) => {
-			await tx.update(bundle).set({ publishStatus, updatedBy: event.locals.user?.id }).where(eq(bundle.id, b.id));
-			await recordAudit(tx, event, { table: 'bundle', recordId: b.id, action: 'update', before: b, after: { publishStatus } });
+			await tx
+				.update(bundle)
+				.set({ publishStatus, updatedBy: event.locals.user?.id })
+				.where(eq(bundle.id, b.id));
+			await recordAudit(tx, event, {
+				table: 'bundle',
+				recordId: b.id,
+				action: 'update',
+				before: b,
+				after: { publishStatus }
+			});
 		});
 		return {
-			message: { type: 'success', text: publishStatus === 'published' ? 'Published on the website' : `Marked ${publishStatus}` }
+			message: {
+				type: 'success',
+				text: publishStatus === 'published' ? 'Published on the website' : `Marked ${publishStatus}`
+			}
 		};
 	},
 
@@ -222,6 +262,10 @@ export const actions = {
 			return null;
 		});
 		if (refusal) return bad(refusal);
-		redirect('/dashboard/catalog/bundles', { type: 'success', message: 'Bundle deleted' }, event.cookies);
+		redirect(
+			'/dashboard/catalog/bundles',
+			{ type: 'success', message: 'Bundle deleted' },
+			event.cookies
+		);
 	}
 };

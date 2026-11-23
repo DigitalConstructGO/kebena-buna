@@ -3,7 +3,9 @@
 	import { srcsetFor } from '#lib/img.js';
 	import { setupGsap } from '#lib/gsap.js';
 	import { whenIdle } from '#lib/reveal.js';
+	import ImageViewer from '@nahu/admin-kit/components/ImageViewer.svelte';
 	import type { JourneyContent, JourneyStep } from '#lib/content/museum.js';
+	import { m } from '#lib/i18n.ts';
 
 	let { content }: { content: JourneyContent } = $props();
 
@@ -39,6 +41,9 @@
 
 	let root = $state<HTMLElement>();
 	let broken = $state<Record<string, boolean>>({});
+	/** A step's photo pressed opens all the steps' photos large, starting on that one. */
+	let viewerOpen = $state(false);
+	let viewerAt = $state(0);
 	/** The cup fills once the stream reaches it. */
 	let full = $state(false);
 	/** The cup is on screen: only then do the ripples run. */
@@ -456,21 +461,31 @@
 								<div class="face">
 									<div class="card-top" aria-hidden="true">
 										<span class="num">{roman(i)}</span>
-										<span class="suit">From farm to cup</span>
+										<span class="suit">{m.home_journey_card_suit()}</span>
 									</div>
 									<figure class="photo">
 										{#if !broken[s.id]}
-											<img
-												src={s.photo.src}
-												srcset={srcsetFor(s.photo.src)}
-												sizes={s.wide
-													? '(min-width: 900px) 640px, 90vw'
-													: '(min-width: 900px) 440px, 90vw'}
-												alt={s.photo.alt}
-												loading="lazy"
-												decoding="async"
-												onerror={() => (broken = { ...broken, [s.id]: true })}
-											/>
+											<button
+												type="button"
+												class="zoom"
+												aria-label={m.home_view_larger({ title: `${s.title} ${s.accent}` })}
+												onclick={() => {
+													viewerAt = i;
+													viewerOpen = true;
+												}}
+											>
+												<img
+													src={s.photo.src}
+													srcset={srcsetFor(s.photo.src)}
+													sizes={s.wide
+														? '(min-width: 900px) 640px, 90vw'
+														: '(min-width: 900px) 440px, 90vw'}
+													alt={s.photo.alt}
+													loading="lazy"
+													decoding="async"
+													onerror={() => (broken = { ...broken, [s.id]: true })}
+												/>
+											</button>
 										{/if}
 									</figure>
 									<!-- one level under the act heading, or straight under the section's when there are no acts -->
@@ -493,7 +508,7 @@
 				<div class="bag">
 					<img
 						src="/hero/bag-front.jpg"
-						alt="A 250 g bag of Kebena Coffee"
+						alt={m.home_journey_bag_alt()}
 						width="452"
 						height="632"
 						loading="lazy"
@@ -555,6 +570,13 @@
 			{/if}
 		</div>
 	</section>
+	<ImageViewer
+		bind:open={viewerOpen}
+		bind:index={viewerAt}
+		images={steps.map((s) => s.photo.src)}
+		captions={steps.map((s) => `${s.title} ${s.accent}: ${s.photo.alt}`)}
+		title={`${content.title} ${content.accent}`}
+	/>
 {/if}
 
 <style>
@@ -753,6 +775,19 @@
 		overflow: hidden;
 		/* shown when a photo is missing, so the card keeps its shape */
 		background: var(--well);
+	}
+	.zoom {
+		display: block;
+		width: 100%;
+		height: 100%;
+		padding: 0;
+		border: 0;
+		background: none;
+		cursor: zoom-in;
+	}
+	.zoom:focus-visible {
+		outline: 2px solid var(--color-lime-400);
+		outline-offset: -2px;
 	}
 	.photo img {
 		display: block;

@@ -24,10 +24,28 @@
 	type Row = (typeof data.redemptions)[number];
 	const columns: ColumnDef<Row>[] = [
 		{ id: 'at', header: 'Used', cell: ({ row }) => dateTime(row.original.createdAt) },
-		{ id: 'order', header: 'Order', cell: ({ row }) => link('order', row.original.orderId, row.original.orderNumber) },
-		{ id: 'customer', header: 'Customer', cell: ({ row }) => link('customer', row.original.customerId, row.original.customer) },
-		{ id: 'total', header: 'Order total (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.orderTotal) },
-		{ id: 'amount', header: 'Discount (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.amount) }
+		{
+			id: 'order',
+			header: 'Order',
+			cell: ({ row }) => link('order', row.original.orderId, row.original.orderNumber)
+		},
+		{
+			id: 'customer',
+			header: 'Customer',
+			cell: ({ row }) => link('customer', row.original.customerId, row.original.customer)
+		},
+		{
+			id: 'total',
+			header: 'Order total (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.orderTotal)
+		},
+		{
+			id: 'amount',
+			header: 'Discount (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.amount)
+		}
 	];
 </script>
 
@@ -40,21 +58,62 @@
 		<Statuses {...flag(d.isActive)} />
 	{/snippet}
 	{#snippet actions()}
-		<FormDialog title="Edit {d.code}" action="?/edit" data={data.editForm} schema={discountEditSchema} dataType="json">
+		<FormDialog
+			title="Edit {d.code}"
+			action="?/edit"
+			data={data.editForm}
+			schema={discountEditSchema}
+			dataType="json"
+		>
 			{#snippet fields({ form, errors })}
 				<DiscountFields form={form as never} errors={errors as never} />
 			{/snippet}
 		</FormDialog>
 		{#if !d.usedCount}
-			<ConfirmAction action="?/delete" label="Delete" icon={Trash2} variant="destructive" title="Delete {d.code}?" description="Only a code nobody has used can be deleted." />
+			<ConfirmAction
+				action="?/delete"
+				label="Delete"
+				icon={Trash2}
+				variant="destructive"
+				title="Delete {d.code}?"
+				description="Only a code nobody has used can be deleted."
+			/>
 		{/if}
 	{/snippet}
 </PageHeader>
 
 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-	<StatCard stat={{ key: 'uses', label: 'Times used', value: d.usedCount, format: 'count', group: 'discount' }} />
-	<StatCard amharicMoney={false} stat={{ key: 'given', label: 'Discount given', value: data.sums.given, format: 'money', group: 'discount', tone: 'negative' }} />
-	<StatCard amharicMoney={false} stat={{ key: 'sales', label: 'Orders it was used on', value: data.sums.sales, format: 'money', group: 'discount', tone: 'positive' }} />
+	<StatCard
+		stat={{
+			key: 'uses',
+			label: 'Times used',
+			value: d.usedCount,
+			format: 'count',
+			group: 'discount'
+		}}
+	/>
+	<StatCard
+		amharicMoney={false}
+		stat={{
+			key: 'given',
+			label: 'Discount given',
+			value: data.sums.given,
+			format: 'money',
+			group: 'discount',
+			tone: 'negative'
+		}}
+	/>
+	<StatCard
+		amharicMoney={false}
+		stat={{
+			key: 'sales',
+			label: 'Orders it was used on',
+			value: data.sums.sales,
+			format: 'money',
+			group: 'discount',
+			tone: 'positive'
+		}}
+	/>
 </div>
 
 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[24rem_minmax(0,1fr)]">

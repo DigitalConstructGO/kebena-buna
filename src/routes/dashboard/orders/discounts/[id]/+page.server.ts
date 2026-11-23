@@ -18,7 +18,10 @@ import { discountEditSchema } from '#lib/schemas/orders.ts';
 
 async function loadCode(raw: string) {
 	const id = idParam(raw, 'Discount code');
-	const [d] = await db.select().from(discountCode).where(and(eq(discountCode.id, id), isNull(discountCode.deletedAt)));
+	const [d] = await db
+		.select()
+		.from(discountCode)
+		.where(and(eq(discountCode.id, id), isNull(discountCode.deletedAt)));
 	if (!d) error(404, 'Discount code not found');
 	return d;
 }
@@ -56,7 +59,7 @@ export const load = async ({ params }) => {
 	return {
 		code: d,
 		redemptions,
-		sums: sums!,
+		sums: sums,
 		stamps,
 		editForm: await superValidate(
 			{
@@ -75,7 +78,8 @@ export const actions = {
 	edit: async (event) => {
 		requirePermission(event.locals, 'discounts.manage');
 		const form = await superValidate(event.request, zod4(discountEditSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		if (form.data.kind === 'percent' && form.data.value > 100) {
 			setError(form, 'value', 'A percentage is at most 100');
 			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
@@ -95,7 +99,13 @@ export const actions = {
 		try {
 			await db.transaction(async (tx) => {
 				await tx.update(discountCode).set(values).where(eq(discountCode.id, before.id));
-				await recordAudit(tx, event, { table: 'discount_code', recordId: before.id, action: 'update', before, after: values });
+				await recordAudit(tx, event, {
+					table: 'discount_code',
+					recordId: before.id,
+					action: 'update',
+					before,
+					after: values
+				});
 			});
 		} catch (err) {
 			if (!isDuplicateKey(err)) throw err;
@@ -110,9 +120,16 @@ export const actions = {
 		const d = await loadCode(event.params.id);
 		if (d.usedCount > 0) return bad('This code has been used: switch it off instead.');
 		await db.transaction(async (tx) => {
-			await tx.update(discountCode).set(deletionStamp(event.locals.user?.id)).where(eq(discountCode.id, d.id));
+			await tx
+				.update(discountCode)
+				.set(deletionStamp(event.locals.user?.id))
+				.where(eq(discountCode.id, d.id));
 			await recordAudit(tx, event, { table: 'discount_code', recordId: d.id, action: 'delete' });
 		});
-		redirect('/dashboard/orders/discounts', { type: 'success', message: `${d.code} deleted` }, event.cookies);
+		redirect(
+			'/dashboard/orders/discounts',
+			{ type: 'success', message: `${d.code} deleted` },
+			event.cookies
+		);
 	}
 };

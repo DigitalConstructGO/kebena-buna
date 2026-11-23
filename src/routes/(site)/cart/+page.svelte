@@ -3,7 +3,7 @@
 	import { enhance } from '$app/forms';
 	import SelectComp from '@nahu/admin-kit/formComponents/SelectComp.svelte';
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { money, tr } from '#lib/format.ts';
 	import { siteHref } from '#lib/site/locale.ts';
 
@@ -28,7 +28,7 @@
 		);
 </script>
 
-<svelte:head><title>{m.cart_title()} · Kebena</title></svelte:head>
+<svelte:head><title>{m.site_page_title({ title: m.cart_title() })}</title></svelte:head>
 
 <div class="page">
 	<header class="head">

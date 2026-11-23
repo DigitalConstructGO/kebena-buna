@@ -12,7 +12,8 @@ import { webhookEvent } from '#lib/server/db/schema.ts';
 
 const FILTERS = ['provider', 'eventType', 'state'] as const;
 const spec: WhereSpec<(typeof FILTERS)[number]> = {
-	search: (term) => or(like(webhookEvent.eventId, `%${term}%`), like(webhookEvent.payload, `%${term}%`)),
+	search: (term) =>
+		or(like(webhookEvent.eventId, `%${term}%`), like(webhookEvent.payload, `%${term}%`)),
 	dateColumn: webhookEvent.receivedAt,
 	filters: {
 		provider: (v) => eq(webhookEvent.provider, v),
@@ -52,10 +53,21 @@ export const load = async ({ url }) => {
 		db.select({ total: count() }).from(webhookEvent).where(where),
 		facetCounts({
 			provider: () =>
-				db.select({ value: webhookEvent.provider, count: count() }).from(webhookEvent).where(buildWhere(query, spec, { except: 'provider' })).groupBy(webhookEvent.provider),
+				db
+					.select({ value: webhookEvent.provider, count: count() })
+					.from(webhookEvent)
+					.where(buildWhere(query, spec, { except: 'provider' }))
+					.groupBy(webhookEvent.provider),
 			eventType: () =>
-				db.select({ value: webhookEvent.eventType, count: count() }).from(webhookEvent).where(buildWhere(query, spec, { except: 'eventType' })).groupBy(webhookEvent.eventType)
+				db
+					.select({ value: webhookEvent.eventType, count: count() })
+					.from(webhookEvent)
+					.where(buildWhere(query, spec, { except: 'eventType' }))
+					.groupBy(webhookEvent.eventType)
 		})
 	]);
-	return { rows, server: { pagination: pagination(query, total), facets, filters: currentQuery(query) } };
+	return {
+		rows,
+		server: { pagination: pagination(query, total), facets, filters: currentQuery(query) }
+	};
 };

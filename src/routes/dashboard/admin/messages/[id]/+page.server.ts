@@ -21,7 +21,11 @@ async function loadMessage(raw: string) {
 export const load = async ({ params, locals }) => {
 	const row = await loadMessage(params.id);
 	const [template] = await db
-		.select({ id: notificationTemplate.id, subject: notificationTemplate.subject, body: notificationTemplate.body })
+		.select({
+			id: notificationTemplate.id,
+			subject: notificationTemplate.subject,
+			body: notificationTemplate.body
+		})
 		.from(notificationTemplate)
 		.where(
 			and(
@@ -57,21 +61,39 @@ async function setStatus(event: RequestEvent<{ id: string }>, to: 'queued' | 'sk
 		fail(400, {
 			message: {
 				type: 'error',
-				text: to === 'queued' ? 'Only a failed or skipped message can be sent again.' : 'Only a queued or failed message can be skipped.'
+				text:
+					to === 'queued'
+						? 'Only a failed or skipped message can be sent again.'
+						: 'Only a queued or failed message can be skipped.'
 			}
 		});
 	if (!from.includes(n.status)) return refused();
 	const moved = await db.transaction(async (tx) => {
 		const [res] = await tx
 			.update(notification)
-			.set(to === 'queued' ? { status: 'queued', scheduledFor: sql`NOW()`, lastError: null } : { status: 'skipped' })
+			.set(
+				to === 'queued'
+					? { status: 'queued', scheduledFor: sql`NOW()`, lastError: null }
+					: { status: 'skipped' }
+			)
 			.where(and(eq(notification.id, n.id), inArray(notification.status, FROM[to])));
 		if (!res.affectedRows) return false;
-		await recordAudit(tx, event, { table: 'notification', recordId: n.id, action: 'update', before: { status: n.status }, after: { status: to } });
+		await recordAudit(tx, event, {
+			table: 'notification',
+			recordId: n.id,
+			action: 'update',
+			before: { status: n.status },
+			after: { status: to }
+		});
 		return true;
 	});
 	if (!moved) return refused();
-	return { message: { type: 'success', text: to === 'queued' ? 'Queued to send again' : 'Skipped: it will not be sent' } };
+	return {
+		message: {
+			type: 'success',
+			text: to === 'queued' ? 'Queued to send again' : 'Skipped: it will not be sent'
+		}
+	};
 }
 
 export const actions = {

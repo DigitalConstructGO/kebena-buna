@@ -80,14 +80,21 @@ export async function bundleContents(bundleIds: number[]) {
 			variantName: enOf(productVariant.name),
 			sku: productVariant.sku,
 			variantPrice: productVariant.price,
-			variantLive: sql<number>`(${productVariant.deletedAt} is null and ${productVariant.isActive} = 1 and ${product.deletedAt} is null and ${product.isActive} = 1)`.mapWith(Number),
+			variantLive:
+				sql<number>`(${productVariant.deletedAt} is null and ${productVariant.isActive} = 1 and ${product.deletedAt} is null and ${product.isActive} = 1)`.mapWith(
+					Number
+				),
 			variantSize: enOf(variantSize.name),
 			variantGrams: variantSize.grams,
 			slotSize: enOf(slotSize.name),
 			slotGrams: slotSize.grams,
 			category: enOf(productCategory.name),
-			slotMin: sql<number | null>`(select min(ev.price) ${choosable})`.mapWith((v) => (v === null ? null : Number(v))),
-			slotMax: sql<number | null>`(select max(ev.price) ${choosable})`.mapWith((v) => (v === null ? null : Number(v))),
+			slotMin: sql<number | null>`(select min(ev.price) ${choosable})`.mapWith((v) =>
+				v === null ? null : Number(v)
+			),
+			slotMax: sql<number | null>`(select max(ev.price) ${choosable})`.mapWith((v) =>
+				v === null ? null : Number(v)
+			),
 			slotChoices: sql<number>`(select count(*) ${choosable})`.mapWith(Number)
 		})
 		.from(bundleItem)
@@ -129,7 +136,8 @@ export async function bundleContents(bundleIds: number[]) {
 /** One bundle's totals: bags, weight, what they would cost alone, and what the bundle charges. */
 export function bundleTotals(rule: BundleRule, items: BundleContent[]) {
 	const live = items.filter((i) => i.status);
-	const sum = (pick: (i: BundleContent) => number) => live.reduce((t, i) => t + i.quantity * pick(i), 0);
+	const sum = (pick: (i: BundleContent) => number) =>
+		live.reduce((t, i) => t + i.quantity * pick(i), 0);
 	const listMin = sum((i) => i.min ?? 0);
 	const listMax = sum((i) => i.max ?? 0);
 	const low = bundlePrice(rule, listMin);
@@ -153,7 +161,11 @@ export function bundleTotals(rule: BundleRule, items: BundleContent[]) {
 export const BUNDLE_TEXT = ['name', 'summary'];
 
 /** A bundle form's values as columns: text folded per language, the window as times of day. */
-export function bundleRow(d: { startsOn?: string | null; endsOn?: string | null; [key: string]: unknown }) {
+export function bundleRow(d: {
+	startsOn?: string | null;
+	endsOn?: string | null;
+	[key: string]: unknown;
+}) {
 	const { startsOn, endsOn, ...rest } = d;
 	return {
 		...packLocalized(rest, BUNDLE_TEXT),
@@ -163,12 +175,17 @@ export function bundleRow(d: { startsOn?: string | null; endsOn?: string | null;
 }
 
 /** How many times each bundle has been sold: one per bundle in an order, however many bags. */
-export const timesSoldOf = sql<number>`(select count(distinct ol.order_id, ol.bundle_group) from order_line ol where ol.bundle_id = \`bundle\`.\`id\`)`.mapWith(
-	Number
-);
+export const timesSoldOf =
+	sql<number>`(select count(distinct ol.order_id, ol.bundle_group) from order_line ol where ol.bundle_id = \`bundle\`.\`id\`)`.mapWith(
+		Number
+	);
 
 export async function bundleSold(tx: Writer, bundleId: number) {
-	const [line] = await tx.select({ id: orderLine.id }).from(orderLine).where(eq(orderLine.bundleId, bundleId)).limit(1);
+	const [line] = await tx
+		.select({ id: orderLine.id })
+		.from(orderLine)
+		.where(eq(orderLine.bundleId, bundleId))
+		.limit(1);
 	return Boolean(line);
 }
 
@@ -180,7 +197,8 @@ export class BundleRefused extends Error {}
 
 /** Why the bundle is not on sale to this customer now, or null when it is. */
 export function notOnSale(b: Bundle, opts: { isMember?: boolean; now?: Date } = {}) {
-	if (b.deletedAt || !b.isActive || b.publishStatus !== 'published') return 'This bundle is not on sale.';
+	if (b.deletedAt || !b.isActive || b.publishStatus !== 'published')
+		return 'This bundle is not on sale.';
 	if (!inWindow(b, opts.now)) return 'This offer is not running now.';
 	if (b.isMemberOnly && !opts.isMember) return 'This bundle is for members.';
 	return null;
@@ -205,13 +223,15 @@ export async function priceBundle(
 	const items = await tx
 		.select()
 		.from(bundleItem)
-		.where(and(eq(bundleItem.bundleId, b.id), isNull(bundleItem.deletedAt), eq(bundleItem.status, true)))
+		.where(
+			and(eq(bundleItem.bundleId, b.id), isNull(bundleItem.deletedAt), eq(bundleItem.status, true))
+		)
 		.orderBy(bundleItem.sortOrder, bundleItem.id);
 	if (!items.length) throw new BundleRefused('This bundle is not on sale.');
 
-	const wanted = [...new Set([...items.map((i) => i.variantId), ...picks.map((p) => p.variantId)])].filter(
-		(id): id is number => id !== null
-	);
+	const wanted = [
+		...new Set([...items.map((i) => i.variantId), ...picks.map((p) => p.variantId)])
+	].filter((id): id is number => id !== null);
 	const variants = await tx
 		.select({
 			id: productVariant.id,
@@ -237,16 +257,24 @@ export async function priceBundle(
 			if (!v || v.variantDeletedAt || !v.variantActive || v.productDeletedAt || !v.productActive) {
 				throw new BundleRefused('Part of this bundle is sold out.');
 			}
-			lines.push({ itemId: item.id, variantId: v.id, quantity: item.quantity, unitPrice: Number(v.price) });
+			lines.push({
+				itemId: item.id,
+				variantId: v.id,
+				quantity: item.quantity,
+				unitPrice: Number(v.price)
+			});
 			continue;
 		}
 		const mine = picks.filter((p) => p.itemId === item.id);
 		if (mine.length !== item.quantity) {
-			throw new BundleRefused(`Choose ${item.quantity} coffee${item.quantity === 1 ? '' : 's'} for each choice in the bundle.`);
+			throw new BundleRefused(
+				`Choose ${item.quantity} coffee${item.quantity === 1 ? '' : 's'} for each choice in the bundle.`
+			);
 		}
 		for (const pick of mine) {
 			const v = byId.get(pick.variantId);
-			if (!v || !isChoosable(v, item)) throw new BundleRefused('One of the coffees chosen cannot go in this bundle.');
+			if (!v || !isChoosable(v, item))
+				throw new BundleRefused('One of the coffees chosen cannot go in this bundle.');
 			lines.push({ itemId: item.id, variantId: v.id, quantity: 1, unitPrice: Number(v.price) });
 		}
 	}

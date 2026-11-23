@@ -10,7 +10,12 @@
 import { and, eq, inArray } from 'drizzle-orm';
 import type { Writer } from '@nahu/admin-kit/server/db';
 import { localToday } from '@nahu/admin-kit/time';
-import { membership, orderLine, subscription, subscriptionDelivery } from '#lib/server/db/schema.ts';
+import {
+	membership,
+	orderLine,
+	subscription,
+	subscriptionDelivery
+} from '#lib/server/db/schema.ts';
 import { addDays, addMonths, termDates } from '#lib/server/memberships.ts';
 import { readSetting } from '#lib/server/stockReads.ts';
 
@@ -29,7 +34,12 @@ export function roastDayFrom(from: string, weekdays: number[]) {
 }
 
 /** The roast days of `count` deliveries: every two weeks or every month, each on a roast day. */
-export function deliverySchedule(first: string, count: number, frequency: 'biweekly' | 'monthly', weekdays: number[]) {
+export function deliverySchedule(
+	first: string,
+	count: number,
+	frequency: 'biweekly' | 'monthly',
+	weekdays: number[]
+) {
 	const dates: string[] = [];
 	for (let n = 0; n < count; n++) {
 		const base = frequency === 'biweekly' ? addDays(first, n * 14) : addMonths(first, n);
@@ -41,9 +51,18 @@ export function deliverySchedule(first: string, count: number, frequency: 'biwee
 /** Activates the memberships and subscriptions a now-paid order bought. */
 export async function activateOrderItems(tx: Writer, orderId: number) {
 	const lines = await tx
-		.select({ id: orderLine.id, itemType: orderLine.itemType, subscriptionId: orderLine.subscriptionId })
+		.select({
+			id: orderLine.id,
+			itemType: orderLine.itemType,
+			subscriptionId: orderLine.subscriptionId
+		})
 		.from(orderLine)
-		.where(and(eq(orderLine.orderId, orderId), inArray(orderLine.itemType, ['membership', 'subscription_bundle'])));
+		.where(
+			and(
+				eq(orderLine.orderId, orderId),
+				inArray(orderLine.itemType, ['membership', 'subscription_bundle'])
+			)
+		);
 	if (!lines.length) return;
 	const today = localToday();
 
@@ -52,7 +71,12 @@ export async function activateOrderItems(tx: Writer, orderId: number) {
 		const pending = await tx
 			.select({ id: membership.id, planId: membership.planId, startsOn: membership.startsOn })
 			.from(membership)
-			.where(and(inArray(membership.orderLineId, membershipLines), eq(membership.status, 'pending_payment')))
+			.where(
+				and(
+					inArray(membership.orderLineId, membershipLines),
+					eq(membership.status, 'pending_payment')
+				)
+			)
 			.for('update');
 		for (const m of pending) {
 			const start = m.startsOn && m.startsOn > today ? m.startsOn : today;
@@ -69,16 +93,29 @@ export async function activateOrderItems(tx: Writer, orderId: number) {
 	if (subscriptionIds.length) {
 		const weekdays = await readSetting<number[]>('roast.weekdays', [2, 5]);
 		const pending = await tx
-			.select({ id: subscription.id, frequency: subscription.frequency, deliveries: subscription.deliveriesPurchased })
+			.select({
+				id: subscription.id,
+				frequency: subscription.frequency,
+				deliveries: subscription.deliveriesPurchased
+			})
 			.from(subscription)
-			.where(and(inArray(subscription.id, subscriptionIds), eq(subscription.status, 'pending_payment')))
+			.where(
+				and(inArray(subscription.id, subscriptionIds), eq(subscription.status, 'pending_payment'))
+			)
 			.for('update');
 		for (const s of pending) {
-			const dates = deliverySchedule(roastDayFrom(addDays(today, 2), weekdays), s.deliveries, s.frequency, weekdays);
+			const dates = deliverySchedule(
+				roastDayFrom(addDays(today, 2), weekdays),
+				s.deliveries,
+				s.frequency,
+				weekdays
+			);
 			if (dates.length) {
 				await tx
 					.insert(subscriptionDelivery)
-					.values(dates.map((roastDate, i) => ({ subscriptionId: s.id, sequence: i + 1, roastDate })));
+					.values(
+						dates.map((roastDate, i) => ({ subscriptionId: s.id, sequence: i + 1, roastDate }))
+					);
 			}
 			await tx
 				.update(subscription)

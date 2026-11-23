@@ -9,7 +9,8 @@
 import { JOBS_ENABLED } from '$app/env/private';
 import { sendDueMessages } from './sendMessages.ts';
 import { releaseExpiredHolds } from './releaseHolds.ts';
-import { expireUnpaidTicketOrders } from './expireTicketOrders.ts';
+import { expireUnpaidOrders } from './expireUnpaidOrders.ts';
+import { reconcileChapaPayments } from './reconcilePayments.ts';
 import { dailySalesAlert, lowStockAlert, staleInboxAlert } from './staffAlerts.ts';
 import {
 	ageMemberships,
@@ -36,11 +37,16 @@ const steps =
  */
 const JOBS: Job[] = [
 	{ name: 'messages', everySeconds: 30, run: sendDueMessages },
-	{ name: 'holds', everySeconds: 300, run: steps(releaseExpiredHolds, expireUnpaidTicketOrders) },
+	{ name: 'holds', everySeconds: 300, run: steps(releaseExpiredHolds, expireUnpaidOrders) },
+	{ name: 'payments', everySeconds: 300, run: reconcileChapaPayments },
 	{ name: 'memberships', everySeconds: 600, run: steps(ageMemberships, membershipReminders) },
 	{ name: 'subscriptions', everySeconds: 600, run: subscriptionTopUps },
 	{ name: 'invoices', everySeconds: 600, run: steps(markOverdueInvoices, invoiceReminders) },
-	{ name: 'staff alerts', everySeconds: 600, run: steps(lowStockAlert, dailySalesAlert, staleInboxAlert) }
+	{
+		name: 'staff alerts',
+		everySeconds: 600,
+		run: steps(lowStockAlert, dailySalesAlert, staleInboxAlert)
+	}
 ];
 
 /** Started once per process, even when the dev server reloads this module. */

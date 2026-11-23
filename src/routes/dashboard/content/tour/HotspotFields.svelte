@@ -33,17 +33,65 @@
 
 <input type="hidden" name="sceneId" value={$form.sceneId} />
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-	<InputComp label="Kind" name="kind" type="select" items={choicesOf(HOTSPOT_KINDS)} {form} {errors} required />
+	<InputComp
+		label="Kind"
+		name="kind"
+		type="select"
+		items={choicesOf(HOTSPOT_KINDS)}
+		{form}
+		{errors}
+		required
+	/>
 	{#if kind === 'product'}
-		<InputComp label="Product" name="productId" type="combo" items={options.products} {form} {errors} required />
+		<InputComp
+			label="Product"
+			name="productId"
+			type="combo"
+			items={options.products}
+			{form}
+			{errors}
+			required
+		/>
 	{:else if kind === 'lot'}
-		<InputComp label="Lot" name="lotId" type="combo" items={options.lots} {form} {errors} required />
+		<InputComp
+			label="Lot"
+			name="lotId"
+			type="combo"
+			items={options.lots}
+			{form}
+			{errors}
+			required
+		/>
 	{:else if kind === 'origin_map'}
-		<InputComp label="Station on the map" name="stationId" type="combo" items={options.stations} {form} {errors} required />
+		<InputComp
+			label="Station on the map"
+			name="stationId"
+			type="combo"
+			items={options.stations}
+			{form}
+			{errors}
+			required
+		/>
 	{:else if kind === 'booking'}
-		<InputComp label="What it books" name="bookableId" type="combo" items={options.bookables} {form} {errors} required />
+		<InputComp
+			label="What it books"
+			name="bookableId"
+			type="combo"
+			items={options.bookables}
+			{form}
+			{errors}
+			required
+		/>
 	{:else if kind === 'scene'}
-		<InputComp label="Goes to scene" name="targetSceneId" type="combo" items={options.scenes} {form} {errors} required />
+		<InputComp
+			label="Goes to scene"
+			name="targetSceneId"
+			type="combo"
+			items={options.scenes}
+			{form}
+			{errors}
+			required
+		/>
 	{:else if kind === 'link'}
 		<InputComp
 			label="Link"
@@ -54,18 +102,54 @@
 			required
 		/>
 	{:else}
-		<InputComp label="Event (optional)" name="eventId" type="combo" items={options.events} {form} {errors} />
+		<InputComp
+			label="Event (optional)"
+			name="eventId"
+			type="combo"
+			items={options.events}
+			{form}
+			{errors}
+		/>
 	{/if}
 	<div class="col-span-full">
 		<LanguageTabs {form} {errors} fields={['title', 'body']}>
 			{#snippet children({ lang, suffix, language })}
-				<InputComp label="Title ({language})" name="title{suffix}" {form} {errors} required={lang === 'en'} />
-				<InputComp label="Text ({language})" name="body{suffix}" type="textarea" rows={3} {form} {errors} />
+				<InputComp
+					label="Title ({language})"
+					name="title{suffix}"
+					{form}
+					{errors}
+					required={lang === 'en'}
+				/>
+				<InputComp
+					label="Text ({language})"
+					name="body{suffix}"
+					type="textarea"
+					rows={3}
+					{form}
+					{errors}
+				/>
 			{/snippet}
 		</LanguageTabs>
 	</div>
-	<InputComp label="Yaw° (left–right)" name="yaw" type="number" step="0.001" {form} {errors} required />
-	<InputComp label="Pitch° (up–down)" name="pitch" type="number" step="0.001" {form} {errors} required />
+	<InputComp
+		label="Yaw° (left–right)"
+		name="yaw"
+		type="number"
+		step="0.001"
+		{form}
+		{errors}
+		required
+	/>
+	<InputComp
+		label="Pitch° (up–down)"
+		name="pitch"
+		type="number"
+		step="0.001"
+		{form}
+		{errors}
+		required
+	/>
 	<InputComp label="Video link" name="videoUrl" type="url" {form} {errors} />
 	<InputComp label="Order" name="sortOrder" type="number" min="0" {form} {errors} />
 </div>

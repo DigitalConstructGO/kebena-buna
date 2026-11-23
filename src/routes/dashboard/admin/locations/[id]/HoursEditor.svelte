@@ -66,7 +66,9 @@
 								class="w-32"
 								aria-label="{WEEKDAYS[day.weekday]} {field}"
 								disabled={disabled || day.isClosed}
-								bind:value={() => $form.days[i][field] ?? '', (v) => ($form.days[i][field] = v || null)}
+								bind:value={
+									() => $form.days[i][field] ?? '', (v) => ($form.days[i][field] = v || null)
+								}
 							/>
 						</Table.Cell>
 					{/each}

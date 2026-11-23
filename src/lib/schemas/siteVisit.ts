@@ -4,9 +4,10 @@
  * (`/experiences/{slug}`). Client-safe, so each form checks itself before posting.
  */
 import { z } from 'zod/v4';
-import { m } from '#lib/paraglide/messages.js';
+import { m } from '#lib/i18n.ts';
 import {
 	buyerFields,
+	payWithField,
 	siteCount,
 	siteFormBase,
 	siteOptionalDate,
@@ -18,7 +19,12 @@ import {
 
 /** How many of each ticket type: one row per type on sale, most left at 0. */
 const ticketItems = z
-	.array(z.object({ ticketTypeId: z.number().int().positive(), quantity: z.number().int().min(0).max(100) }))
+	.array(
+		z.object({
+			ticketTypeId: z.number().int().positive(),
+			quantity: z.number().int().min(0).max(100)
+		})
+	)
 	.default([]);
 
 const atLeastOne = (d: { items: { quantity: number }[] }) => d.items.some((i) => i.quantity > 0);
@@ -28,7 +34,11 @@ export const ticketOrderSchema = z
 	.object({
 		...buyerFields,
 		...siteFormBase,
-		slotId: z.coerce.number({ error: () => m.visit_err_slot() }).int().positive({ error: () => m.visit_err_slot() }),
+		...payWithField,
+		slotId: z.coerce
+			.number({ error: () => m.visit_err_slot() })
+			.int()
+			.positive({ error: () => m.visit_err_slot() }),
 		audienceId: z.coerce.number().int().positive(),
 		/** The audience's ID declaration (6.2), when it has one. */
 		declared: z.boolean().default(false),
@@ -41,6 +51,7 @@ export const eventOrderSchema = z
 	.object({
 		...buyerFields,
 		...siteFormBase,
+		...payWithField,
 		audienceId: z.coerce.number().int().positive(),
 		declared: z.boolean().default(false),
 		items: ticketItems
@@ -62,7 +73,12 @@ export const bookingRequestSchema = z.object({
 	phone: sitePhone,
 	email: siteOptionalEmail,
 	/** A session, for bookables that run them; enquiry-only ones ask for a date instead. */
-	sessionId: z.preprocess((v) => (v === '' || v === null || v === undefined ? null : v), z.coerce.number().int().positive().nullable()).default(null),
+	sessionId: z
+		.preprocess(
+			(v) => (v === '' || v === null || v === undefined ? null : v),
+			z.coerce.number().int().positive().nullable()
+		)
+		.default(null),
 	preferredDate: siteOptionalDate,
 	partySize: siteCount(1, 250).default(1),
 	language: siteOptionalText(8),

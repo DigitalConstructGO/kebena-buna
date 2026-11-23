@@ -36,25 +36,48 @@
 	];
 	type Recent = (typeof data.recent)[number];
 	const recentColumns: ColumnDef<Recent>[] = [
-		{ id: 'code', header: 'Ticket', cell: ({ row }) => link('ticket', row.original.id, row.original.code) },
+		{
+			id: 'code',
+			header: 'Ticket',
+			cell: ({ row }) => link('ticket', row.original.id, row.original.code)
+		},
 		{ id: 'date', header: 'Visit', cell: ({ row }) => date(row.original.visitDate) },
 		{ id: 'holder', header: 'Holder', cell: ({ row }) => row.original.holderName ?? '—' },
 		{ id: 'audience', header: 'Audience', cell: ({ row }) => row.original.audience },
-		{ id: 'admits', header: 'Admits', meta: { align: 'right' }, cell: ({ row }) => row.original.admits },
+		{
+			id: 'admits',
+			header: 'Admits',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.admits
+		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) }
 	];
 </script>
 
-<PageHeader title={tr(t.name)} eyebrow={t.eventId ? 'Event ticket type' : 'Entry ticket type'} description={t.code}>
+<PageHeader
+	title={tr(t.name)}
+	eyebrow={t.eventId ? 'Event ticket type' : 'Entry ticket type'}
+	description={t.code}
+>
 	{#snippet badges()}
 		<Statuses {...flag(t.isActive, 'On sale', 'Off sale')} />
 	{/snippet}
 	{#snippet actions()}
 		{#if data.canManage}
-			<FormDialog title="Edit {tr(t.name)}" action="?/edit" data={data.editForm} schema={ticketTypeEditSchema}>
+			<FormDialog
+				title="Edit {tr(t.name)}"
+				action="?/edit"
+				data={data.editForm}
+				schema={ticketTypeEditSchema}
+			>
 				{#snippet fields({ form, errors })}
 					<InputComp type="hidden" name="id" {form} {errors} />
-					<TicketTypeFields form={form as never} errors={errors as never} taxRates={data.taxRates} events={data.events} />
+					<TicketTypeFields
+						form={form as never}
+						errors={errors as never}
+						taxRates={data.taxRates}
+						events={data.events}
+					/>
 				{/snippet}
 			</FormDialog>
 			<ConfirmAction
@@ -70,9 +93,36 @@
 </PageHeader>
 
 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-	<StatCard stat={{ key: 'valid', label: 'Valid', value: count('valid'), format: 'count', group: 'type', tone: 'neutral' }} />
-	<StatCard stat={{ key: 'used', label: 'Used', value: count('used'), format: 'count', group: 'type', tone: 'positive' }} />
-	<StatCard stat={{ key: 'cancelled', label: 'Cancelled or refunded', value: count('cancelled') + count('refunded'), format: 'count', group: 'type', tone: 'negative' }} />
+	<StatCard
+		stat={{
+			key: 'valid',
+			label: 'Valid',
+			value: count('valid'),
+			format: 'count',
+			group: 'type',
+			tone: 'neutral'
+		}}
+	/>
+	<StatCard
+		stat={{
+			key: 'used',
+			label: 'Used',
+			value: count('used'),
+			format: 'count',
+			group: 'type',
+			tone: 'positive'
+		}}
+	/>
+	<StatCard
+		stat={{
+			key: 'cancelled',
+			label: 'Cancelled or refunded',
+			value: count('cancelled') + count('refunded'),
+			format: 'count',
+			group: 'type',
+			tone: 'negative'
+		}}
+	/>
 </div>
 
 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[24rem_minmax(0,1fr)]">
@@ -86,7 +136,10 @@
 					{ name: 'Description', value: tr(t.description) || '—', long: 40 },
 					{ name: 'Proof at the door', value: tr(t.requiresProof) || '—' },
 					{ name: 'People per ticket', value: t.admitsPerTicket },
-					{ name: 'Per order', value: `${t.minQuantity}${t.maxQuantity ? `–${t.maxQuantity}` : '+'}` },
+					{
+						name: 'Per order',
+						value: `${t.minQuantity}${t.maxQuantity ? `–${t.maxQuantity}` : '+'}`
+					},
 					{ name: 'Counts toward capacity', value: yesNo(t.countsTowardCapacity) },
 					{ name: 'Staff only', value: yesNo(t.isStaffOnly) },
 					{ name: 'Members only', value: yesNo(t.isMemberOnly) },
@@ -97,7 +150,10 @@
 		</PageSection>
 	</div>
 	<div class="grid min-w-0 grid-cols-1 content-start gap-6">
-		<PageSection title="Prices" hint="A missing price means the type is not sold to that audience. Every change is in the audit log.">
+		<PageSection
+			title="Prices"
+			hint="A missing price means the type is not sold to that audience. Every change is in the audit log."
+		>
 			{#snippet actions()}
 				<FormDialog
 					title="Prices for {tr(t.name)}"

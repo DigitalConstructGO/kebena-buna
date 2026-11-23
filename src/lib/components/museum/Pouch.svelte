@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { m } from '#lib/i18n.ts';
+
 	/** A stand-up coffee pouch built in 3D: printed front, plain back, gusseted sides, crimped seal. */
 	let {
 		src,
@@ -14,6 +16,12 @@
 		name?: string;
 		eager?: boolean;
 	} = $props();
+
+	/** The brand, set in two lines on the back: its first word, then the rest. */
+	const brand = $derived.by(() => {
+		const [first, ...rest] = m.museum_bag_brand().split(' ');
+		return [first, rest.join(' ')] as const;
+	});
 </script>
 
 <!-- size it with --w; turn it with --ry and --rx (degrees) -->
@@ -28,19 +36,21 @@
 			decoding="async"
 			draggable="false"
 		/>
-		<span class="wt">Net wt {weight}</span>
+		<span class="wt">{m.museum_bag_net_weight({ weight })}</span>
 		<span class="light"></span>
 	</div>
 	<div class="face back" aria-hidden="true">
 		<span class="frame"></span>
-		<span class="brand">Kebena<br />Coffee</span>
-		<span class="tag">{name ?? 'From farm to cup'}</span>
+		<span class="brand">
+			{brand[0]}{#if brand[1]}<br />{brand[1]}{/if}
+		</span>
+		<span class="tag">{name ?? m.museum_tagline()}</span>
 		<svg class="art" viewBox="0 0 192 48" preserveAspectRatio="xMidYMax meet">
 			<path
 				d="M7 48V24a17 17 0 0 1 34 0v24M14 48V24a10 10 0 0 1 20 0v24M72 20a11 11 0 1 0 .1 0M50 48l15-15 11 10 9-8 11 13M120 45c-14-12-14-30 0-41 14 11 14 29 0 41ZM120 4v44M150 48V29h36v19M146 30l22-20 22 20"
 			/>
 		</svg>
-		<span class="wt">Net wt {weight}</span>
+		<span class="wt">{m.museum_bag_net_weight({ weight })}</span>
 	</div>
 	<div class="side left" aria-hidden="true"></div>
 	<div class="side right" aria-hidden="true"></div>

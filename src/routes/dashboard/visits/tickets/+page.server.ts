@@ -10,12 +10,25 @@ import {
 	type WhereSpec
 } from '@nahu/admin-kit/server/queryFilters';
 import { db } from '#lib/server/db/index.ts';
-import { audience, customer, event, order, ticket, ticketType, visitSlot } from '#lib/server/db/schema.ts';
+import {
+	audience,
+	customer,
+	event,
+	order,
+	ticket,
+	ticketType,
+	visitSlot
+} from '#lib/server/db/schema.ts';
 import { enOf } from '#lib/server/localized.ts';
 import { TICKET_STATUSES } from '#lib/constants.ts';
 
 const FILTERS = ['status', 'ticketTypeId', 'audienceId'] as const;
-const SORTS = { code: ticket.code, visitDate: ticket.visitDate, issuedAt: ticket.issuedAt, admits: ticket.admits };
+const SORTS = {
+	code: ticket.code,
+	visitDate: ticket.visitDate,
+	issuedAt: ticket.issuedAt,
+	admits: ticket.admits
+};
 
 const spec: WhereSpec<(typeof FILTERS)[number]> = {
 	dateColumn: ticket.visitDate,
@@ -37,7 +50,8 @@ const spec: WhereSpec<(typeof FILTERS)[number]> = {
 };
 
 /** Search reaches the customer's name and phone, so every count joins them too. */
-const joined = <T extends MySqlSelect>(q: T) => q.leftJoin(customer, eq(ticket.customerId, customer.id));
+const joined = <T extends MySqlSelect>(q: T) =>
+	q.leftJoin(customer, eq(ticket.customerId, customer.id));
 
 export const load = async ({ url }) => {
 	const query = parseTableQuery(url, FILTERS, 20, Object.keys(SORTS));
@@ -107,5 +121,8 @@ export const load = async ({ url }) => {
 					.groupBy(audience.id, audience.name)
 		})
 	]);
-	return { rows, server: { pagination: pagination(query, total), facets, filters: currentQuery(query) } };
+	return {
+		rows,
+		server: { pagination: pagination(query, total), facets, filters: currentQuery(query) }
+	};
 };

@@ -23,7 +23,8 @@ const MAX_ATTEMPTS = 5;
 const STALE_MINUTES = 10;
 
 type Message = typeof notification.$inferSelect;
-type Outcome = { status: 'sent'; providerRef?: string } | { status: 'skipped' | 'retry'; error: string };
+type Outcome =
+	{ status: 'sent'; providerRef?: string } | { status: 'skipped' | 'retry'; error: string };
 
 /** Sends what is due. Returns how many messages it handled. */
 export async function sendDueMessages(): Promise<number> {
@@ -49,13 +50,18 @@ export async function sendDueMessages(): Promise<number> {
 		// Claimed here or by another server; `scheduledFor` now marks when sending started.
 		const [claim] = await db
 			.update(notification)
-			.set({ status: 'sending', attempts: sql`${notification.attempts} + 1`, scheduledFor: sql`NOW()` })
+			.set({
+				status: 'sending',
+				attempts: sql`${notification.attempts} + 1`,
+				scheduledFor: sql`NOW()`
+			})
 			.where(and(eq(notification.id, id), eq(notification.status, 'queued')));
 		if (!claim.affectedRows) continue;
 		const [m] = await db.select().from(notification).where(eq(notification.id, id));
-		const outcome = await sendOne(m).catch(
-			(err: unknown): Outcome => ({ status: 'retry', error: err instanceof Error ? err.message : String(err) })
-		);
+		const outcome = await sendOne(m).catch((err: unknown): Outcome => ({
+			status: 'retry',
+			error: err instanceof Error ? err.message : String(err)
+		}));
 		await settle(m, outcome);
 		handled++;
 	}
@@ -66,17 +72,26 @@ async function settle(m: Message, outcome: Outcome) {
 	if (outcome.status === 'sent') {
 		await db
 			.update(notification)
-			.set({ status: 'sent', sentAt: new Date(), lastError: null, providerRef: outcome.providerRef ?? null })
+			.set({
+				status: 'sent',
+				sentAt: new Date(),
+				lastError: null,
+				providerRef: outcome.providerRef ?? null
+			})
 			.where(eq(notification.id, m.id));
 		return;
 	}
 	if (outcome.status === 'skipped') {
-		await db.update(notification).set({ status: 'skipped', lastError: outcome.error.slice(0, 500) }).where(eq(notification.id, m.id));
+		await db
+			.update(notification)
+			.set({ status: 'skipped', lastError: outcome.error.slice(0, 500) })
+			.where(eq(notification.id, m.id));
 		return;
 	}
 	const attempts = m.attempts; // already counted at the claim
 	const giveUp = attempts >= MAX_ATTEMPTS;
-	if (!giveUp) console.warn(`[messages] #${m.id} ${m.channel} failed (try ${attempts}): ${outcome.error}`);
+	if (!giveUp)
+		console.warn(`[messages] #${m.id} ${m.channel} failed (try ${attempts}): ${outcome.error}`);
 	else console.error(`[messages] #${m.id} ${m.channel} failed for good: ${outcome.error}`);
 	await db
 		.update(notification)
@@ -118,7 +133,11 @@ async function sendOne(m: Message): Promise<Outcome> {
 async function findTemplate(key: string, channel: Message['channel'], locale: string) {
 	const locales = [...new Set([locale, 'am', 'en'])];
 	const rows = await db
-		.select({ locale: notificationTemplate.locale, subject: notificationTemplate.subject, body: notificationTemplate.body })
+		.select({
+			locale: notificationTemplate.locale,
+			subject: notificationTemplate.subject,
+			body: notificationTemplate.body
+		})
 		.from(notificationTemplate)
 		.where(
 			and(
@@ -138,14 +157,18 @@ async function consented(m: Message) {
 	const [latest] = await db
 		.select({ granted: marketingConsent.granted })
 		.from(marketingConsent)
-		.where(and(eq(marketingConsent.customerId, m.customerId), eq(marketingConsent.channel, m.channel)))
+		.where(
+			and(eq(marketingConsent.customerId, m.customerId), eq(marketingConsent.channel, m.channel))
+		)
 		.orderBy(desc(marketingConsent.id))
 		.limit(1);
 	return Boolean(latest?.granted);
 }
 
 function dryRun(m: Message, summary: string): Outcome {
-	console.log(`[messages] dry run #${m.id} ${m.channel} → ${m.recipient}: ${summary.slice(0, 120)}`);
+	console.log(
+		`[messages] dry run #${m.id} ${m.channel} → ${m.recipient}: ${summary.slice(0, 120)}`
+	);
 	return { status: 'sent', providerRef: 'dry-run' };
 }
 
@@ -160,9 +183,16 @@ async function sendSms(phone: string, text: string): Promise<Outcome> {
 		body: JSON.stringify({ token: SMS_KEY, phone: phone.replace(/^\+/, ''), msg: text }),
 		signal: AbortSignal.timeout(15_000)
 	});
-	const data = (await res.json().catch(() => null)) as { error?: boolean; msg?: string; data?: { id?: string } } | null;
+	const data = (await res.json().catch(() => null)) as {
+		error?: boolean;
+		msg?: string;
+		data?: { id?: string };
+	} | null;
 	if (res.status >= 400 || !data || data.error === true) {
-		return { status: 'retry', error: String(data?.msg ?? `The SMS provider answered ${res.status}`) };
+		return {
+			status: 'retry',
+			error: String(data?.msg ?? `The SMS provider answered ${res.status}`)
+		};
 	}
 	return { status: 'sent', providerRef: data.data?.id ? String(data.data.id) : undefined };
 }
@@ -170,7 +200,8 @@ async function sendSms(phone: string, text: string): Promise<Outcome> {
 let transport: Transporter | undefined;
 
 async function sendEmail(to: string, subject: string, html: string): Promise<Outcome> {
-	if (!SMTP_URL || !SMTP_FROM) return { status: 'retry', error: 'SMTP_URL and SMTP_FROM must be set on the server' };
+	if (!SMTP_URL || !SMTP_FROM)
+		return { status: 'retry', error: 'SMTP_URL and SMTP_FROM must be set on the server' };
 	transport ??= nodemailer.createTransport(SMTP_URL);
 	const info = await transport.sendMail({ from: SMTP_FROM, to, subject, html });
 	return { status: 'sent', providerRef: info.messageId?.slice(0, 100) };

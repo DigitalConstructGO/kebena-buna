@@ -120,7 +120,14 @@ async function queueBookingMessage(tx: Writer, bookingId: number, to: 'confirmed
 			time: startsAt ? localClock(startsAt) : '',
 			party: b.party
 		},
-		{ refType: 'booking', refId: bookingId, dedupe: to === 'confirmed' ? `booking:${bookingId}:confirmed:${when}` : `booking:${bookingId}:cancelled` }
+		{
+			refType: 'booking',
+			refId: bookingId,
+			dedupe:
+				to === 'confirmed'
+					? `booking:${bookingId}:confirmed:${when}`
+					: `booking:${bookingId}:cancelled`
+		}
 	);
 }
 
@@ -150,7 +157,10 @@ export async function syncSessionBooked(tx: Writer, sessionId: number) {
 		.for('share');
 	// Only growth is refused: a cancellation must still go through on a session already over.
 	if (n > session.capacity && n > session.booked)
-		throw new WriteRefused('partySize', `The session takes ${session.capacity}; its bookings would need ${n} places`);
+		throw new WriteRefused(
+			'partySize',
+			`The session takes ${session.capacity}; its bookings would need ${n} places`
+		);
 	await tx.update(bookingSession).set({ booked: n }).where(eq(bookingSession.id, sessionId));
 }
 
@@ -161,7 +171,11 @@ export async function syncSessionBooked(tx: Writer, sessionId: number) {
  */
 export async function holdPlaces(tx: Writer, bookingId: number, places: number) {
 	const [b] = await tx
-		.select({ status: booking.status, heldPlaces: booking.heldPlaces, visitSlotId: booking.visitSlotId })
+		.select({
+			status: booking.status,
+			heldPlaces: booking.heldPlaces,
+			visitSlotId: booking.visitSlotId
+		})
 		.from(booking)
 		.where(eq(booking.id, bookingId))
 		.for('update');
@@ -171,9 +185,11 @@ export async function holdPlaces(tx: Writer, bookingId: number, places: number) 
 	if (delta > 0) {
 		if (b.status === 'cancelled' || b.status === 'declined')
 			throw new WriteRefused('heldPlaces', `A ${b.status} booking holds no places`);
-		if (!b.visitSlotId) throw new WriteRefused('heldPlaces', 'The booking has no visit slot to hold places on');
+		if (!b.visitSlotId)
+			throw new WriteRefused('heldPlaces', 'The booking has no visit slot to hold places on');
 	}
-	if (b.visitSlotId) await moveCounters(tx, b.visitSlotId, delta, { column: 'held', field: 'heldPlaces' });
+	if (b.visitSlotId)
+		await moveCounters(tx, b.visitSlotId, delta, { column: 'held', field: 'heldPlaces' });
 	await tx.update(booking).set({ heldPlaces: places }).where(eq(booking.id, bookingId));
 }
 
@@ -308,7 +324,10 @@ export async function nextBookingNumber(tx: Writer) {
 	for (;;) {
 		const n = await nextNumber(tx, `booking:${yy}`);
 		const number = `BK-${yy}-${String(n).padStart(4, '0')}`;
-		const [taken] = await tx.select({ id: booking.id }).from(booking).where(eq(booking.number, number));
+		const [taken] = await tx
+			.select({ id: booking.id })
+			.from(booking)
+			.where(eq(booking.number, number));
 		if (!taken) return number;
 	}
 }
@@ -318,13 +337,23 @@ export async function nextBookingNumber(tx: Writer) {
  * calendar (for every location or this bookable's) is skipped, and so is any start that already
  * has a session, cancelled or not. Returns how many were made.
  */
-export async function generateSessions(bookableId: number, days: number, userId: string | undefined) {
+export async function generateSessions(
+	bookableId: number,
+	days: number,
+	userId: string | undefined
+) {
 	const [b] = await db.select().from(bookable).where(eq(bookable.id, bookableId));
 	if (!b) return 0;
 	const schedules = await db
 		.select()
 		.from(bookableSchedule)
-		.where(and(eq(bookableSchedule.bookableId, bookableId), eq(bookableSchedule.status, true), sql`${bookableSchedule.deletedAt} is null`));
+		.where(
+			and(
+				eq(bookableSchedule.bookableId, bookableId),
+				eq(bookableSchedule.status, true),
+				sql`${bookableSchedule.deletedAt} is null`
+			)
+		);
 	if (!schedules.length) return 0;
 
 	// Today in Addis Ababa, not on the server's clock: a UTC server is still on yesterday until 03:00.
@@ -335,7 +364,13 @@ export async function generateSessions(bookableId: number, days: number, userId:
 			await db
 				.select({ date: calendarException.date, locationId: calendarException.locationId })
 				.from(calendarException)
-				.where(and(inArray(calendarException.date, dates), eq(calendarException.isClosed, true), sql`${calendarException.deletedAt} is null`))
+				.where(
+					and(
+						inArray(calendarException.date, dates),
+						eq(calendarException.isClosed, true),
+						sql`${calendarException.deletedAt} is null`
+					)
+				)
 		)
 			.filter((c) => c.locationId === null || c.locationId === b.locationId)
 			.map((c) => c.date)

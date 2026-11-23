@@ -33,10 +33,21 @@ import {
 	station,
 	taxRate
 } from '#lib/server/db/schema.ts';
-import { enOf, flatLocalized, packLocalized, toRichLocalized, unpackLocalized } from '#lib/server/localized.ts';
+import {
+	enOf,
+	flatLocalized,
+	packLocalized,
+	toRichLocalized,
+	unpackLocalized
+} from '#lib/server/localized.ts';
 import { stampsOf, userAlias } from '#lib/server/people.ts';
 import { idParam } from '#lib/server/records.ts';
-import { deleteVariants, packedUnitsOfVariant, setProductOptions, variantsInUse } from '#lib/server/catalog.ts';
+import {
+	deleteVariants,
+	packedUnitsOfVariant,
+	setProductOptions,
+	variantsInUse
+} from '#lib/server/catalog.ts';
 import {
 	bagSizeOptions,
 	categoryOptions,
@@ -130,7 +141,11 @@ export const load = async ({ params, locals }) => {
 			.leftJoin(bagSize, eq(productVariant.bagSizeId, bagSize.id))
 			.where(eq(productVariant.productId, p.id)),
 		db
-			.select({ id: roastLevel.id, name: enOf(roastLevel.name), isDefault: productRoastLevel.isDefault })
+			.select({
+				id: roastLevel.id,
+				name: enOf(roastLevel.name),
+				isDefault: productRoastLevel.isDefault
+			})
 			.from(productRoastLevel)
 			.innerJoin(roastLevel, eq(productRoastLevel.roastLevelId, roastLevel.id))
 			.where(eq(productRoastLevel.productId, p.id))
@@ -256,10 +271,10 @@ export const load = async ({ params, locals }) => {
 			...variantSection,
 			rows: variantSection.rows.map((v) => ({
 				...unpackLocalized(v as Record<string, unknown>, ['name']),
-				id: v.id as number,
+				id: v.id,
 				status: (v as Record<string, unknown>).isActive,
-				bagSize: packedBy.get(v.id as number)?.bagSize ?? '',
-				packed: packedBy.get(v.id as number)?.packed ?? 0
+				bagSize: packedBy.get(v.id)?.bagSize ?? '',
+				packed: packedBy.get(v.id)?.packed ?? 0
 			}))
 		},
 		roasts,
@@ -323,14 +338,19 @@ export const actions = {
 		requirePermission(event.locals, 'catalog.manage');
 		const productId = await owner(event);
 		const form = await superValidate(event.request, zod4(z.object({ id: z.coerce.number() })));
-		if (!form.valid) return message(form, { type: 'error', text: 'Nothing chosen' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Nothing chosen' }, { status: 400 });
 		const scope = and(
 			eq(productVariant.id, form.data.id),
 			eq(productVariant.productId, productId),
 			isNull(productVariant.deletedAt)
 		);
 		const refusal = await db.transaction(async (tx) => {
-			const [v] = await tx.select({ id: productVariant.id }).from(productVariant).where(scope).for('update');
+			const [v] = await tx
+				.select({ id: productVariant.id })
+				.from(productVariant)
+				.where(scope)
+				.for('update');
 			if (!v) return 'That size is already gone.';
 			const inUse = await variantsInUse(tx, [v.id]);
 			if (inUse) return `This size cannot be deleted. ${inUse.text}`;
@@ -344,13 +364,16 @@ export const actions = {
 
 	description: async (event) => {
 		requirePermission(event.locals, 'catalog.manage');
-		const form = await superValidate(event.request, zod4(productDescriptionSchema), { id: 'description' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the text' }, { status: 400 });
+		const form = await superValidate(event.request, zod4(productDescriptionSchema), {
+			id: 'description'
+		});
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the text' }, { status: 400 });
 		const { product: p } = await loadProduct(event.params.id);
 		const description = toRichLocalized(form.data, 'description');
 		await db
 			.update(product)
-			.set({ description, updatedBy: event.locals.user?.id } as Partial<typeof product.$inferInsert>)
+			.set({ description, updatedBy: event.locals.user?.id })
 			.where(eq(product.id, p.id));
 		return message(form, { type: 'success', text: 'Description saved' });
 	},
@@ -358,11 +381,16 @@ export const actions = {
 	options: async (event) => {
 		requirePermission(event.locals, 'catalog.manage');
 		const form = await superValidate(event.request, zod4(productOptionsSchema), { id: 'options' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		if (!form.data.roastLevelIds.length || !form.data.grindIds.length) {
 			const field = form.data.roastLevelIds.length ? 'grindIds' : 'roastLevelIds';
 			setError(form, field as never, 'Allow at least one');
-			return message(form, { type: 'error', text: 'Allow at least one roast and one grind' }, { status: 400 });
+			return message(
+				form,
+				{ type: 'error', text: 'Allow at least one roast and one grind' },
+				{ status: 400 }
+			);
 		}
 		const { product: p } = await loadProduct(event.params.id);
 		await db.transaction((tx) => setProductOptions(tx, p.id, form.data));
@@ -380,7 +408,10 @@ export const actions = {
 				setError(form, 'image', 'Choose a picture');
 				return message(form, { type: 'error', text: 'Choose a picture' }, { status: 400 });
 			}
-			await db.update(product).set({ image, updatedBy: event.locals.user?.id }).where(eq(product.id, p.id));
+			await db
+				.update(product)
+				.set({ image, updatedBy: event.locals.user?.id })
+				.where(eq(product.id, p.id));
 		} catch (err) {
 			if (err instanceof UploadRefused) {
 				setError(form, 'image', err.message);
@@ -397,19 +428,23 @@ export const actions = {
 		const form = await superValidate(posted, zod4(productPhotosSchema), { id: 'photos' });
 		const { product: p } = await loadProduct(event.params.id);
 		const files = form.data.photos.filter((f) => f.size > 0);
-		if (!files.length) return message(form, { type: 'error', text: 'Choose at least one photo' }, { status: 400 });
+		if (!files.length)
+			return message(form, { type: 'error', text: 'Choose at least one photo' }, { status: 400 });
 		try {
 			const names = [];
 			for (const file of files) names.push(await saveUploadedFile(file));
 			const [{ next }] = await db
-				.select({ next: sql<number>`coalesce(max(${productImage.sortOrder}), 0) + 1`.mapWith(Number) })
+				.select({
+					next: sql<number>`coalesce(max(${productImage.sortOrder}), 0) + 1`.mapWith(Number)
+				})
 				.from(productImage)
 				.where(eq(productImage.productId, p.id));
 			await db
 				.insert(productImage)
 				.values(names.map((fileName, i) => ({ productId: p.id, fileName, sortOrder: next + i })));
 		} catch (err) {
-			if (err instanceof UploadRefused) return message(form, { type: 'error', text: err.message }, { status: 400 });
+			if (err instanceof UploadRefused)
+				return message(form, { type: 'error', text: err.message }, { status: 400 });
 			throw err;
 		}
 		return message(form, {
@@ -422,19 +457,25 @@ export const actions = {
 		requirePermission(event.locals, 'catalog.manage');
 		const { product: p } = await loadProduct(event.params.id);
 		const imageId = await numberField(event.request, 'imageId');
-		await db.delete(productImage).where(and(eq(productImage.id, imageId), eq(productImage.productId, p.id)));
+		await db
+			.delete(productImage)
+			.where(and(eq(productImage.id, imageId), eq(productImage.productId, p.id)));
 		return { message: { type: 'success', text: 'Photo removed' } };
 	},
 
 	addOrigin: async (event) => {
 		requirePermission(event.locals, 'catalog.manage');
 		const form = await superValidate(event.request, zod4(productOriginSchema), { id: 'origin' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { product: p } = await loadProduct(event.params.id);
 		let stationId = form.data.stationId;
 		// A lot names its station: a product sourced from a lot is sourced from that station too.
 		if (form.data.lotId && !stationId) {
-			const [l] = await db.select({ stationId: lot.stationId }).from(lot).where(eq(lot.id, form.data.lotId));
+			const [l] = await db
+				.select({ stationId: lot.stationId })
+				.from(lot)
+				.where(eq(lot.id, form.data.lotId));
 			stationId = l?.stationId ?? null;
 		}
 		await db.insert(productOrigin).values({ ...form.data, stationId, productId: p.id });
@@ -458,7 +499,10 @@ export const actions = {
 		if (!(PUBLISH_STATUSES as readonly string[]).includes(to)) return fail(400);
 		const publishStatus = to as (typeof PUBLISH_STATUSES)[number];
 		await db.transaction(async (tx) => {
-			await tx.update(product).set({ publishStatus, updatedBy: event.locals.user?.id }).where(eq(product.id, p.id));
+			await tx
+				.update(product)
+				.set({ publishStatus, updatedBy: event.locals.user?.id })
+				.where(eq(product.id, p.id));
 			await recordAudit(tx, event, {
 				table: 'product',
 				recordId: p.id,
@@ -467,7 +511,12 @@ export const actions = {
 				after: { publishStatus }
 			});
 		});
-		return { message: { type: 'success', text: publishStatus === 'published' ? 'Published on the website' : `Marked ${publishStatus}` } };
+		return {
+			message: {
+				type: 'success',
+				text: publishStatus === 'published' ? 'Published on the website' : `Marked ${publishStatus}`
+			}
+		};
 	},
 
 	delete: async (event) => {
@@ -480,9 +529,13 @@ export const actions = {
 				.select({ id: productVariant.id })
 				.from(productVariant)
 				.where(eq(productVariant.productId, p.id));
-			const inUse = await variantsInUse(tx, sizes.map((v) => v.id));
+			const inUse = await variantsInUse(
+				tx,
+				sizes.map((v) => v.id)
+			);
 			if (inUse?.sold) return 'This product has been sold: archive it instead.';
-			if (inUse) return `This product cannot be deleted while one of its sizes is in use. ${inUse.text}`;
+			if (inUse)
+				return `This product cannot be deleted while one of its sizes is in use. ${inUse.text}`;
 			await tx
 				.update(product)
 				.set({
@@ -496,6 +549,10 @@ export const actions = {
 			return null;
 		});
 		if (refusal) return { message: { type: 'error', text: refusal } };
-		redirect('/dashboard/catalog/products', { type: 'success', message: 'Product deleted' }, event.cookies);
+		redirect(
+			'/dashboard/catalog/products',
+			{ type: 'success', message: 'Product deleted' },
+			event.cookies
+		);
 	}
 };

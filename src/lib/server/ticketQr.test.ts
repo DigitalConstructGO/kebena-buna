@@ -1,9 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('$app/env/private', () => ({ TICKET_QR_SECRET: 'test-secret', BETTER_AUTH_SECRET: undefined }));
+vi.mock('$app/env/private', () => ({
+	TICKET_QR_SECRET: 'test-secret',
+	BETTER_AUTH_SECRET: undefined
+}));
 
-const { signTicketQr, readTicketQr, ticketQrPublicKey, newTicketCode, qrSvg } = await import('./ticketQr.ts');
-const { parseTicketQr, importQrKey, verifyTicketQr, ticketCodeOf } = await import('#lib/ticketQr.ts');
+const { signTicketQr, readTicketQr, ticketQrPublicKey, newTicketCode, qrSvg } =
+	await import('./ticketQr.ts');
+const { parseTicketQr, importQrKey, verifyTicketQr, ticketCodeOf } =
+	await import('#lib/ticketQr.ts');
 
 const t = { code: 'ABCD234567', visitDate: '2026-11-24', admits: 3 };
 

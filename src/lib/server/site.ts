@@ -13,9 +13,12 @@ import type { Writer } from '@nahu/admin-kit/server/db';
 import { CHAPA_SECRET_KEY } from '$app/env/private';
 import { initializeTransaction, verifyTransaction } from '@nahu/admin-kit/server/chapa';
 import { settleGatewayPayment } from '#lib/server/orders.ts';
+import { queueOrderMessage } from '#lib/server/orderMessages.ts';
+import { claimDiscount } from '#lib/server/discounts.ts';
 import { db } from '#lib/server/db/index.ts';
 import {
 	customer,
+	discountRedemption,
 	formSubmission,
 	marketingConsent,
 	order,
@@ -40,7 +43,10 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
  * page as a person, so it learns nothing; a flood gets a 429.
  */
 export function floodRefused(event: RequestEvent, bucket: string, perMinute = 3) {
-	return !takeToken(`site:${bucket}:${event.getClientAddress()}`, { capacity: perMinute * 2, perMinute });
+	return !takeToken(`site:${bucket}:${event.getClientAddress()}`, {
+		capacity: perMinute * 2,
+		perMinute
+	});
 }
 export const isTrapped = (data: { website?: string | null }) => Boolean(data.website?.trim());
 
@@ -90,7 +96,9 @@ export async function recordConsent(
 	c: { phone?: string | null; email?: string | null },
 	source: string
 ) {
-	const channels = [c.email ? 'email' : null, c.phone ? 'sms' : null].filter(Boolean) as ('email' | 'sms')[];
+	const channels = [c.email ? 'email' : null, c.phone ? 'sms' : null].filter(Boolean) as (
+		'email' | 'sms'
+	)[];
 	if (!channels.length) return;
 	await tx.insert(marketingConsent).values(
 		channels.map((channel) => ({
@@ -122,7 +130,9 @@ export type Submission = {
  */
 export async function submitForm(event: RequestEvent, s: Submission) {
 	return db.transaction(async (tx) => {
-		const customerId = s.phone ? await customerFor(tx, { name: s.name ?? '', phone: s.phone, email: s.email }) : null;
+		const customerId = s.phone
+			? await customerFor(tx, { name: s.name ?? '', phone: s.phone, email: s.email })
+			: null;
 		const [res] = await tx.insert(formSubmission).values({
 			formType: s.formType,
 			customerId,
@@ -138,7 +148,9 @@ export async function submitForm(event: RequestEvent, s: Submission) {
 			marketingConsent: Boolean(s.marketingConsent),
 			...origin(event)
 		});
-		await tx.insert(workflowHistory).values({ submissionId: res.insertId, toStatus: 'new', note: 'Sent from the website' });
+		await tx
+			.insert(workflowHistory)
+			.values({ submissionId: res.insertId, toStatus: 'new', note: 'Sent from the website' });
 		if (customerId && s.marketingConsent) {
 			await recordConsent(tx, event, customerId, s, `${s.formType}_form`);
 		}
@@ -149,7 +161,14 @@ export async function submitForm(event: RequestEvent, s: Submission) {
 /** One line of a web order. Prices include tax (2.6); the line's tax is worked out of its total. */
 export type WebLine = Omit<
 	typeof orderLine.$inferInsert,
-	'id' | 'orderId' | 'taxRate' | 'taxAmount' | 'lineTotal' | 'discountAmount' | 'quantity' | 'unitPrice'
+	| 'id'
+	| 'orderId'
+	| 'taxRate'
+	| 'taxAmount'
+	| 'lineTotal'
+	| 'discountAmount'
+	| 'quantity'
+	| 'unitPrice'
 > & { quantity: number; unitPrice: number; discountAmount?: number };
 
 export type WebOrder = {
@@ -166,6 +185,8 @@ export type WebOrder = {
 	customerNote?: string | null;
 	/** From the form, so a double-submitted checkout makes one order. */
 	idempotencyKey?: string | null;
+	/** A discount code the buyer typed; refused with `DiscountRefused`. */
+	discountCode?: string | null;
 };
 
 /** The tax on a tax-inclusive amount. */
@@ -175,6 +196,10 @@ const taxIn = (gross: number, rate: number) => r2((gross * rate) / (100 + rate))
  * A `pending_payment` web order with its lines, numbered `KC-26-000123` from the year's sequence.
  * Each line's tax comes from its `taxRateId`, or the default rate. Returns the order's id, number,
  * total, line ids (in input order) and its `payToken`, the secret that opens its status page.
+ *
+ * A discount code is claimed here, in the order's transaction, and spread over the lines it
+ * applies to. An order left with nothing to pay (a free event, a 100% code) is completed by the
+ * caller with `completeFreeOrder`, once what it sells (a membership, a subscription) is written.
  */
 export async function createWebOrder(tx: Writer, event: RequestEvent, o: WebOrder) {
 	if (!o.lines.length) throw new Error('An order needs at least one line.');
@@ -185,9 +210,20 @@ export async function createWebOrder(tx: Writer, event: RequestEvent, o: WebOrde
 	const fallback = rates.find((r) => r.isDefault) ?? null;
 	const rateOf = (id: number | null | undefined) => rates.find((r) => r.id === id) ?? fallback;
 
-	const lines = o.lines.map((l) => {
+	const code = o.discountCode
+		? await claimDiscount(
+				tx,
+				o.discountCode,
+				o.customerId,
+				o.lines.map((l) => ({
+					itemType: l.itemType,
+					gross: r2(l.unitPrice * l.quantity - (l.discountAmount ?? 0))
+				}))
+			)
+		: null;
+	const lines = o.lines.map((l, i) => {
 		const rate = rateOf(l.taxRateId);
-		const discount = r2(l.discountAmount ?? 0);
+		const discount = r2((l.discountAmount ?? 0) + (code?.perLine[i] ?? 0));
 		const lineTotal = r2(l.unitPrice * l.quantity - discount);
 		return {
 			...l,
@@ -201,7 +237,9 @@ export async function createWebOrder(tx: Writer, event: RequestEvent, o: WebOrde
 	const deliveryFee = r2(o.deliveryFee ?? 0);
 	const subtotal = r2(lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0));
 	const discountTotal = r2(lines.reduce((sum, l) => sum + l.discountAmount, 0));
-	const taxTotal = r2(lines.reduce((sum, l) => sum + l.taxAmount, 0) + taxIn(deliveryFee, Number(fallback?.rate ?? 0)));
+	const taxTotal = r2(
+		lines.reduce((sum, l) => sum + l.taxAmount, 0) + taxIn(deliveryFee, Number(fallback?.rate ?? 0))
+	);
 	const total = r2(subtotal - discountTotal + deliveryFee);
 
 	const now = new Date();
@@ -222,6 +260,7 @@ export async function createWebOrder(tx: Writer, event: RequestEvent, o: WebOrde
 		deliveryAddress: o.deliveryAddress ?? null,
 		pickupLocationId: o.pickupLocationId ?? null,
 		membershipId: o.membershipId ?? null,
+		discountCodeId: code?.id ?? null,
 		subtotal,
 		discountTotal,
 		deliveryFee,
@@ -237,10 +276,27 @@ export async function createWebOrder(tx: Writer, event: RequestEvent, o: WebOrde
 	const orderId = res.insertId;
 	const lineIds: number[] = [];
 	for (const l of lines) {
-		const [lr] = await tx.insert(orderLine).values({ ...l, orderId } as typeof orderLine.$inferInsert);
+		const [lr] = await tx
+			.insert(orderLine)
+			.values({ ...l, orderId } as typeof orderLine.$inferInsert);
 		lineIds.push(lr.insertId);
 	}
-	await tx.insert(orderStatusHistory).values({ orderId, toStatus: 'pending_payment', note: 'Placed on the website' });
+	if (code) {
+		await tx
+			.insert(discountRedemption)
+			.values({ discountCodeId: code.id, orderId, customerId: o.customerId, amount: code.amount });
+	}
+	// The buyer is sent the order's link at once: it is where they pay, upload a transfer receipt
+	// and find their tickets, even if they close this page. A free order is paid straight away and
+	// told so then.
+	let notified = false;
+	if (total > 0) {
+		const [placed] = await tx.select().from(order).where(eq(order.id, orderId));
+		notified = (await queueOrderMessage(tx, placed, 'pending_payment')) > 0;
+	}
+	await tx
+		.insert(orderStatusHistory)
+		.values({ orderId, toStatus: 'pending_payment', note: 'Placed on the website', notified });
 	return { id: orderId, number, total, lineIds, payToken };
 }
 
@@ -283,7 +339,9 @@ export async function startPayment(event: RequestEvent, orderId: number) {
 	if (!o) throw new Error('Order not found.');
 	const amount = r2(Number(o.total) - Number(o.amountPaid));
 	const txRef = `KC-TX-${Date.now().toString(36).toUpperCase()}-${randomBytes(3).toString('hex').toUpperCase()}`;
-	const [res] = await db.insert(payment).values({ orderId: o.id, provider: 'chapa', status: 'initiated', amount, txRef });
+	const [res] = await db
+		.insert(payment)
+		.values({ orderId: o.id, provider: 'chapa', status: 'initiated', amount, txRef });
 	const back = `${event.url.origin}${siteHref(`/pay/${txRef}`, getLocale())}`;
 	const checkoutUrl = await initializeTransaction({
 		amount,
@@ -296,7 +354,10 @@ export async function startPayment(event: RequestEvent, orderId: number) {
 		description: `Kebena order ${o.number}`,
 		title: 'Kebena Coffee'
 	});
-	await db.update(payment).set({ checkoutUrl, status: 'pending' }).where(eq(payment.id, res.insertId));
+	await db
+		.update(payment)
+		.set({ checkoutUrl, status: 'pending' })
+		.where(eq(payment.id, res.insertId));
 	return checkoutUrl;
 }
 
@@ -324,12 +385,18 @@ export function publicImageNames() {
 	] as const;
 	const names = Promise.all(
 		columns.map(([table, column]) =>
-			db
-				.selectDistinct({ name: column as typeof s.product.image })
-				.from(table as typeof s.product)
+			db.selectDistinct({ name: column as typeof s.product.image }).from(table as typeof s.product)
 		)
 	)
-		.then((rows) => new Set(rows.flat().map((r) => r.name).filter((n): n is string => Boolean(n))))
+		.then(
+			(rows) =>
+				new Set(
+					rows
+						.flat()
+						.map((r) => r.name)
+						.filter((n): n is string => Boolean(n))
+				)
+		)
 		.catch((err: unknown) => {
 			imageNames = null;
 			throw err;
@@ -346,17 +413,29 @@ export function publicImageNames() {
 export async function settleByTxRef(event: RequestEvent, txRef: string) {
 	const [p] = await db.select().from(payment).where(eq(payment.txRef, txRef)).limit(1);
 	if (!p?.orderId) return null;
-	const [o] = await db.select({ number: order.number, payToken: order.payToken }).from(order).where(eq(order.id, p.orderId)).limit(1);
+	const [o] = await db
+		.select({ number: order.number, payToken: order.payToken })
+		.from(order)
+		.where(eq(order.id, p.orderId))
+		.limit(1);
 	if (p.status === 'succeeded') return { order: o, outcome: 'paid' as const };
 	const v = await verifyTransaction(txRef);
 	if (v.paid) {
 		await db.transaction((tx) =>
-			settleGatewayPayment(tx, event, p.id, { amount: v.amount, providerRef: v.reference ?? null, raw: v.raw, paidAt: new Date() })
+			settleGatewayPayment(tx, event, p.id, {
+				amount: v.amount,
+				providerRef: v.reference ?? null,
+				raw: v.raw,
+				paidAt: new Date()
+			})
 		);
 		return { order: o, outcome: 'paid' as const };
 	}
 	if (v.failed) {
-		await db.update(payment).set({ status: 'failed', response: v.raw, failureReason: 'Declined at Chapa' }).where(eq(payment.id, p.id));
+		await db
+			.update(payment)
+			.set({ status: 'failed', response: v.raw, failureReason: 'Declined at Chapa' })
+			.where(eq(payment.id, p.id));
 		return { order: o, outcome: 'failed' as const };
 	}
 	return { order: o, outcome: 'pending' as const };

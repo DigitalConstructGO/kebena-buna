@@ -52,11 +52,23 @@
 
 	type Waiting = (typeof data.waiting)[number];
 	const waitingColumns: ColumnDef<Waiting>[] = [
-		{ id: 'number', header: 'Order', cell: ({ row }) => link('order', row.original.id, row.original.number) },
-		{ id: 'customer', header: 'Customer', cell: ({ row }) => link('customer', row.original.customerId, row.original.customer) },
+		{
+			id: 'number',
+			header: 'Order',
+			cell: ({ row }) => link('order', row.original.id, row.original.number)
+		},
+		{
+			id: 'customer',
+			header: 'Customer',
+			cell: ({ row }) => link('customer', row.original.customerId, row.original.customer)
+		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) },
 		// Packers group the day's work by how it leaves: rider, courier or pickup.
-		{ id: 'delivery', header: 'Delivery', cell: ({ row }) => humanize(row.original.deliveryMethod) },
+		{
+			id: 'delivery',
+			header: 'Delivery',
+			cell: ({ row }) => humanize(row.original.deliveryMethod)
+		},
 		{
 			id: 'waiting',
 			header: 'Waiting',
@@ -65,7 +77,12 @@
 				return days > LATE_AFTER_DAYS ? status('overdue', waitingFor(days)) : waitingFor(days);
 			}
 		},
-		{ id: 'total', header: 'Total (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.total) }
+		{
+			id: 'total',
+			header: 'Total (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.total)
+		}
 	];
 
 	type Queue = (typeof data.roastQueue)[number];
@@ -75,7 +92,9 @@
 			id: 'roastOn',
 			header: 'Roast day',
 			cell: ({ row }) =>
-				overdueRoast(row.original) ? status('overdue', date(row.original.roastOn)) : date(row.original.roastOn)
+				overdueRoast(row.original)
+					? status('overdue', date(row.original.roastOn))
+					: date(row.original.roastOn)
 		},
 		{
 			id: 'what',
@@ -93,10 +112,23 @@
 
 	type Session = (typeof data.sessions)[number];
 	const sessionColumns: ColumnDef<Session>[] = [
-		{ id: 'at', header: 'Time', cell: ({ row }) => link('session', row.original.id, localClock(row.original.startsAt)) },
-		{ id: 'what', header: 'What', cell: ({ row }) => link('bookable', row.original.bookableId, row.original.bookable) },
+		{
+			id: 'at',
+			header: 'Time',
+			cell: ({ row }) => link('session', row.original.id, localClock(row.original.startsAt))
+		},
+		{
+			id: 'what',
+			header: 'What',
+			cell: ({ row }) => link('bookable', row.original.bookableId, row.original.bookable)
+		},
 		{ id: 'lang', header: 'Language', cell: ({ row }) => languageName(row.original.language) },
-		{ id: 'booked', header: 'Booked', meta: { align: 'right' }, cell: ({ row }) => `${row.original.booked} / ${row.original.capacity}` }
+		{
+			id: 'booked',
+			header: 'Booked',
+			meta: { align: 'right' },
+			cell: ({ row }) => `${row.original.booked} / ${row.original.capacity}`
+		}
 	];
 
 	const shows = (key: string) => data.stats.some((s) => s.key === key);
@@ -108,7 +140,10 @@
 	{#snippet actions()}
 		{#each quick as q (q.url)}
 			{@const Icon = q.icon}
-			<Button href={q.url} variant="outline" size="sm" class="gap-1.5"><Icon class="size-4" /> {q.label}</Button>
+			<Button href={q.url} variant="outline" size="sm" class="gap-1.5">
+				<Icon class="size-4" />
+				{q.label}
+			</Button>
 		{/each}
 	{/snippet}
 </PageHeader>
@@ -121,7 +156,9 @@
 	</div>
 {:else}
 	<div class="mt-6">
-		<Empty message="Nothing to show yet: your role opens no section with figures. Use the menu for your pages." />
+		<Empty
+			message="Nothing to show yet: your role opens no section with figures. Use the menu for your pages."
+		/>
 	</div>
 {/if}
 
@@ -135,9 +172,11 @@
 						href={d.href}
 						class="flex items-center gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 					>
-						<span class="grid size-10 shrink-0 place-items-center rounded-full bg-amber-500/15 text-lg font-semibold text-amber-700 tabular-nums dark:text-amber-400"
-							>{d.count}</span
+						<span
+							class="grid size-10 shrink-0 place-items-center rounded-full bg-amber-500/15 text-lg font-semibold text-amber-700 tabular-nums dark:text-amber-400"
 						>
+							{d.count}
+						</span>
 						<span class="min-w-0 flex-1">
 							<span class="block font-medium">{d.label}</span>
 							<span class="block truncate text-sm text-muted-foreground">{d.hint}</span>
@@ -159,10 +198,12 @@
 			title="Orders waiting"
 			hint={late
 				? `Paid and not yet with the customer, oldest first. ${late} waiting more than ${LATE_AFTER_DAYS} days.`
-				: "Paid and not yet with the customer, oldest first."}
+				: 'Paid and not yet with the customer, oldest first.'}
 		>
 			{#snippet actions()}
-				<Button href="/dashboard/orders?open=1" variant="ghost" size="sm" class="gap-1">See all <ChevronRight class="size-4" /></Button>
+				<Button href="/dashboard/orders?open=1" variant="ghost" size="sm" class="gap-1">
+					See all <ChevronRight class="size-4" />
+				</Button>
 			{/snippet}
 			{#if data.waiting.length}
 				<DataTable

@@ -32,7 +32,8 @@ export const load = async ({ locals }) => {
 export const actions = {
 	default: async (event) => {
 		const form = await superValidate(event.request, zod4(loginSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 
 		// Signing in on the server skips better-auth's own limiter, so guesses are limited here: per
 		// address, and per account so spreading them over many addresses does not help either.
@@ -41,7 +42,11 @@ export const actions = {
 			!takeToken(`login:ip:${event.getClientAddress()}`, { capacity: 10, perMinute: 2 }) ||
 			!takeToken(`login:email:${email}`, { capacity: 5, perMinute: 1 })
 		) {
-			return message(form, { type: 'error', text: 'Too many attempts. Wait a minute.' }, { status: 429 });
+			return message(
+				form,
+				{ type: 'error', text: 'Too many attempts. Wait a minute.' },
+				{ status: 429 }
+			);
 		}
 
 		try {
@@ -52,7 +57,10 @@ export const actions = {
 		} catch (err) {
 			// The same words for an unknown email and a wrong password, so the form cannot be used to
 			// find out who has an account. A switched-off account (right password) says so.
-			const text = err instanceof APIError && err.message === SWITCHED_OFF ? SWITCHED_OFF : 'Wrong email or password.';
+			const text =
+				err instanceof APIError && err.message === SWITCHED_OFF
+					? SWITCHED_OFF
+					: 'Wrong email or password.';
 			return message(form, { type: 'error', text }, { status: 401 });
 		}
 

@@ -88,14 +88,27 @@ export const load = async ({ url }) => {
 					.where(buildWhere(query, spec, { except: 'status' }))
 					.groupBy(booking.status),
 			bookableId: () =>
-				joined(db.select({ value: bookable.id, label: enOf(bookable.name), count: count() }).from(booking).$dynamic())
+				joined(
+					db
+						.select({ value: bookable.id, label: enOf(bookable.name), count: count() })
+						.from(booking)
+						.$dynamic()
+				)
 					.where(buildWhere(query, spec, { except: 'bookableId' }))
 					.groupBy(bookable.id),
 			assignedTo: () =>
-				joined(db.select({ value: assignee.id, label: assignee.name, count: count() }).from(booking).$dynamic())
+				joined(
+					db
+						.select({ value: assignee.id, label: assignee.name, count: count() })
+						.from(booking)
+						.$dynamic()
+				)
 					.where(buildWhere(query, spec, { except: 'assignedTo' }))
 					.groupBy(assignee.id, assignee.name)
 		})
 	]);
-	return { rows, server: { pagination: pagination(query, total), facets, filters: currentQuery(query) } };
+	return {
+		rows,
+		server: { pagination: pagination(query, total), facets, filters: currentQuery(query) }
+	};
 };

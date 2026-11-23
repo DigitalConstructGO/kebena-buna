@@ -40,7 +40,8 @@ export const actions = {
 	default: async (event) => {
 		requirePermission(event.locals, 'origins.manage');
 		const form = await superValidate(event.request, zod4(lotSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 
 		const { varietyIds, certificationIds, ...values } = form.data;
 		let made: { id: number; code: string };

@@ -7,7 +7,7 @@ import { floodRefused, isTrapped, submitForm } from '#lib/server/site.ts';
 import { bookingRequestSchema } from '#lib/schemas/siteVisit.ts';
 import { tr } from '#lib/format.ts';
 import { getLocale } from '#lib/paraglide/runtime.js';
-import { m } from '#lib/paraglide/messages.js';
+import { m } from '#lib/i18n.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -15,7 +15,10 @@ export const load: PageServerLoad = async ({ params }) => {
 	if (!x) error(404, m.exp_label());
 	const languages = x.languages ?? [];
 	const form = await superValidate(
-		{ partySize: x.minParty, language: languages.includes(getLocale()) ? getLocale() : (languages[0] ?? null) },
+		{
+			partySize: x.minParty,
+			language: languages.includes(getLocale()) ? getLocale() : (languages[0] ?? null)
+		},
 		zod4(bookingRequestSchema),
 		{ errors: false }
 	);
@@ -31,7 +34,8 @@ export const actions: Actions = {
 		const form = await superValidate(event.request, zod4(bookingRequestSchema));
 		if (!form.valid) return fail(400, { form });
 		if (isTrapped(form.data)) return message(form, m.exp_sent());
-		if (floodRefused(event, 'booking', 3)) return message(form, m.site_err_flood(), { status: 429 });
+		if (floodRefused(event, 'booking', 3))
+			return message(form, m.site_err_flood(), { status: 429 });
 
 		const x = await experience(event.params.slug);
 		if (!x) error(404, m.exp_label());
@@ -47,7 +51,8 @@ export const actions: Actions = {
 			if (!d.sessionId) return setError(form, 'sessionId', m.exp_err_session());
 			[session] = await openSessions(x.id, d.sessionId);
 			if (!session) return setError(form, 'sessionId', m.exp_err_session());
-			if (session.free < d.partySize) return setError(form, 'partySize', m.exp_err_room({ count: session.free }));
+			if (session.free < d.partySize)
+				return setError(form, 'partySize', m.exp_err_room({ count: session.free }));
 		}
 
 		const visitDate = session ? localDate(session.startsAt) : (d.preferredDate ?? null);
@@ -56,7 +61,11 @@ export const actions: Actions = {
 			name: d.name,
 			phone: d.phone,
 			email: d.email,
-			subject: `${tr(x.name, 'en')}${session ? ` · ${visitDate} ${localClock(session.startsAt)}` : ''}`.slice(0, 255),
+			subject:
+				`${tr(x.name, 'en')}${session ? ` · ${visitDate} ${localClock(session.startsAt)}` : ''}`.slice(
+					0,
+					255
+				),
 			message: d.specialRequests ?? null,
 			visitDate,
 			data: {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import UserRound from '@lucide/svelte/icons/user-round';
 	import LogOut from '@lucide/svelte/icons/log-out';
 	import * as DropdownMenu from '@nahu/admin-kit/components/ui/dropdown-menu/index.js';
@@ -20,9 +21,14 @@
 </script>
 
 <DropdownMenu.Root>
-	<DropdownMenu.Trigger class={buttonVariants({ variant: 'ghost', size: 'icon' })} aria-label="Account">
+	<DropdownMenu.Trigger
+		class={buttonVariants({ variant: 'ghost', size: 'icon' })}
+		aria-label="Account"
+	>
 		<Avatar.Root class="size-8">
-			<Avatar.Fallback class="bg-primary text-xs text-primary-foreground">{initials}</Avatar.Fallback>
+			<Avatar.Fallback class="bg-primary text-xs text-primary-foreground">
+				{initials}
+			</Avatar.Fallback>
 		</Avatar.Root>
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content align="end" class="w-56">
@@ -33,7 +39,9 @@
 		<DropdownMenu.Separator />
 		<DropdownMenu.Item>
 			{#snippet child({ props })}
-				<a href="/dashboard/account" {...props}><UserRound class="size-4" /> My account</a>
+				<a href={resolve('/dashboard/account')} {...props}>
+					<UserRound class="size-4" /> My account
+				</a>
 			{/snippet}
 		</DropdownMenu.Item>
 		<DropdownMenu.Item onSelect={() => logoutForm?.requestSubmit()}>

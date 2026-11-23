@@ -43,7 +43,11 @@
 			header: 'Record',
 			cell: ({ row }) =>
 				row.original.recordEntity
-					? link(row.original.recordEntity, row.original.recordId, `${humanize(row.original.tableName)} #${row.original.recordId}`)
+					? link(
+							row.original.recordEntity,
+							row.original.recordId,
+							`${humanize(row.original.tableName)} #${row.original.recordId}`
+						)
 					: `${humanize(row.original.tableName)} #${row.original.recordId}`
 		},
 		{ id: 'summary', header: 'Changes', cell: ({ row }) => longText(row.original.summary, 50) }
@@ -51,20 +55,52 @@
 
 	type Roast = (typeof data.roasts)[number];
 	const roastColumns: ColumnDef<Roast>[] = [
-		{ id: 'code', header: 'Batch', cell: ({ row }) => link('roastBatch', row.original.id, row.original.code) },
+		{
+			id: 'code',
+			header: 'Batch',
+			cell: ({ row }) => link('roastBatch', row.original.id, row.original.code)
+		},
 		{ id: 'at', header: 'Roasted', cell: ({ row }) => dateTime(row.original.roastedAt) },
 		{ id: 'roast', header: 'Roast', cell: ({ row }) => row.original.roastLevel },
-		{ id: 'in', header: 'Green in', meta: { align: 'right' }, cell: ({ row }) => kg(row.original.greenKgIn) },
-		{ id: 'out', header: 'Roasted out', meta: { align: 'right' }, cell: ({ row }) => kg(row.original.roastedKgOut) },
-		{ id: 'loss', header: 'Loss', meta: { align: 'right' }, cell: ({ row }) => percent(row.original.weightLossPct) }
+		{
+			id: 'in',
+			header: 'Green in',
+			meta: { align: 'right' },
+			cell: ({ row }) => kg(row.original.greenKgIn)
+		},
+		{
+			id: 'out',
+			header: 'Roasted out',
+			meta: { align: 'right' },
+			cell: ({ row }) => kg(row.original.roastedKgOut)
+		},
+		{
+			id: 'loss',
+			header: 'Loss',
+			meta: { align: 'right' },
+			cell: ({ row }) => percent(row.original.weightLossPct)
+		}
 	];
 
 	type Ride = (typeof data.rides)[number];
 	const rideColumns: ColumnDef<Ride>[] = [
-		{ id: 'number', header: 'Order', cell: ({ row }) => link('order', row.original.id, row.original.number) },
-		{ id: 'customer', header: 'Customer', cell: ({ row }) => link('customer', row.original.customerId, row.original.customer) },
+		{
+			id: 'number',
+			header: 'Order',
+			cell: ({ row }) => link('order', row.original.id, row.original.number)
+		},
+		{
+			id: 'customer',
+			header: 'Customer',
+			cell: ({ row }) => link('customer', row.original.customerId, row.original.customer)
+		},
 		{ id: 'placed', header: 'Placed', cell: ({ row }) => dateTime(row.original.placedAt) },
-		{ id: 'total', header: 'Total (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.total) },
+		{
+			id: 'total',
+			header: 'Total (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.total)
+		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) }
 	];
 
@@ -88,10 +124,19 @@
 
 	type Booking = (typeof data.bookings)[number];
 	const bookingColumns: ColumnDef<Booking>[] = [
-		{ id: 'number', header: 'Booking', cell: ({ row }) => link('booking', row.original.id, row.original.number) },
+		{
+			id: 'number',
+			header: 'Booking',
+			cell: ({ row }) => link('booking', row.original.id, row.original.number)
+		},
 		{ id: 'what', header: 'What', cell: ({ row }) => row.original.bookable },
 		{ id: 'who', header: 'Contact', cell: ({ row }) => row.original.contactName },
-		{ id: 'party', header: 'Party', meta: { align: 'right' }, cell: ({ row }) => row.original.partySize },
+		{
+			id: 'party',
+			header: 'Party',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.partySize
+		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) }
 	];
 
@@ -129,7 +174,11 @@
 	];
 </script>
 
-<PageHeader title={u.name} eyebrow={u.kind === 'staff' ? 'Staff member' : 'Customer sign-in'} description={u.email}>
+<PageHeader
+	title={u.name}
+	eyebrow={u.kind === 'staff' ? 'Staff member' : 'Customer sign-in'}
+	description={u.email}
+>
 	{#snippet badges()}
 		<Statuses {...flag(u.isActive, 'Active', 'Switched off')} />
 		{#if data.role}<Statuses status="info" label={data.role} />{/if}
@@ -140,7 +189,15 @@
 				<InputComp label="Full name" name="name" {form} {errors} required />
 				<InputComp label="Phone" name="phone" type="tel" {form} {errors} />
 				{#if u.kind === 'staff'}
-					<InputComp label="Role" name="roleId" type="select" items={data.roles} {form} {errors} required />
+					<InputComp
+						label="Role"
+						name="roleId"
+						type="select"
+						items={data.roles}
+						{form}
+						{errors}
+						required
+					/>
 				{/if}
 				<InputComp
 					label="Language"
@@ -203,7 +260,9 @@
 					{ name: 'Telegram', value: u.telegramId ?? '—' },
 					{
 						name: 'Customer record',
-						value: data.customer ? (data.customer.name ?? data.customer.phone ?? `#${data.customer.id}`) : '—',
+						value: data.customer
+							? (data.customer.name ?? data.customer.phone ?? `#${data.customer.id}`)
+							: '—',
 						href: href('customer', data.customer?.id)
 					},
 					{ name: 'Joined', value: formatDateTime(u.createdAt) },

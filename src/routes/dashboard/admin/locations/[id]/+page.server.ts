@@ -25,7 +25,10 @@ import { hoursSchema, locationSchema } from '#lib/schemas/admin.ts';
 
 async function loadLocation(raw: string) {
 	const id = idParam(raw, 'Location');
-	const [row] = await db.select().from(location).where(and(eq(location.id, id), isNull(location.deletedAt)));
+	const [row] = await db
+		.select()
+		.from(location)
+		.where(and(eq(location.id, id), isNull(location.deletedAt)));
 	if (!row) error(404, 'Location not found');
 	return row;
 }
@@ -36,7 +39,7 @@ const hhmm = (t: string | null) => (t ? t.slice(0, 5) : null);
 async function selfAndInside(id: number) {
 	const rows = await db.select({ id: location.id, parentId: location.parentId }).from(location);
 	const inside = new Set([id]);
-	for (let grew = true; grew; ) {
+	for (let grew = true; grew;) {
 		grew = false;
 		for (const r of rows) {
 			if (r.parentId && inside.has(r.parentId) && !inside.has(r.id)) {
@@ -50,47 +53,84 @@ async function selfAndInside(id: number) {
 
 export const load = async ({ params }) => {
 	const l = await loadLocation(params.id);
-	const [parent, children, hours, machines, devices, exceptions, [green], [roasted], [packed], stamps, parents] =
-		await Promise.all([
-			l.parentId
-				? db.select({ id: location.id, name: enOf(location.name) }).from(location).where(eq(location.id, l.parentId))
-				: Promise.resolve([]),
-			db
-				.select({ id: location.id, name: enOf(location.name), type: location.type })
-				.from(location)
-				.where(and(eq(location.parentId, l.id), isNull(location.deletedAt))),
-			db.select().from(openingHours).where(eq(openingHours.locationId, l.id)).orderBy(asc(openingHours.weekday)),
-			db
-				.select({ id: roastMachine.id, name: roastMachine.name, capacityKg: roastMachine.capacityKg, status: roastMachine.status })
-				.from(roastMachine)
-				.where(and(eq(roastMachine.locationId, l.id), isNull(roastMachine.deletedAt))),
-			db
-				.select({ id: scannerDevice.id, name: scannerDevice.name, lastSyncAt: scannerDevice.lastSyncAt, isActive: scannerDevice.isActive })
-				.from(scannerDevice)
-				.where(and(eq(scannerDevice.locationId, l.id), isNull(scannerDevice.deletedAt))),
-			db
-				.select({
-					id: calendarException.id,
-					date: calendarException.date,
-					name: enOf(calendarException.name),
-					isClosed: calendarException.isClosed,
-					isHoliday: calendarException.isHoliday,
-					everywhere: isNull(calendarException.locationId)
-				})
-				.from(calendarException)
-				.where(
-					and(
-						or(eq(calendarException.locationId, l.id), isNull(calendarException.locationId)),
-						isNull(calendarException.deletedAt)
-					)
+	const [
+		parent,
+		children,
+		hours,
+		machines,
+		devices,
+		exceptions,
+		[green],
+		[roasted],
+		[packed],
+		stamps,
+		parents
+	] = await Promise.all([
+		l.parentId
+			? db
+					.select({ id: location.id, name: enOf(location.name) })
+					.from(location)
+					.where(eq(location.id, l.parentId))
+			: Promise.resolve([]),
+		db
+			.select({ id: location.id, name: enOf(location.name), type: location.type })
+			.from(location)
+			.where(and(eq(location.parentId, l.id), isNull(location.deletedAt))),
+		db
+			.select()
+			.from(openingHours)
+			.where(eq(openingHours.locationId, l.id))
+			.orderBy(asc(openingHours.weekday)),
+		db
+			.select({
+				id: roastMachine.id,
+				name: roastMachine.name,
+				capacityKg: roastMachine.capacityKg,
+				status: roastMachine.status
+			})
+			.from(roastMachine)
+			.where(and(eq(roastMachine.locationId, l.id), isNull(roastMachine.deletedAt))),
+		db
+			.select({
+				id: scannerDevice.id,
+				name: scannerDevice.name,
+				lastSyncAt: scannerDevice.lastSyncAt,
+				isActive: scannerDevice.isActive
+			})
+			.from(scannerDevice)
+			.where(and(eq(scannerDevice.locationId, l.id), isNull(scannerDevice.deletedAt))),
+		db
+			.select({
+				id: calendarException.id,
+				date: calendarException.date,
+				name: enOf(calendarException.name),
+				isClosed: calendarException.isClosed,
+				isHoliday: calendarException.isHoliday,
+				everywhere: isNull(calendarException.locationId)
+			})
+			.from(calendarException)
+			.where(
+				and(
+					or(eq(calendarException.locationId, l.id), isNull(calendarException.locationId)),
+					isNull(calendarException.deletedAt)
 				)
-				.orderBy(desc(calendarException.date)),
-			db.select({ kg: sum(greenStock.kg).mapWith(Number) }).from(greenStock).where(eq(greenStock.locationId, l.id)),
-			db.select({ kg: sum(roastedStock.kg).mapWith(Number) }).from(roastedStock).where(eq(roastedStock.locationId, l.id)),
-			db.select({ units: sum(packedStock.units).mapWith(Number) }).from(packedStock).where(eq(packedStock.locationId, l.id)),
-			stampsOf(l),
-			locationOptions()
-		]);
+			)
+			.orderBy(desc(calendarException.date)),
+		db
+			.select({ kg: sum(greenStock.kg).mapWith(Number) })
+			.from(greenStock)
+			.where(eq(greenStock.locationId, l.id)),
+		db
+			.select({ kg: sum(roastedStock.kg).mapWith(Number) })
+			.from(roastedStock)
+			.where(eq(roastedStock.locationId, l.id)),
+		db
+			.select({ units: sum(packedStock.units).mapWith(Number) })
+			.from(packedStock)
+			.where(eq(packedStock.locationId, l.id)),
+		stampsOf(l),
+		locationOptions()
+	]);
 	const inside = await selfAndInside(l.id);
 
 	const days = [1, 2, 3, 4, 5, 6, 7].map((weekday) => {
@@ -115,7 +155,9 @@ export const load = async ({ params }) => {
 		stock: { green: green?.kg ?? 0, roasted: roasted?.kg ?? 0, packed: packed?.units ?? 0 },
 		stamps,
 		parents: parents.filter((p) => !inside.has(p.value)),
-		editForm: await superValidate(unpackLocalized(l, ['name']), zod4(locationSchema), { errors: false }),
+		editForm: await superValidate(unpackLocalized(l, ['name']), zod4(locationSchema), {
+			errors: false
+		}),
 		hoursForm: await superValidate({ days }, zod4(hoursSchema), { id: 'hours' })
 	};
 };
@@ -127,7 +169,10 @@ export const actions = {
 		const form = await superValidate(event.request, zod4(locationSchema));
 		if (!form.valid) return invalid(form);
 		if (form.data.parentId && (await selfAndInside(l.id)).has(form.data.parentId))
-			return refusedForm(form, new WriteRefused('parentId', 'A location cannot sit inside itself or a place within it.'));
+			return refusedForm(
+				form,
+				new WriteRefused('parentId', 'A location cannot sit inside itself or a place within it.')
+			);
 		try {
 			await saveLocation(event, form.data, l.id);
 		} catch (err) {
@@ -140,8 +185,15 @@ export const actions = {
 		const l = await loadLocation(event.params.id);
 		const form = await superValidate(event.request, zod4(hoursSchema), { id: 'hours' });
 		if (!form.valid) return invalid(form);
-		const bad = form.data.days.find((d) => !d.isClosed && (!d.opensAt || !d.closesAt || d.opensAt >= d.closesAt));
-		if (bad) return message(form, { type: 'error', text: 'Every open day needs an opening time before its closing time.' }, { status: 400 });
+		const bad = form.data.days.find(
+			(d) => !d.isClosed && (!d.opensAt || !d.closesAt || d.opensAt >= d.closesAt)
+		);
+		if (bad)
+			return message(
+				form,
+				{ type: 'error', text: 'Every open day needs an opening time before its closing time.' },
+				{ status: 400 }
+			);
 		await db.transaction(async (tx) => {
 			await tx.delete(openingHours).where(eq(openingHours.locationId, l.id));
 			await tx.insert(openingHours).values(
@@ -154,7 +206,12 @@ export const actions = {
 					lastEntryAt: d.isClosed ? null : (d.lastEntryAt ?? null)
 				}))
 			);
-			await recordAudit(tx, event, { table: 'location', recordId: l.id, action: 'update', detail: { openingHours: 'changed' } });
+			await recordAudit(tx, event, {
+				table: 'location',
+				recordId: l.id,
+				action: 'update',
+				detail: { openingHours: 'changed' }
+			});
 		});
 		return message(form, { type: 'success', text: 'Opening hours saved' });
 	}

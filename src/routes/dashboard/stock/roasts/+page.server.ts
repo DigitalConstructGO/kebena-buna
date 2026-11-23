@@ -49,7 +49,8 @@ const joined = <T extends MySqlSelect>(q: T) =>
 export const load = async ({ url, locals }) => {
 	const query = parseTableQuery(url, FILTERS, 20, Object.keys(SORTS));
 	const where = buildWhere(query, spec);
-	const facet = <K extends (typeof FILTERS)[number]>(key: K) => buildWhere(query, spec, { except: key });
+	const facet = <K extends (typeof FILTERS)[number]>(key: K) =>
+		buildWhere(query, spec, { except: key });
 	const [rows, [{ total }], facets, levels] = await Promise.all([
 		joined(
 			db

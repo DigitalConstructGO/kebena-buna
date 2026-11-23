@@ -37,14 +37,39 @@
 		<Statuses {...badge(p.publishStatus)} />
 	{/snippet}
 	{#snippet actions()}
-		<Button href="/dashboard/content/posts" variant="outline"><ArrowLeft class="size-4" /> Posts</Button>
+		<Button href="/dashboard/content/posts" variant="outline">
+			<ArrowLeft class="size-4" /> Posts
+		</Button>
 		{#if p.publishStatus !== 'published'}
-			<ConfirmAction action="?/status" fields={{ to: 'published' }} label="Publish" icon={Send} title="Publish this post?" description="It appears on the blog as last saved." />
+			<ConfirmAction
+				action="?/status"
+				fields={{ to: 'published' }}
+				label="Publish"
+				icon={Send}
+				title="Publish this post?"
+				description="It appears on the blog as last saved."
+			/>
 		{:else}
-			<ConfirmAction action="?/status" fields={{ to: 'draft' }} label="Unpublish" icon={EyeOff} variant="outline" title="Take this post off the blog?" description="It goes back to draft; nothing is lost." />
+			<ConfirmAction
+				action="?/status"
+				fields={{ to: 'draft' }}
+				label="Unpublish"
+				icon={EyeOff}
+				variant="outline"
+				title="Take this post off the blog?"
+				description="It goes back to draft; nothing is lost."
+			/>
 		{/if}
 		{#if p.publishStatus !== 'archived'}
-			<ConfirmAction action="?/status" fields={{ to: 'archived' }} label="Archive" icon={Archive} variant="outline" title="Archive this post?" description="Off the blog, kept for reference." />
+			<ConfirmAction
+				action="?/status"
+				fields={{ to: 'archived' }}
+				label="Archive"
+				icon={Archive}
+				variant="outline"
+				title="Archive this post?"
+				description="Off the blog, kept for reference."
+			/>
 		{/if}
 		<ConfirmAction
 			action="?/delete"
@@ -57,9 +82,23 @@
 	{/snippet}
 </PageHeader>
 
-<form method="POST" action="?/save" enctype="multipart/form-data" use:enhance class="mt-4 grid grid-cols-1 gap-6">
+<form
+	method="POST"
+	action="?/save"
+	enctype="multipart/form-data"
+	use:enhance
+	class="mt-4 grid grid-cols-1 gap-6"
+>
 	<Errors allErrors={$allErrors} />
-	<DocFields {form} {errors} base="/blog/" picture="coverImage" pictureLabel="Cover picture" stored={p.coverImage ?? ''} summary>
+	<DocFields
+		{form}
+		{errors}
+		base="/blog/"
+		picture="coverImage"
+		pictureLabel="Cover picture"
+		stored={p.coverImage ?? ''}
+		summary
+	>
 		{#snippet settings()}
 			<PostSettings {form} {errors} categories={data.categories} authors={data.authors} />
 		{/snippet}

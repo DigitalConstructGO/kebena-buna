@@ -20,7 +20,7 @@ export async function inboxAction<T extends Record<string, unknown>>(
 ) {
 	const form = await superValidate(event.request, zod4(schema), { id });
 	if (!form.valid) return fail(400, { form });
-	if (isTrapped(form.data as { website?: string })) return message(form, 'ok');
+	if (isTrapped(form.data)) return message(form, 'ok');
 	if (floodRefused(event, id)) return message(form, 'flood', { status: 429 });
 	await submitForm(event, toSubmission(form.data as T));
 	return message(form, 'ok');

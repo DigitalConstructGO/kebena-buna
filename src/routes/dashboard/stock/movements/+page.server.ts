@@ -26,7 +26,11 @@ import { STOCK_REASONS, STOCK_STAGES } from '#lib/constants.ts';
 
 const mover = userAlias('mover');
 const FILTERS = ['stage', 'reason', 'locationId'] as const;
-const SORTS = { occurredAt: stockMovement.occurredAt, quantity: stockMovement.quantity, unitCost: stockMovement.unitCost };
+const SORTS = {
+	occurredAt: stockMovement.occurredAt,
+	quantity: stockMovement.quantity,
+	unitCost: stockMovement.unitCost
+};
 const oneOf = <T extends readonly string[]>(list: T, v: string) =>
 	(list as readonly string[]).includes(v) ? (v as T[number]) : undefined;
 
@@ -100,30 +104,47 @@ export const load = async ({ url }) => {
 			.innerJoin(location, eq(stockMovement.locationId, location.id))
 			.leftJoin(
 				orderLine,
-				and(eq(stockMovement.refType, 'order_line'), eq(orderLine.id, sql`cast(${stockMovement.refId} as unsigned)`))
+				and(
+					eq(stockMovement.refType, 'order_line'),
+					eq(orderLine.id, sql`cast(${stockMovement.refId} as unsigned)`)
+				)
 			)
 			.leftJoin(order, eq(order.id, orderLine.orderId))
 			.leftJoin(mover, eq(stockMovement.createdBy, mover.id))
 			.where(where)
-			.orderBy(...(orderBy(query, SORTS) ?? [desc(stockMovement.occurredAt), desc(stockMovement.id)]))
+			.orderBy(
+				...(orderBy(query, SORTS) ?? [desc(stockMovement.occurredAt), desc(stockMovement.id)])
+			)
 			.limit(query.limit)
 			.offset(query.offset),
 		joined(db.select({ total: count() }).from(stockMovement).$dynamic()).where(where),
 		facetCounts({
 			stage: () =>
-				joined(db.select({ value: stockMovement.stage, count: count() }).from(stockMovement).$dynamic())
+				joined(
+					db.select({ value: stockMovement.stage, count: count() }).from(stockMovement).$dynamic()
+				)
 					.where(facet('stage'))
 					.groupBy(stockMovement.stage),
 			reason: () =>
-				joined(db.select({ value: stockMovement.reason, count: count() }).from(stockMovement).$dynamic())
+				joined(
+					db.select({ value: stockMovement.reason, count: count() }).from(stockMovement).$dynamic()
+				)
 					.where(facet('reason'))
 					.groupBy(stockMovement.reason),
 			locationId: () =>
-				joined(db.select({ value: location.id, label: enOf(location.name), count: count() }).from(stockMovement).$dynamic())
+				joined(
+					db
+						.select({ value: location.id, label: enOf(location.name), count: count() })
+						.from(stockMovement)
+						.$dynamic()
+				)
 					.innerJoin(location, eq(stockMovement.locationId, location.id))
 					.where(facet('locationId'))
 					.groupBy(location.id, location.name)
 		})
 	]);
-	return { rows, server: { pagination: pagination(query, total), facets, filters: currentQuery(query) } };
+	return {
+		rows,
+		server: { pagination: pagination(query, total), facets, filters: currentQuery(query) }
+	};
 };

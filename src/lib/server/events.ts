@@ -80,7 +80,9 @@ export async function saveEvent(
 	values.description = toRichLocalized(data, 'description');
 	values.startsAt = startsAt;
 	values.endsAt = endsAt;
-	values.registrationClosesAt = data.closesDate ? joinDateTime(data.closesDate, data.closesTime) : null;
+	values.registrationClosesAt = data.closesDate
+		? joinDateTime(data.closesDate, data.closesTime)
+		: null;
 	await storeFileFields(values, ['image'], posted);
 
 	return db.transaction(async (tx) => {
@@ -94,12 +96,19 @@ export async function saveEvent(
 				.where(eq(event.id, id));
 			// Its staff move with it, so the double-booking check reads the real times.
 			await shiftAssignments(tx, { eventId: id }, before, { startsAt, endsAt });
-			await recordAudit(tx, req, { table: 'event', recordId: id, action: 'update', before, after: values });
+			await recordAudit(tx, req, {
+				table: 'event',
+				recordId: id,
+				action: 'update',
+				before,
+				after: values
+			});
 			return id;
 		}
-		const [res] = await tx
-			.insert(event)
-			.values({ ...(values as unknown as typeof event.$inferInsert), createdBy: req.locals.user?.id });
+		const [res] = await tx.insert(event).values({
+			...(values as unknown as typeof event.$inferInsert),
+			createdBy: req.locals.user?.id
+		});
 		await recordAudit(tx, req, { table: 'event', recordId: res.insertId, action: 'create' });
 		return res.insertId;
 	});

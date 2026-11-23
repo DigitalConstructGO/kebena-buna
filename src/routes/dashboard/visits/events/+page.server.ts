@@ -16,8 +16,15 @@ import { enOf } from '#lib/server/localized.ts';
 import { EVENT_VISIBILITIES, PUBLISH_STATUSES } from '#lib/constants.ts';
 
 const FILTERS = ['publishStatus', 'visibility', 'locationId'] as const;
-const full = sql<number>`round(${event.registered} / nullif(${event.capacity}, 0) * 100)`.mapWith(Number);
-const SORTS = { title: enOf(event.title), startsAt: event.startsAt, registered: event.registered, full };
+const full = sql<number>`round(${event.registered} / nullif(${event.capacity}, 0) * 100)`.mapWith(
+	Number
+);
+const SORTS = {
+	title: enOf(event.title),
+	startsAt: event.startsAt,
+	registered: event.registered,
+	full
+};
 
 const spec: WhereSpec<(typeof FILTERS)[number]> = {
 	base: [notDeleted(event)],

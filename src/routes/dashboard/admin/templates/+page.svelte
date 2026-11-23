@@ -12,17 +12,16 @@
 		'What customers are sent, per event, channel and language. Write {{placeholders}} — {{name}}, {{order_number}}, {{total}}, {{rider_phone}} — and they are filled in when the message is queued. One per key, channel and language.';
 </script>
 
-<PageHeader
-	title="Message templates"
-	eyebrow="Messages"
-	description={DESCRIPTION}
-/>
+<PageHeader title="Message templates" eyebrow="Messages" description={DESCRIPTION} />
 
 <LookupPage
 	{data}
 	tabTitle={false}
 	schemas={{ add: templateSchema, edit: templateEditSchema }}
-	table={{ facetKeys: ['channel', 'locale'], facetLabels: { channel: 'Channel', locale: 'Language' } }}
+	table={{
+		facetKeys: ['channel', 'locale'],
+		facetLabels: { channel: 'Channel', locale: 'Language' }
+	}}
 	config={{
 		entity: 'Template',
 		plural: 'Message templates',

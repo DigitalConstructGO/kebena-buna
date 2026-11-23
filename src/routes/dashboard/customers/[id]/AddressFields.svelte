@@ -23,9 +23,22 @@
 	<InputComp label="Woreda" name="woreda" {form} {errors} />
 </div>
 <InputComp label="House, building, street" name="line1" {form} {errors} required />
-<InputComp label="Landmark" name="landmark" placeholder="Blue gate, behind Edna Mall…" {form} {errors} />
+<InputComp
+	label="Landmark"
+	name="landmark"
+	placeholder="Blue gate, behind Edna Mall…"
+	{form}
+	{errors}
+/>
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 	<InputComp label="Latitude" name="latitude" type="number" step="0.000001" {form} {errors} />
 	<InputComp label="Longitude" name="longitude" type="number" step="0.000001" {form} {errors} />
 </div>
-<InputComp label="Default" name="isDefault" type="checkboxSingle" placeholder="Offered first at checkout" {form} {errors} />
+<InputComp
+	label="Default"
+	name="isDefault"
+	type="checkboxSingle"
+	placeholder="Offered first at checkout"
+	{form}
+	{errors}
+/>

@@ -7,7 +7,7 @@ import { db } from '#lib/server/db/index.ts';
 import { order } from '#lib/server/db/schema.ts';
 import { floodRefused, trackHref } from '#lib/server/site.ts';
 import { sitePhone, siteText } from '#lib/schemas/site.ts';
-import { m } from '#lib/paraglide/messages.js';
+import { m } from '#lib/i18n.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const findSchema = z.object({ number: siteText(20), phone: sitePhone });
@@ -23,7 +23,12 @@ export const actions: Actions = {
 		const [o] = await db
 			.select({ number: order.number, payToken: order.payToken })
 			.from(order)
-			.where(and(eq(order.number, form.data.number.toUpperCase()), eq(order.contactPhone, form.data.phone)))
+			.where(
+				and(
+					eq(order.number, form.data.number.toUpperCase()),
+					eq(order.contactPhone, form.data.phone)
+				)
+			)
 			.limit(1);
 		if (!o?.payToken) return message(form, m.track_find_none(), { status: 404 });
 		redirect(303, trackHref(o));

@@ -13,11 +13,19 @@ import {
 	optionalText,
 	optionalUserId,
 	requiredId,
-	requiredText
+	requiredText,
+	sortOrder
 } from '#lib/schemas/common.ts';
 
 /** Providers staff record by hand; gateway payments arrive by webhook. */
-export const MANUAL_PROVIDERS = ['desk_cash', 'desk_card', 'bank_transfer', 'telebirr', 'cbe_birr', 'store_credit'] as const;
+export const MANUAL_PROVIDERS = [
+	'desk_cash',
+	'desk_card',
+	'bank_transfer',
+	'telebirr',
+	'cbe_birr',
+	'store_credit'
+] as const;
 
 export const orderStatusSchema = z.object({
 	status: z.enum(ORDER_STATUSES),
@@ -34,6 +42,23 @@ export const orderDeliverySchema = z.object({
 });
 
 export const cancelSchema = z.object({ reason: requiredText(255, 'Say why it is cancelled') });
+
+/** A buyer's transfer receipt staff checked against the statement. */
+export const receiptSchema = z.object({ paymentId: requiredId('Which receipt?') });
+export const rejectReceiptSchema = receiptSchema.extend({
+	reason: requiredText(255, 'Say why, so the buyer can put it right')
+});
+
+/** An account buyers can pay into by transfer, listed on their order's page. */
+export const bankAccountSchema = z.object({
+	bankName: requiredText(80),
+	accountName: requiredText(120),
+	accountNumber: requiredText(40),
+	note: optionalText(255),
+	sortOrder,
+	status: boolTrue
+});
+export const bankAccountEditSchema = bankAccountSchema.extend({ id: z.coerce.number() });
 
 export const paymentSchema = z.object({
 	provider: z.enum(MANUAL_PROVIDERS),
@@ -92,7 +117,14 @@ const discountFields = z.object({
 
 /** The rules across fields: a percentage of at most 100, and an expiry on or after the start. */
 const discountRules = (
-	v: { kind: string; value: number; startsOn?: string | null; expiresOn?: string | null; usageLimit?: number | null; perCustomerLimit?: number | null },
+	v: {
+		kind: string;
+		value: number;
+		startsOn?: string | null;
+		expiresOn?: string | null;
+		usageLimit?: number | null;
+		perCustomerLimit?: number | null;
+	},
 	ctx: z.RefinementCtx
 ) => {
 	if (v.kind === 'percent' && v.value > 100) {
@@ -102,9 +134,15 @@ const discountRules = (
 		ctx.addIssue({ code: 'custom', path: ['expiresOn'], message: 'On or after the start date' });
 	}
 	if (v.usageLimit && v.perCustomerLimit && v.perCustomerLimit > v.usageLimit) {
-		ctx.addIssue({ code: 'custom', path: ['perCustomerLimit'], message: 'No more than the total limit' });
+		ctx.addIssue({
+			code: 'custom',
+			path: ['perCustomerLimit'],
+			message: 'No more than the total limit'
+		});
 	}
 };
 
 export const discountSchema = discountFields.superRefine(discountRules);
-export const discountEditSchema = discountFields.extend({ id: requiredId() }).superRefine(discountRules);
+export const discountEditSchema = discountFields
+	.extend({ id: requiredId() })
+	.superRefine(discountRules);

@@ -67,9 +67,17 @@
 	const consentColumns: ColumnDef<Consent>[] = [
 		{ id: 'at', header: 'When', cell: ({ row }) => dateTime(row.original.recordedAt) },
 		{ id: 'channel', header: 'Channel', cell: ({ row }) => row.original.channel.toUpperCase() },
-		{ id: 'granted', header: 'Consent', cell: ({ row }) => flag(row.original.granted, 'Granted', 'Withdrawn') },
+		{
+			id: 'granted',
+			header: 'Consent',
+			cell: ({ row }) => flag(row.original.granted, 'Granted', 'Withdrawn')
+		},
 		{ id: 'source', header: 'Source', cell: ({ row }) => humanize(row.original.source) },
-		{ id: 'by', header: 'Recorded by', cell: ({ row }) => user(row.original.recordedById, row.original.recordedBy) }
+		{
+			id: 'by',
+			header: 'Recorded by',
+			cell: ({ row }) => user(row.original.recordedById, row.original.recordedBy)
+		}
 	];
 
 	type Credit = (typeof data.credits)[number];
@@ -86,72 +94,165 @@
 						? `${humanize(row.original.refType)} ${row.original.refId ?? ''}`
 						: (row.original.note ?? '—')
 		},
-		{ id: 'amount', header: 'Amount (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.amount) },
+		{
+			id: 'amount',
+			header: 'Amount (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.amount)
+		},
 		{ id: 'expires', header: 'Expires', cell: ({ row }) => date(row.original.expiresAt) },
-		{ id: 'by', header: 'By', cell: ({ row }) => user(row.original.createdById, row.original.createdBy) }
+		{
+			id: 'by',
+			header: 'By',
+			cell: ({ row }) => user(row.original.createdById, row.original.createdBy)
+		}
 	];
 
 	type Order = (typeof data.orders)[number];
 	const orderColumns: ColumnDef<Order>[] = [
-		{ id: 'number', header: 'Order', cell: ({ row }) => link('order', row.original.id, row.original.number) },
+		{
+			id: 'number',
+			header: 'Order',
+			cell: ({ row }) => link('order', row.original.id, row.original.number)
+		},
 		{ id: 'placed', header: 'Placed', cell: ({ row }) => dateTime(row.original.placedAt) },
 		{ id: 'channel', header: 'Channel', cell: ({ row }) => humanize(row.original.channel) },
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) },
 		{ id: 'payment', header: 'Payment', cell: ({ row }) => status(row.original.paymentState) },
-		{ id: 'total', header: 'Total (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.total) }
+		{
+			id: 'total',
+			header: 'Total (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.total)
+		}
 	];
 	type Invoice = (typeof data.invoices)[number];
 	const invoiceColumns: ColumnDef<Invoice>[] = [
-		{ id: 'number', header: 'Invoice', cell: ({ row }) => link('invoice', row.original.id, row.original.number) },
+		{
+			id: 'number',
+			header: 'Invoice',
+			cell: ({ row }) => link('invoice', row.original.id, row.original.number)
+		},
 		{ id: 'due', header: 'Due', cell: ({ row }) => date(row.original.dueOn) },
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) },
-		{ id: 'total', header: 'Total (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.total) },
-		{ id: 'paid', header: 'Paid (ETB)', meta: { align: 'right' }, cell: ({ row }) => amount(row.original.amountPaid) }
+		{
+			id: 'total',
+			header: 'Total (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.total)
+		},
+		{
+			id: 'paid',
+			header: 'Paid (ETB)',
+			meta: { align: 'right' },
+			cell: ({ row }) => amount(row.original.amountPaid)
+		}
 	];
 	type Ticket = (typeof data.tickets)[number];
 	const ticketColumns: ColumnDef<Ticket>[] = [
-		{ id: 'code', header: 'Ticket', cell: ({ row }) => link('ticket', row.original.id, row.original.code) },
+		{
+			id: 'code',
+			header: 'Ticket',
+			cell: ({ row }) => link('ticket', row.original.id, row.original.code)
+		},
 		{ id: 'date', header: 'Visit', cell: ({ row }) => date(row.original.visitDate) },
-		{ id: 'type', header: 'Type', cell: ({ row }) => link('ticketType', row.original.ticketTypeId, row.original.ticketType) },
-		{ id: 'admits', header: 'Checked in', meta: { align: 'right' }, cell: ({ row }) => `${row.original.checkedIn} / ${row.original.admits}` },
+		{
+			id: 'type',
+			header: 'Type',
+			cell: ({ row }) => link('ticketType', row.original.ticketTypeId, row.original.ticketType)
+		},
+		{
+			id: 'admits',
+			header: 'Checked in',
+			meta: { align: 'right' },
+			cell: ({ row }) => `${row.original.checkedIn} / ${row.original.admits}`
+		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) },
-		{ id: 'order', header: 'Order', cell: ({ row }) => (row.original.orderId ? link('order', row.original.orderId, `#${row.original.orderId}`) : '—') }
+		{
+			id: 'order',
+			header: 'Order',
+			cell: ({ row }) =>
+				row.original.orderId ? link('order', row.original.orderId, `#${row.original.orderId}`) : '—'
+		}
 	];
 	type Membership = (typeof data.memberships)[number];
 	const membershipColumns: ColumnDef<Membership>[] = [
-		{ id: 'number', header: 'Membership', cell: ({ row }) => link('membership', row.original.id, row.original.number) },
-		{ id: 'plan', header: 'Plan', cell: ({ row }) => link('membershipPlan', row.original.planId, row.original.plan) },
+		{
+			id: 'number',
+			header: 'Membership',
+			cell: ({ row }) => link('membership', row.original.id, row.original.number)
+		},
+		{
+			id: 'plan',
+			header: 'Plan',
+			cell: ({ row }) => link('membershipPlan', row.original.planId, row.original.plan)
+		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) },
 		{ id: 'from', header: 'From', cell: ({ row }) => date(row.original.startsOn) },
 		{ id: 'to', header: 'Until', cell: ({ row }) => date(row.original.endsOn) }
 	];
 	type Subscription = (typeof data.subscriptions)[number];
 	const subscriptionColumns: ColumnDef<Subscription>[] = [
-		{ id: 'number', header: 'Subscription', cell: ({ row }) => link('subscription', row.original.id, row.original.number) },
-		{ id: 'coffee', header: 'Coffee', cell: ({ row }) => link('variant', row.original.variantId, row.original.product) },
+		{
+			id: 'number',
+			header: 'Subscription',
+			cell: ({ row }) => link('subscription', row.original.id, row.original.number)
+		},
+		{
+			id: 'coffee',
+			header: 'Coffee',
+			cell: ({ row }) => link('variant', row.original.variantId, row.original.product)
+		},
 		{ id: 'frequency', header: 'Every', cell: ({ row }) => humanize(row.original.frequency) },
-		{ id: 'left', header: 'Deliveries left', meta: { align: 'right' }, cell: ({ row }) => row.original.left },
+		{
+			id: 'left',
+			header: 'Deliveries left',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.left
+		},
 		{ id: 'next', header: 'Next roast', cell: ({ row }) => date(row.original.nextRoastDate) },
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) }
 	];
 	type Booking = (typeof data.bookings)[number];
 	const bookingColumns: ColumnDef<Booking>[] = [
-		{ id: 'number', header: 'Booking', cell: ({ row }) => link('booking', row.original.id, row.original.number) },
-		{ id: 'what', header: 'What', cell: ({ row }) => link('bookable', row.original.bookableId, row.original.bookable) },
+		{
+			id: 'number',
+			header: 'Booking',
+			cell: ({ row }) => link('booking', row.original.id, row.original.number)
+		},
+		{
+			id: 'what',
+			header: 'What',
+			cell: ({ row }) => link('bookable', row.original.bookableId, row.original.bookable)
+		},
 		{ id: 'when', header: 'When', cell: ({ row }) => dateTime(row.original.confirmedStartsAt) },
-		{ id: 'party', header: 'Party', meta: { align: 'right' }, cell: ({ row }) => row.original.partySize },
+		{
+			id: 'party',
+			header: 'Party',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.partySize
+		},
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) }
 	];
 	type Submission = (typeof data.submissions)[number];
 	const submissionColumns: ColumnDef<Submission>[] = [
-		{ id: 'subject', header: 'Submission', cell: ({ row }) => link('submission', row.original.id, row.original.subject ?? humanize(row.original.formType)) },
+		{
+			id: 'subject',
+			header: 'Submission',
+			cell: ({ row }) =>
+				link('submission', row.original.id, row.original.subject ?? humanize(row.original.formType))
+		},
 		{ id: 'type', header: 'Form', cell: ({ row }) => humanize(row.original.formType) },
 		{ id: 'at', header: 'Sent', cell: ({ row }) => dateTime(row.original.submittedAt) },
 		{ id: 'status', header: 'Status', cell: ({ row }) => status(row.original.status) }
 	];
 	type Message = (typeof data.messages)[number];
 	const messageColumns: ColumnDef<Message>[] = [
-		{ id: 'key', header: 'Message', cell: ({ row }) => link('notification', row.original.id, row.original.templateKey) },
+		{
+			id: 'key',
+			header: 'Message',
+			cell: ({ row }) => link('notification', row.original.id, row.original.templateKey)
+		},
 		{ id: 'channel', header: 'Channel', cell: ({ row }) => row.original.channel.toUpperCase() },
 		{ id: 'to', header: 'To', cell: ({ row }) => row.original.recipient },
 		{ id: 'at', header: 'Queued', cell: ({ row }) => dateTime(row.original.createdAt) },
@@ -159,22 +260,43 @@
 	];
 	type Chat = (typeof data.chats)[number];
 	const chatColumns: ColumnDef<Chat>[] = [
-		{ id: 'chat', header: 'Conversation', cell: ({ row }) => link('conversation', row.original.id, `#${row.original.id}`) },
+		{
+			id: 'chat',
+			header: 'Conversation',
+			cell: ({ row }) => link('conversation', row.original.id, `#${row.original.id}`)
+		},
 		{ id: 'channel', header: 'Channel', cell: ({ row }) => humanize(row.original.channel) },
 		{ id: 'started', header: 'Started', cell: ({ row }) => dateTime(row.original.startedAt) },
 		{ id: 'last', header: 'Last message', cell: ({ row }) => dateTime(row.original.lastMessageAt) },
-		{ id: 'messages', header: 'Messages', meta: { align: 'right' }, cell: ({ row }) => row.original.messages }
+		{
+			id: 'messages',
+			header: 'Messages',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.messages
+		}
 	];
 	type Business = (typeof data.businesses)[number];
 	const businessColumns: ColumnDef<Business>[] = [
-		{ id: 'name', header: 'Business', cell: ({ row }) => link('business', row.original.id, row.original.name) },
+		{
+			id: 'name',
+			header: 'Business',
+			cell: ({ row }) => link('business', row.original.id, row.original.name)
+		},
 		{ id: 'type', header: 'Type', cell: ({ row }) => humanize(row.original.type) },
-		{ id: 'role', header: 'Role', cell: ({ row }) => (row.original.isAdmin ? 'Administrator' : 'Orders for it') },
+		{
+			id: 'role',
+			header: 'Role',
+			cell: ({ row }) => (row.original.isAdmin ? 'Administrator' : 'Orders for it')
+		},
 		{ id: 'status', header: 'Approval', cell: ({ row }) => status(row.original.approvalStatus) }
 	];
 </script>
 
-<PageHeader title={title} eyebrow="Customer" description={c.businessName ?? (data.account ? 'Has a sign-in' : 'Guest')}>
+<PageHeader
+	{title}
+	eyebrow="Customer"
+	description={c.businessName ?? (data.account ? 'Has a sign-in' : 'Guest')}
+>
 	{#snippet badges()}
 		{#if c.anonymizedAt}
 			<Statuses status="neutral" label="Anonymised" />
@@ -184,7 +306,12 @@
 	{/snippet}
 	{#snippet actions()}
 		{#if data.canManage && !c.anonymizedAt}
-			<FormDialog title="Edit {title}" action="?/edit" data={data.editForm} schema={customerEditSchema}>
+			<FormDialog
+				title="Edit {title}"
+				action="?/edit"
+				data={data.editForm}
+				schema={customerEditSchema}
+			>
 				{#snippet fields({ form, errors })}
 					<InputComp type="hidden" name="id" {form} {errors} />
 					<CustomerFields form={form as never} errors={errors as never} />
@@ -226,10 +353,43 @@
 {/if}
 
 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-	<StatCard stat={{ key: 'orders', label: 'Orders', value: data.orders.length, format: 'count', group: 'customer' }} />
-	<StatCard stat={{ key: 'spent', label: 'Spent, less refunds', value: data.spent, format: 'money', group: 'customer', tone: 'positive' }} />
-	<StatCard stat={{ key: 'credit', label: 'Store credit', value: data.creditBalance, format: 'money', group: 'customer' }} />
-	<StatCard stat={{ key: 'tickets', label: 'Tickets', value: data.tickets.length, format: 'count', group: 'customer' }} />
+	<StatCard
+		stat={{
+			key: 'orders',
+			label: 'Orders',
+			value: data.orders.length,
+			format: 'count',
+			group: 'customer'
+		}}
+	/>
+	<StatCard
+		stat={{
+			key: 'spent',
+			label: 'Spent, less refunds',
+			value: data.spent,
+			format: 'money',
+			group: 'customer',
+			tone: 'positive'
+		}}
+	/>
+	<StatCard
+		stat={{
+			key: 'credit',
+			label: 'Store credit',
+			value: data.creditBalance,
+			format: 'money',
+			group: 'customer'
+		}}
+	/>
+	<StatCard
+		stat={{
+			key: 'tickets',
+			label: 'Tickets',
+			value: data.tickets.length,
+			format: 'count',
+			group: 'customer'
+		}}
+	/>
 </div>
 
 <div class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[26rem_minmax(0,1fr)]">
@@ -244,7 +404,13 @@
 					{ name: 'Business', value: c.businessName ?? '—' },
 					{ name: 'Telegram', value: c.telegramChatId ?? '—' },
 					{ name: 'Source', value: humanize(c.source) },
-					{ name: 'Sign-in', value: data.account ? `${data.account.name} (${data.account.email})` : 'Guest — no sign-in', href: href('user', data.account?.id) },
+					{
+						name: 'Sign-in',
+						value: data.account
+							? `${data.account.name} (${data.account.email})`
+							: 'Guest — no sign-in',
+						href: href('user', data.account?.id)
+					},
 					{ name: 'Last active', value: formatDateTime(c.lastActivityAt) },
 					{ name: 'Notes', value: c.notes ?? '—', long: 40 },
 					...stampRows(data.stamps, href)
@@ -257,7 +423,9 @@
 				{#if data.canManage && !c.anonymizedAt}
 					<FormDialog
 						title="Add an address"
-						triggerLabel="Add address" triggerIcon={Plus} submitIcon={Plus}
+						triggerLabel="Add address"
+						triggerIcon={Plus}
+						submitIcon={Plus}
 						action="?/addAddress"
 						data={data.addressForm}
 						schema={addressSchema}
@@ -282,10 +450,14 @@
 									</p>
 									<p class="text-sm">{a.line1}{a.landmark ? ` · ${a.landmark}` : ''}</p>
 									<p class="text-sm text-muted-foreground">
-										{[a.area, a.woreda, a.city].filter(Boolean).join(', ')}{a.zone ? ` — ${a.zone}` : ''}
+										{[a.area, a.woreda, a.city].filter(Boolean).join(', ')}{a.zone
+											? ` — ${a.zone}`
+											: ''}
 									</p>
 									{#if a.recipientName || a.phone}
-										<p class="text-sm text-muted-foreground">{[a.recipientName, a.phone].filter(Boolean).join(' · ')}</p>
+										<p class="text-sm text-muted-foreground">
+											{[a.recipientName, a.phone].filter(Boolean).join(' · ')}
+										</p>
 									{/if}
 								</div>
 								{#if data.canManage && !c.anonymizedAt}
@@ -324,7 +496,10 @@
 			</FormDialog>
 		</PageSection>
 
-		<PageSection title="Marketing consent" hint="Marketing goes only to a channel with a granted consent. No row: never asked.">
+		<PageSection
+			title="Marketing consent"
+			hint="Marketing goes only to a channel with a granted consent. No row: never asked."
+		>
 			{#snippet actions()}
 				{#if data.canManage && !c.anonymizedAt}
 					<FormDialog
@@ -336,9 +511,35 @@
 						resetOnSuccess
 					>
 						{#snippet fields({ form, errors })}
-							<InputComp label="Channel" name="channel" type="select" items={CONTACT_CHANNELS.map((v) => ({ value: v, name: v.toUpperCase() }))} {form} {errors} required />
-							<InputComp label="Consent" name="granted" type="radio" items={[{ value: 'granted', name: 'Granted' }, { value: 'withdrawn', name: 'Withdrawn' }]} {form} {errors} required />
-							<InputComp label="How it was given" name="source" placeholder="phone call, desk form, email reply…" {form} {errors} required />
+							<InputComp
+								label="Channel"
+								name="channel"
+								type="select"
+								items={CONTACT_CHANNELS.map((v) => ({ value: v, name: v.toUpperCase() }))}
+								{form}
+								{errors}
+								required
+							/>
+							<InputComp
+								label="Consent"
+								name="granted"
+								type="radio"
+								items={[
+									{ value: 'granted', name: 'Granted' },
+									{ value: 'withdrawn', name: 'Withdrawn' }
+								]}
+								{form}
+								{errors}
+								required
+							/>
+							<InputComp
+								label="How it was given"
+								name="source"
+								placeholder="phone call, desk form, email reply…"
+								{form}
+								{errors}
+								required
+							/>
 						{/snippet}
 					</FormDialog>
 				{/if}
@@ -347,7 +548,12 @@
 				singleTable={data.consentNow.map((x) => ({
 					name: x.channel.toUpperCase(),
 					value: x.granted === null ? 'neutral' : x.granted ? 'active' : 'inactive',
-					label: x.granted === null ? 'Never asked' : x.granted ? `Granted ${formatDateTime(x.at)}` : `Withdrawn ${formatDateTime(x.at)}`,
+					label:
+						x.granted === null
+							? 'Never asked'
+							: x.granted
+								? `Granted ${formatDateTime(x.at)}`
+								: `Withdrawn ${formatDateTime(x.at)}`,
 					kind: 'status' as const
 				}))}
 			/>
@@ -360,21 +566,53 @@
 	</div>
 
 	<div class="grid min-w-0 grid-cols-1 content-start gap-6">
-		<PageSection title="Store credit" hint="Balance {money(data.creditBalance)} — expired lines no longer count.">
+		<PageSection
+			title="Store credit"
+			hint="Balance {money(data.creditBalance)} — expired lines no longer count."
+		>
 			{#snippet actions()}
 				{#if data.canManage && !c.anonymizedAt}
 					<FormDialog
 						title="Credit or debit store credit"
-						triggerLabel="Add credit" triggerIcon={Plus} submitIcon={Plus}
+						triggerLabel="Add credit"
+						triggerIcon={Plus}
+						submitIcon={Plus}
 						action="?/credit"
 						data={data.creditForm}
 						schema={creditSchema}
 						resetOnSuccess
 					>
 						{#snippet fields({ form, errors })}
-							<InputComp label="Direction" name="direction" type="radio" items={[{ value: 'credit', name: 'Credit (give)' }, { value: 'debit', name: 'Debit (take back)' }]} {form} {errors} required />
-							<InputComp label="Amount (ETB)" name="amount" type="number" step="0.01" {form} {errors} required />
-							<InputComp label="Reason" name="reason" type="select" items={choicesOf(CREDIT_REASONS)} {form} {errors} required />
+							<InputComp
+								label="Direction"
+								name="direction"
+								type="radio"
+								items={[
+									{ value: 'credit', name: 'Credit (give)' },
+									{ value: 'debit', name: 'Debit (take back)' }
+								]}
+								{form}
+								{errors}
+								required
+							/>
+							<InputComp
+								label="Amount (ETB)"
+								name="amount"
+								type="number"
+								step="0.01"
+								{form}
+								{errors}
+								required
+							/>
+							<InputComp
+								label="Reason"
+								name="reason"
+								type="select"
+								items={choicesOf(CREDIT_REASONS)}
+								{form}
+								{errors}
+								required
+							/>
 							<InputComp label="Expires" name="expiresAt" type="date" futureDays {form} {errors} />
 							<InputComp label="Note" name="note" {form} {errors} />
 						{/snippet}

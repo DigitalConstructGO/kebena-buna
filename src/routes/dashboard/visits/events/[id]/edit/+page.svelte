@@ -20,7 +20,9 @@
 
 <PageHeader title={tr(data.event.title)} eyebrow="Edit event">
 	{#snippet actions()}
-		<Button href="/dashboard/visits/events/{data.event.id}" variant="outline"><ArrowLeft class="size-4" /> Back to the event</Button>
+		<Button href="/dashboard/visits/events/{data.event.id}" variant="outline">
+			<ArrowLeft class="size-4" /> Back to the event
+		</Button>
 	{/snippet}
 </PageHeader>
 

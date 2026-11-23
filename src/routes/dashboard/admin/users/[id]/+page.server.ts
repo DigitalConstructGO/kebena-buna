@@ -175,7 +175,10 @@ export const actions = {
 		}
 		const credentials = { name: u.name, email: u.email, password: form.data.password };
 		form.data.password = '';
-		form.message = { type: 'success', text: `New password set; ${u.name} was signed out everywhere` };
+		form.message = {
+			type: 'success',
+			text: `New password set; ${u.name} was signed out everywhere`
+		};
 		return { form, credentials };
 	},
 	/** Signs one session out (`sessionId`), or every one when none is named. */
@@ -191,7 +194,11 @@ export const actions = {
 		await db.transaction(async (tx) => {
 			await tx
 				.delete(session)
-				.where(sessionId ? and(eq(session.id, sessionId), eq(session.userId, u.id)) : eq(session.userId, u.id));
+				.where(
+					sessionId
+						? and(eq(session.id, sessionId), eq(session.userId, u.id))
+						: eq(session.userId, u.id)
+				);
 			await recordAudit(tx, event, {
 				table: 'user',
 				recordId: u.id,
@@ -199,6 +206,8 @@ export const actions = {
 				detail: { signedOut: sessionId ? 'one session' : 'every session' }
 			});
 		});
-		return { message: { type: 'success', text: sessionId ? 'Session signed out' : 'Signed out everywhere' } };
+		return {
+			message: { type: 'success', text: sessionId ? 'Session signed out' : 'Signed out everywhere' }
+		};
 	}
 };

@@ -62,7 +62,8 @@
 			id: 'signIn',
 			header: 'Sign-in',
 			meta: { class: 'hidden lg:table-cell' },
-			cell: ({ row }) => (row.original.userId ? user(row.original.userId, row.original.userName) : 'Guest')
+			cell: ({ row }) =>
+				row.original.userId ? user(row.original.userId, row.original.userName) : 'Guest'
 		},
 		{
 			id: 'source',

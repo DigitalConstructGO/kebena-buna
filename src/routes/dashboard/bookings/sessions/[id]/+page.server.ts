@@ -74,12 +74,24 @@ export const load = async ({ params, locals }) => {
 		people,
 		canManage: hasPermission(locals, 'bookings.manage'),
 		editForm: await superValidate(
-			{ date: start.date, startsAt: start.time, endsAt: end.time, capacity: s.capacity, language: s.language, notes: s.notes },
+			{
+				date: start.date,
+				startsAt: start.time,
+				endsAt: end.time,
+				capacity: s.capacity,
+				language: s.language,
+				notes: s.notes
+			},
 			zod4(sessionEditSchema),
 			{ errors: false, id: 'edit' }
 		),
 		staffForm: await superValidate(
-			{ role: row.kind === 'ceremony' ? 'host' : 'guide', date: start.date, startsAt: start.time, endsAt: end.time },
+			{
+				role: row.kind === 'ceremony' ? 'host' : 'guide',
+				date: start.date,
+				startsAt: start.time,
+				endsAt: end.time
+			},
 			zod4(staffAssignmentSchema),
 			{ errors: false, id: 'staff' }
 		)
@@ -90,18 +102,35 @@ export const actions = {
 	edit: async (event) => {
 		requirePermission(event.locals, 'bookings.manage');
 		const form = await superValidate(event.request, zod4(sessionEditSchema), { id: 'edit' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { s } = await loadSession(event.params.id);
 		const { date, startsAt, endsAt, capacity, language, notes } = form.data;
 		const start = joinDateTime(date, startsAt);
 		const end = joinDateTime(date, endsAt);
-		if (end <= start) return message(form, { type: 'error', text: 'The end must be after the start.' }, { status: 400 });
+		if (end <= start)
+			return message(
+				form,
+				{ type: 'error', text: 'The end must be after the start.' },
+				{ status: 400 }
+			);
 		const refusal = await db.transaction(async (tx) => {
-			const [before] = await tx.select().from(bookingSession).where(eq(bookingSession.id, s.id)).for('update');
+			const [before] = await tx
+				.select()
+				.from(bookingSession)
+				.where(eq(bookingSession.id, s.id))
+				.for('update');
 			if (capacity < before.booked) return `${before.booked} places are already booked.`;
 			await tx
 				.update(bookingSession)
-				.set({ startsAt: start, endsAt: end, capacity, language, notes, updatedBy: event.locals.user?.id })
+				.set({
+					startsAt: start,
+					endsAt: end,
+					capacity,
+					language,
+					notes,
+					updatedBy: event.locals.user?.id
+				})
 				.where(eq(bookingSession.id, s.id));
 			// Its staff move with it, so the double-booking check reads the real times.
 			await shiftAssignments(tx, { sessionId: s.id }, before, { startsAt: start, endsAt: end });
@@ -113,7 +142,8 @@ export const actions = {
 	staff: async (event) => {
 		requirePermission(event.locals, 'bookings.manage');
 		const form = await superValidate(event.request, zod4(staffAssignmentSchema), { id: 'staff' });
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { s } = await loadSession(event.params.id);
 		const result = await assignStaff({ ...form.data, sessionId: s.id }, event.locals.user?.id);
 		if (!result.ok) return message(form, { type: 'error', text: result.text }, { status: 400 });
@@ -122,9 +152,14 @@ export const actions = {
 	unstaff: async (event) => {
 		requirePermission(event.locals, 'bookings.manage');
 		const { s } = await loadSession(event.params.id);
-		const id = z.coerce.number().int().safeParse((await event.request.formData()).get('assignmentId'));
+		const id = z.coerce
+			.number()
+			.int()
+			.safeParse((await event.request.formData()).get('assignmentId'));
 		if (!id.success) return { message: { type: 'error', text: 'Which assignment?' } };
-		await db.delete(staffAssignment).where(and(eq(staffAssignment.id, id.data), eq(staffAssignment.sessionId, s.id)));
+		await db
+			.delete(staffAssignment)
+			.where(and(eq(staffAssignment.id, id.data), eq(staffAssignment.sessionId, s.id)));
 		return { message: { type: 'success', text: 'Taken off the session' } };
 	},
 	/** Cancels or reinstates the run. Its bookings are left for staff to move or refund one by one. */
@@ -135,6 +170,8 @@ export const actions = {
 			.update(bookingSession)
 			.set({ isCancelled: !s.isCancelled, updatedBy: event.locals.user?.id })
 			.where(eq(bookingSession.id, s.id));
-		return { message: { type: 'success', text: s.isCancelled ? 'Session reinstated' : 'Session cancelled' } };
+		return {
+			message: { type: 'success', text: s.isCancelled ? 'Session reinstated' : 'Session cancelled' }
+		};
 	}
 };

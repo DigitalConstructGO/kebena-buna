@@ -41,7 +41,10 @@ export const PERMISSIONS = [
 	{ name: 'ai.view', description: 'AI agent conversations' },
 	{ name: 'ai.manage', description: 'Take over AI chats and hand them back' },
 
-	{ name: 'settings.manage', description: 'Locations, hours, taxes, audiences, languages, settings' },
+	{
+		name: 'settings.manage',
+		description: 'Locations, hours, taxes, audiences, languages, settings'
+	},
 	{ name: 'messages.view', description: 'Outgoing messages, templates and webhooks' },
 	{
 		name: 'messages.manage',

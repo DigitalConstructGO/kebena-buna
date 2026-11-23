@@ -19,7 +19,12 @@
 				const under =
 					link.url === home ? path === home : path === link.url || path.startsWith(link.url + '/');
 				if (under && link.url.length > (best?.url.length ?? -1)) {
-					best = { group: item.title, title: link.title, url: link.url, grouped: Boolean(item.items) };
+					best = {
+						group: item.title,
+						title: link.title,
+						url: link.url,
+						grouped: Boolean(item.items)
+					};
 				}
 			}
 		}
@@ -38,7 +43,11 @@
 		<ol class="flex min-w-0 items-center gap-1 text-sm text-muted-foreground">
 			{#each crumbs as crumb, i (crumb.label)}
 				{#if i > 0}<li aria-hidden="true"><ChevronRight class="size-3.5 shrink-0" /></li>{/if}
-				<li class="truncate {i === crumbs.length - 1 && !crumb.href ? 'font-medium text-foreground' : ''}">
+				<li
+					class="truncate {i === crumbs.length - 1 && !crumb.href
+						? 'font-medium text-foreground'
+						: ''}"
+				>
 					{#if crumb.href}
 						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- a path from NAVIGATION -->
 						<a href={crumb.href} class="hover:text-foreground hover:underline">{crumb.label}</a>

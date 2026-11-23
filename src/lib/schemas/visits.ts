@@ -20,7 +20,12 @@ import {
 } from '#lib/schemas/common.ts';
 
 export const ticketTypeSchema = z.object({
-	code: z.string().trim().min(1, 'Required').max(24).transform((v) => v.toUpperCase()),
+	code: z
+		.string()
+		.trim()
+		.min(1, 'Required')
+		.max(24)
+		.transform((v) => v.toUpperCase()),
 	nameEn: enText(100),
 	nameAm: amText(100),
 	nameOm: amText(100),
@@ -62,7 +67,8 @@ const slotTemplateFields = z.object({
 	status: boolTrue
 });
 /** `HH:mm` and `HH:mm:ss` compare as text once both are cut to five characters. */
-const endsAfterStart = (v: { startsAt: string; endsAt: string }) => v.endsAt.slice(0, 5) > v.startsAt.slice(0, 5);
+const endsAfterStart = (v: { startsAt: string; endsAt: string }) =>
+	v.endsAt.slice(0, 5) > v.startsAt.slice(0, 5);
 const endsAfterStartError = { path: ['endsAt'], message: 'It must end after it starts' };
 export const slotTemplateSchema = slotTemplateFields.refine(endsAfterStart, endsAfterStartError);
 export const slotTemplateEditSchema = slotTemplateFields

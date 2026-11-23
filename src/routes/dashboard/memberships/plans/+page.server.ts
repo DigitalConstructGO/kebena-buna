@@ -26,7 +26,10 @@ export const load = async ({ locals }) => {
 			shopDiscountPct: membershipPlan.shopDiscountPct,
 			publishStatus: membershipPlan.publishStatus,
 			isActive: membershipPlan.isActive,
-			active: sql<number>`(select count(*) from ${membership} m where m.plan_id = ${membershipPlan.id} and m.status in ('active', 'grace') and m.deleted_at is null)`.mapWith(Number)
+			active:
+				sql<number>`(select count(*) from ${membership} m where m.plan_id = ${membershipPlan.id} and m.status in ('active', 'grace') and m.deleted_at is null)`.mapWith(
+					Number
+				)
 		})
 		.from(membershipPlan)
 		.where(isNull(membershipPlan.deletedAt))
@@ -46,7 +49,8 @@ export const actions = {
 		requirePermission(event.locals, 'memberships.manage');
 		const posted = await postedForm(event.request);
 		const form = await superValidate(posted, zod4(membershipPlanSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		let id: number;
 		try {
 			id = await savePlan(event, form.data, posted);
@@ -57,11 +61,18 @@ export const actions = {
 			}
 			if (isDuplicateKey(err)) {
 				setError(form, 'code', 'A plan already has this code');
-				return message(form, { type: 'error', text: 'A plan already has this code' }, { status: 400 });
+				return message(
+					form,
+					{ type: 'error', text: 'A plan already has this code' },
+					{ status: 400 }
+				);
 			}
 			throw err;
 		}
-		redirect(`/dashboard/memberships/plans/${id}`, { type: 'success', message: 'Plan added' }, event.cookies);
+		redirect(
+			`/dashboard/memberships/plans/${id}`,
+			{ type: 'success', message: 'Plan added' },
+			event.cookies
+		);
 	}
 };
-

@@ -17,7 +17,9 @@ export const load: PageServerLoad = async () => ({
 export const actions: Actions = {
 	group: (event) =>
 		inboxAction<z.infer<typeof groupSchema>>(event, groupSchema, 'group', (d) => {
-			const preferredDates = [d.preferredDate1, d.preferredDate2, d.preferredDate3].filter((x): x is string => Boolean(x));
+			const preferredDates = [d.preferredDate1, d.preferredDate2, d.preferredDate3].filter(
+				(x): x is string => Boolean(x)
+			);
 			return {
 				formType: 'group_booking',
 				name: d.contactName,

@@ -11,7 +11,9 @@
 
 	let { data } = $props();
 	// svelte-ignore state_referenced_locally
-	const { form, errors, enhance, delayed, allErrors } = createForm(data.form, accountSchema, { taintedMessage: confirmLeave });
+	const { form, errors, enhance, delayed, allErrors } = createForm(data.form, accountSchema, {
+		taintedMessage: confirmLeave
+	});
 </script>
 
 <PageHeader
@@ -19,7 +21,12 @@
 	description="An application taken by phone or in person. It stays pending until a Manager or Owner other than you approves it."
 />
 
-<form method="POST" enctype="multipart/form-data" use:enhance class="mt-4 grid grid-cols-1 max-w-3xl gap-6">
+<form
+	method="POST"
+	enctype="multipart/form-data"
+	use:enhance
+	class="mt-4 grid max-w-3xl grid-cols-1 gap-6"
+>
 	<Errors allErrors={$allErrors} />
 	<PageSection title="Application">
 		<div class="grid grid-cols-1 gap-4">

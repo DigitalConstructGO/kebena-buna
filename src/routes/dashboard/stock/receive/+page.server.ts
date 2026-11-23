@@ -53,7 +53,11 @@ export const load = async ({ locals, url }) => {
 		locations,
 		recent,
 		form: await superValidate(
-			{ date: localToday(), locationId: roastery?.id, lotId: Number(url.searchParams.get('lot')) || undefined },
+			{
+				date: localToday(),
+				locationId: roastery?.id,
+				lotId: Number(url.searchParams.get('lot')) || undefined
+			},
 			zod4(receiveSchema),
 			{ errors: false }
 		)
@@ -64,11 +68,16 @@ export const actions = {
 	default: async (event) => {
 		requirePermission(event.locals, 'stock.manage');
 		const form = await superValidate(event.request, zod4(receiveSchema));
-		if (!form.valid) return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { date, ...values } = form.data;
 		try {
 			await db.transaction(async (tx) => {
-				await receiveGreen(tx, { ...values, occurredAt: joinDateTime(date, '12:00'), userId: event.locals.user?.id });
+				await receiveGreen(tx, {
+					...values,
+					occurredAt: joinDateTime(date, '12:00'),
+					userId: event.locals.user?.id
+				});
 				await recordAudit(tx, event, {
 					table: 'green_stock',
 					recordId: `${values.lotId}:${values.locationId}`,

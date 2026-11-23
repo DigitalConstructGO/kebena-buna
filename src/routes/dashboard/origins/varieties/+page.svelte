@@ -20,12 +20,53 @@
 		plural: 'Varieties',
 		fields: [
 			{ name: 'name', label: 'Name', type: 'text' },
-			{ name: 'descriptionEn', label: 'Description (English)', type: 'textarea', required: false, rows: 3 },
-			{ name: 'descriptionAm', label: 'Description (Amharic)', type: 'textarea', required: false, rows: 3, inTable: false },
-			{ name: 'descriptionOm', label: 'Description (Afaan Oromo)', type: 'textarea', required: false, rows: 3, inTable: false },
-			{ name: 'descriptionAr', label: 'Description (Arabic)', type: 'textarea', required: false, rows: 3, inTable: false },
-			{ name: 'descriptionIt', label: 'Description (Italian)', type: 'textarea', required: false, rows: 3, inTable: false },
-			{ name: 'descriptionFr', label: 'Description (French)', type: 'textarea', required: false, rows: 3, inTable: false },
+			{
+				name: 'descriptionEn',
+				label: 'Description (English)',
+				type: 'textarea',
+				required: false,
+				rows: 3
+			},
+			{
+				name: 'descriptionAm',
+				label: 'Description (Amharic)',
+				type: 'textarea',
+				required: false,
+				rows: 3,
+				inTable: false
+			},
+			{
+				name: 'descriptionOm',
+				label: 'Description (Afaan Oromo)',
+				type: 'textarea',
+				required: false,
+				rows: 3,
+				inTable: false
+			},
+			{
+				name: 'descriptionAr',
+				label: 'Description (Arabic)',
+				type: 'textarea',
+				required: false,
+				rows: 3,
+				inTable: false
+			},
+			{
+				name: 'descriptionIt',
+				label: 'Description (Italian)',
+				type: 'textarea',
+				required: false,
+				rows: 3,
+				inTable: false
+			},
+			{
+				name: 'descriptionFr',
+				label: 'Description (French)',
+				type: 'textarea',
+				required: false,
+				rows: 3,
+				inTable: false
+			},
 			{ name: 'status', label: 'Status', type: 'boolean' }
 		]
 	}}

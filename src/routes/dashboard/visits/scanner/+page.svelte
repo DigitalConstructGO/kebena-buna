@@ -15,7 +15,13 @@
 	let { data } = $props();
 
 	type Ticket = (typeof data.tickets)[number];
-	type Queued = { clientScanId: string; raw: string; headcount?: number; scannedAt: string; wasOffline: boolean };
+	type Queued = {
+		clientScanId: string;
+		raw: string;
+		headcount?: number;
+		scannedAt: string;
+		wasOffline: boolean;
+	};
 	type Verdict = {
 		tone: 'go' | 'again' | 'stop';
 		title: string;
@@ -74,20 +80,37 @@
 	async function handle(raw: string, headcount?: number) {
 		const qr = parseTicketQr(raw);
 		if (qr && key && !(await verifyTicketQr(qr, key))) {
-			return show(raw, { tone: 'stop', title: 'Not a Kebena ticket', detail: 'The QR code is not signed by Kebena.' });
+			return show(raw, {
+				tone: 'stop',
+				title: 'Not a Kebena ticket',
+				detail: 'The QR code is not signed by Kebena.'
+			});
 		}
 		if (qr && qr.visitDate !== today) {
-			return show(raw, { tone: 'stop', title: 'Wrong day', detail: `This ticket is for ${formatDate(qr.visitDate)}.` });
+			return show(raw, {
+				tone: 'stop',
+				title: 'Wrong day',
+				detail: `This ticket is for ${formatDate(qr.visitDate)}.`
+			});
 		}
 		const code = ticketCodeOf(raw);
 		const t = byCode.get(code);
 		if (!t) {
-			return show(raw, { tone: 'stop', title: 'Not on today’s list', detail: `${code} — check it at the desk.` });
+			return show(raw, {
+				tone: 'stop',
+				title: 'Not on today’s list',
+				detail: `${code} — check it at the desk.`
+			});
 		}
 		const remaining = Math.max(t.admits - t.checkedIn, 0);
 		if (remaining === 0) {
 			const first = t.firstCheckedInAt ? localClock(new Date(t.firstCheckedInAt)) : 'earlier';
-			return show(raw, { tone: 'again', title: 'Re-entry', detail: `First checked in at ${first}.`, ticket: t });
+			return show(raw, {
+				tone: 'again',
+				title: 'Re-entry',
+				detail: `First checked in at ${first}.`,
+				ticket: t
+			});
 		}
 		if (remaining > 1 && headcount === undefined) {
 			pending = { raw, ticket: t, count: remaining };
@@ -113,8 +136,17 @@
 	function show(raw: string, v: Verdict, headcount?: number) {
 		pending = null;
 		verdict = v;
-		recent = [{ code: v.ticket?.code ?? ticketCodeOf(raw), title: v.title, tone: v.tone, at: new Date() }, ...recent].slice(0, 8);
-		enqueue({ clientScanId: crypto.randomUUID(), raw, headcount, scannedAt: new Date().toISOString(), wasOffline: !online });
+		recent = [
+			{ code: v.ticket?.code ?? ticketCodeOf(raw), title: v.title, tone: v.tone, at: new Date() },
+			...recent
+		].slice(0, 8);
+		enqueue({
+			clientScanId: crypto.randomUUID(),
+			raw,
+			headcount,
+			scannedAt: new Date().toISOString(),
+			wasOffline: !online
+		});
 		navigator.vibrate?.(v.tone === 'go' ? 80 : [60, 60, 60]);
 	}
 
@@ -137,13 +169,23 @@
 				body: JSON.stringify({ scans: batch })
 			});
 			if (!res.ok) throw new Error(String(res.status));
-			const { results } = (await res.json()) as { results: { clientScanId: string; result: string; code: string }[] };
+			const { results } = (await res.json()) as {
+				results: { clientScanId: string; result: string; code: string }[];
+			};
 			const done = new Set(results.map((r) => r.clientScanId));
 			queue = queue.filter((q) => !done.has(q.clientScanId));
 			save(QUEUE_KEY, queue);
 			for (const r of results) {
 				if (r.result === 'duplicate_offline') {
-					recent = [{ code: r.code, title: 'Admitted twice while offline', tone: 'stop' as const, at: new Date() }, ...recent].slice(0, 8);
+					recent = [
+						{
+							code: r.code,
+							title: 'Admitted twice while offline',
+							tone: 'stop' as const,
+							at: new Date()
+						},
+						...recent
+					].slice(0, 8);
 				}
 			}
 			online = true;
@@ -176,7 +218,10 @@
 	async function startCamera() {
 		cameraError = null;
 		try {
-			stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+			stream = await navigator.mediaDevices.getUserMedia({
+				video: { facingMode: 'environment' },
+				audio: false
+			});
 			cameraOn = true;
 			await Promise.resolve();
 			if (video) {
@@ -185,7 +230,10 @@
 				void readLoop();
 			}
 		} catch (err) {
-			cameraError = err instanceof Error && err.name === 'NotAllowedError' ? 'Camera permission was refused.' : 'No camera could be opened.';
+			cameraError =
+				err instanceof Error && err.name === 'NotAllowedError'
+					? 'Camera permission was refused.'
+					: 'No camera could be opened.';
 			stopCamera();
 		}
 	}
@@ -200,7 +248,13 @@
 	async function readLoop() {
 		const canvas = document.createElement('canvas');
 		const ctx = canvas.getContext('2d', { willReadFrequently: true });
-		const Detector = (globalThis as { BarcodeDetector?: new (o: { formats: string[] }) => { detect: (v: HTMLVideoElement) => Promise<{ rawValue: string }[]> } }).BarcodeDetector;
+		const Detector = (
+			globalThis as {
+				BarcodeDetector?: new (o: { formats: string[] }) => {
+					detect: (v: HTMLVideoElement) => Promise<{ rawValue: string }[]>;
+				};
+			}
+		).BarcodeDetector;
 		const detector = Detector ? new Detector({ formats: ['qr_code'] }) : null;
 		while (cameraOn && video) {
 			let raw: string | null = null;
@@ -211,7 +265,9 @@
 					const w = (canvas.width = video.videoWidth);
 					const h = (canvas.height = video.videoHeight);
 					ctx.drawImage(video, 0, 0, w, h);
-					raw = jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' })?.data ?? null;
+					raw =
+						jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' })
+							?.data ?? null;
 				}
 			}
 			// The same QR held up to the camera reads many times a second: count it once.
@@ -260,7 +316,9 @@
 
 <PageHeader
 	title="Gate scanner"
-	description="{formatDate(today)} · {inside} of {expected} in. Point the camera at a ticket QR; it keeps working offline and catches up when the network is back."
+	description="{formatDate(
+		today
+	)} · {inside} of {expected} in. Point the camera at a ticket QR; it keeps working offline and catches up when the network is back."
 />
 
 <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_20rem]">
@@ -268,7 +326,9 @@
 		<div class="relative aspect-[4/3] max-h-[70vh] w-full overflow-hidden rounded-xl bg-black">
 			{#if cameraOn}
 				<video bind:this={video} class="size-full object-cover" playsinline muted></video>
-				<div class="pointer-events-none absolute inset-[18%] rounded-2xl border-4 border-white/70"></div>
+				<div
+					class="pointer-events-none absolute inset-[18%] rounded-2xl border-4 border-white/70"
+				></div>
 			{:else}
 				<div class="grid size-full place-items-center p-6 text-center text-white/80">
 					<div class="flex flex-col items-center gap-3">
@@ -296,7 +356,9 @@
 						<span class="text-xl font-bold tracking-wide">{label(verdict.ticket)}</span>
 						{#if who(verdict.ticket)}<span class="text-lg">{who(verdict.ticket)}</span>{/if}
 						{#if verdict.tone === 'go' && verdict.ticket.requiresIdCheck}
-							<span class="mt-2 rounded-full bg-white/20 px-4 py-1 text-sm font-semibold">Check ID</span>
+							<span class="mt-2 rounded-full bg-white/20 px-4 py-1 text-sm font-semibold">
+								Check ID
+							</span>
 						{/if}
 					{/if}
 					{#if verdict.detail}<span class="text-base opacity-90">{verdict.detail}</span>{/if}
@@ -305,21 +367,37 @@
 			{/if}
 
 			{#if pending}
-				<div class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/85 p-6 text-center text-white">
+				<div
+					class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/85 p-6 text-center text-white"
+				>
 					<span class="text-xl font-bold">{label(pending.ticket)}</span>
-					<span>{who(pending.ticket)} · group of {pending.ticket.admits}, {pending.ticket.admits - pending.ticket.checkedIn} still to come</span>
+					<span>
+						{who(pending.ticket)} · group of {pending.ticket.admits}, {pending.ticket.admits -
+							pending.ticket.checkedIn} still to come
+					</span>
 					<div class="flex items-center gap-4">
-						<Button variant="secondary" size="lg" disabled={pending.count <= 1} onclick={() => pending && pending.count--}>−</Button>
+						<Button
+							variant="secondary"
+							size="lg"
+							disabled={pending.count <= 1}
+							onclick={() => pending && pending.count--}
+						>
+							−
+						</Button>
 						<span class="w-16 text-4xl font-black tabular-nums">{pending.count}</span>
 						<Button
 							variant="secondary"
 							size="lg"
 							disabled={pending.count >= pending.ticket.admits - pending.ticket.checkedIn}
-							onclick={() => pending && pending.count++}>+</Button
+							onclick={() => pending && pending.count++}
 						>
+							+
+						</Button>
 					</div>
 					<div class="flex gap-3">
-						<Button size="lg" onclick={() => pending && handle(pending.raw, pending.count)}>Admit {pending.count}</Button>
+						<Button size="lg" onclick={() => pending && handle(pending.raw, pending.count)}>
+							Admit {pending.count}
+						</Button>
 						<Button variant="ghost" size="lg" onclick={() => (pending = null)}>Cancel</Button>
 					</div>
 				</div>
@@ -328,12 +406,19 @@
 
 		<div class="flex flex-wrap gap-3">
 			{#if cameraOn}
-				<Button variant="outline" onclick={stopCamera}><CameraOff class="size-4" /> Stop camera</Button>
+				<Button variant="outline" onclick={stopCamera}>
+					<CameraOff class="size-4" /> Stop camera
+				</Button>
 			{:else}
 				<Button onclick={startCamera}><Camera class="size-4" /> Start camera</Button>
 			{/if}
 			<form class="flex min-w-60 flex-1 gap-2" onsubmit={submitTyped}>
-				<Input bind:value={typed} placeholder="Or type a ticket code" aria-label="Ticket code" autocomplete="off" />
+				<Input
+					bind:value={typed}
+					placeholder="Or type a ticket code"
+					aria-label="Ticket code"
+					autocomplete="off"
+				/>
 				<Button type="submit" variant="outline">Check</Button>
 			</form>
 		</div>
@@ -342,14 +427,19 @@
 	<aside class="flex flex-col gap-4">
 		<div class="rounded-xl border p-4 text-sm">
 			<p class="flex items-center gap-2 font-medium">
-				{#if online}<Wifi class="size-4 text-emerald-600" /> Online{:else}<WifiOff class="size-4 text-amber-600" /> Offline{/if}
+				{#if online}<Wifi class="size-4 text-emerald-600" /> Online{:else}<WifiOff
+						class="size-4 text-amber-600"
+					/> Offline{/if}
 			</p>
 			<p class="mt-1 text-muted-foreground">
 				{tickets.length} tickets on today’s list.
-				{#if queue.length}{queue.length} scan{queue.length === 1 ? '' : 's'} waiting to sync.{:else}All scans synced.{/if}
+				{#if queue.length}{queue.length} scan{queue.length === 1 ? '' : 's'} waiting to sync.{:else}All
+					scans synced.{/if}
 			</p>
 			{#if lastSync}<p class="text-muted-foreground">Last synced {localClock(lastSync)}.</p>{/if}
-			{#if !key}<p class="mt-2 text-amber-700">This browser cannot check QR signatures; tickets are checked against the list only.</p>{/if}
+			{#if !key}<p class="mt-2 text-amber-700">
+					This browser cannot check QR signatures; tickets are checked against the list only.
+				</p>{/if}
 		</div>
 		<div class="rounded-xl border p-4">
 			<p class="mb-2 text-sm font-medium">Recent scans</p>
@@ -359,7 +449,11 @@
 						<li class="flex items-center justify-between gap-2">
 							<span class="flex items-center gap-2">
 								<span
-									class="size-2.5 rounded-full {r.tone === 'go' ? 'bg-emerald-600' : r.tone === 'again' ? 'bg-amber-600' : 'bg-red-600'}"
+									class="size-2.5 rounded-full {r.tone === 'go'
+										? 'bg-emerald-600'
+										: r.tone === 'again'
+											? 'bg-amber-600'
+											: 'bg-red-600'}"
 								></span>
 								<span class="font-mono">{r.code}</span>
 							</span>

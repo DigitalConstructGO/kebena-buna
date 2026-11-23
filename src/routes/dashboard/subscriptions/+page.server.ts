@@ -23,7 +23,10 @@ import { enOf } from '#lib/server/localized.ts';
 import { SUBSCRIPTION_FREQUENCIES, SUBSCRIPTION_STATUSES } from '#lib/constants.ts';
 
 const FILTERS = ['status', 'frequency'] as const;
-const left = sql<number>`(${subscription.deliveriesPurchased} - ${subscription.deliveriesUsed})`.mapWith(Number);
+const left =
+	sql<number>`(${subscription.deliveriesPurchased} - ${subscription.deliveriesUsed})`.mapWith(
+		Number
+	);
 const SORTS = {
 	number: subscription.number,
 	customer: customer.name,
@@ -95,14 +98,21 @@ export const load = async ({ url }) => {
 		joined(db.select({ total: count() }).from(subscription).$dynamic()).where(where),
 		facetCounts({
 			status: () =>
-				joined(db.select({ value: subscription.status, count: count() }).from(subscription).$dynamic())
+				joined(
+					db.select({ value: subscription.status, count: count() }).from(subscription).$dynamic()
+				)
 					.where(buildWhere(query, spec, { except: 'status' }))
 					.groupBy(subscription.status),
 			frequency: () =>
-				joined(db.select({ value: subscription.frequency, count: count() }).from(subscription).$dynamic())
+				joined(
+					db.select({ value: subscription.frequency, count: count() }).from(subscription).$dynamic()
+				)
 					.where(buildWhere(query, spec, { except: 'frequency' }))
 					.groupBy(subscription.frequency)
 		})
 	]);
-	return { rows, server: { pagination: pagination(query, total), facets, filters: currentQuery(query) } };
+	return {
+		rows,
+		server: { pagination: pagination(query, total), facets, filters: currentQuery(query) }
+	};
 };

@@ -11,7 +11,14 @@ import { and, asc, eq, inArray } from 'drizzle-orm';
 import type { RequestEvent } from '@sveltejs/kit';
 import { localToday } from '@nahu/admin-kit/time';
 import { db } from '#lib/server/db/index.ts';
-import { audience, customer, ticket, ticketScan, ticketType, visitSlot } from '#lib/server/db/schema.ts';
+import {
+	audience,
+	customer,
+	ticket,
+	ticketScan,
+	ticketType,
+	visitSlot
+} from '#lib/server/db/schema.ts';
 import { enOf } from '#lib/server/localized.ts';
 import { readTicketQr } from '#lib/server/ticketQr.ts';
 import { parseTicketQr, ticketCodeOf } from '#lib/ticketQr.ts';
@@ -67,12 +74,21 @@ export type ScanOutcome = {
 export async function recordScan(event: RequestEvent, s: Scan): Promise<ScanOutcome> {
 	return db.transaction(async (tx) => {
 		const [done] = await tx
-			.select({ result: ticketScan.result, code: ticketScan.scannedCode, headcount: ticketScan.headcount })
+			.select({
+				result: ticketScan.result,
+				code: ticketScan.scannedCode,
+				headcount: ticketScan.headcount
+			})
 			.from(ticketScan)
 			.where(eq(ticketScan.clientScanId, s.clientScanId))
 			.limit(1);
 		if (done) {
-			return { clientScanId: s.clientScanId, result: done.result, code: done.code, admitted: done.result === 'admitted' ? done.headcount : 0 };
+			return {
+				clientScanId: s.clientScanId,
+				result: done.result,
+				code: done.code,
+				admitted: done.result === 'admitted' ? done.headcount : 0
+			};
 		}
 
 		const scannedAt = new Date(s.scannedAt);
@@ -133,7 +149,11 @@ export async function recordScan(event: RequestEvent, s: Scan): Promise<ScanOutc
 		const checkedIn = t.checkedIn + people;
 		await tx
 			.update(ticket)
-			.set({ status: checkedIn >= t.admits ? 'used' : 'valid', checkedIn, firstCheckedInAt: t.firstCheckedInAt ?? when })
+			.set({
+				status: checkedIn >= t.admits ? 'used' : 'valid',
+				checkedIn,
+				firstCheckedInAt: t.firstCheckedInAt ?? when
+			})
 			.where(eq(ticket.id, t.id));
 		const result: ScanResult = asked > remaining ? 'over_headcount' : 'admitted';
 		await log(result, t.id, people);

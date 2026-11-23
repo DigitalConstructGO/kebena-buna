@@ -5,7 +5,16 @@ import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
 import { requirePermission } from '@nahu/admin-kit/server/permissions';
 import { localToday } from '@nahu/admin-kit/time';
 import { db } from '#lib/server/db/index.ts';
-import { audience, customer, event, location, ticket, ticketType, visitDay, visitSlot } from '#lib/server/db/schema.ts';
+import {
+	audience,
+	customer,
+	event,
+	location,
+	ticket,
+	ticketType,
+	visitDay,
+	visitSlot
+} from '#lib/server/db/schema.ts';
 import { enOf } from '#lib/server/localized.ts';
 import { checkInTicket } from '#lib/server/visits.ts';
 
@@ -30,9 +39,10 @@ export const load = async ({ locals }) => {
 				capacity: visitSlot.capacity,
 				sold: visitSlot.sold,
 				location: enOf(location.name),
-				checkedIn: sql<number>`(select coalesce(sum(t.checked_in), 0) from ticket t where t.visit_slot_id = ${visitSlot.id})`.mapWith(
-					Number
-				)
+				checkedIn:
+					sql<number>`(select coalesce(sum(t.checked_in), 0) from ticket t where t.visit_slot_id = ${visitSlot.id})`.mapWith(
+						Number
+					)
 			})
 			.from(visitSlot)
 			.innerJoin(visitDay, eq(visitSlot.visitDayId, visitDay.id))

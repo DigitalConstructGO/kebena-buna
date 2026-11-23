@@ -6,7 +6,7 @@
 	import ProductViewer from '#lib/site/shop/ProductViewer.svelte';
 	import type { ShelfProduct } from '#lib/site/shop/types.ts';
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { m } from '#lib/paraglide/messages.js';
+	import { m } from '#lib/i18n.ts';
 	import { money, tr } from '#lib/format.ts';
 	import { siteHref } from '#lib/site/locale.ts';
 
@@ -14,13 +14,17 @@
 
 	const locale = $derived(getLocale());
 	/** `?c=specialty` narrows the shop to one category; links, so it works without script. */
-	const current = $derived(data.categories.find((c) => c.slug === page.url.searchParams.get('c')) ?? null);
+	const current = $derived(
+		data.categories.find((c) => c.slug === page.url.searchParams.get('c')) ?? null
+	);
 	const groups = $derived(
 		(current ? [current] : data.categories)
 			.map((c) => ({ category: c, products: data.products.filter((p) => p.categoryId === c.id) }))
 			.filter((g) => g.products.length)
 	);
-	const uncategorised = $derived(current ? [] : data.products.filter((p) => !data.categories.some((c) => c.id === p.categoryId)));
+	const uncategorised = $derived(
+		current ? [] : data.products.filter((p) => !data.categories.some((c) => c.id === p.categoryId))
+	);
 
 	/** The Kebena bag every coffee is sold in: its printed front. */
 	const BAG = '/hero/bag-front.jpg';
@@ -34,7 +38,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.shop_title()} · Kebena</title>
+	<title>{m.site_page_title({ title: m.shop_title() })}</title>
 	<meta name="description" content={m.shop_lede()} />
 </svelte:head>
 
@@ -47,9 +51,16 @@
 
 	{#if data.categories.length > 1}
 		<nav class="section chips" aria-label={m.shop_categories()}>
-			<a href={siteHref('/shop', locale)} aria-current={current ? undefined : 'page'}>{m.shop_all()}</a>
+			<a href={siteHref('/shop', locale)} aria-current={current ? undefined : 'page'}>
+				{m.shop_all()}
+			</a>
 			{#each data.categories as c (c.id)}
-				<a href="{siteHref('/shop', locale)}?c={c.slug}" aria-current={current?.id === c.id ? 'page' : undefined}>{tr(c.name, locale)}</a>
+				<a
+					href="{siteHref('/shop', locale)}?c={c.slug}"
+					aria-current={current?.id === c.id ? 'page' : undefined}
+				>
+					{tr(c.name, locale)}
+				</a>
 			{/each}
 		</nav>
 	{/if}
