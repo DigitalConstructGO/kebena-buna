@@ -95,7 +95,7 @@ export const actions = {
 		if (!form.valid)
 			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { date, time, ...values } = form.data;
-		let run: { id: number; code: string };
+		let run: { id: number; code: string; filled: number };
 		try {
 			run = await db.transaction(async (tx) => {
 				const r = await recordPacking(tx, {
@@ -115,7 +115,12 @@ export const actions = {
 		}
 		redirect(
 			`/dashboard/stock/packing/${run.id}`,
-			{ type: 'success', message: `${run.code} recorded` },
+			{
+				type: 'success',
+				message: run.filled
+					? `${run.code} recorded; bags went to ${run.filled} order line${run.filled === 1 ? '' : 's'}`
+					: `${run.code} recorded`
+			},
 			event.cookies
 		);
 	}

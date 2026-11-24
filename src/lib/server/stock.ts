@@ -8,17 +8,21 @@
  * Callers pass the transaction (`db.transaction((tx) => recordRoast(tx, …))`).
  */
 import { randomUUID } from 'node:crypto';
-import { and, eq, gt, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
 import type { Writer } from '@nahu/admin-kit/server/db';
 import { localDate } from '@nahu/admin-kit/time';
 import {
 	bagSize,
 	greenStock,
+	location,
 	lot,
+	order,
+	orderLine,
 	packedStock,
 	packingRun,
 	packingRunSource,
+	product,
 	productVariant,
 	roastBatch,
 	roastBatchInput,
@@ -350,7 +354,9 @@ export async function recordRoast(
 		occurredAt: r.roastedAt,
 		userId: r.userId
 	});
-	return { id, code };
+	// A roast-day batch takes the queue's lines it was roasted for.
+	const linked = r.isToOrder ? await linkRoastToOrders(tx, id) : 0;
+	return { id, code, linked };
 }
 
 export type PackSource = { roastBatchId: number; roastedKg: number };
@@ -487,7 +493,20 @@ export async function recordPacking(
 		occurredAt: r.packedAt,
 		userId: r.userId
 	});
-	return { id, code };
+	const filled = r.isToOrder
+		? await fillToOrderLines(tx, {
+				packingRunId: id,
+				batchIds: sources.map((s) => s.roastBatchId),
+				variantId: r.variantId,
+				roastLevelId: r.roastLevelId,
+				grindId: r.grindId ?? null,
+				locationId: r.locationId,
+				units: r.units,
+				packedAt: r.packedAt,
+				userId: r.userId
+			})
+		: 0;
+	return { id, code, filled };
 }
 
 /** What a stock line names: a lot (green), a batch (roasted) or a packing run (packed). */
@@ -589,6 +608,188 @@ export async function adjustStock(
 		refType: r.refType,
 		refId: r.refId
 	});
+}
+
+/** An order's coffee bags sold from the shelf: the lines whose stock is counted as packed bags. */
+async function shelfLines(
+	tx: Writer,
+	orderId: number,
+	fulfilments: ('from_stock' | 'roast_to_order')[] = ['from_stock']
+) {
+	return tx
+		.select({
+			id: orderLine.id,
+			variantId: orderLine.variantId,
+			roastLevelId: orderLine.roastLevelId,
+			grindId: orderLine.grindId,
+			quantity: orderLine.quantity,
+			refundedQuantity: orderLine.refundedQuantity
+		})
+		.from(orderLine)
+		.innerJoin(productVariant, eq(orderLine.variantId, productVariant.id))
+		.innerJoin(product, eq(productVariant.productId, product.id))
+		.where(
+			and(
+				eq(orderLine.orderId, orderId),
+				eq(orderLine.itemType, 'product'),
+				inArray(orderLine.fulfilment, fulfilments),
+				eq(product.kind, 'coffee')
+			)
+		);
+}
+
+/** Bags each line has off the shelf now, per packing run and location: sold less returned. */
+async function bagsOut(tx: Writer, lineIds: number[]) {
+	if (!lineIds.length) return [];
+	const rows = await tx
+		.select({
+			lineId: stockMovement.refId,
+			packingRunId: stockMovement.packingRunId,
+			locationId: stockMovement.locationId,
+			// Sales are negative, returns positive: what is out is minus their sum.
+			units: sql<number>`-sum(${stockMovement.quantity})`.mapWith(Number)
+		})
+		.from(stockMovement)
+		.where(
+			and(
+				eq(stockMovement.stage, 'packed'),
+				inArray(stockMovement.reason, ['sale', 'sale_return']),
+				eq(stockMovement.refType, 'order_line'),
+				inArray(stockMovement.refId, lineIds.map(String))
+			)
+		)
+		.groupBy(stockMovement.refId, stockMovement.packingRunId, stockMovement.locationId);
+	return rows.map((r) => ({ ...r, lineId: Number(r.lineId), units: Math.round(r.units) }));
+}
+
+/**
+ * Takes a paid order's coffee off the shelf: a `sale` movement per packing run, oldest bags first,
+ * of the line's size and roast (its grind preferred). It looks where the order is fulfilled from
+ * first — its own location, then its pickup point — then the locations that ship online, then
+ * anywhere. A line already taken is left alone, so a second call does nothing. Checkout checks the
+ * shelves, but two unpaid orders can both pass for the last bags: payment is never refused for it,
+ * the line takes what is there and the shortfall is returned (the order page shows it).
+ */
+export async function takeOrderStock(tx: Writer, orderId: number, userId?: string | null) {
+	const lines = (await shelfLines(tx, orderId)).filter((l) => l.variantId !== null);
+	if (!lines.length) return 0;
+	const taken = new Set(
+		(
+			await bagsOut(
+				tx,
+				lines.map((l) => l.id)
+			)
+		).map((r) => r.lineId)
+	);
+	const [o] = await tx
+		.select({ locationId: order.locationId, pickupLocationId: order.pickupLocationId })
+		.from(order)
+		.where(eq(order.id, orderId));
+	const rank = sql<number>`case
+		when ${packedStock.locationId} = ${o?.locationId ?? 0} then 0
+		when ${packedStock.locationId} = ${o?.pickupLocationId ?? 0} then 1
+		when ${location.fulfilsOnline} then 2
+		else 3 end`;
+	const now = new Date();
+	let short = 0;
+	for (const line of lines) {
+		if (taken.has(line.id)) continue;
+		const shelves = await tx
+			.select({
+				packingRunId: packedStock.packingRunId,
+				locationId: packedStock.locationId,
+				free: sql<number>`${packedStock.units} - ${packedStock.reservedUnits}`.mapWith(Number)
+			})
+			.from(packedStock)
+			.innerJoin(packingRun, eq(packedStock.packingRunId, packingRun.id))
+			.innerJoin(location, eq(packedStock.locationId, location.id))
+			.where(
+				and(
+					eq(packedStock.variantId, line.variantId!),
+					line.roastLevelId ? eq(packedStock.roastLevelId, line.roastLevelId) : undefined,
+					gt(sql`${packedStock.units} - ${packedStock.reservedUnits}`, 0)
+				)
+			)
+			.orderBy(
+				rank,
+				sql`case when ${packingRun.grindId} <=> ${line.grindId} then 0 else 1 end`,
+				packingRun.packedAt,
+				packingRun.id
+			)
+			.for('update');
+		let need = line.quantity;
+		for (const s of shelves) {
+			if (need <= 0) break;
+			const units = Math.min(s.free, need);
+			await change(tx, { stage: 'packed', itemId: s.packingRunId }, s.locationId, -units, {
+				reason: 'sale',
+				occurredAt: now,
+				userId,
+				refType: 'order_line',
+				refId: line.id
+			});
+			need -= units;
+		}
+		short += need;
+	}
+	return short;
+}
+
+/**
+ * Puts a cancelled order's bags back on the shelf they came off, as `sale_return` movements. Bags
+ * already refunded are not returned again: a refund that restocked put them back itself, and one
+ * that did not means they are gone.
+ */
+export async function returnOrderStock(
+	tx: Writer,
+	orderId: number,
+	note: string,
+	userId?: string | null
+) {
+	// Bags packed for a roast-to-order line came off the shelf the same way, and go back too.
+	const lines = await shelfLines(tx, orderId, ['from_stock', 'roast_to_order']);
+	const out = await bagsOut(
+		tx,
+		lines.map((l) => l.id)
+	);
+	const now = new Date();
+	for (const line of lines) {
+		let left = line.quantity - line.refundedQuantity;
+		for (const r of out.filter((x) => x.lineId === line.id && x.units > 0)) {
+			if (left <= 0 || !r.packingRunId) break;
+			const units = Math.min(r.units, left);
+			await adjustStock(tx, {
+				stage: 'packed',
+				itemId: r.packingRunId,
+				reason: 'sale_return',
+				locationId: r.locationId,
+				quantity: units,
+				occurredAt: now,
+				note,
+				userId,
+				refType: 'order_line',
+				refId: line.id
+			});
+			left -= units;
+		}
+	}
+}
+
+/** Bags each of an order's shelf lines is still waiting for: ordered, less taken off the shelf. */
+export async function shelfShortfall(tx: Writer, orderId: number) {
+	const lines = await shelfLines(tx, orderId);
+	const out = await bagsOut(
+		tx,
+		lines.map((l) => l.id)
+	);
+	const short = new Map<number, number>();
+	for (const line of lines) {
+		const have = out.filter((r) => r.lineId === line.id).reduce((sum, r) => sum + r.units, 0);
+		// Refunded bags count as dealt with, whether or not they went back.
+		const missing = line.quantity - line.refundedQuantity - have;
+		if (missing > 0) short.set(line.id, missing);
+	}
+	return short;
 }
 
 /** A move between locations: `transfer_out` and `transfer_in`, paired by one `transferKey`. */
@@ -784,4 +985,255 @@ export async function roastedAvailable(tx: Writer, locationId?: number) {
 		)
 		.orderBy(sql`${roastBatch.roastedAt} desc`);
 	return rows;
+}
+
+/* ── Roast to order ─────────────────────────────────────────────────────────────────────────── */
+
+/** Roast-to-order lines still waiting, in orders being made: paid, or roasting. */
+const waitingLine = () =>
+	and(
+		eq(orderLine.itemType, 'product'),
+		eq(orderLine.fulfilment, 'roast_to_order'),
+		inArray(order.status, ['paid', 'roasting']),
+		isNull(order.deletedAt)
+	);
+
+/** The coffee a line's bags hold, in kg. */
+const lineKg = sql<number>`(${orderLine.quantity} - ${orderLine.refundedQuantity}) * coalesce(${bagSize.grams}, 0) / 1000`;
+
+/**
+ * A roast-to-order batch takes the roast queue's lines it can fill (7.5): of its product and roast,
+ * due to be roasted on its day or before, oldest first, while its roasted kilograms last. Each line
+ * taken carries the batch (`roast_batch_id`) and leaves the queue. Returns the lines taken.
+ */
+export async function linkRoastToOrders(tx: Writer, roastBatchId: number) {
+	const [b] = await tx
+		.select({
+			productId: roastBatch.productId,
+			roastLevelId: roastBatch.roastLevelId,
+			roastedKgOut: roastBatch.roastedKgOut,
+			roastedAt: roastBatch.roastedAt,
+			isToOrder: roastBatch.isToOrder,
+			deletedAt: roastBatch.deletedAt
+		})
+		.from(roastBatch)
+		.where(eq(roastBatch.id, roastBatchId))
+		.for('update');
+	if (!b?.isToOrder || !b.productId || b.deletedAt) return 0;
+	const [promised] = await tx
+		.select({ kg: sql<number>`coalesce(sum(${lineKg}), 0)`.mapWith(Number) })
+		.from(orderLine)
+		.innerJoin(productVariant, eq(orderLine.variantId, productVariant.id))
+		.leftJoin(bagSize, eq(productVariant.bagSizeId, bagSize.id))
+		.where(eq(orderLine.roastBatchId, roastBatchId));
+	let room = Number(b.roastedKgOut) - (promised?.kg ?? 0);
+	const lines = await tx
+		.select({ id: orderLine.id, kg: lineKg.mapWith(Number) })
+		.from(orderLine)
+		.innerJoin(order, eq(orderLine.orderId, order.id))
+		.innerJoin(productVariant, eq(orderLine.variantId, productVariant.id))
+		.leftJoin(bagSize, eq(productVariant.bagSizeId, bagSize.id))
+		.where(
+			and(
+				waitingLine(),
+				isNull(orderLine.roastBatchId),
+				eq(productVariant.productId, b.productId),
+				or(eq(orderLine.roastLevelId, b.roastLevelId), isNull(orderLine.roastLevelId)),
+				or(isNull(orderLine.roastOn), lte(orderLine.roastOn, localDate(b.roastedAt)))
+			)
+		)
+		.orderBy(asc(orderLine.roastOn), asc(order.id), asc(orderLine.id))
+		.for('update');
+	const taken: number[] = [];
+	for (const line of lines) {
+		if (line.kg <= 0 || line.kg > room + 0.0005) continue;
+		taken.push(line.id);
+		room -= line.kg;
+	}
+	if (taken.length)
+		await tx.update(orderLine).set({ roastBatchId }).where(inArray(orderLine.id, taken));
+	return taken.length;
+}
+
+/**
+ * A to-order packing run hands its bags straight to the lines its batches were roasted for, as
+ * `sale` movements like a bag off the shelf: of the run's size and roast, its grind first, oldest
+ * first. Bags left over stay on the shelf. Returns the lines filled.
+ */
+async function fillToOrderLines(
+	tx: Writer,
+	r: {
+		packingRunId: number;
+		batchIds: number[];
+		variantId: number;
+		roastLevelId: number;
+		grindId: number | null;
+		locationId: number;
+		units: number;
+		packedAt: Date;
+		userId?: string | null;
+	}
+) {
+	const lines = await tx
+		.select({
+			id: orderLine.id,
+			quantity: orderLine.quantity,
+			refundedQuantity: orderLine.refundedQuantity
+		})
+		.from(orderLine)
+		.innerJoin(order, eq(orderLine.orderId, order.id))
+		.where(
+			and(
+				waitingLine(),
+				inArray(orderLine.roastBatchId, r.batchIds),
+				eq(orderLine.variantId, r.variantId),
+				or(eq(orderLine.roastLevelId, r.roastLevelId), isNull(orderLine.roastLevelId))
+			)
+		)
+		.orderBy(
+			sql`case when ${orderLine.grindId} <=> ${r.grindId} then 0 else 1 end`,
+			asc(orderLine.roastOn),
+			asc(order.id),
+			asc(orderLine.id)
+		)
+		.for('update');
+	const out = await bagsOut(
+		tx,
+		lines.map((l) => l.id)
+	);
+	let left = r.units;
+	let filled = 0;
+	for (const line of lines) {
+		if (left <= 0) break;
+		const have = out.filter((o) => o.lineId === line.id).reduce((sum, o) => sum + o.units, 0);
+		const need = Math.min(line.quantity - line.refundedQuantity - have, left);
+		if (need <= 0) continue;
+		await change(tx, { stage: 'packed', itemId: r.packingRunId }, r.locationId, -need, {
+			reason: 'sale',
+			occurredAt: r.packedAt,
+			userId: r.userId,
+			refType: 'order_line',
+			refId: line.id
+		});
+		left -= need;
+		filled++;
+	}
+	return filled;
+}
+
+/* ── Correcting a roast ─────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The roasted weight was misread: the batch's output is set to what really came out, and the
+ * difference moves its roasted stock where it was roasted as an `adjustment`. Less can only come
+ * off what is still free there. The cost per kg stays as recorded.
+ */
+export async function correctRoastWeight(
+	tx: Writer,
+	r: { roastBatchId: number; roastedKgOut: number; reason: string; userId?: string | null }
+) {
+	const [b] = await tx
+		.select()
+		.from(roastBatch)
+		.where(eq(roastBatch.id, r.roastBatchId))
+		.for('update');
+	if (!b || b.deletedAt) throw new WriteRefused('roastedKgOut', 'That batch was voided.');
+	const next = round3(r.roastedKgOut);
+	if (next <= 0) throw new WriteRefused('roastedKgOut', 'Enter the roasted kilograms.');
+	if (next > Number(b.greenKgIn))
+		throw new WriteRefused('roastedKgOut', `More came out than went in (${b.greenKgIn} kg green).`);
+	const delta = round3(next - Number(b.roastedKgOut));
+	if (!delta) throw new WriteRefused('roastedKgOut', 'That is the weight already recorded.');
+	await change(
+		tx,
+		{ stage: 'roasted', itemId: b.id },
+		b.locationId,
+		delta,
+		{
+			reason: 'adjustment',
+			occurredAt: new Date(),
+			note: `Roasted weight corrected from ${b.roastedKgOut} to ${next} kg: ${r.reason}`,
+			userId: r.userId,
+			refType: 'roast_batch',
+			refId: b.id
+		},
+		'roastedKgOut'
+	);
+	await tx
+		.update(roastBatch)
+		.set({ roastedKgOut: next, updatedBy: r.userId ?? null })
+		.where(eq(roastBatch.id, b.id));
+	return { before: Number(b.roastedKgOut), after: next };
+}
+
+/**
+ * A batch recorded by mistake: its green goes back to the lots at what it cost, its roasted coffee
+ * is taken out, its order lines go back to the roast queue, and it is marked deleted. Only while
+ * all it made is still where it was roasted — none packed, moved, sold or wasted.
+ */
+export async function voidRoastBatch(
+	tx: Writer,
+	r: { roastBatchId: number; reason: string; userId?: string | null }
+) {
+	const [b] = await tx
+		.select()
+		.from(roastBatch)
+		.where(eq(roastBatch.id, r.roastBatchId))
+		.for('update');
+	if (!b || b.deletedAt) throw new WriteRefused('reason', 'That batch was voided already.');
+	const used = await tx
+		.select({ reason: stockMovement.reason })
+		.from(stockMovement)
+		.where(
+			and(
+				eq(stockMovement.roastBatchId, b.id),
+				eq(stockMovement.stage, 'roasted'),
+				sql`${stockMovement.reason} not in ('roast_output', 'adjustment')`
+			)
+		)
+		.limit(1);
+	if (used.length)
+		throw new WriteRefused(
+			'reason',
+			'Some of this batch was packed, moved or used since: correct its weight instead, or record waste.'
+		);
+	const now = new Date();
+	const note = `Roast batch ${b.code} voided: ${r.reason}`;
+	const base = { occurredAt: now, note, userId: r.userId, refType: 'roast_batch', refId: b.id };
+	const [here] = await tx
+		.select({ kg: roastedStock.kg })
+		.from(roastedStock)
+		.where(and(eq(roastedStock.roastBatchId, b.id), eq(roastedStock.locationId, b.locationId)));
+	const kg = round3(Number(here?.kg ?? 0));
+	if (kg > 0)
+		await change(tx, { stage: 'roasted', itemId: b.id }, b.locationId, -kg, {
+			...base,
+			reason: 'adjustment'
+		});
+	const inputs = await tx
+		.select({
+			lotId: stockMovement.lotId,
+			kg: stockMovement.quantity,
+			cost: stockMovement.unitCost
+		})
+		.from(stockMovement)
+		.where(and(eq(stockMovement.roastBatchId, b.id), eq(stockMovement.reason, 'roast_input')));
+	for (const i of inputs) {
+		if (!i.lotId) continue;
+		await change(
+			tx,
+			{ stage: 'green', itemId: i.lotId },
+			b.locationId,
+			Math.abs(Number(i.kg)),
+			{ ...base, reason: 'adjustment' },
+			'reason',
+			Number(i.cost)
+		);
+	}
+	await tx.update(orderLine).set({ roastBatchId: null }).where(eq(orderLine.roastBatchId, b.id));
+	await tx
+		.update(roastBatch)
+		.set({ deletedAt: now, deletedBy: r.userId ?? null, updatedBy: r.userId ?? null })
+		.where(eq(roastBatch.id, b.id));
+	return { code: b.code, kg, lots: inputs.length };
 }

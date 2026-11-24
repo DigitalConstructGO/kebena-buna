@@ -260,6 +260,28 @@
 				actions={{ add: '?/addMember', edit: '?/editMember', delete: '?/deleteMember' }}
 			/>
 		</PageSection>
+		{#if data.cards.length && (m.status === 'active' || m.status === 'grace')}
+			<PageSection
+				title="Member cards"
+				hint="The gate scanner reads these, or the code typed in. Print them or send a photo."
+			>
+				<div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+					{#each data.cards as c (c.id)}
+						<figure class="flex flex-col items-center gap-1 text-center">
+							<!-- Our own SVG, made by `qrcode` from the card code. -->
+							<div class="size-32 rounded-lg border bg-white p-1.5 [&_svg]:size-full">
+								<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+								{@html c.svg}
+							</div>
+							<figcaption class="flex flex-col text-sm font-medium">
+								{c.name}
+								<span class="font-mono text-xs font-normal text-muted-foreground">{c.code}</span>
+							</figcaption>
+						</figure>
+					{/each}
+				</div>
+			</PageSection>
+		{/if}
 		<PageSection title="Card scans" hint="Entries on this membership's cards.">
 			{#if data.scans.length}
 				<DataTable variant="compact" columns={scanColumns} data={data.scans} />

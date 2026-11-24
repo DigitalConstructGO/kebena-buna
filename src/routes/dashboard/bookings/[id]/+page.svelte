@@ -283,6 +283,17 @@
 					>
 						{#snippet fields({ form, errors })}
 							<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+								<div class="sm:col-span-2">
+									<InputComp
+										label="Session"
+										name="sessionId"
+										type="select"
+										items={data.sessions}
+										placeholder="Not on a session"
+										{form}
+										{errors}
+									/>
+								</div>
 								<InputComp
 									label="Confirmed date"
 									name="confirmedDate"

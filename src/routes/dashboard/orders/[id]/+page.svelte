@@ -45,6 +45,7 @@
 	let { data } = $props();
 	const o = $derived(data.order);
 	const r = $derived(data.related);
+	const shortLines = $derived(data.lines.filter((l) => l.short > 0));
 	const href = useLinks();
 	const tracking = $derived(
 		r.courierTemplate && o.trackingNumber
@@ -605,6 +606,14 @@
 			/>
 		{/snippet}
 	</FormDialog>
+{/if}
+
+{#if shortLines.length}
+	<Notice tone="warning" title="Not enough bags on the shelf" class="mt-4">
+		When this order was paid the shelves were short of {shortLines
+			.map((l) => `${l.short} × ${l.description}`)
+			.join(', ')}. Pack more and record the packing run, or refund what cannot be sent.
+	</Notice>
 {/if}
 
 {#if o.status === 'cancelled'}

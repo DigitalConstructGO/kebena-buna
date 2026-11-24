@@ -667,9 +667,13 @@ function visit(): VisitContent {
 	};
 }
 
-/** The footer under every museum and site page. */
-export function footerContent(): FooterContent {
-	return {
+/**
+ * The footer under every museum and site page. `pages` are the Website section's menu pages, which
+ * the site pages load; the museum's prerendered pages are built without them. A page whose address
+ * the footer already links (`/visit`) is not listed twice.
+ */
+export function footerContent(pages: { label: string; href: string }[] = []): FooterContent {
+	const content: FooterContent = {
 		brand: m.home_footer_brand(),
 		tagline: m.site_footer_tagline(),
 		columns: [
@@ -681,7 +685,8 @@ export function footerContent(): FooterContent {
 					{ label: m.home_halls_collection_title(), href: '/#collection' },
 					{ label: m.home_archive_eyebrow(), href: '/#archive' },
 					{ label: m.site_nav_history(), href: '/history' },
-					{ label: m.site_footer_kingdoms(), href: '/kingdoms' }
+					{ label: m.site_footer_kingdoms(), href: '/kingdoms' },
+					{ label: m.site_footer_journal(), href: '/journal' }
 				]
 			},
 			{
@@ -692,6 +697,7 @@ export function footerContent(): FooterContent {
 					{ label: m.site_footer_events(), href: '/events' },
 					{ label: m.site_footer_groups(), href: '/groups' },
 					{ label: m.site_footer_membership(), href: '/membership' },
+					{ label: m.site_footer_faq(), href: '/faq' },
 					{ label: m.site_nav_contact(), href: '/contact' }
 				]
 			},
@@ -727,6 +733,10 @@ export function footerContent(): FooterContent {
 		legal: `© ${m.home_footer_legal_name()} ${m.site_footer_rights()}`,
 		contact: `${m.home_footer_hours()} · ${PHONE}`
 	};
+	const linked = new Set(content.columns.flatMap((c) => c.links.map((l) => l.href)));
+	const more = pages.filter((p) => !linked.has(p.href));
+	if (more.length) content.columns[0].links.push(...more);
+	return content;
 }
 
 /** The whole home page, in the language of the current request. */

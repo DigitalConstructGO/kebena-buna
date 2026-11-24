@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
-import { and, asc, eq, isNull } from 'drizzle-orm';
-import { fail, message, setError, superValidate } from 'sveltekit-superforms';
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
+import { fail, message, setError, superValidate, type SuperValidated } from 'sveltekit-superforms';
+import type { z } from 'zod/v4';
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { isDuplicateKey } from '@nahu/admin-kit/server/dbErrors';
 import { db } from '#lib/server/db/index.ts';
@@ -135,9 +136,29 @@ async function offer() {
 	};
 }
 
-export const load: PageServerLoad = async () => {
+/** The subscription a top-up link names, while it can still take deliveries. */
+async function toppable(number: string | null | undefined) {
+	if (!number) return null;
+	const [row] = await db
+		.select({ s: subscription, address: customerAddress })
+		.from(subscription)
+		.leftJoin(customerAddress, eq(subscription.addressId, customerAddress.id))
+		.where(
+			and(
+				eq(subscription.number, number),
+				inArray(subscription.status, ['active', 'paused', 'completed']),
+				isNull(subscription.deletedAt)
+			)
+		);
+	return row ?? null;
+}
+
+export const load: PageServerLoad = async ({ url }) => {
 	const o = await offer();
-	const first = o.variants[0];
+	// From a reminder's top-up link: the form shows the subscription's own coffee and address.
+	const topUp = await toppable(url.searchParams.get('s'));
+	const sub = topUp?.s;
+	const first = o.variants.find((v) => v.id === sub?.variantId) ?? o.variants[0];
 	const defaultRoast =
 		o.roasts.find((r) => r.productId === first?.productId && r.isDefault) ??
 		o.roasts.find((r) => r.productId === first?.productId);
@@ -145,15 +166,21 @@ export const load: PageServerLoad = async () => {
 		...o,
 		paymentsOn: paymentsOn(),
 		transfersOn: await transfersOn(),
+		toppingUp: sub?.number ?? null,
 		form: await superValidate(
 			{
 				planId: o.plans.find((p) => p.deliveries === 6)?.id ?? o.plans[0]?.id,
 				variantId: first?.id,
-				roastLevelId: defaultRoast?.id,
-				deliveryZoneId: o.zones.find((z) => !z.isPickup)?.id,
-				quantity: 1,
-				frequency: 'monthly' as const,
-				city: m.checkout_city_default(),
+				roastLevelId: sub?.roastLevelId ?? defaultRoast?.id,
+				grindId: sub?.grindId ?? undefined,
+				deliveryZoneId: sub?.deliveryZoneId ?? o.zones.find((z) => !z.isPickup)?.id,
+				quantity: sub?.quantity ?? 1,
+				frequency: sub?.frequency ?? ('monthly' as const),
+				areaId: topUp?.address?.areaId ?? undefined,
+				line1: topUp?.address?.line1 ?? undefined,
+				landmark: topUp?.address?.landmark ?? undefined,
+				city: topUp?.address?.city ?? m.checkout_city_default(),
+				topUp: sub?.number,
 				idempotencyKey: crypto.randomUUID()
 			},
 			zod4(subscriptionSignupSchema),
@@ -161,6 +188,100 @@ export const load: PageServerLoad = async () => {
 		)
 	};
 };
+
+type Offer = Awaited<ReturnType<typeof offer>>;
+
+/** The phone given is not the one on the subscription being topped up. */
+class NotTheirs extends Error {}
+
+/**
+ * A top-up: the bundle is bought for the subscription the link named, at its own coffee and
+ * quantity, and its deliveries are added to it once paid (`activateOrderItems`). Only the
+ * subscriber's own phone may do it; anyone else is told to use theirs.
+ */
+async function topUpSubscription(
+	event: Parameters<Actions['default']>[0],
+	form: SuperValidated<z.infer<typeof subscriptionSignupSchema>>,
+	sub: typeof subscription.$inferSelect,
+	plan: Offer['plans'][number],
+	o: Offer
+) {
+	const d = form.data;
+	const variant = o.variants.find((v) => v.id === sub.variantId);
+	if (!variant) return setError(form, 'variantId', m.subs_err_coffee());
+	const pricePerDelivery = r2(variant.price * sub.quantity * (1 - plan.discountPct / 100));
+	const description = Object.fromEntries(
+		LANGS.map((l) => [
+			l,
+			`${sub.number} + ${tr(plan.name, l)} · ${tr(variant.product, l)}${variant.size ? ` ${tr(variant.size, l)}` : ''} × ${sub.quantity}`
+		])
+	) as Localized;
+	let placed: Awaited<ReturnType<typeof createWebOrder>> & { free: boolean };
+	try {
+		placed = await db.transaction(async (tx) => {
+			const customerId = await customerFor(tx, { name: d.name, phone: d.phone, email: d.email });
+			if (customerId !== sub.customerId) throw new NotTheirs();
+			const order = await createWebOrder(tx, event, {
+				customerId,
+				contact: { name: d.name, phone: d.phone, email: d.email },
+				idempotencyKey: d.idempotencyKey,
+				discountCode: d.discountCode,
+				lines: [
+					{
+						itemType: 'subscription_bundle',
+						description,
+						subscriptionPlanId: plan.id,
+						subscriptionId: sub.id,
+						variantId: sub.variantId,
+						roastLevelId: sub.roastLevelId,
+						grindId: sub.grindId,
+						taxRateId: variant.taxRateId,
+						quantity: 1,
+						unitPrice: r2(pricePerDelivery * plan.deliveries)
+					}
+				]
+			});
+			await tx.insert(subscriptionBundle).values({
+				subscriptionId: sub.id,
+				planId: plan.id,
+				orderLineId: order.lineIds[0],
+				deliveries: plan.deliveries,
+				discountPct: plan.discountPct,
+				pricePerDelivery
+			});
+			return { ...order, free: order.total < 0.005 && (await completeFreeOrder(tx, order.id)) };
+		});
+	} catch (err) {
+		if (err instanceof NotTheirs)
+			return setError(form, 'phone', m.renew_err_phone({ number: sub.number }));
+		if (err instanceof DiscountRefused) return setError(form, 'discountCode', err.message);
+		if (err instanceof UnpaidRefused) return setError(form, 'phone', err.message);
+		if (isDuplicateKey(err)) {
+			const again = await orderByIdempotencyKey(d.idempotencyKey);
+			if (again) redirect(303, trackHref(again));
+		}
+		throw err;
+	}
+	return toPayment(event, placed, d.payWith);
+}
+
+/** On to Chapa, or the order's page for a transfer (or when Chapa is off or fails). */
+async function toPayment(
+	event: Parameters<Actions['default']>[0],
+	placed: { id: number; number: string; payToken: string | null; free: boolean },
+	payWith: string | null | undefined
+): Promise<never> {
+	if (paymentsOn() && payWith !== 'transfer' && !placed.free) {
+		let checkout: string | null = null;
+		try {
+			checkout = await startPayment(event, placed.id);
+		} catch (err) {
+			console.error('[subscriptions] could not start Chapa checkout:', err);
+		}
+		if (checkout) toCheckout(checkout);
+	}
+	redirect(303, trackHref(placed));
+}
 
 export const actions: Actions = {
 	default: async (event) => {
@@ -196,6 +317,9 @@ export const actions: Actions = {
 				return setError(form, 'areaId', m.subs_err_area());
 			if (!d.line1) return setError(form, 'line1', m.site_err_required());
 		}
+
+		const topUp = await toppable(d.topUp);
+		if (topUp) return topUpSubscription(event, form, topUp.s, plan, o);
 
 		// A delivery's price: the bag × how many, less the bundle's discount; the bundle pays for all.
 		const pricePerDelivery = r2(variant.price * d.quantity * (1 - plan.discountPct / 100));
@@ -280,15 +404,6 @@ export const actions: Actions = {
 			throw err;
 		}
 
-		if (paymentsOn() && d.payWith !== 'transfer' && !placed.free) {
-			let checkout: string | null = null;
-			try {
-				checkout = await startPayment(event, placed.id);
-			} catch (err) {
-				console.error('[subscriptions] could not start Chapa checkout:', err);
-			}
-			if (checkout) toCheckout(checkout);
-		}
-		redirect(303, trackHref(placed));
+		return toPayment(event, placed, d.payWith);
 	}
 };

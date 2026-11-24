@@ -4,7 +4,25 @@
  */
 import { and, asc, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '#lib/server/db/index.ts';
-import { event, location, ticketPrice, ticketType } from '#lib/server/db/schema.ts';
+import {
+	event,
+	location,
+	order,
+	orderLine,
+	ticketPrice,
+	ticketType
+} from '#lib/server/db/schema.ts';
+
+/** Places taken: people registered, plus those held by unpaid orders (`eventHeld`). */
+const taken = sql<number>`${event.registered} + (
+	select coalesce(sum(${orderLine.quantity} * ${ticketType.admitsPerTicket}), 0)
+	from ${orderLine}
+	join ${order} on ${order.id} = ${orderLine.orderId}
+	join ${ticketType} on ${ticketType.id} = ${orderLine.ticketTypeId}
+	where ${orderLine.eventId} = ${event.id}
+		and ${order.status} = 'pending_payment'
+		and ${order.deletedAt} is null
+)`.mapWith(Number);
 
 const columns = {
 	id: event.id,
@@ -17,7 +35,7 @@ const columns = {
 	startsAt: event.startsAt,
 	endsAt: event.endsAt,
 	capacity: event.capacity,
-	registered: event.registered,
+	registered: taken,
 	visibility: event.visibility,
 	isFree: event.isFree,
 	includesEntry: event.includesEntry,

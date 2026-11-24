@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Save from '@lucide/svelte/icons/save';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import ExternalLink from '@lucide/svelte/icons/external-link';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import Send from '@lucide/svelte/icons/send';
 	import EyeOff from '@lucide/svelte/icons/eye-off';
@@ -24,6 +25,8 @@
 	let { data } = $props();
 	const p = $derived(data.page);
 	const href = useLinks();
+	/** Its public address while it is live. */
+	const siteHref = $derived(data.siteHref);
 
 	// svelte-ignore state_referenced_locally
 	const { form, errors, enhance, delayed, allErrors } = createForm(data.form, pageSchema, {
@@ -40,6 +43,12 @@
 		<Button href="/dashboard/content/pages" variant="outline">
 			<ArrowLeft class="size-4" /> Pages
 		</Button>
+		{#if siteHref}
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+			<Button href={siteHref} target="_blank" rel="noopener" variant="outline">
+				<ExternalLink class="size-4" /> View on site
+			</Button>
+		{/if}
 		{#if p.publishStatus !== 'published'}
 			<ConfirmAction
 				action="?/status"

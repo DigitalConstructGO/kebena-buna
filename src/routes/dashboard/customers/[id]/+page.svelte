@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Plus from '@lucide/svelte/icons/plus';
+	import { resolve } from '$app/paths';
 	import type { ColumnDef } from '@tanstack/table-core';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import UserX from '@lucide/svelte/icons/user-x';
@@ -305,6 +306,11 @@
 		{/if}
 	{/snippet}
 	{#snippet actions()}
+		{#if data.canOrder && !c.anonymizedAt}
+			<Button href={`${resolve('/dashboard/orders/new')}?customer=${c.id}`} variant="outline">
+				<Plus class="size-4" /> New order
+			</Button>
+		{/if}
 		{#if data.canManage && !c.anonymizedAt}
 			<FormDialog
 				title="Edit {title}"

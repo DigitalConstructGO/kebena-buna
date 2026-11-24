@@ -92,6 +92,10 @@
 			<div class="form">
 				<Trap />
 				<input type="hidden" name="idempotencyKey" value={$form.idempotencyKey} />
+				{#if data.toppingUp}
+					<input type="hidden" name="topUp" value={$form.topUp} />
+					<p class="notice">{m.subs_topping_up({ number: data.toppingUp })}</p>
+				{/if}
 
 				<fieldset>
 					<legend>{m.subs_step_coffee()}</legend>

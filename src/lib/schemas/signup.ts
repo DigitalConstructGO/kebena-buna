@@ -36,6 +36,8 @@ export const membershipSignupSchema = z.object({
 	/** Everyone else on a family plan: the buyer is the first adult. */
 	adults: names,
 	children: names,
+	/** The membership a reminder's renewal link names (`?m=`): this term follows it. */
+	renews: siteOptionalText(20),
 	...buyerFields,
 	...siteFormBase,
 	...payWithField
@@ -59,6 +61,8 @@ export const subscriptionSignupSchema = z.object({
 	line1: siteOptionalText(255),
 	landmark: siteOptionalText(255),
 	city: siteText(64).default('Addis Ababa'),
+	/** The subscription a reminder's top-up link names (`?s=`): the bundle is added to it. */
+	topUp: siteOptionalText(20),
 	...buyerFields,
 	...siteFormBase,
 	...payWithField

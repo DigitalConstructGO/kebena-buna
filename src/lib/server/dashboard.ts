@@ -551,7 +551,8 @@ export async function homeData(locals: App.Locals) {
 	}
 
 	await Promise.all(tasks);
-	const DECISION_ORDER = ['refunds', 'wholesale', 'bookings', 'renewals'];
+	// Money waiting on a check first: a buyer has paid and is told nothing until it is confirmed.
+	const DECISION_ORDER = ['receipts', 'refunds', 'wholesale', 'bookings', 'renewals'];
 	decisions.sort((a, b) => DECISION_ORDER.indexOf(a.key) - DECISION_ORDER.indexOf(b.key));
 
 	const ORDER = ['sales', 'fulfil', 'tickets', 'capacity', 'low', 'inbox', 'bookings', 'members'];

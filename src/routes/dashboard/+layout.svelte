@@ -6,7 +6,7 @@
 	import * as Sidebar from '@nahu/admin-kit/components/ui/sidebar/index.js';
 	import KitProvider from '@nahu/admin-kit/components/KitProvider.svelte';
 	import AppSidebar from '@nahu/admin-kit/components/shell/AppSidebar.svelte';
-	import Search from '@nahu/admin-kit/components/shell/Search.svelte';
+	import GlobalSearch from '#lib/components/GlobalSearch.svelte';
 	import DarkMode from '@nahu/admin-kit/components/shell/DarkMode.svelte';
 	import DateText from '@nahu/admin-kit/components/DateText.svelte';
 	import UserMenu from '#lib/components/UserMenu.svelte';
@@ -69,7 +69,7 @@
 						<CalendarDays class="size-4" />
 						<DateText value={data.today} both />
 					</span>
-					<Search />
+					<GlobalSearch />
 					<DarkMode />
 					<UserMenu account={data.account} />
 				</div>

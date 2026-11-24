@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Plus from '@lucide/svelte/icons/plus';
+	import { resolve } from '$app/paths';
 	import type { ColumnDef } from '@tanstack/table-core';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import SquarePen from '@lucide/svelte/icons/square-pen';
@@ -159,6 +160,11 @@
 		<Statuses {...flagBadge(a.isActive, 'Active', 'Switched off')} />
 	{/snippet}
 	{#snippet actions()}
+		{#if data.canOrder && a.approvalStatus === 'approved' && a.isActive}
+			<Button href={`${resolve('/dashboard/orders/new')}?account=${a.id}`} variant="outline">
+				<Plus class="size-4" /> New order
+			</Button>
+		{/if}
 		{#if data.canManage}
 			{#if data.canRelease}
 				<FormDialog

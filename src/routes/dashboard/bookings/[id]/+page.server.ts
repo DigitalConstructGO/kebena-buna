@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNull, or } from 'drizzle-orm';
 import { message, setError, superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { z } from 'zod/v4';
@@ -29,8 +29,11 @@ import { audienceOptions } from '#lib/server/options.ts';
 import {
 	assignStaff,
 	changeWorkflow,
+	holdExpiry,
 	holdPlaces,
+	setBookingSession,
 	shiftAssignments,
+	slotAt,
 	syncSessionBooked
 } from '#lib/server/bookings.ts';
 import {
@@ -86,7 +89,7 @@ const assignee = userAlias('assignee');
 export const load = async ({ params, locals }) => {
 	const row = await loadBooking(params.id);
 	const b = row.b;
-	const [history, staff, [handler], stamps, people, audiences] = await Promise.all([
+	const [history, staff, [handler], stamps, people, audiences, sessionRows] = await Promise.all([
 		db
 			.select({
 				id: workflowHistory.id,
@@ -122,7 +125,28 @@ export const load = async ({ params, locals }) => {
 			: Promise.resolve([]),
 		stampsOf(b),
 		staffOptions(),
-		audienceOptions()
+		audienceOptions(),
+		// Its bookable's sessions still to come, and the one it is on.
+		db
+			.select({
+				id: bookingSession.id,
+				startsAt: bookingSession.startsAt,
+				booked: bookingSession.booked,
+				capacity: bookingSession.capacity
+			})
+			.from(bookingSession)
+			.where(
+				and(
+					eq(bookingSession.bookableId, b.bookableId),
+					isNull(bookingSession.deletedAt),
+					or(
+						b.sessionId ? eq(bookingSession.id, b.sessionId) : undefined,
+						and(eq(bookingSession.isCancelled, false), gt(bookingSession.startsAt, new Date()))
+					)
+				)
+			)
+			.orderBy(asc(bookingSession.startsAt))
+			.limit(200)
 	]);
 	const start = b.confirmedStartsAt ?? row.sessionStartsAt ?? row.slotStartsAt;
 	const startParts = splitDateTime(start);
@@ -139,6 +163,10 @@ export const load = async ({ params, locals }) => {
 		stamps,
 		people,
 		audiences,
+		sessions: sessionRows.map((r) => {
+			const at = splitDateTime(r.startsAt);
+			return { value: r.id, name: `${at.date} ${at.time} · ${r.booked}/${r.capacity} booked` };
+		}),
 		canManage: hasPermission(locals, 'bookings.manage'),
 		statusForm: await superValidate({ status: b.status }, zod4(workflowSchema), {
 			errors: false,
@@ -168,6 +196,7 @@ export const load = async ({ params, locals }) => {
 		),
 		scheduleForm: await superValidate(
 			{
+				sessionId: b.sessionId,
 				confirmedDate: confirmed.date || null,
 				confirmedTime: confirmed.time || null,
 				heldPlaces: b.heldPlaces,
@@ -294,12 +323,36 @@ export const actions = {
 		const form = await superValidate(event.request, zod4(scheduleSchema), { id: 'schedule' });
 		if (!form.valid) return bad(form);
 		const { b } = await loadBooking(event.params.id);
-		const { confirmedDate, confirmedTime, heldPlaces, holdExpiresDate } = form.data;
+		const { sessionId, confirmedDate, confirmedTime, heldPlaces, holdExpiresDate } = form.data;
 		try {
 			await db.transaction(async (tx) => {
+				// On a session, the booking takes its places there (refused when it is full)…
+				await setBookingSession(tx, b.id, sessionId ?? null);
+				const [session] = sessionId
+					? await tx
+							.select({ startsAt: bookingSession.startsAt })
+							.from(bookingSession)
+							.where(eq(bookingSession.id, sessionId))
+					: [];
+				// …and is for the session's time unless staff give another.
+				const confirmedStartsAt = confirmedDate
+					? joinDateTime(confirmedDate, confirmedTime)
+					: (session?.startsAt ?? null);
+				// A hold goes on the visit slot the booking falls in; a new time moves it there.
+				const [x] = await tx
+					.select({ locationId: bookable.locationId, usesVisit: bookable.usesVisitCapacity })
+					.from(bookable)
+					.where(eq(bookable.id, b.bookableId));
+				const slotId =
+					confirmedStartsAt && (heldPlaces > 0 || x?.usesVisit)
+						? await slotAt(tx, x?.locationId ?? null, confirmedStartsAt)
+						: b.visitSlotId;
+				if (slotId !== b.visitSlotId) {
+					await holdPlaces(tx, b.id, 0);
+					await tx.update(booking).set({ visitSlotId: slotId }).where(eq(booking.id, b.id));
+				}
 				// The hold takes (or gives back) places on the visit slot in the same transaction.
 				await holdPlaces(tx, b.id, heldPlaces);
-				const confirmedStartsAt = confirmedDate ? joinDateTime(confirmedDate, confirmedTime) : null;
 				// A confirmed date moved: the staff on the booking move with it.
 				if (b.confirmedStartsAt && confirmedStartsAt) {
 					const before = { startsAt: b.confirmedStartsAt, endsAt: b.confirmedStartsAt };
@@ -312,8 +365,12 @@ export const actions = {
 					.update(booking)
 					.set({
 						confirmedStartsAt,
-						holdExpiresAt:
-							heldPlaces && holdExpiresDate ? joinDateTime(holdExpiresDate, '23:59') : null,
+						// A hold always ends: on the date given, else after the bookable's hold days.
+						holdExpiresAt: !heldPlaces
+							? null
+							: holdExpiresDate
+								? joinDateTime(holdExpiresDate, '23:59')
+								: (b.holdExpiresAt ?? (await holdExpiry(tx, b.bookableId))),
 						updatedBy: event.locals.user?.id
 					})
 					.where(eq(booking.id, b.id));

@@ -3,11 +3,13 @@ import { and, desc, eq, isNull } from 'drizzle-orm';
 import { message, superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { redirect } from 'sveltekit-flash-message/server';
+import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
 import { hasPermission, requirePermission } from '@nahu/admin-kit/server/permissions';
 import { db } from '#lib/server/db/index.ts';
 import {
 	bookable,
 	booking,
+	bookingSession,
 	customer,
 	formSubmission,
 	workflowHistory
@@ -16,8 +18,14 @@ import { enOf } from '#lib/server/localized.ts';
 import { stampsOf, staffOptions, userAlias } from '#lib/server/people.ts';
 import { idParam } from '#lib/server/records.ts';
 import { bookableOptions } from '#lib/server/options.ts';
-import { changeWorkflow, nextBookingNumber } from '#lib/server/bookings.ts';
-import { assignSchema, submissionToBookingSchema, workflowSchema } from '#lib/schemas/bookings.ts';
+import { changeWorkflow, nextBookingNumber, setBookingSession } from '#lib/server/bookings.ts';
+import {
+	assignSchema,
+	replySchema,
+	submissionToBookingSchema,
+	workflowSchema
+} from '#lib/schemas/bookings.ts';
+import { queueMessage } from '#lib/server/notify.ts';
 
 /** Forms whose submission can become a booking. */
 const BOOKABLE_FORMS = ['booking', 'group_booking', 'private_event', 'event_registration'];
@@ -92,6 +100,8 @@ export const load = async ({ params, locals }) => {
 			errors: false,
 			id: 'assign'
 		}),
+		canReply: Boolean(f.phone || f.email),
+		replyForm: await superValidate(zod4(replySchema), { id: 'reply' }),
 		bookingForm: await superValidate({ partySize }, zod4(submissionToBookingSchema), {
 			errors: false,
 			id: 'book'
@@ -119,6 +129,53 @@ export const actions = {
 			type: changed ? 'success' : 'error',
 			text: changed ? 'Status changed' : 'It already has that status'
 		});
+	},
+	/**
+	 * An answer by SMS and email, in the sender's language template, kept in the history. A new
+	 * submission moves to in progress with it.
+	 */
+	reply: async (event) => {
+		requirePermission(event.locals, 'inbox.manage');
+		const form = await superValidate(event.request, zod4(replySchema), { id: 'reply' });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		const { f } = await loadSubmission(event.params.id);
+		const userId = event.locals.user?.id;
+		const text = form.data.message;
+		const sent = await db.transaction(async (tx) => {
+			const queued = await queueMessage(
+				tx,
+				'inbox.reply',
+				{ phone: f.phone, email: f.email, locale: f.locale, customerId: f.customerId },
+				{ name: f.name, subject: f.subject ?? 'Kebena Coffee', message: text },
+				{ refType: 'form_submission', refId: f.id }
+			);
+			if (!queued) return 0;
+			const note = `Replied: ${text}`.slice(0, 500);
+			const moved =
+				f.status === 'new' &&
+				(await changeWorkflow(tx, { submissionId: f.id }, 'in_progress', note, userId));
+			if (!moved)
+				await tx.insert(workflowHistory).values({
+					submissionId: f.id,
+					fromStatus: f.status,
+					toStatus: f.status,
+					note,
+					changedBy: userId
+				});
+			await tx
+				.update(formSubmission)
+				.set({ firstHandledAt: f.firstHandledAt ?? new Date(), updatedBy: userId })
+				.where(eq(formSubmission.id, f.id));
+			return queued;
+		});
+		if (!sent)
+			return message(
+				form,
+				{ type: 'error', text: 'They left no phone or email to reply to' },
+				{ status: 400 }
+			);
+		return message(form, { type: 'success', text: 'Reply sent' });
 	},
 	assign: async (event) => {
 		requirePermission(event.locals, 'inbox.manage');
@@ -156,59 +213,82 @@ export const actions = {
 			);
 		const data = f.data ?? {};
 		const userId = event.locals.user?.id;
-		const made = await db.transaction(async (tx) => {
-			// The submission's row is locked, so a second click waits here and then finds the first booking.
-			await tx
-				.select({ id: formSubmission.id })
-				.from(formSubmission)
-				.where(eq(formSubmission.id, f.id))
-				.for('update');
-			const [existing] = await tx
-				.select({ id: booking.id })
-				.from(booking)
-				.where(and(eq(booking.submissionId, f.id), isNull(booking.deletedAt)))
-				.limit(1);
-			if (existing) return null;
-			const number = await nextBookingNumber(tx);
-			const [res] = await tx.insert(booking).values({
-				number,
-				bookableId: form.data.bookableId,
-				customerId: f.customerId,
-				submissionId: f.id,
-				status: 'new',
-				contactName: f.name ?? 'Visitor',
-				contactPhone: f.phone ?? '',
-				contactEmail: f.email,
-				partySize: form.data.partySize,
-				language: f.locale,
-				// The website's group form sends every date offered (`preferredDates`); older posts one.
-				preferredDates: Array.isArray(data.preferredDates)
-					? data.preferredDates.filter((d): d is string => typeof d === 'string')
-					: typeof data.preferredDate === 'string'
-						? [data.preferredDate]
-						: f.visitDate
-							? [f.visitDate]
-							: null,
-				specialRequests: f.message,
-				assignedTo: f.assignedTo ?? userId,
-				createdBy: userId
+		let made: { id: number; number: string } | null;
+		try {
+			made = await db.transaction(async (tx) => {
+				// The submission's row is locked, so a second click waits here and then finds the first booking.
+				await tx
+					.select({ id: formSubmission.id })
+					.from(formSubmission)
+					.where(eq(formSubmission.id, f.id))
+					.for('update');
+				const [existing] = await tx
+					.select({ id: booking.id })
+					.from(booking)
+					.where(and(eq(booking.submissionId, f.id), isNull(booking.deletedAt)))
+					.limit(1);
+				if (existing) return null;
+				const number = await nextBookingNumber(tx);
+				const [res] = await tx.insert(booking).values({
+					number,
+					bookableId: form.data.bookableId,
+					customerId: f.customerId,
+					submissionId: f.id,
+					status: 'new',
+					contactName: f.name ?? 'Visitor',
+					contactPhone: f.phone ?? '',
+					contactEmail: f.email,
+					partySize: form.data.partySize,
+					language: f.locale,
+					// The website's group form sends every date offered (`preferredDates`); older posts one.
+					preferredDates: Array.isArray(data.preferredDates)
+						? data.preferredDates.filter((d): d is string => typeof d === 'string')
+						: typeof data.preferredDate === 'string'
+							? [data.preferredDate]
+							: f.visitDate
+								? [f.visitDate]
+								: null,
+					specialRequests: f.message,
+					assignedTo: f.assignedTo ?? userId,
+					createdBy: userId
+				});
+				await tx.insert(workflowHistory).values({
+					bookingId: res.insertId,
+					toStatus: 'new',
+					note: 'Made from the inbox',
+					changedBy: userId
+				});
+				// The session the visitor picked on the website, when it is one of this bookable's:
+				// the booking takes its places there, or is refused when it is full by now.
+				const sessionId = Number(data.sessionId);
+				if (Number.isInteger(sessionId) && sessionId > 0) {
+					const [s] = await tx
+						.select({ bookableId: bookingSession.bookableId, startsAt: bookingSession.startsAt })
+						.from(bookingSession)
+						.where(eq(bookingSession.id, sessionId));
+					if (s?.bookableId === form.data.bookableId) {
+						await setBookingSession(tx, res.insertId, sessionId);
+						await tx
+							.update(booking)
+							.set({ confirmedStartsAt: s.startsAt })
+							.where(eq(booking.id, res.insertId));
+					}
+				}
+				if (f.status === 'new')
+					await changeWorkflow(
+						tx,
+						{ submissionId: f.id },
+						'in_progress',
+						`Booking ${number} made`,
+						userId
+					);
+				return { id: res.insertId, number };
 			});
-			await tx.insert(workflowHistory).values({
-				bookingId: res.insertId,
-				toStatus: 'new',
-				note: 'Made from the inbox',
-				changedBy: userId
-			});
-			if (f.status === 'new')
-				await changeWorkflow(
-					tx,
-					{ submissionId: f.id },
-					'in_progress',
-					`Booking ${number} made`,
-					userId
-				);
-			return { id: res.insertId, number };
-		});
+		} catch (err) {
+			// The session it asked for filled up meanwhile: say so, and nothing is made.
+			if (!(err instanceof WriteRefused)) throw err;
+			return message(form, { type: 'error', text: err.message }, { status: 400 });
+		}
 		if (!made)
 			return message(
 				form,

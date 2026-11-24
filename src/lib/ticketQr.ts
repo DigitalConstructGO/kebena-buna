@@ -57,6 +57,22 @@ export function ticketCodeOf(raw: string): string {
 	);
 }
 
+/**
+ * A member's card QR (7.3): `KC1.<CARDCODE>`. Not signed: the card code is itself the secret, and
+ * a scanner admits only cards on its downloaded members list.
+ */
+export const CARD_PREFIX = 'KC1';
+
+export const memberCardQr = (cardCode: string) => `${CARD_PREFIX}.${cardCode}`;
+
+/** The card code in a scanned member card QR, or null when it is not one. */
+export function memberCardOf(raw: string): string | null {
+	const [prefix, code, ...rest] = raw.trim().split('.');
+	return prefix === CARD_PREFIX && !rest.length && /^[A-Z0-9]{4,16}$/.test(code ?? '')
+		? code
+		: null;
+}
+
 const fromBase64url = (s: string) => {
 	const b64 = s.replaceAll('-', '+').replaceAll('_', '/') + '='.repeat((4 - (s.length % 4)) % 4);
 	return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));

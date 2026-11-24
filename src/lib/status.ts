@@ -61,6 +61,8 @@ const TONES: Record<string, Tone> = {
 	unknown: 'danger',
 	over_headcount: 'warning',
 	duplicate_offline: 'warning',
+	wrong_location: 'warning',
+	card_refused: 'danger',
 	// memberships and subscriptions
 	grace: 'warning',
 	lapsed: 'danger',

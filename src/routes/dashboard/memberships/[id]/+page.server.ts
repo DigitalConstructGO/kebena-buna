@@ -23,6 +23,8 @@ import {
 import { enOf } from '#lib/server/localized.ts';
 import { stampsOf, userAlias } from '#lib/server/people.ts';
 import { idParam } from '#lib/server/records.ts';
+import { qrSvg } from '#lib/server/ticketQr.ts';
+import { memberCardQr } from '#lib/ticketQr.ts';
 import { membershipPlanOptions } from '#lib/server/options.ts';
 import {
 	cardCode,
@@ -124,6 +126,17 @@ export const load = async ({ params, locals }) => {
 		membershipPlanOptions()
 	]);
 	const memberIds = memberData.rows.map((r) => r.id);
+	// Each active member's card QR, to print or send; a blocked card gets none.
+	const cards = await Promise.all(
+		(memberData.rows as { id: number; name: string; cardCode: string; isActive?: boolean }[])
+			.filter((r) => r.isActive !== false)
+			.map(async (r) => ({
+				id: r.id,
+				name: r.name,
+				code: r.cardCode,
+				svg: await qrSvg(memberCardQr(r.cardCode))
+			}))
+	);
 	const scans = memberIds.length
 		? await db
 				.select({
@@ -158,6 +171,7 @@ export const load = async ({ params, locals }) => {
 		renewedBy,
 		subscriptions,
 		scans,
+		cards,
 		stamps,
 		plans,
 		members: {

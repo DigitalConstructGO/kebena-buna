@@ -1,7 +1,7 @@
-import { error, json } from '@sveltejs/kit';
+import { error, json, type RequestEvent } from '@sveltejs/kit';
 import { z } from 'zod/v4';
 import { requirePermission } from '@nahu/admin-kit/server/permissions';
-import { recordScan, scannerDay } from '#lib/server/scanner.ts';
+import { DeviceRefused, deviceOf, recordScan, scannerDay } from '#lib/server/scanner.ts';
 
 const syncSchema = z.object({
 	scans: z
@@ -17,10 +17,20 @@ const syncSchema = z.object({
 		.max(500)
 });
 
-/** A fresh copy of today's list, for a scanner coming back online. */
-export const GET = async ({ locals }) => {
-	requirePermission(locals, 'visits.view');
-	return json(await scannerDay());
+/** The device a request comes from; a revoked token gets a 401 the scanner shows. */
+async function device(event: RequestEvent) {
+	try {
+		return await deviceOf(event);
+	} catch (err) {
+		if (err instanceof DeviceRefused) error(401, err.message);
+		throw err;
+	}
+}
+
+/** A fresh copy of today's lists, for a scanner coming back online. */
+export const GET = async (event) => {
+	requirePermission(event.locals, 'visits.view');
+	return json(await scannerDay(await device(event)));
 };
 
 /**
@@ -31,9 +41,10 @@ export const POST = async (event) => {
 	requirePermission(event.locals, 'visits.view');
 	const parsed = syncSchema.safeParse(await event.request.json().catch(() => null));
 	if (!parsed.success) error(400, 'Bad scan batch');
+	const from = await device(event);
 	const results = [];
 	for (const scan of parsed.data.scans.toSorted((a, b) => a.scannedAt.localeCompare(b.scannedAt))) {
-		results.push(await recordScan(event, scan));
+		results.push(await recordScan(event, scan, from));
 	}
 	return json({ results });
 };

@@ -206,6 +206,13 @@ export async function seedBase() {
 			updatedBy: manager
 		},
 		{
+			key: 'orders.pay_window_hours',
+			value: 72,
+			description:
+				'Unpaid web shop, membership and subscription orders cancelled after (hours; not those with a receipt waiting)',
+			updatedBy: manager
+		},
+		{
 			key: 'tickets.pay_window_hours',
 			value: 24,
 			description: 'Unpaid web ticket orders cancelled, and their places released, after (hours)',
@@ -259,7 +266,9 @@ export async function seedBase() {
 			value: {
 				low_stock: ['Manager', 'Roaster'],
 				sales_daily: ['Owner', 'Manager', 'Accountant'],
-				inbox_stale: ['Manager']
+				inbox_stale: ['Manager'],
+				inbox_new: ['Manager'],
+				receipt: ['Owner', 'Manager', 'Accountant']
 			},
 			description: 'Which staff roles get each daily email alert',
 			updatedBy: owner

@@ -3,7 +3,8 @@
  * invoices, and refunds from request to money back. Each runs in the caller's transaction and is
  * audited there.
  */
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { randomBytes } from 'node:crypto';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { RequestEvent } from '@sveltejs/kit';
 import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
 import { recordAudit } from '@nahu/admin-kit/server/audit';
@@ -17,15 +18,18 @@ import {
 	refund,
 	refundLine,
 	stockMovement,
-	storeCredit
+	storeCredit,
+	subscriptionDelivery,
+	ticket
 } from '#lib/server/db/schema.ts';
 import { nextNumber } from '#lib/server/records.ts';
 import { fromLocal, localDate } from '@nahu/admin-kit/time';
 import { creditBalance } from '#lib/server/customers.ts';
-import { adjustStock } from '#lib/server/stock.ts';
+import { adjustStock, takeOrderStock } from '#lib/server/stock.ts';
 import { orderUrl, queueOrderMessage } from '#lib/server/orderMessages.ts';
 import { queueMessage } from '#lib/server/notify.ts';
 import { issueOrderTickets } from '#lib/server/tickets.ts';
+import { voidTicket } from '#lib/server/visits.ts';
 import { activateOrderItems } from '#lib/server/activation.ts';
 import type { OrderStatus } from '#lib/constants.ts';
 
@@ -84,6 +88,15 @@ const STAMP: Partial<
 	cancelled: 'cancelledAt'
 };
 
+/** Letters and digits that cannot be misread for each other over a counter (no 0/O, 1/I/L). */
+const PICKUP_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+/** `K7QM-4TXP`: what the buyer shows at the counter to collect (3.7). */
+export function newPickupCode() {
+	const chars = Array.from(randomBytes(8), (b) => PICKUP_ALPHABET[b % PICKUP_ALPHABET.length]);
+	return `${chars.slice(0, 4).join('')}-${chars.slice(4).join('')}`;
+}
+
 /** Moves an order to `to`, writes its history and audit. Refuses a step the path does not allow. */
 export async function moveOrder(
 	tx: Writer,
@@ -112,7 +125,17 @@ export async function moveOrder(
 		...opts.extra
 	};
 	if (stamp) values[stamp] = new Date();
+	// Ready to collect: it gets the code the buyer is sent and shows at the counter.
+	if (to === 'ready_for_pickup' && !o.pickupCode) values.pickupCode = newPickupCode();
 	await tx.update(order).set(values).where(eq(order.id, o.id));
+	// A subscription's delivery order reached the customer: that delivery is done.
+	if (to === 'delivered' || to === 'collected' || to === 'completed')
+		await tx
+			.update(subscriptionDelivery)
+			.set({ status: 'delivered' })
+			.where(
+				and(eq(subscriptionDelivery.orderId, o.id), eq(subscriptionDelivery.status, 'ordered'))
+			);
 	const queued = await queueOrderMessage(tx, { ...o, ...values }, to);
 	await tx.insert(orderStatusHistory).values({
 		orderId: o.id,
@@ -173,6 +196,8 @@ async function applyOrderPayment(
 	if (covered && (o.paymentState === 'unpaid' || o.paymentState === 'failed'))
 		values.paymentState = 'paid';
 	if (covered && !o.receiptNumber) values.receiptNumber = await nextReceiptNumber(tx, p.paidAt);
+	// An order sent on credit was confirmed before it was paid: it is paid now, on this date.
+	if (covered && !o.paidAt) values.paidAt = p.paidAt;
 	await tx.update(order).set(values).where(eq(order.id, o.id));
 	if (covered && o.status === 'pending_payment') {
 		await moveOrder(tx, event, { ...o, ...values }, 'paid', {
@@ -180,7 +205,9 @@ async function applyOrderPayment(
 			note: `Paid by ${p.provider.replaceAll('_', ' ')}`
 		});
 	}
-	// Paid in full: its entry and event tickets exist from now on, each with its signed QR.
+	// Paid in full: its coffee comes off the shelf…
+	if (covered) await takeOrderStock(tx, o.id, event.locals.user?.id ?? null);
+	// …its entry and event tickets exist from now on, each with its signed QR.
 	if (covered) await issueOrderTickets(tx, o.id);
 	// …and the memberships and subscriptions it bought start.
 	if (covered) await activateOrderItems(tx, o.id);
@@ -544,6 +571,31 @@ export async function requestRefund(
 type Refund = typeof refund.$inferSelect;
 
 /**
+ * Ends the tickets a refunded ticket line gave back: up to `quantity` of its tickets nobody has
+ * come in on yet become `refunded`, so the scanner turns them away and their places go back. A
+ * ticket someone already used, even in part, is left for staff to settle.
+ */
+async function refundLineTickets(
+	tx: Writer,
+	line: typeof orderLine.$inferSelect,
+	quantity: number,
+	amount: number,
+	note: string,
+	userId: string | null
+) {
+	const open = await tx
+		.select({ id: ticket.id })
+		.from(ticket)
+		.where(
+			and(eq(ticket.orderLineId, line.id), eq(ticket.status, 'valid'), eq(ticket.checkedIn, 0))
+		)
+		.orderBy(desc(ticket.id))
+		.limit(quantity);
+	const each = r2(amount / quantity);
+	for (const t of open) await voidTicket(tx, t.id, 'refunded', note, userId, -each);
+}
+
+/**
  * Puts a refunded line's bags back where they were sold from: the line's packed `sale` movements
  * in the ledger say which packing run and location. Bags already refunded are taken as coming off
  * the first of them. A line nothing was taken off the shelf for yet has nothing to put back.
@@ -611,7 +663,8 @@ export async function decideRefund(
 		approved: ['requested'],
 		processing: ['approved'],
 		succeeded: ['approved', 'processing'],
-		failed: ['approved', 'processing']
+		// A request turned down (or withdrawn) fails too, and stops claiming the money.
+		failed: ['requested', 'approved', 'processing']
 	};
 	if (!allowed[to].includes(rf.status))
 		throw new WriteRefused(null, `A ${rf.status} refund cannot become ${to}.`);
@@ -651,8 +704,11 @@ export async function decideRefund(
 		const note = `Refund ${rf.id} on ${o.number}`;
 		for (const l of lines) {
 			const line = byId.get(l.orderLineId)!;
-			if (l.restock && line.itemType === 'product')
+			// A cancelled order's bags went back on the shelf when it was cancelled.
+			if (l.restock && line.itemType === 'product' && o.status !== 'cancelled')
 				await restockLine(tx, line, l.quantity, note, me);
+			if (line.itemType === 'ticket' || line.itemType === 'event_ticket')
+				await refundLineTickets(tx, line, l.quantity, Number(l.amount), note, me);
 			await tx
 				.update(orderLine)
 				.set({

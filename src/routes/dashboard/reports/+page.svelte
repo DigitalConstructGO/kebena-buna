@@ -112,7 +112,7 @@
 			meta: { align: 'right' },
 			cell: ({ row }) => {
 				const loss = Number(row.original.weightLossPct ?? 0);
-				return loss && (loss < 12 || loss > 20)
+				return loss && (loss < data.lossRange.min || loss > data.lossRange.max)
 					? status('overdue', percent(loss))
 					: percent(row.original.weightLossPct);
 			}
@@ -261,7 +261,7 @@
 		<PageSection
 			title="Roast yield"
 			hint={data.roasts.length
-				? `Average weight loss ${avgLoss.toFixed(1)}%; outside 12–20% is flagged.`
+				? `Average weight loss ${avgLoss.toFixed(1)}%; outside ${data.lossRange.min}–${data.lossRange.max}% is flagged.`
 				: undefined}
 		>
 			{#if data.roasts.length}

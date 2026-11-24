@@ -1,4 +1,4 @@
-import { count, desc, eq, like, or } from 'drizzle-orm';
+import { count, desc, eq, isNull, like, or } from 'drizzle-orm';
 import type { MySqlSelect } from 'drizzle-orm/mysql-core';
 import { hasPermission } from '@nahu/admin-kit/server/permissions';
 import {
@@ -28,6 +28,8 @@ const SORTS = {
 };
 
 const spec: WhereSpec<(typeof FILTERS)[number]> = {
+	// A voided batch was never roasted.
+	base: [isNull(roastBatch.deletedAt)],
 	search: (term) => or(like(roastBatch.code, `%${term}%`), like(roastBatch.notes, `%${term}%`)),
 	dateColumn: roastBatch.roastedAt,
 	filters: {

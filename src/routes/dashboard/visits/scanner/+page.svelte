@@ -10,11 +10,20 @@
 	import { Input } from '@nahu/admin-kit/components/ui/input/index.js';
 	import { localClock } from '@nahu/admin-kit/time';
 	import { formatDate } from '#lib/format.ts';
-	import { importQrKey, parseTicketQr, ticketCodeOf, verifyTicketQr } from '#lib/ticketQr.ts';
+	import { SCANNER_DEVICE_HEADER } from '#lib/constants.ts';
+	import {
+		importQrKey,
+		memberCardOf,
+		parseTicketQr,
+		ticketCodeOf,
+		verifyTicketQr
+	} from '#lib/ticketQr.ts';
 
 	let { data } = $props();
 
 	type Ticket = (typeof data.tickets)[number];
+	type Member = (typeof data.members)[number] & { firstCheckedInAt?: Date | string | null };
+	type Day = { today: string; tickets: Ticket[]; members: Member[] };
 	type Queued = {
 		clientScanId: string;
 		raw: string;
@@ -26,24 +35,45 @@
 		tone: 'go' | 'again' | 'stop';
 		title: string;
 		detail?: string;
-		ticket?: Ticket;
-		admitted?: number;
+		/** Who it is: the audience and ticket type, or the member's plan. */
+		heading?: string;
+		person?: string;
+		colour?: string | null;
+		idCheck?: boolean;
+		code?: string;
+	};
+	/** A group ticket or shared card waiting for the gate to say how many came in. */
+	type Pending = {
+		raw: string;
+		heading: string;
+		person: string;
+		admits: number;
+		left: number;
+		count: number;
 	};
 
 	const QUEUE_KEY = 'kb-scan-queue';
 	const LIST_KEY = 'kb-scan-day';
+	const TOKEN_KEY = 'kb-scan-device';
 
 	// svelte-ignore state_referenced_locally
 	let tickets = $state<Ticket[]>(data.tickets);
 	// svelte-ignore state_referenced_locally
 	let today = $state(data.today);
+	// svelte-ignore state_referenced_locally
+	let members = $state<Member[]>(data.members);
+	/** This browser's device token, and the device it names once the server has said. */
+	let token = $state<string | null>(null);
+	let device = $state<{ name: string; location: string | null } | null>(null);
+	let deviceError = $state<string | null>(null);
+	let pairing = $state(false);
+	let typedToken = $state('');
 	let queue = $state<Queued[]>([]);
 	let online = $state(true);
 	let syncing = $state(false);
 	let lastSync = $state<Date | null>(null);
 	let verdict = $state<Verdict | null>(null);
-	/** A group ticket waiting for the gate to say how many came in. */
-	let pending = $state<{ raw: string; ticket: Ticket; count: number } | null>(null);
+	let pending = $state<Pending | null>(null);
 	let recent = $state<{ code: string; title: string; tone: Verdict['tone']; at: Date }[]>([]);
 	let typed = $state('');
 	let cameraOn = $state(false);
@@ -54,7 +84,11 @@
 	let lastRead = { raw: '', at: 0 };
 
 	const byCode = $derived(new Map(tickets.map((t) => [t.code, t])));
-	const inside = $derived(tickets.reduce((sum, t) => sum + t.checkedIn, 0));
+	const byCard = $derived(new Map(members.map((c) => [c.card, c])));
+	const inside = $derived(
+		tickets.reduce((sum, t) => sum + t.checkedIn, 0) +
+			members.reduce((sum, c) => sum + c.checkedIn, 0)
+	);
 	const expected = $derived(tickets.reduce((sum, t) => sum + t.admits, 0));
 
 	const save = (k: string, v: unknown) => {
@@ -75,9 +109,89 @@
 
 	const who = (t: Ticket) => t.holder || t.customer || '';
 	const label = (t: Ticket) => `${t.audience} · ${t.type}`.toUpperCase();
+	const ticketFace = (t: Ticket) => ({
+		heading: label(t),
+		person: who(t),
+		colour: t.colour,
+		idCheck: t.requiresIdCheck,
+		code: t.code
+	});
+	const cardFace = (c: Member) => ({
+		heading: `MEMBER · ${c.plan}`.toUpperCase(),
+		person: c.isChild ? `${c.name} (child)` : c.name,
+		colour: '#1d4ed8',
+		code: c.card
+	});
+	const headers = (): Record<string, string> => (token ? { [SCANNER_DEVICE_HEADER]: token } : {});
+
+	/**
+	 * How many of those still to come a scan lets in: everyone on a single ticket, or a count the
+	 * gate picks for a group (null until it has).
+	 */
+	function people(
+		raw: string,
+		face: { heading: string; person: string },
+		admits: number,
+		left: number,
+		headcount?: number
+	) {
+		if (left > 1 && headcount === undefined) {
+			pending = { raw, ...face, admits, left, count: left };
+			return null;
+		}
+		return Math.min(headcount ?? left, left);
+	}
+
+	const firstIn = (at: Date | string | null | undefined) =>
+		at ? localClock(new Date(at)) : 'earlier';
+
+	/** A member card, checked against today's members list. */
+	function handleCard(raw: string, c: Member, headcount?: number) {
+		if (c.refused) {
+			return show(raw, {
+				tone: 'stop',
+				title: c.refused,
+				detail: `Card of ${c.name}, ${c.number}.`,
+				...cardFace(c)
+			});
+		}
+		const left = Math.max(c.admits - c.checkedIn, 0);
+		if (left === 0) {
+			return show(raw, {
+				tone: 'again',
+				title: 'Re-entry',
+				detail: `Member card, first in at ${firstIn(c.firstCheckedInAt)}.`,
+				...cardFace(c)
+			});
+		}
+		const n = people(raw, cardFace(c), c.admits, left, headcount);
+		if (n === null) return;
+		c.checkedIn += n;
+		c.firstCheckedInAt ??= new Date();
+		show(
+			raw,
+			{
+				tone: 'go',
+				title: n === 1 ? 'Admit 1' : `Admit ${n}`,
+				detail: `Membership ${c.number}`,
+				...cardFace(c)
+			},
+			n
+		);
+	}
 
 	/** Reads one scan, decides on the device, and queues it for the server. */
 	async function handle(raw: string, headcount?: number) {
+		const card = memberCardOf(raw);
+		if (card) {
+			const c = byCard.get(card);
+			if (c) return handleCard(raw, c, headcount);
+			return show(raw, {
+				tone: 'stop',
+				title: 'Unknown member card',
+				detail: `${card} — check it at the desk.`
+			});
+		}
 		const qr = parseTicketQr(raw);
 		if (qr && key && !(await verifyTicketQr(qr, key))) {
 			return show(raw, {
@@ -95,6 +209,9 @@
 		}
 		const code = ticketCodeOf(raw);
 		const t = byCode.get(code);
+		// A card code typed at the gate.
+		const c = t ? undefined : byCard.get(code);
+		if (c) return handleCard(raw, c, headcount);
 		if (!t) {
 			return show(raw, {
 				tone: 'stop',
@@ -104,32 +221,27 @@
 		}
 		const remaining = Math.max(t.admits - t.checkedIn, 0);
 		if (remaining === 0) {
-			const first = t.firstCheckedInAt ? localClock(new Date(t.firstCheckedInAt)) : 'earlier';
 			return show(raw, {
 				tone: 'again',
 				title: 'Re-entry',
-				detail: `First checked in at ${first}.`,
-				ticket: t
+				detail: `First checked in at ${firstIn(t.firstCheckedInAt)}.`,
+				...ticketFace(t)
 			});
 		}
-		if (remaining > 1 && headcount === undefined) {
-			pending = { raw, ticket: t, count: remaining };
-			return;
-		}
-		const people = Math.min(headcount ?? remaining, remaining);
-		t.checkedIn += people;
+		const n = people(raw, ticketFace(t), t.admits, remaining, headcount);
+		if (n === null) return;
+		t.checkedIn += n;
 		t.firstCheckedInAt ??= new Date();
 		const rest = t.admits - t.checkedIn;
 		show(
 			raw,
 			{
 				tone: 'go',
-				title: people === 1 ? 'Admit 1' : `Admit ${people}`,
+				title: n === 1 ? 'Admit 1' : `Admit ${n}`,
 				detail: rest ? `${rest} more on this ticket still to come.` : undefined,
-				ticket: t,
-				admitted: people
+				...ticketFace(t)
 			},
-			people
+			n
 		);
 	}
 
@@ -137,7 +249,7 @@
 		pending = null;
 		verdict = v;
 		recent = [
-			{ code: v.ticket?.code ?? ticketCodeOf(raw), title: v.title, tone: v.tone, at: new Date() },
+			{ code: v.code ?? ticketCodeOf(raw), title: v.title, tone: v.tone, at: new Date() },
 			...recent
 		].slice(0, 8);
 		enqueue({
@@ -153,21 +265,35 @@
 	function enqueue(scan: Queued) {
 		queue = [...queue, scan];
 		save(QUEUE_KEY, queue);
-		save(LIST_KEY, { today, tickets });
+		save(LIST_KEY, { today, tickets, members });
 		void sync();
 	}
 
+	/** A 401 from the server: this device's token was revoked or mistyped. */
+	function refused() {
+		deviceError =
+			'This device’s token no longer works: it was revoked, or mistyped. Scans wait here until it is paired again or unpaired.';
+		device = null;
+	}
+
+	/** What the server said after a sync, worth flagging at the gate. */
+	const LATE: Partial<Record<string, string>> = {
+		duplicate_offline: 'Admitted twice while offline',
+		wrong_location: 'Ticket for another site'
+	};
+
 	/** Sends the queue; what the server settled leaves it, the rest waits for the next try. */
 	async function sync() {
-		if (syncing || !queue.length || !navigator.onLine) return;
+		if (syncing || deviceError || !queue.length || !navigator.onLine) return;
 		syncing = true;
 		const batch = queue.slice(0, 200);
 		try {
 			const res = await fetch('/dashboard/visits/scanner/sync', {
 				method: 'POST',
-				headers: { 'content-type': 'application/json' },
+				headers: { 'content-type': 'application/json', ...headers() },
 				body: JSON.stringify({ scans: batch })
 			});
+			if (res.status === 401) return refused();
 			if (!res.ok) throw new Error(String(res.status));
 			const { results } = (await res.json()) as {
 				results: { clientScanId: string; result: string; code: string }[];
@@ -176,17 +302,12 @@
 			queue = queue.filter((q) => !done.has(q.clientScanId));
 			save(QUEUE_KEY, queue);
 			for (const r of results) {
-				if (r.result === 'duplicate_offline') {
+				const title = LATE[r.result];
+				if (title)
 					recent = [
-						{
-							code: r.code,
-							title: 'Admitted twice while offline',
-							tone: 'stop' as const,
-							at: new Date()
-						},
+						{ code: r.code, title, tone: 'stop' as const, at: new Date() },
 						...recent
 					].slice(0, 8);
-				}
 			}
 			online = true;
 			lastSync = new Date();
@@ -195,19 +316,22 @@
 		} finally {
 			syncing = false;
 		}
-		if (queue.length && online) void sync();
+		if (queue.length && online && !deviceError) void sync();
 	}
 
 	/** A fresh list from the server, when nothing is waiting to go up (it would be overwritten). */
 	async function refresh() {
-		if (queue.length || !navigator.onLine) return;
+		if (queue.length || deviceError || !navigator.onLine) return;
 		try {
-			const res = await fetch('/dashboard/visits/scanner/sync');
+			const res = await fetch('/dashboard/visits/scanner/sync', { headers: headers() });
+			if (res.status === 401) return refused();
 			if (!res.ok) throw new Error(String(res.status));
-			const day = (await res.json()) as { today: string; tickets: Ticket[] };
+			const day = (await res.json()) as Day & { device: typeof device };
 			today = day.today;
 			tickets = day.tickets;
-			save(LIST_KEY, day);
+			members = day.members;
+			device = day.device;
+			save(LIST_KEY, { today, tickets, members });
 			online = true;
 			lastSync = new Date();
 		} catch {
@@ -279,6 +403,32 @@
 		}
 	}
 
+	function storedToken() {
+		try {
+			return localStorage.getItem(TOKEN_KEY);
+		} catch {
+			return null;
+		}
+	}
+
+	/** Pairs this browser with a registered device: its scans then carry the device and site. */
+	async function pair(value: string) {
+		token = value.trim() || null;
+		try {
+			if (token) localStorage.setItem(TOKEN_KEY, token);
+			else localStorage.removeItem(TOKEN_KEY);
+		} catch {
+			// without storage the pairing lasts until the page is closed
+		}
+		pairing = false;
+		typedToken = '';
+		deviceError = null;
+		device = null;
+		// The queue goes up first, under the new pairing, then the device's own lists come down.
+		await sync();
+		await refresh();
+	}
+
 	function submitTyped(e: SubmitEvent) {
 		e.preventDefault();
 		if (typed.trim()) void handle(typed.trim());
@@ -289,8 +439,22 @@
 		const saved = load<Queued[]>(QUEUE_KEY);
 		if (saved?.length) queue = saved;
 		// A list kept from earlier today (taken offline) keeps the device's own check-ins.
-		const day = load<{ today: string; tickets: Ticket[] }>(LIST_KEY);
-		if (day?.today === today && saved?.length) tickets = day.tickets;
+		const day = load<Day>(LIST_KEY);
+		if (day?.today === today && saved?.length) {
+			tickets = day.tickets;
+			members = day.members ?? members;
+		}
+		// A pairing link from the devices page: `#pair=<token>`, kept and then wiped from the address.
+		const linked = new URLSearchParams(location.hash.slice(1)).get('pair');
+		if (linked) {
+			history.replaceState(history.state, '', location.pathname + location.search);
+			try {
+				localStorage.setItem(TOKEN_KEY, linked);
+			} catch {
+				// paired for this visit only
+			}
+		}
+		token = linked ?? storedToken();
 		void importQrKey(data.publicKey).then((k) => (key = k));
 		online = navigator.onLine;
 		const up = () => {
@@ -300,7 +464,7 @@
 		const down = () => (online = false);
 		window.addEventListener('online', up);
 		window.addEventListener('offline', down);
-		void sync();
+		void sync().then(refresh);
 		const timer = setInterval(() => {
 			void sync();
 			void refresh();
@@ -344,7 +508,7 @@
 					type="button"
 					class="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center text-white"
 					style:background={verdict.tone === 'go'
-						? (verdict.ticket?.colour ?? '#15803d')
+						? (verdict.colour ?? '#15803d')
 						: verdict.tone === 'again'
 							? '#b45309'
 							: '#b91c1c'}
@@ -352,10 +516,10 @@
 					aria-live="assertive"
 				>
 					<span class="text-4xl font-black tracking-tight sm:text-5xl">{verdict.title}</span>
-					{#if verdict.ticket}
-						<span class="text-xl font-bold tracking-wide">{label(verdict.ticket)}</span>
-						{#if who(verdict.ticket)}<span class="text-lg">{who(verdict.ticket)}</span>{/if}
-						{#if verdict.tone === 'go' && verdict.ticket.requiresIdCheck}
+					{#if verdict.heading}
+						<span class="text-xl font-bold tracking-wide">{verdict.heading}</span>
+						{#if verdict.person}<span class="text-lg">{verdict.person}</span>{/if}
+						{#if verdict.tone === 'go' && verdict.idCheck}
 							<span class="mt-2 rounded-full bg-white/20 px-4 py-1 text-sm font-semibold">
 								Check ID
 							</span>
@@ -370,10 +534,9 @@
 				<div
 					class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/85 p-6 text-center text-white"
 				>
-					<span class="text-xl font-bold">{label(pending.ticket)}</span>
+					<span class="text-xl font-bold">{pending.heading}</span>
 					<span>
-						{who(pending.ticket)} · group of {pending.ticket.admits}, {pending.ticket.admits -
-							pending.ticket.checkedIn} still to come
+						{pending.person} · group of {pending.admits}, {pending.left} still to come
 					</span>
 					<div class="flex items-center gap-4">
 						<Button
@@ -388,7 +551,7 @@
 						<Button
 							variant="secondary"
 							size="lg"
-							disabled={pending.count >= pending.ticket.admits - pending.ticket.checkedIn}
+							disabled={pending.count >= pending.left}
 							onclick={() => pending && pending.count++}
 						>
 							+
@@ -415,8 +578,8 @@
 			<form class="flex min-w-60 flex-1 gap-2" onsubmit={submitTyped}>
 				<Input
 					bind:value={typed}
-					placeholder="Or type a ticket code"
-					aria-label="Ticket code"
+					placeholder="Or type a ticket or card code"
+					aria-label="Ticket or card code"
 					autocomplete="off"
 				/>
 				<Button type="submit" variant="outline">Check</Button>
@@ -432,11 +595,59 @@
 					/> Offline{/if}
 			</p>
 			<p class="mt-1 text-muted-foreground">
-				{tickets.length} tickets on today’s list.
+				{tickets.length} tickets and {members.length} member cards on today’s list.
 				{#if queue.length}{queue.length} scan{queue.length === 1 ? '' : 's'} waiting to sync.{:else}All
 					scans synced.{/if}
 			</p>
 			{#if lastSync}<p class="text-muted-foreground">Last synced {localClock(lastSync)}.</p>{/if}
+			<div class="mt-3 border-t pt-3">
+				{#if deviceError}
+					<p class="text-red-700">{deviceError}</p>
+				{:else if device}
+					<p>
+						<span class="font-medium">{device.name}</span>{#if device.location}
+							· {device.location}{/if}
+					</p>
+					<p class="text-muted-foreground">
+						{device.location
+							? 'Only this site’s tickets are on the list.'
+							: 'This device has no site: every site’s tickets are on the list.'}
+					</p>
+				{:else if token}
+					<p class="text-muted-foreground">Checking this device…</p>
+				{:else}
+					<p class="text-muted-foreground">
+						Not paired: scans are not tied to a device or site, and every site’s tickets are on the
+						list.
+					</p>
+				{/if}
+				{#if pairing}
+					<form
+						class="mt-2 flex gap-2"
+						onsubmit={(e) => {
+							e.preventDefault();
+							void pair(typedToken);
+						}}
+					>
+						<Input
+							bind:value={typedToken}
+							placeholder="Device token"
+							aria-label="Device token"
+							autocomplete="off"
+						/>
+						<Button type="submit" size="sm">Pair</Button>
+					</form>
+				{:else}
+					<div class="mt-2 flex gap-2">
+						<Button variant="outline" size="sm" onclick={() => (pairing = true)}>
+							{token ? 'Pair again' : 'Pair this device'}
+						</Button>
+						{#if token}
+							<Button variant="ghost" size="sm" onclick={() => pair('')}>Unpair</Button>
+						{/if}
+					</div>
+				{/if}
+			</div>
 			{#if !key}<p class="mt-2 text-amber-700">
 					This browser cannot check QR signatures; tickets are checked against the list only.
 				</p>{/if}

@@ -1,7 +1,7 @@
 /**
  * Messages to staff: the low-stock list each morning (questionnaire 4.3), the day's sales at 21:00
  * (5.2), form submissions or bookings left in New for more than a day (8.5), and — as it happens —
- * a buyer's bank-transfer receipt waiting to be checked.
+ * a buyer's bank-transfer receipt waiting to be checked and each new enquiry from the website.
  *
  * Who gets each is the `alerts.roles` setting — role names per alert, editable in Admin › Settings —
  * and each goes by email to the active staff in those roles. Each is queued once per occasion — a
@@ -16,13 +16,14 @@ import { queueMessage, type Payload } from '#lib/server/notify.ts';
 import { lowStock, readSetting, stockLevels } from '#lib/server/stockReads.ts';
 import { netSales, netVat, paidDay, soldOrder } from '#lib/server/dashboard.ts';
 
-type Alert = 'low_stock' | 'sales_daily' | 'inbox_stale' | 'receipt';
+type Alert = 'low_stock' | 'sales_daily' | 'inbox_stale' | 'inbox_new' | 'receipt';
 
 /** The roles questionnaire 4.3, 5.2 and 8.5 name, until staff change the setting. */
 const DEFAULT_ROLES: Record<Alert, string[]> = {
 	low_stock: ['Manager', 'Roaster'],
 	sales_daily: ['Owner', 'Manager', 'Accountant'],
 	inbox_stale: ['Manager'],
+	inbox_new: ['Manager'],
 	receipt: ['Owner', 'Manager', 'Accountant']
 };
 

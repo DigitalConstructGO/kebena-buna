@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ColumnDef } from '@tanstack/table-core';
+	import { page } from '$app/state';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Ban from '@lucide/svelte/icons/ban';
 	import PageHeader from '@nahu/admin-kit/components/PageHeader.svelte';
@@ -25,6 +26,10 @@
 	let addOpen = $state(false);
 	/** The token of the device just added: shown here once, never again. */
 	let issued = $state<{ device: string; token: string } | null>(null);
+	/** Opened on the device itself, it pairs the scanner there and forgets the token from the address. */
+	const pairLink = $derived(
+		issued ? `${page.url.origin}/dashboard/visits/scanner#pair=${issued.token}` : ''
+	);
 	// svelte-ignore state_referenced_locally
 	const { form, errors, enhance, delayed, allErrors } = createForm(data.addForm, deviceSchema, {
 		resetForm: true,
@@ -106,7 +111,7 @@
 
 <PageHeader
 	title="Scanner devices"
-	description="The phones and tablets running the offline scanner. Each signs its syncs with its own token."
+	description="The phones and tablets running the offline scanner. A paired device sends its token with every sync: its scans are logged against it, and it only lists and admits its own site’s tickets."
 >
 	{#snippet actions()}
 		{#if data.canManage}
@@ -144,12 +149,17 @@
 {#if issued}
 	<Notice tone="warning" title="Token for {issued.device}" class="mt-4">
 		<p>
-			Enter it in the scanner app now. It is shown only this once; a lost token means revoking the
-			device and adding it again.
+			Pair the device now: open the link on it while signed in, or enter the token under “Pair this
+			device” on its scanner. It is shown only this once; a lost token means revoking the device and
+			adding it again.
 		</p>
 		<div class="mt-2 flex items-center gap-2 font-mono text-sm break-all">
 			{issued.token}
 			<Copy data={issued.token} />
+		</div>
+		<div class="mt-1 flex items-center gap-2 font-mono text-xs break-all text-muted-foreground">
+			{pairLink}
+			<Copy data={pairLink} />
 		</div>
 	</Notice>
 {/if}

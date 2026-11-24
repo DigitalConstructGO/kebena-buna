@@ -368,42 +368,57 @@ export async function rescheduleTicket(
 	});
 }
 
+/**
+ * Ends a ticket that has not been used, in the caller's transaction: `cancelled`, or `refunded`
+ * when its money went back. Its places go back to the slot, or to the event, and the scanner turns
+ * it away from then on.
+ */
+export async function voidTicket(
+	tx: Writer,
+	ticketId: number,
+	to: 'cancelled' | 'refunded',
+	reason: string | null | undefined,
+	userId?: string | null,
+	amount = 0
+) {
+	const { ticket: t, counts } = await lockTicket(tx, ticketId);
+	if (t.status !== 'valid') throw new WriteRefused(null, `A ${t.status} ticket cannot be ${to}`);
+	if (counts && t.visitSlotId) await moveCounters(tx, t.visitSlotId, -t.admits);
+	if (t.eventId) {
+		// The event's registrations are its own counter: give the party's places back.
+		await tx
+			.select({ id: eventTable.id })
+			.from(eventTable)
+			.where(eq(eventTable.id, t.eventId))
+			.for('update');
+		await tx
+			.update(eventTable)
+			.set({ registered: sql`greatest(${eventTable.registered} - ${t.admits}, 0)` })
+			.where(eq(eventTable.id, t.eventId));
+	}
+	await tx
+		.update(ticket)
+		.set({ status: to, cancelledAt: new Date() })
+		.where(eq(ticket.id, ticketId));
+	await tx.insert(ticketChange).values({
+		ticketId,
+		kind: to === 'refunded' ? 'refund' : 'cancel',
+		fromSlotId: t.visitSlotId,
+		amount,
+		reason: reason ?? null,
+		changedBy: userId ?? null
+	});
+}
+
 /** Cancels a ticket that has not been used; its places go back to the slot, or to the event. */
 export async function cancelTicket(
 	event: RequestEvent,
 	ticketId: number,
 	reason: string | null | undefined
 ) {
-	await db.transaction(async (tx) => {
-		const { ticket: t, counts } = await lockTicket(tx, ticketId);
-		if (t.status !== 'valid')
-			throw new WriteRefused(null, `A ${t.status} ticket cannot be cancelled`);
-		if (counts && t.visitSlotId) await moveCounters(tx, t.visitSlotId, -t.admits);
-		if (t.eventId) {
-			// The event's registrations are its own counter: give the party's places back.
-			await tx
-				.select({ id: eventTable.id })
-				.from(eventTable)
-				.where(eq(eventTable.id, t.eventId))
-				.for('update');
-			await tx
-				.update(eventTable)
-				.set({ registered: sql`greatest(${eventTable.registered} - ${t.admits}, 0)` })
-				.where(eq(eventTable.id, t.eventId));
-		}
-		await tx
-			.update(ticket)
-			.set({ status: 'cancelled', cancelledAt: new Date() })
-			.where(eq(ticket.id, ticketId));
-		await tx.insert(ticketChange).values({
-			ticketId,
-			kind: 'cancel',
-			fromSlotId: t.visitSlotId,
-			amount: 0,
-			reason: reason ?? null,
-			changedBy: event.locals.user?.id
-		});
-	});
+	await db.transaction((tx) =>
+		voidTicket(tx, ticketId, 'cancelled', reason, event.locals.user?.id)
+	);
 }
 
 /**

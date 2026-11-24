@@ -3,7 +3,7 @@
  * with their history, staff on bookings and sessions with the double-booking check (8.2), session
  * counters, booking numbers, and sessions generated from a bookable's weekly pattern.
  */
-import { and, eq, gt, inArray, isNull, lt, notInArray, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, inArray, isNull, lt, lte, notInArray, sql } from 'drizzle-orm';
 import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
 import type { Writer } from '@nahu/admin-kit/server/db';
 import { addLocalDays, fromLocal, localClock, localDate, localToday } from '@nahu/admin-kit/time';
@@ -17,11 +17,14 @@ import {
 	formSubmission,
 	staffAssignment,
 	user,
+	visitDay,
+	visitSlot,
 	workflowHistory
 } from '#lib/server/db/schema.ts';
 import { nextNumber } from '#lib/server/records.ts';
 import { queueMessage } from '#lib/server/notify.ts';
 import { moveCounters } from '#lib/server/visits.ts';
+import { readSetting } from '#lib/server/stockReads.ts';
 import type { WorkflowStatus } from '#lib/constants.ts';
 
 export type WorkflowTarget = { bookingId: number } | { submissionId: number };
@@ -154,7 +157,7 @@ export async function syncSessionBooked(tx: Writer, sessionId: number) {
 				isNull(booking.deletedAt)
 			)
 		)
-		.for('share');
+		.for('update');
 	// Only growth is refused: a cancellation must still go through on a session already over.
 	if (n > session.capacity && n > session.booked)
 		throw new WriteRefused(
@@ -191,6 +194,64 @@ export async function holdPlaces(tx: Writer, bookingId: number, places: number) 
 	if (b.visitSlotId)
 		await moveCounters(tx, b.visitSlotId, delta, { column: 'held', field: 'heldPlaces' });
 	await tx.update(booking).set({ heldPlaces: places }).where(eq(booking.id, bookingId));
+}
+
+/**
+ * Puts a booking on one of its bookable's sessions (or takes it off, with null), recounting both
+ * sessions' `booked` under their locks. Refuses a session of another bookable, a cancelled one,
+ * or one without room for the party.
+ */
+export async function setBookingSession(tx: Writer, bookingId: number, sessionId: number | null) {
+	const [b] = await tx
+		.select({ bookableId: booking.bookableId, sessionId: booking.sessionId })
+		.from(booking)
+		.where(eq(booking.id, bookingId))
+		.for('update');
+	if (!b) throw new WriteRefused(null, 'Booking not found');
+	if (b.sessionId === sessionId) return;
+	if (sessionId) {
+		const [s] = await tx
+			.select({ bookableId: bookingSession.bookableId, isCancelled: bookingSession.isCancelled })
+			.from(bookingSession)
+			.where(and(eq(bookingSession.id, sessionId), isNull(bookingSession.deletedAt)));
+		if (!s || s.bookableId !== b.bookableId)
+			throw new WriteRefused('sessionId', 'Choose a session of what is being booked');
+		if (s.isCancelled) throw new WriteRefused('sessionId', 'That session is cancelled');
+	}
+	await tx.update(booking).set({ sessionId }).where(eq(booking.id, bookingId));
+	if (b.sessionId) await syncSessionBooked(tx, b.sessionId);
+	if (sessionId) await syncSessionBooked(tx, sessionId);
+}
+
+/** The visit slot that `at` falls in, at a location (any, when null): where a group's hold goes. */
+export async function slotAt(tx: Writer, locationId: number | null, at: Date) {
+	const [slot] = await tx
+		.select({ id: visitSlot.id })
+		.from(visitSlot)
+		.innerJoin(visitDay, eq(visitSlot.visitDayId, visitDay.id))
+		.where(
+			and(
+				locationId ? eq(visitDay.locationId, locationId) : undefined,
+				lte(visitSlot.startsAt, at),
+				gt(visitSlot.endsAt, at)
+			)
+		)
+		.orderBy(desc(visitSlot.startsAt))
+		.limit(1);
+	return slot?.id ?? null;
+}
+
+/**
+ * The day an unpaid hold lets go when staff give no date (6.6): the bookable's own hold days,
+ * else the `booking.hold_days` setting (7), counted from today.
+ */
+export async function holdExpiry(tx: Writer, bookableId: number) {
+	const [b] = await tx
+		.select({ holdDays: bookable.holdDays })
+		.from(bookable)
+		.where(eq(bookable.id, bookableId));
+	const days = b?.holdDays ?? (await readSetting('booking.hold_days', 7));
+	return fromLocal(addLocalDays(localToday(), Math.max(Number(days) || 7, 1)), '23:59');
 }
 
 /** What else this person is on in that stretch of time — the double-booking warning (8.2). */

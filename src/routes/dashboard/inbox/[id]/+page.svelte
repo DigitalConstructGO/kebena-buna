@@ -16,6 +16,7 @@
 	import { WORKFLOW_STATUSES } from '#lib/constants.ts';
 	import {
 		assignSchema,
+		replySchema,
 		submissionToBookingSchema,
 		workflowSchema
 	} from '#lib/schemas/bookings.ts';
@@ -75,6 +76,31 @@
 		<Statuses {...badge(f.status)} />
 	{/snippet}
 	{#snippet actions()}
+		{#if data.canManage && data.canReply}
+			<FormDialog
+				title="Reply to {f.name ?? 'them'}"
+				triggerLabel="Reply"
+				triggerVariant="default"
+				action="?/reply"
+				data={data.replyForm}
+				schema={replySchema}
+				description="Sent to {[f.phone && `${f.phone} by SMS`, f.email && `${f.email} by email`]
+					.filter(Boolean)
+					.join(' and ')}, signed Kebena Coffee, and kept in the history below."
+			>
+				{#snippet fields({ form, errors })}
+					<InputComp
+						label="Message"
+						name="message"
+						type="textarea"
+						rows={5}
+						{form}
+						{errors}
+						required
+					/>
+				{/snippet}
+			</FormDialog>
+		{/if}
 		{#if data.canManage}
 			<FormDialog
 				title="Move this submission"

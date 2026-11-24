@@ -1,6 +1,12 @@
 <script lang="ts">
 	import type { ColumnDef } from '@tanstack/table-core';
 	import Package from '@lucide/svelte/icons/package';
+	import ListPlus from '@lucide/svelte/icons/list-plus';
+	import Scale from '@lucide/svelte/icons/scale';
+	import Undo2 from '@lucide/svelte/icons/undo-2';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
+	import ConfirmAction from '@nahu/admin-kit/components/ConfirmAction.svelte';
+	import { renderComponent } from '@nahu/admin-kit/components/ui/data-table/index.js';
 	import PageHeader from '@nahu/admin-kit/components/PageHeader.svelte';
 	import PageSection from '@nahu/admin-kit/components/PageSection.svelte';
 	import SingleTable from '@nahu/admin-kit/components/SingleTable.svelte';
@@ -14,10 +20,11 @@
 	import { amount, dateTime, kg, link, status, user } from '#lib/cells.ts';
 	import { formatDateTime, humanize, pct, qty } from '#lib/format.ts';
 	import { stampRows, useLinks } from '#lib/links.ts';
-	import { roastEditSchema } from '#lib/schemas/stock.ts';
+	import { roastCorrectSchema, roastEditSchema, roastVoidSchema } from '#lib/schemas/stock.ts';
 
 	let { data } = $props();
 	const b = $derived(data.batch);
+	const live = $derived(data.canManage && !b.deletedAt);
 	const href = useLinks();
 	const loss = $derived(Number(b.weightLossPct ?? 0));
 	const offRange = $derived(loss < data.lossRange.min || loss > data.lossRange.max);
@@ -111,7 +118,29 @@
 			meta: { align: 'right' },
 			cell: ({ row }) => row.original.quantity
 		},
-		{ id: 'status', header: 'Order status', cell: ({ row }) => status(row.original.status) }
+		{
+			id: 'bagged',
+			header: 'Bagged',
+			meta: { align: 'right' },
+			cell: ({ row }) => row.original.bagged
+		},
+		{ id: 'status', header: 'Order status', cell: ({ row }) => status(row.original.status) },
+		{
+			id: 'unlink',
+			header: '',
+			cell: ({ row }) =>
+				live && row.original.bagged <= 0
+					? renderComponent(ConfirmAction, {
+							action: '?/unlink',
+							label: 'Unlink',
+							icon: Undo2,
+							variant: 'ghost',
+							title: `Take ${row.original.number} off this batch?`,
+							description: 'The line goes back on the roast queue, to be roasted in another batch.',
+							fields: { lineId: row.original.id }
+						})
+					: ''
+		}
 	];
 	type Move = (typeof data.movements)[number];
 	const moveColumns: ColumnDef<Move>[] = [
@@ -155,9 +184,20 @@
 			/>
 		{/if}
 		{#if b.isToOrder}<Statuses status="ready" label="Roast-day batch" />{/if}
+		{#if b.deletedAt}<Statuses status="cancelled" label="Voided" />{/if}
 	{/snippet}
 	{#snippet actions()}
-		{#if data.canManage}
+		{#if live}
+			{#if b.isToOrder && b.productId}
+				<ConfirmAction
+					action="?/link"
+					label="Fill from roast queue"
+					icon={ListPlus}
+					variant="outline"
+					title="Take waiting order lines?"
+					description="Roast-to-order lines of this product and roast, due on its roast day or before, oldest first, while its roasted kilograms last."
+				/>
+			{/if}
 			<Button href="/dashboard/stock/packing/new?batch={b.id}" variant="outline">
 				<Package class="size-4" /> Pack from this batch
 			</Button>
@@ -166,7 +206,7 @@
 				action="?/edit"
 				data={data.editForm}
 				schema={roastEditSchema}
-				description="Weights moved stock and stay as recorded; correct them with an adjustment on Stock on hand."
+				description="The weights moved stock: correct a misread roasted weight with Correct weight."
 			>
 				{#snippet fields({ form, errors })}
 					<!-- The dialog posts only the fields it renders: without this the save has no batch. -->
@@ -228,6 +268,45 @@
 						{form}
 						{errors}
 					/>
+				{/snippet}
+			</FormDialog>
+			<FormDialog
+				title="Correct the roasted weight"
+				action="?/correct"
+				data={data.correctForm}
+				schema={roastCorrectSchema}
+				triggerLabel="Correct weight"
+				triggerIcon={Scale}
+				triggerVariant="outline"
+				description="The difference moves this batch's roasted stock at {data.location} as an adjustment. Less can only come off what is still there."
+			>
+				{#snippet fields({ form, errors })}
+					<InputComp type="hidden" name="id" {form} {errors} />
+					<InputComp
+						label="Roasted kg out"
+						name="roastedKgOut"
+						type="number"
+						step="0.001"
+						{form}
+						{errors}
+						required
+					/>
+					<InputComp label="What was wrong" name="reason" {form} {errors} required />
+				{/snippet}
+			</FormDialog>
+			<FormDialog
+				title="Void {b.code}?"
+				action="?/void"
+				data={data.voidForm}
+				schema={roastVoidSchema}
+				triggerLabel="Void"
+				triggerIcon={Trash2}
+				triggerVariant="ghost"
+				description="For a batch recorded by mistake: its green goes back to its lots, its roasted coffee is taken out, and its order lines go back on the roast queue. Only while none of it has been packed, moved or used."
+			>
+				{#snippet fields({ form, errors })}
+					<InputComp type="hidden" name="id" {form} {errors} />
+					<InputComp label="Why" name="reason" {form} {errors} required />
 				{/snippet}
 			</FormDialog>
 		{/if}

@@ -12,10 +12,11 @@ import { redirect, type RequestEvent } from '@sveltejs/kit';
 import { takeToken } from '@nahu/admin-kit/server/rateLimit';
 import { resolveStoredFile } from '@nahu/admin-kit/server/files';
 import type { Writer } from '@nahu/admin-kit/server/db';
-import { CHAPA_SECRET_KEY } from '$app/env/private';
+import { CHAPA_SECRET_KEY, ORIGIN } from '$app/env/private';
 import { initializeTransaction, verifyTransaction } from '@nahu/admin-kit/server/chapa';
 import { settleGatewayPayment } from '#lib/server/orders.ts';
 import { queueOrderMessage } from '#lib/server/orderMessages.ts';
+import { tellStaff } from '#lib/server/jobs/staffAlerts.ts';
 import { claimDiscount } from '#lib/server/discounts.ts';
 import { db } from '#lib/server/db/index.ts';
 import {
@@ -33,7 +34,7 @@ import {
 import * as s from '#lib/server/db/schema.ts';
 import type { AddressSnapshot } from '#lib/server/db/orders.schema.ts';
 import { nextNumber } from '#lib/server/records.ts';
-import type { FormType } from '#lib/constants.ts';
+import type { FormType, SalesChannel } from '#lib/constants.ts';
 import { getLocale } from '#lib/paraglide/runtime.js';
 import { m } from '#lib/i18n.ts';
 import { siteHref } from '#lib/site/locale.ts';
@@ -165,6 +166,20 @@ export async function submitForm(event: RequestEvent, s: Submission) {
 		await tx
 			.insert(workflowHistory)
 			.values({ submissionId: res.insertId, toStatus: 'new', note: 'Sent from the website' });
+		// Staff hear of it now, not only when it has waited a day (`staleInboxAlert`).
+		const url = `${ORIGIN.replace(/\/$/, '')}/dashboard/inbox/${res.insertId}`;
+		await tellStaff(
+			'inbox_new',
+			'staff.inbox_new',
+			{
+				form: s.formType.replaceAll('_', ' '),
+				name: s.name ?? 'Someone',
+				subject: s.subject ?? s.message?.slice(0, 120) ?? '',
+				url
+			},
+			`submission:${res.insertId}`,
+			tx
+		);
 		if (customerId && s.marketingConsent) {
 			await recordConsent(tx, event, customerId, s, `${s.formType}_form`);
 		}
@@ -183,7 +198,13 @@ export type WebLine = Omit<
 	| 'discountAmount'
 	| 'quantity'
 	| 'unitPrice'
-> & { quantity: number; unitPrice: number; discountAmount?: number };
+> & {
+	quantity: number;
+	unitPrice: number;
+	discountAmount?: number;
+	/** A bundle that does not stack: a discount code leaves this line alone. */
+	codeExempt?: boolean;
+};
 
 export type WebOrder = {
 	customerId: number;
@@ -201,6 +222,19 @@ export type WebOrder = {
 	idempotencyKey?: string | null;
 	/** A discount code the buyer typed; refused with `DiscountRefused`. */
 	discountCode?: string | null;
+	/** Set when staff take the order in the dashboard (`placeStaffOrder`), not the website. */
+	staff?: {
+		channel: Exclude<SalesChannel, 'web'>;
+		userId: string | null;
+		locale: string;
+		locationId?: number | null;
+		businessAccountId?: number | null;
+		customerTin?: string | null;
+		customerBusinessName?: string | null;
+		staffNote?: string | null;
+		/** False when the buyer needs no pay link: paid at the desk, or billed on an invoice. */
+		notify: boolean;
+	};
 };
 
 /** How many web orders one phone may leave waiting for payment at once. */
@@ -234,18 +268,21 @@ export async function createWebOrder(tx: Writer, event: RequestEvent, o: WebOrde
 	if (!o.lines.length) throw new Error('An order needs at least one line.');
 	// Each unpaid order holds what it sells (places, a code's uses) until it is paid or expires, so
 	// one phone may only keep a couple waiting: pay one, or let it lapse, before placing another.
-	const [waiting] = await tx
-		.select({ n: count() })
-		.from(order)
-		.where(
-			and(
-				eq(order.channel, 'web'),
-				eq(order.status, 'pending_payment'),
-				eq(order.contactPhone, o.contact.phone),
-				isNull(order.deletedAt)
-			)
-		);
-	if ((waiting?.n ?? 0) >= MAX_UNPAID_PER_PHONE) throw new UnpaidRefused();
+	// Staff taking an order are trusted with it.
+	if (!o.staff) {
+		const [waiting] = await tx
+			.select({ n: count() })
+			.from(order)
+			.where(
+				and(
+					eq(order.channel, 'web'),
+					eq(order.status, 'pending_payment'),
+					eq(order.contactPhone, o.contact.phone),
+					isNull(order.deletedAt)
+				)
+			);
+		if ((waiting?.n ?? 0) >= MAX_UNPAID_PER_PHONE) throw new UnpaidRefused();
+	}
 	const rates = await tx
 		.select({ id: taxRate.id, rate: taxRate.rate, isDefault: taxRate.isDefault })
 		.from(taxRate)
@@ -260,11 +297,11 @@ export async function createWebOrder(tx: Writer, event: RequestEvent, o: WebOrde
 				o.customerId,
 				o.lines.map((l) => ({
 					itemType: l.itemType,
-					gross: r2(l.unitPrice * l.quantity - (l.discountAmount ?? 0))
+					gross: l.codeExempt ? 0 : r2(l.unitPrice * l.quantity - (l.discountAmount ?? 0))
 				}))
 			)
 		: null;
-	const lines = o.lines.map((l, i) => {
+	const lines = o.lines.map(({ codeExempt: _, ...l }, i) => {
 		const rate = rateOf(l.taxRateId);
 		const discount = r2((l.discountAmount ?? 0) + (code?.perLine[i] ?? 0));
 		const lineTotal = r2(l.unitPrice * l.quantity - discount);
@@ -292,8 +329,14 @@ export async function createWebOrder(tx: Writer, event: RequestEvent, o: WebOrde
 	const [res] = await tx.insert(order).values({
 		number,
 		customerId: o.customerId,
-		channel: 'web',
-		locale: getLocale(),
+		channel: o.staff?.channel ?? 'web',
+		locale: o.staff?.locale ?? getLocale(),
+		businessAccountId: o.staff?.businessAccountId ?? null,
+		locationId: o.staff?.locationId ?? null,
+		customerTin: o.staff?.customerTin ?? null,
+		customerBusinessName: o.staff?.customerBusinessName ?? null,
+		staffNote: o.staff?.staffNote ?? null,
+		createdBy: o.staff?.userId ?? null,
 		contactName: o.contact.name,
 		contactPhone: o.contact.phone,
 		contactEmail: o.contact.email ?? null,
@@ -314,7 +357,8 @@ export async function createWebOrder(tx: Writer, event: RequestEvent, o: WebOrde
 		idempotencyKey: o.idempotencyKey ?? null,
 		customerNote: o.customerNote ?? null,
 		placedAt: now,
-		ipAddress: origin(event).ipAddress
+		// The address alone: a background job placing it (a subscription's delivery) has no request.
+		ipAddress: event.getClientAddress().slice(0, 45)
 	} as typeof order.$inferInsert);
 	const orderId = res.insertId;
 	const lineIds: number[] = [];
@@ -333,13 +377,17 @@ export async function createWebOrder(tx: Writer, event: RequestEvent, o: WebOrde
 	// and find their tickets, even if they close this page. A free order is paid straight away and
 	// told so then.
 	let notified = false;
-	if (total > 0) {
+	if (total > 0 && (o.staff?.notify ?? true)) {
 		const [placed] = await tx.select().from(order).where(eq(order.id, orderId));
 		notified = (await queueOrderMessage(tx, placed, 'pending_payment')) > 0;
 	}
-	await tx
-		.insert(orderStatusHistory)
-		.values({ orderId, toStatus: 'pending_payment', note: 'Placed on the website', notified });
+	await tx.insert(orderStatusHistory).values({
+		orderId,
+		toStatus: 'pending_payment',
+		note: o.staff ? `Taken by staff (${o.staff.channel})` : 'Placed on the website',
+		notified,
+		changedBy: o.staff?.userId ?? null
+	});
 	return { id: orderId, number, total, lineIds, payToken };
 }
 

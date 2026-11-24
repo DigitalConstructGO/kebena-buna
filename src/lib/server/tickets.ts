@@ -4,9 +4,10 @@
  * A web order for entry tickets holds its places (`visit_slot.held`) the moment it is placed, so
  * two buyers cannot pay for the last place. Payment turns the hold into tickets: one per unit, each
  * with its own code and signed QR (`#lib/server/ticketQr`), and the places move from `held` to
- * `sold`. Until then there is no ticket to scan.
+ * `sold`. Until then there is no ticket to scan. Event tickets are held the same way, counted from
+ * the event's unpaid orders (`eventHeld`), and become `registered` people when paid.
  */
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { Writer } from '@nahu/admin-kit/server/db';
 import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
 import { localDate } from '@nahu/admin-kit/time';
@@ -59,26 +60,69 @@ async function peoplePerSlot(tx: Writer, lines: TicketLine[]) {
 /**
  * Holds the places an order's ticket lines need, at checkout. Refuses (`WriteRefused`, under
  * `field`) when a slot or its day is closed or full; the caller's transaction then rolls back.
- * Event tickets are checked against the event's room here and counted when issued.
+ * Event tickets are held while their order is unpaid (`eventHeld`) and counted when issued.
  */
 export async function holdTicketPlaces(tx: Writer, lines: TicketLine[], field = 'slot') {
 	for (const [slotId, people] of await peoplePerSlot(tx, lines)) {
 		await moveCounters(tx, slotId, people, { column: 'held', field });
 	}
 	const perEvent = new Map<number, number>();
-	for (const l of lines)
-		if (l.eventId) perEvent.set(l.eventId, (perEvent.get(l.eventId) ?? 0) + l.quantity);
-	for (const [eventId, seats] of perEvent) {
+	for (const [eventId, people] of await peoplePerEvent(tx, lines))
+		perEvent.set(eventId, (perEvent.get(eventId) ?? 0) + people);
+	for (const [eventId, people] of [...perEvent].sort(([a], [b]) => a - b)) {
+		// Locked, so two checkouts for the last places queue here and the second sees the first.
 		const [e] = await tx
 			.select({ capacity: event.capacity, registered: event.registered })
 			.from(event)
 			.where(eq(event.id, eventId))
 			.for('update');
 		if (!e) throw new WriteRefused(field, 'Event not found');
-		if (e.registered + seats > e.capacity) {
-			throw new WriteRefused(field, `Only ${Math.max(e.capacity - e.registered, 0)} places left`);
+		const taken = e.registered + (await eventHeld(tx, eventId));
+		if (taken + people > e.capacity) {
+			throw new WriteRefused(field, `Only ${Math.max(e.capacity - taken, 0)} places left`);
 		}
 	}
+}
+
+/** People a set of lines brings to each event: tickets times the people each admits. */
+async function peoplePerEvent(tx: Writer, lines: TicketLine[]) {
+	const evLines = lines.filter((l) => l.eventId && l.ticketTypeId);
+	const typeIds = [...new Set(evLines.map((l) => l.ticketTypeId!))];
+	const types = typeIds.length
+		? await tx
+				.select({ id: ticketType.id, admits: ticketType.admitsPerTicket })
+				.from(ticketType)
+				.where(inArray(ticketType.id, typeIds))
+		: [];
+	return evLines.map(
+		(l) =>
+			[l.eventId!, l.quantity * (types.find((t) => t.id === l.ticketTypeId)?.admits ?? 1)] as const
+	);
+}
+
+/**
+ * People in an event's unpaid orders: their places are held until they pay or the order lapses
+ * (`expireUnpaidOrders`), counted from the orders themselves so a cancelled one lets go by itself.
+ */
+export async function eventHeld(tx: Writer, eventId: number) {
+	const [row] = await tx
+		.select({
+			people:
+				sql<number>`coalesce(sum(${orderLine.quantity} * ${ticketType.admitsPerTicket}), 0)`.mapWith(
+					Number
+				)
+		})
+		.from(orderLine)
+		.innerJoin(order, eq(orderLine.orderId, order.id))
+		.innerJoin(ticketType, eq(orderLine.ticketTypeId, ticketType.id))
+		.where(
+			and(
+				eq(orderLine.eventId, eventId),
+				eq(order.status, 'pending_payment'),
+				isNull(order.deletedAt)
+			)
+		);
+	return row?.people ?? 0;
 }
 
 /** Gives back the places an unpaid order held (cancelled, or its payment window closed). */
@@ -171,10 +215,11 @@ export async function issueOrderTickets(tx: Writer, orderId: number) {
 			});
 			made++;
 		}
+		// The event counts people, as cancelling a ticket gives back its `admits`.
 		if (l.eventId) {
 			await tx
 				.update(event)
-				.set({ registered: sql`${event.registered} + ${Number(l.quantity)}` })
+				.set({ registered: sql`${event.registered} + ${Number(l.quantity) * l.admits}` })
 				.where(eq(event.id, l.eventId));
 		}
 	}

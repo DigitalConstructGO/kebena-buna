@@ -34,6 +34,9 @@ export const workflowSchema = z.object({
 
 export const assignSchema = z.object({ assignedTo: optionalUserId });
 
+/** An answer to a website enquiry, sent to the sender's phone and email. */
+export const replySchema = z.object({ message: requiredText(1000, 'Write the reply') });
+
 /** A person put on a booking or a session for a stretch of time (8.2). */
 export const staffAssignmentSchema = z.object({
 	userId: requiredText(255, 'Choose who'),
@@ -49,6 +52,7 @@ export const quoteSchema = z.object({
 });
 
 export const scheduleSchema = z.object({
+	sessionId: optionalId,
 	confirmedDate: optionalDate,
 	confirmedTime: optionalTime,
 	heldPlaces: z.coerce.number().int().min(0).default(0),

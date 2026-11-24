@@ -5,6 +5,10 @@
  *
  * A line whose product was unpublished, or whose option is no longer allowed, falls back to the
  * product's default option or drops out, so the cart never holds something checkout would refuse.
+ *
+ * Bundles sit in a second cookie (`kb-bundles`): the bundle, the coffee picked for each choice in
+ * it, one roast and grind for all its bags, and how many. `priceBundles` prices them with
+ * `priceBundle`, so the saving is always today's.
  */
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { Cookies } from '@sveltejs/kit';
@@ -25,8 +29,13 @@ import {
 import type { Localized } from '#lib/server/db/fields.ts';
 import { LANGS } from '#lib/languages.ts';
 import { tr } from '#lib/format.ts';
+import { BundleRefused, priceBundle } from '#lib/server/bundles.ts';
 
 const COOKIE = 'kb-cart';
+const BUNDLE_COOKIE = 'kb-bundles';
+const MAX_BUNDLES = 10;
+/** The most of one bundle a cart holds, when the bundle sets no lower limit. */
+export const MAX_BUNDLE_QTY = 10;
 const MAX_LINES = 30;
 export const MAX_QTY = 50;
 
@@ -52,26 +61,78 @@ export function readChoices(cookies: Cookies): CartChoice[] {
 	}
 }
 
+const bundleEntry = z.object({
+	bundleId: id,
+	picks: z.array(z.object({ itemId: id, variantId: id })).max(24),
+	roastLevelId: id.nullable(),
+	grindId: id.nullable(),
+	quantity: z.number().int().min(1).max(MAX_BUNDLE_QTY),
+	/** Bags in one bundle, for the header's count. */
+	bags: z.number().int().min(0).max(99)
+});
+export type BundleEntry = z.infer<typeof bundleEntry>;
+
+/** The bundles the cookie holds, or none when it is missing or malformed. */
+export function readBundles(cookies: Cookies): BundleEntry[] {
+	const raw = cookies.get(BUNDLE_COOKIE);
+	if (!raw) return [];
+	try {
+		const parsed = z.array(bundleEntry).max(MAX_BUNDLES).safeParse(JSON.parse(raw));
+		return parsed.success ? parsed.data : [];
+	} catch {
+		return [];
+	}
+}
+
+/** The same bundle with the same picks and options: one cart entry. */
+export const bundleKey = (b: BundleEntry) =>
+	`b${b.bundleId}-${b.roastLevelId ?? 0}-${b.grindId ?? 0}-${b.picks
+		.map((p) => `${p.itemId}.${p.variantId}`)
+		.toSorted()
+		.join('_')}`;
+
+/** Adds a bundle to the cart, merging into the same one already there. */
+export function addBundle(entries: BundleEntry[], entry: BundleEntry, max = MAX_BUNDLE_QTY) {
+	const existing = entries.find((e) => bundleKey(e) === bundleKey(entry));
+	if (existing) existing.quantity = Math.min(existing.quantity + entry.quantity, max);
+	else entries.push({ ...entry, quantity: Math.min(entry.quantity, max) });
+	return entries.slice(-MAX_BUNDLES);
+}
+
 /**
  * The number of bags, readable by the page (`kb-cart-n`): the museum pages are built ahead as
  * static HTML, so their header reads the cart badge from this rather than from the server.
  */
 const COUNT_COOKIE = 'kb-cart-n';
 
-export function writeChoices(cookies: Cookies, lines: CartChoice[], secure: boolean) {
-	if (!lines.length) {
-		cookies.delete(COOKIE, { path: '/' });
-		cookies.delete(COUNT_COOKIE, { path: '/' });
-		return;
-	}
+/**
+ * Writes the cart: its bags, and its bundles (those already there unless given). The header's count
+ * covers both.
+ */
+export function writeChoices(
+	cookies: Cookies,
+	lines: CartChoice[],
+	secure: boolean,
+	bundles: BundleEntry[] = readBundles(cookies)
+) {
 	const kept = lines.slice(0, MAX_LINES);
+	const keptBundles = bundles.slice(0, MAX_BUNDLES);
 	const options = { path: '/', sameSite: 'lax' as const, secure, maxAge: 60 * 60 * 24 * 30 };
-	cookies.set(COOKIE, JSON.stringify(kept), { ...options, httpOnly: true });
-	cookies.set(COUNT_COOKIE, String(kept.reduce((sum, l) => sum + l.quantity, 0)), {
-		...options,
-		httpOnly: false
-	});
+	if (kept.length) cookies.set(COOKIE, JSON.stringify(kept), { ...options, httpOnly: true });
+	else cookies.delete(COOKIE, { path: '/' });
+	if (keptBundles.length)
+		cookies.set(BUNDLE_COOKIE, JSON.stringify(keptBundles), { ...options, httpOnly: true });
+	else cookies.delete(BUNDLE_COOKIE, { path: '/' });
+	const count =
+		kept.reduce((sum, l) => sum + l.quantity, 0) +
+		keptBundles.reduce((sum, b) => sum + b.bags * b.quantity, 0);
+	if (count) cookies.set(COUNT_COOKIE, String(count), { ...options, httpOnly: false });
+	else cookies.delete(COUNT_COOKIE, { path: '/' });
 }
+
+/** Writes the bundles, keeping the bags as they are. */
+export const writeBundles = (cookies: Cookies, bundles: BundleEntry[], secure: boolean) =>
+	writeChoices(cookies, readChoices(cookies), secure, bundles);
 
 /** The same choice: one cart line per variant and option set. */
 const sameChoice = (a: CartChoice, b: CartChoice) =>
@@ -129,8 +190,12 @@ function describe(parts: (Localized | string | null | undefined)[]): Localized {
 
 export type PricedLine = Awaited<ReturnType<typeof priceCart>>['lines'][number];
 
-/** The cart as it stands now: each line re-priced and its options checked against the product. */
-export async function priceCart(choices: CartChoice[]) {
+/**
+ * The cart as it stands now: each line re-priced and its options checked against the product.
+ * `staff` prices an order taken in the dashboard: any switched-on product, published or not and
+ * members-only included.
+ */
+export async function priceCart(choices: CartChoice[], { staff = false } = {}) {
 	const variantIds = [...new Set(choices.map((c) => c.variantId))];
 	if (!variantIds.length) return { lines: [], subtotal: 0, count: 0, changed: false };
 
@@ -148,6 +213,7 @@ export async function priceCart(choices: CartChoice[]) {
 			image: product.image,
 			fulfilment: product.fulfilment,
 			taxRateId: product.taxRateId,
+			grams: bagSize.grams,
 			available: availableOf
 		})
 		.from(productVariant)
@@ -158,7 +224,7 @@ export async function priceCart(choices: CartChoice[]) {
 				inArray(productVariant.id, variantIds),
 				eq(productVariant.isActive, true),
 				isNull(productVariant.deletedAt),
-				onSale
+				staff ? and(eq(product.isActive, true), isNull(product.deletedAt)) : onSale
 			)
 		);
 	const productIds = [...new Set(variants.map((v) => v.productId))];
@@ -254,6 +320,8 @@ export async function priceCart(choices: CartChoice[]) {
 			sku: v.sku,
 			fulfilment: v.fulfilment,
 			taxRateId: v.taxRateId,
+			/** Grams in one bag: what wholesale tiers are counted in. */
+			grams: v.grams,
 			image: productImageUrl(v),
 			unitPrice,
 			quantity: c.quantity,
@@ -275,5 +343,97 @@ export function shortLines(lines: PricedLine[]) {
 			wanted.set(l.choice.variantId, (wanted.get(l.choice.variantId) ?? 0) + l.quantity);
 	return lines.filter(
 		(l) => l.available !== null && (wanted.get(l.choice.variantId) ?? 0) > l.available
+	);
+}
+
+export type PricedBundle = Awaited<ReturnType<typeof priceBundles>>['bundles'][number];
+
+/**
+ * The cart's bundles as they stand now: each priced by `priceBundle` and its bags by `priceCart`
+ * (for their descriptions, tax, stock and the roast and grind each coffee allows). A bundle no longer
+ * on sale, or whose coffee was switched off, drops out.
+ */
+export async function priceBundles(entries: BundleEntry[]) {
+	let changed = false;
+	const bundles = [];
+	for (const e of entries) {
+		let priced: Awaited<ReturnType<typeof priceBundle>>;
+		try {
+			priced = await priceBundle(db, e.bundleId, e.picks);
+		} catch (err) {
+			if (!(err instanceof BundleRefused)) throw err;
+			changed = true;
+			continue;
+		}
+		const b = priced.bundle;
+		const max = Math.min(b.maxPerOrder ?? MAX_BUNDLE_QTY, MAX_BUNDLE_QTY);
+		const quantity = Math.min(e.quantity, max);
+		const bags = await priceCart(
+			priced.lines.map((l) => ({
+				variantId: l.variantId,
+				roastLevelId: e.roastLevelId,
+				grindId: e.grindId,
+				packagingId: null,
+				quantity: l.quantity
+			})),
+			{ staff: true }
+		);
+		if (bags.lines.length !== priced.lines.length) {
+			changed = true;
+			continue;
+		}
+		const bagCount = priced.lines.reduce((sum, l) => sum + l.quantity, 0);
+		const entry: BundleEntry = { ...e, quantity, bags: bagCount };
+		if (quantity !== e.quantity || bagCount !== e.bags) changed = true;
+		bundles.push({
+			key: bundleKey(entry),
+			entry,
+			bundleId: b.id,
+			slug: b.slug,
+			name: b.name,
+			image: b.image ? publicFileUrl(b.image) : '/hero/bag-front.jpg',
+			stacksWithDiscounts: b.stacksWithDiscounts,
+			quantity,
+			max,
+			bags: bagCount,
+			list: priced.list,
+			price: priced.price,
+			saving: priced.saving,
+			total: Math.round(priced.price * quantity * 100) / 100,
+			/** One bundle's bags: priced as the bundle prices them, roast and grind as allowed. */
+			lines: priced.lines.map((l, i) => {
+				const bag = bags.lines[i];
+				return {
+					...bag,
+					// No gift packaging in a bundle: the bundle's price is the bags' own.
+					choice: { ...bag.choice, packagingId: null },
+					unitPrice: l.unitPrice,
+					quantity: l.quantity,
+					discountAmount: l.discountAmount
+				};
+			})
+		});
+	}
+	const subtotal = Math.round(bundles.reduce((sum, b) => sum + b.total, 0) * 100) / 100;
+	return { bundles, subtotal, changed };
+}
+
+/**
+ * Bags the whole cart asks for beyond what is on hand, loose and in bundles together: the variants
+ * short, with what is left of each.
+ */
+export function shortVariants(lines: PricedLine[], bundles: PricedBundle[]) {
+	const wanted = new Map<number, { available: number; want: number }>();
+	const want = (variantId: number, available: number | null, quantity: number) => {
+		if (available === null) return;
+		const w = wanted.get(variantId) ?? { available, want: 0 };
+		w.want += quantity;
+		wanted.set(variantId, w);
+	};
+	for (const l of lines) want(l.choice.variantId, l.available, l.quantity);
+	for (const b of bundles)
+		for (const l of b.lines) want(l.choice.variantId, l.available, l.quantity * b.quantity);
+	return new Map(
+		[...wanted].filter(([, w]) => w.want > w.available).map(([v, w]) => [v, w.available])
 	);
 }

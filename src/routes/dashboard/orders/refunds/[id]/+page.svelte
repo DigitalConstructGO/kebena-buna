@@ -66,6 +66,16 @@
 				description="It can then be paid back. You are recorded as the approver."
 			/>
 		{/if}
+		{#if data.canDecide && rf.status === 'requested'}
+			<ConfirmAction
+				action="?/fail"
+				label="Decline"
+				icon={X}
+				variant="destructive"
+				title="Decline this refund?"
+				description="Nothing is paid back, and what it asked for can be refunded again later."
+			/>
+		{/if}
 		{#if data.canDecide && rf.status === 'approved'}
 			<ConfirmAction
 				action="?/processing"

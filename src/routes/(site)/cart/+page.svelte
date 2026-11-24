@@ -10,11 +10,11 @@
 	let { data, form } = $props();
 
 	const locale = $derived(getLocale());
-	const anyShort = $derived(data.lines.some((l) => l.short));
+	const anyShort = $derived(data.lines.some((l) => l.short) || data.bundles.some((b) => b.short));
 
 	const uid = $props.id();
-	const counts = (quantity: number) =>
-		Array.from({ length: Math.max(10, quantity) }, (_, i) => ({
+	const counts = (quantity: number, max = 10) =>
+		Array.from({ length: Math.max(max, quantity) }, (_, i) => ({
 			value: String(i + 1),
 			name: String(i + 1)
 		}));
@@ -36,7 +36,7 @@
 		<h1 class="title">{m.cart_title()}</h1>
 	</header>
 
-	{#if !data.lines.length}
+	{#if !data.lines.length && !data.bundles.length}
 		<div class="section card empty">
 			<p class="lede">{m.cart_empty()}</p>
 			<a class="btn" href={siteHref('/shop', locale)}>{m.cart_browse()}</a>
@@ -92,6 +92,60 @@
 								<p class="price num">{money(l.lineTotal)}</p>
 								<form method="POST" action="?/remove" use:enhance>
 									<input type="hidden" name="key" value={l.key} />
+									<button class="remove">{m.cart_remove()}</button>
+								</form>
+							</div>
+						</li>
+					{/each}
+					{#each data.bundles as b, i (b.key)}
+						<li class="item card">
+							<a
+								class="pic"
+								href={siteHref(`/shop/bundle/${b.slug}`, locale)}
+								tabindex="-1"
+								aria-hidden="true"
+							>
+								<img src={b.image} alt="" width="96" height="96" loading="lazy" />
+							</a>
+							<div class="what">
+								<p class="label">{m.bundle_label()}</p>
+								<a class="name" href={siteHref(`/shop/bundle/${b.slug}`, locale)}>
+									{tr(b.name, locale)}
+								</a>
+								<ul class="bags">
+									{#each b.bags as bag, j (j)}
+										<li class="muted">
+											{bag.quantity} × {[bag.name, bag.size, bag.roast, bag.grind]
+												.filter(Boolean)
+												.map((x) => tr(x ?? '', locale))
+												.join(' · ')}
+										</li>
+									{/each}
+								</ul>
+								<p class="muted num">
+									{m.shop_each({ price: money(b.price) })}{#if b.saving > 0}
+										· {m.bundle_save({ amount: money(b.saving) })}{/if}
+								</p>
+								{#if b.short}<p class="error">{m.shop_sold_out()}</p>{/if}
+							</div>
+							<div class="how">
+								<form method="POST" action="?/updateBundle" use:enhance>
+									<input type="hidden" name="key" value={b.key} />
+									<label class="qty" for="{uid}-b{i}">
+										<span class="visually-hidden">{m.shop_quantity()}</span>
+										<SelectComp
+											id="{uid}-b{i}"
+											name="quantity"
+											value={String(b.quantity)}
+											items={counts(b.quantity, b.max)}
+											label={m.shop_quantity()}
+											onValueChange={submitCount(`${uid}-b${i}`)}
+										/>
+									</label>
+								</form>
+								<p class="price num">{money(b.total)}</p>
+								<form method="POST" action="?/removeBundle" use:enhance>
+									<input type="hidden" name="key" value={b.key} />
 									<button class="remove">{m.cart_remove()}</button>
 								</form>
 							</div>
@@ -164,6 +218,12 @@
 		font-size: 1.15rem;
 		font-weight: 700;
 		text-decoration: none;
+	}
+	.bags {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-size: 14px;
 	}
 	.how {
 		display: flex;

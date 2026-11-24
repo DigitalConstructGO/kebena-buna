@@ -16,7 +16,9 @@ const PAGES = [
 	'/subscriptions',
 	'/groups',
 	'/wholesale',
-	'/contact'
+	'/contact',
+	'/journal',
+	'/faq'
 ];
 
 /** Every page in every language, each listing its translations. */

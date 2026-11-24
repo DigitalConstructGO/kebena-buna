@@ -1,6 +1,6 @@
 /** Membership and subscription writes the pages share: numbers, card codes, terms, pickers. */
 import { randomBytes } from 'node:crypto';
-import { and, count, eq, isNull, ne, sql } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
 import { localToday } from '@nahu/admin-kit/time';
 import type { Writer } from '@nahu/admin-kit/server/db';
@@ -195,6 +195,32 @@ export async function createMembership(
 		});
 	}
 	return { id: res.insertId, number };
+}
+
+/**
+ * What a customer's membership gives them in the shop (7.2): its plan's discount and whether
+ * delivery is free, from their best term still running (active, or in its grace days). Null for a
+ * customer who is not a member.
+ */
+export async function memberPerks(tx: Writer, customerId: number) {
+	const [best] = await tx
+		.select({
+			membershipId: membership.id,
+			shopDiscountPct: membershipPlan.shopDiscountPct,
+			freeDelivery: membershipPlan.freeDelivery
+		})
+		.from(membership)
+		.innerJoin(membershipPlan, eq(membership.planId, membershipPlan.id))
+		.where(
+			and(
+				eq(membership.customerId, customerId),
+				inArray(membership.status, ['active', 'grace']),
+				isNull(membership.deletedAt)
+			)
+		)
+		.orderBy(desc(membershipPlan.shopDiscountPct))
+		.limit(1);
+	return best ? { ...best, shopDiscountPct: Number(best.shopDiscountPct) } : null;
 }
 
 /** A customer's addresses as picker options. */

@@ -366,6 +366,7 @@ export const load = async ({ params, locals }) => {
 		areas,
 		spent: orders.reduce((sum, o) => sum + Number(o.paid), 0),
 		canManage: hasPermission(locals, 'customers.manage'),
+		canOrder: hasPermission(locals, 'orders.manage'),
 		editForm,
 		addressForm,
 		addressEditForm,

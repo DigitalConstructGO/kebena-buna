@@ -192,6 +192,7 @@ export const load = async ({ params, locals }) => {
 		customers: customers.filter((c) => !members.some((m) => m.customerId === c.value)),
 		areas,
 		canManage,
+		canOrder: hasPermission(locals, 'orders.manage'),
 		canRelease: release.allowed,
 		releaseOverrides: release.overridden,
 		editForm,

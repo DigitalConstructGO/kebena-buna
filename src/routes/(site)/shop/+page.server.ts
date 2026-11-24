@@ -16,6 +16,8 @@ import {
 	station
 } from '#lib/server/db/schema.ts';
 import { fromPriceOf } from '#lib/server/catalog.ts';
+import { bundlesOnSale } from '#lib/server/bundles.ts';
+import { publicFileUrl } from '@nahu/admin-kit/files';
 import { onSale, productImageUrl, tracksStock } from '#lib/server/cart.ts';
 import type { PageServerLoad } from './$types';
 
@@ -39,7 +41,7 @@ const defaultOf = <T extends { productId: number; id: number; isDefault: boolean
 };
 
 export const load: PageServerLoad = async () => {
-	const [rows, categories] = await Promise.all([
+	const [rows, categories, bundles] = await Promise.all([
 		db
 			.select({
 				id: product.id,
@@ -66,7 +68,8 @@ export const load: PageServerLoad = async () => {
 			})
 			.from(productCategory)
 			.where(and(eq(productCategory.status, true), isNull(productCategory.deletedAt)))
-			.orderBy(asc(productCategory.sortOrder), asc(productCategory.id))
+			.orderBy(asc(productCategory.sortOrder), asc(productCategory.id)),
+		bundlesOnSale()
 	]);
 
 	const listed = rows.filter((p) => p.from !== null);
@@ -172,6 +175,15 @@ export const load: PageServerLoad = async () => {
 	});
 	return {
 		products,
+		bundles: bundles.map(({ bundle: b, totals: t }) => ({
+			slug: b.slug,
+			name: b.name,
+			summary: b.summary,
+			image: b.image ? publicFileUrl(b.image) : '/hero/bag-front.jpg',
+			from: t.priceMin,
+			saving: t.savingMin,
+			bags: t.bags
+		})),
 		// Only categories with something in them, in their own order.
 		categories: categories.filter((c) => products.some((p) => p.categoryId === c.id))
 	};

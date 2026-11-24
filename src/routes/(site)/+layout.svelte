@@ -5,10 +5,15 @@
 	import { footerContent } from '#lib/content/museum.ts';
 	import { setKitLabels } from '@nahu/admin-kit/labels';
 	import { publicKitLabels } from '#lib/site/kitLabels.ts';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { tr } from '#lib/format.ts';
 	import '#lib/site/museum.css';
 	import '#lib/site/site.css';
 
-	let { children } = $props();
+	let { data, children } = $props();
+
+	const locale = $derived(getLocale());
+	const pages = $derived(data.menuPages.map((p) => ({ label: tr(p.title, locale), href: p.href })));
 
 	// The kit's controls speak the page's language (`kitLabels.ts`).
 	setKitLabels(publicKitLabels);
@@ -21,5 +26,5 @@
 	<main>
 		{@render children()}
 	</main>
-	<SiteFooter content={footerContent()} />
+	<SiteFooter content={footerContent(pages)} />
 </div>

@@ -4,6 +4,7 @@ import { message, setError, superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { redirect } from 'sveltekit-flash-message/server';
 import { postedForm } from '@nahu/admin-kit/server/files';
+import { livePagePath } from '#lib/server/sitePages.ts';
 import { db } from '#lib/server/db/index.ts';
 import { page } from '#lib/server/db/schema.ts';
 import { enOf } from '#lib/server/localized.ts';
@@ -51,6 +52,8 @@ export const load = async ({ params }) => {
 	]);
 	const rest = { ...p, heroImage: undefined };
 	return {
+		/** Its address on the site while it is published. */
+		siteHref: await livePagePath(p.id),
 		page: {
 			id: p.id,
 			slug: p.slug,

@@ -1,7 +1,9 @@
 import { error } from '@sveltejs/kit';
-import { desc, eq } from 'drizzle-orm';
-import { message, superValidate } from 'sveltekit-superforms';
+import { and, desc, eq, sql } from 'drizzle-orm';
+import { message, setError, superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
+import { redirect } from 'sveltekit-flash-message/server';
+import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
 import { hasPermission, requirePermission } from '@nahu/admin-kit/server/permissions';
 import { recordAudit } from '@nahu/admin-kit/server/audit';
 import { db } from '#lib/server/db/index.ts';
@@ -25,9 +27,14 @@ import { enOf } from '#lib/server/localized.ts';
 import { staffOptions, stampsOf, userAlias } from '#lib/server/people.ts';
 import { productOptions, roastMachineOptions } from '#lib/server/options.ts';
 import { idParam } from '#lib/server/records.ts';
-import { roastedCost } from '#lib/server/stock.ts';
+import {
+	correctRoastWeight,
+	linkRoastToOrders,
+	roastedCost,
+	voidRoastBatch
+} from '#lib/server/stock.ts';
 import { stockLevels } from '#lib/server/stockReads.ts';
-import { roastEditSchema } from '#lib/schemas/stock.ts';
+import { roastCorrectSchema, roastEditSchema, roastVoidSchema } from '#lib/schemas/stock.ts';
 
 const roaster = userAlias('roaster');
 const mover = userAlias('mover');
@@ -92,11 +99,17 @@ export const load = async ({ params, locals }) => {
 				.orderBy(desc(packingRun.packedAt)),
 			db
 				.select({
+					id: orderLine.id,
 					orderId: order.id,
 					number: order.number,
 					status: order.status,
 					description: orderLine.description,
-					quantity: orderLine.quantity
+					quantity: orderLine.quantity,
+					/** Bags it has had: sold off a run, less returned. */
+					bagged:
+						sql<number>`(select coalesce(-sum(m.quantity), 0) from stock_movement m where m.stage = 'packed' and m.reason in ('sale', 'sale_return') and m.ref_type = 'order_line' and m.ref_id = ${orderLine.id})`.mapWith(
+							Number
+						)
 				})
 				.from(orderLine)
 				.innerJoin(order, eq(orderLine.orderId, order.id))
@@ -169,7 +182,16 @@ export const load = async ({ params, locals }) => {
 			},
 			zod4(roastEditSchema),
 			{ errors: false }
-		)
+		),
+		correctForm: await superValidate(
+			{ id: b.id, roastedKgOut: Number(b.roastedKgOut) },
+			zod4(roastCorrectSchema),
+			{ errors: false, id: 'correct' }
+		),
+		voidForm: await superValidate({ id: b.id }, zod4(roastVoidSchema), {
+			errors: false,
+			id: 'void'
+		})
 	};
 };
 
@@ -194,6 +216,116 @@ export const actions = {
 				after: values
 			});
 		});
-		return message(form, { type: 'success', text: 'Batch saved' });
+		// Marked roast-day, or given its product, it may now fill queue lines.
+		const linked = await db.transaction((tx) => linkRoastToOrders(tx, id));
+		return message(form, {
+			type: 'success',
+			text: linked ? `Batch saved; roasted for ${linked} more order lines` : 'Batch saved'
+		});
+	},
+	/** Takes the roast queue's lines this roast-day batch can still fill. */
+	link: async (event) => {
+		requirePermission(event.locals, 'stock.manage');
+		const { batch } = await loadBatch(event.params.id);
+		const linked = await db.transaction((tx) => linkRoastToOrders(tx, batch.id));
+		return {
+			message: linked
+				? { type: 'success', text: `Roasted for ${linked} order line${linked === 1 ? '' : 's'}` }
+				: { type: 'info', text: 'No waiting order line fits this batch' }
+		};
+	},
+	/** A line wrongly named: it goes back to the roast queue, unless it has its bags already. */
+	unlink: async (event) => {
+		requirePermission(event.locals, 'stock.manage');
+		const { batch } = await loadBatch(event.params.id);
+		const lineId = Number((await event.request.formData()).get('lineId'));
+		const [line] = await db
+			.select({
+				bagged:
+					sql<number>`(select coalesce(-sum(m.quantity), 0) from stock_movement m where m.stage = 'packed' and m.reason in ('sale', 'sale_return') and m.ref_type = 'order_line' and m.ref_id = ${orderLine.id})`.mapWith(
+						Number
+					)
+			})
+			.from(orderLine)
+			.where(and(eq(orderLine.id, lineId), eq(orderLine.roastBatchId, batch.id)));
+		if (!line) return { message: { type: 'error', text: 'That line is not on this batch' } };
+		if (line.bagged > 0) return { message: { type: 'error', text: 'Its bags are packed already' } };
+		await db.transaction(async (tx) => {
+			await tx.update(orderLine).set({ roastBatchId: null }).where(eq(orderLine.id, lineId));
+			await recordAudit(tx, event, {
+				table: 'order_line',
+				recordId: lineId,
+				action: 'update',
+				detail: { roastBatchId: { from: batch.id, to: null } }
+			});
+		});
+		return { message: { type: 'success', text: 'Back on the roast queue' } };
+	},
+	correct: async (event) => {
+		requirePermission(event.locals, 'stock.manage');
+		const form = await superValidate(event.request, zod4(roastCorrectSchema), { id: 'correct' });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		try {
+			const r = await db.transaction(async (tx) => {
+				const done = await correctRoastWeight(tx, {
+					roastBatchId: form.data.id,
+					roastedKgOut: form.data.roastedKgOut,
+					reason: form.data.reason,
+					userId: event.locals.user?.id
+				});
+				await recordAudit(tx, event, {
+					table: 'roast_batch',
+					recordId: form.data.id,
+					action: 'update',
+					before: { roastedKgOut: done.before },
+					after: { roastedKgOut: done.after },
+					detail: { reason: form.data.reason }
+				});
+				return done;
+			});
+			return message(form, {
+				type: 'success',
+				text: `Roasted weight is now ${r.after} kg (was ${r.before} kg)`
+			});
+		} catch (err) {
+			if (!(err instanceof WriteRefused)) throw err;
+			setError(form, 'roastedKgOut', err.message);
+			return message(form, { type: 'error', text: err.message }, { status: 400 });
+		}
+	},
+	void: async (event) => {
+		requirePermission(event.locals, 'stock.manage');
+		const form = await superValidate(event.request, zod4(roastVoidSchema), { id: 'void' });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		let done: Awaited<ReturnType<typeof voidRoastBatch>>;
+		try {
+			done = await db.transaction(async (tx) => {
+				const r = await voidRoastBatch(tx, {
+					roastBatchId: form.data.id,
+					reason: form.data.reason,
+					userId: event.locals.user?.id
+				});
+				await recordAudit(tx, event, {
+					table: 'roast_batch',
+					recordId: form.data.id,
+					action: 'delete',
+					detail: { voided: true, reason: form.data.reason }
+				});
+				return r;
+			});
+		} catch (err) {
+			if (!(err instanceof WriteRefused)) throw err;
+			return message(form, { type: 'error', text: err.message }, { status: 400 });
+		}
+		redirect(
+			'/dashboard/stock/roasts',
+			{
+				type: 'success',
+				message: `${done.code} voided; its green is back on ${done.lots} lot${done.lots === 1 ? '' : 's'}`
+			},
+			event.cookies
+		);
 	}
 };

@@ -11,6 +11,7 @@ import { sendDueMessages } from './sendMessages.ts';
 import { releaseExpiredHolds } from './releaseHolds.ts';
 import { expireUnpaidOrders } from './expireUnpaidOrders.ts';
 import { reconcileChapaPayments } from './reconcilePayments.ts';
+import { orderDueDeliveries } from '#lib/server/subscriptionOrders.ts';
 import { dailySalesAlert, lowStockAlert, staleInboxAlert } from './staffAlerts.ts';
 import {
 	ageMemberships,
@@ -40,7 +41,7 @@ const JOBS: Job[] = [
 	{ name: 'holds', everySeconds: 300, run: steps(releaseExpiredHolds, expireUnpaidOrders) },
 	{ name: 'payments', everySeconds: 300, run: reconcileChapaPayments },
 	{ name: 'memberships', everySeconds: 600, run: steps(ageMemberships, membershipReminders) },
-	{ name: 'subscriptions', everySeconds: 600, run: subscriptionTopUps },
+	{ name: 'subscriptions', everySeconds: 600, run: steps(orderDueDeliveries, subscriptionTopUps) },
 	{ name: 'invoices', everySeconds: 600, run: steps(markOverdueInvoices, invoiceReminders) },
 	{
 		name: 'staff alerts',

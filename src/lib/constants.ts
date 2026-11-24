@@ -165,9 +165,16 @@ export const SCAN_RESULTS = [
 	'cancelled',
 	'unknown',
 	'over_headcount',
-	'duplicate_offline'
+	'duplicate_offline',
+	/** A ticket for another site than the scanning device's. */
+	'wrong_location',
+	/** A member card that does not admit: blocked, lapsed, or a plan without free entry. */
+	'card_refused'
 ] as const;
 export type ScanResult = (typeof SCAN_RESULTS)[number];
+
+/** The header a paired gate scanner sends its device token in. */
+export const SCANNER_DEVICE_HEADER = 'x-scanner-token';
 
 export const EVENT_VISIBILITIES = ['public', 'members_only', 'private'] as const;
 export type EventVisibility = (typeof EVENT_VISIBILITIES)[number];

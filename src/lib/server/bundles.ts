@@ -95,7 +95,15 @@ export async function bundleContents(bundleIds: number[]) {
 			slotMax: sql<number | null>`(select max(ev.price) ${choosable})`.mapWith((v) =>
 				v === null ? null : Number(v)
 			),
-			slotChoices: sql<number>`(select count(*) ${choosable})`.mapWith(Number)
+			slotChoices: sql<number>`(select count(*) ${choosable})`.mapWith(Number),
+			/** The same names in every language, for the shop. */
+			text: {
+				product: product.name,
+				variant: productVariant.name,
+				variantSize: variantSize.name,
+				slotSize: slotSize.name,
+				category: productCategory.name
+			}
 		})
 		.from(bundleItem)
 		.leftJoin(productVariant, eq(bundleItem.variantId, productVariant.id))
@@ -293,4 +301,81 @@ export async function priceBundle(
 		saving,
 		lines: lines.map((l, i) => ({ ...l, discountAmount: shares[i] }))
 	};
+}
+
+/**
+ * Bundles a visitor may buy now: published, switched on, in their window, not for members only,
+ * and with nothing in them broken. Each with what it holds and what it costs today.
+ */
+export async function bundlesOnSale(where?: { slug?: string }) {
+	const rows = await db
+		.select()
+		.from(bundle)
+		.where(
+			and(
+				eq(bundle.publishStatus, 'published'),
+				eq(bundle.isActive, true),
+				eq(bundle.isMemberOnly, false),
+				isNull(bundle.deletedAt),
+				where?.slug ? eq(bundle.slug, where.slug) : undefined
+			)
+		)
+		.orderBy(bundle.sortOrder, bundle.id);
+	const live = rows.filter((b) => !notOnSale(b));
+	const contents = await bundleContents(live.map((b) => b.id));
+	return live
+		.map((b) => {
+			const items = contents.filter((c) => c.bundleId === b.id && c.status);
+			return {
+				bundle: b,
+				items,
+				totals: bundleTotals({ pricing: b.pricing, value: Number(b.value) }, items)
+			};
+		})
+		.filter((b) => b.items.length && !b.totals.problems.length);
+}
+
+/**
+ * The coffees a customer may put in each of these slots, cheapest first: the same rule as
+ * `isChoosable`, with names for the page.
+ */
+export async function slotChoices(
+	slots: { id: number; bagSizeId: number | null; categoryId: number | null }[]
+) {
+	const sizes = [...new Set(slots.map((s) => s.bagSizeId).filter((v): v is number => v !== null))];
+	if (!sizes.length)
+		return new Map<number, { variantId: number; name: Record<string, string>; price: number }[]>();
+	const variants = await db
+		.select({
+			variantId: productVariant.id,
+			bagSizeId: productVariant.bagSizeId,
+			categoryId: product.categoryId,
+			name: product.name,
+			price: productVariant.price
+		})
+		.from(productVariant)
+		.innerJoin(product, eq(productVariant.productId, product.id))
+		.where(
+			and(
+				inArray(productVariant.bagSizeId, sizes),
+				isNull(productVariant.deletedAt),
+				eq(productVariant.isActive, true),
+				isNull(product.deletedAt),
+				eq(product.isActive, true),
+				eq(product.kind, 'coffee'),
+				eq(product.publishStatus, 'published')
+			)
+		)
+		.orderBy(productVariant.price, product.sortOrder);
+	return new Map(
+		slots.map((s) => [
+			s.id,
+			variants
+				.filter(
+					(v) =>
+						v.bagSizeId === s.bagSizeId && (s.categoryId === null || v.categoryId === s.categoryId)
+				)
+				.map((v) => ({ variantId: v.variantId, name: v.name, price: Number(v.price) }))
+		])
+	);
 }

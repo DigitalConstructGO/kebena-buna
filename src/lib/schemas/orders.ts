@@ -43,6 +43,56 @@ export const orderDeliverySchema = z.object({
 
 export const cancelSchema = z.object({ reason: requiredText(255, 'Say why it is cancelled') });
 
+/** The channels staff take orders on; the website's are its own. */
+export const STAFF_CHANNELS = ['desk', 'admin', 'telegram', 'wholesale'] as const;
+
+const staffLineSchema = z.object({
+	variantId: requiredId('Choose what is sold'),
+	roastLevelId: optionalId,
+	grindId: optionalId,
+	quantity: z.coerce.number().int().min(1, 'At least one').max(999)
+});
+
+/**
+ * An order staff take at the desk, on the phone or for a wholesale account. It is priced on the
+ * server: retail prices, less the account's tier and discount for wholesale.
+ */
+export const staffOrderSchema = z
+	.object({
+		channel: z.enum(STAFF_CHANNELS),
+		customerId: optionalId,
+		businessAccountId: optionalId,
+		locationId: optionalId,
+		deliveryMethod: z.enum(['none', 'pickup', 'rider', 'courier']).default('none'),
+		deliveryZoneId: optionalId,
+		addressLine: optionalText(255),
+		addressCity: optionalText(64),
+		deliveryFee: optionalMoney,
+		customerNote: optionalText(500),
+		staffNote: optionalText(500),
+		/** Paid in full now, by this means; empty leaves it to be paid (the buyer gets a pay link). */
+		payNow: z.preprocess(
+			(v) => (v === '' ? null : v),
+			z.enum(MANUAL_PROVIDERS).nullable().optional()
+		),
+		payReference: optionalText(64),
+		/** Wholesale on approved credit: sent now, billed on an invoice due after the account's terms. */
+		onCredit: bool,
+		lines: z.array(staffLineSchema).min(1, 'Add what is sold')
+	})
+	.superRefine((d, ctx) => {
+		if (d.channel === 'wholesale' ? !d.businessAccountId : !d.customerId)
+			ctx.addIssue({
+				code: 'custom',
+				path: [d.channel === 'wholesale' ? 'businessAccountId' : 'customerId'],
+				message: 'Choose who it is for'
+			});
+		if ((d.deliveryMethod === 'rider' || d.deliveryMethod === 'courier') && !d.addressLine)
+			ctx.addIssue({ code: 'custom', path: ['addressLine'], message: 'Where it goes' });
+		if (d.onCredit && d.payNow)
+			ctx.addIssue({ code: 'custom', path: ['payNow'], message: 'On credit it is paid later' });
+	});
+
 /** A buyer's transfer receipt staff checked against the statement. */
 export const receiptSchema = z.object({ paymentId: requiredId('Which receipt?') });
 export const rejectReceiptSchema = receiptSchema.extend({

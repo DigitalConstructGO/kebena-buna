@@ -5,7 +5,8 @@
  *
  * A membership starts on the day the buyer chose, or today if that day has passed while it waited
  * for payment. A subscription gets its prepaid deliveries scheduled on roast days (the
- * `roast.weekdays` setting), the first at least two days out so it can still be changed (7.5).
+ * `roast.weekdays` setting), the first at least two days out so it can still be changed (7.5). A
+ * top-up adds its bundle's deliveries to the subscription it was bought for.
  */
 import { and, eq, inArray } from 'drizzle-orm';
 import type { Writer } from '@nahu/admin-kit/server/db';
@@ -14,6 +15,7 @@ import {
 	membership,
 	orderLine,
 	subscription,
+	subscriptionBundle,
 	subscriptionDelivery
 } from '#lib/server/db/schema.ts';
 import { addDays, addMonths, termDates } from '#lib/server/memberships.ts';
@@ -92,6 +94,20 @@ export async function activateOrderItems(tx: Writer, orderId: number) {
 		.map((l) => l.subscriptionId as number);
 	if (subscriptionIds.length) {
 		const weekdays = await readSetting<number[]>('roast.weekdays', [2, 5]);
+		// Top-ups (bundles bought for a subscription already running) are read before new ones
+		// are switched on below, so a new subscription's own bundle is never taken for one.
+		const bundleLines = lines.filter((l) => l.itemType === 'subscription_bundle').map((l) => l.id);
+		const topUps = await tx
+			.select({ s: subscription, deliveries: subscriptionBundle.deliveries })
+			.from(subscriptionBundle)
+			.innerJoin(subscription, eq(subscriptionBundle.subscriptionId, subscription.id))
+			.where(
+				and(
+					inArray(subscriptionBundle.orderLineId, bundleLines),
+					inArray(subscription.status, ['active', 'paused', 'completed'])
+				)
+			)
+			.for('update');
 		const pending = await tx
 			.select({
 				id: subscription.id,
@@ -120,6 +136,46 @@ export async function activateOrderItems(tx: Writer, orderId: number) {
 			await tx
 				.update(subscription)
 				.set({ status: 'active', nextRoastDate: dates[0] ?? null })
+				.where(eq(subscription.id, s.id));
+		}
+
+		// A top-up's deliveries go after the last roast day on record, at the subscription's pace;
+		// a completed subscription starts again.
+		for (const { s, deliveries } of topUps) {
+			const rows = await tx
+				.select({
+					roastDate: subscriptionDelivery.roastDate,
+					sequence: subscriptionDelivery.sequence
+				})
+				.from(subscriptionDelivery)
+				.where(eq(subscriptionDelivery.subscriptionId, s.id));
+			const soonest = addDays(today, 2);
+			const last = rows.reduce((max, r) => (r.roastDate > max ? r.roastDate : max), '');
+			const base =
+				last && last >= soonest
+					? s.frequency === 'biweekly'
+						? addDays(last, 14)
+						: addMonths(last, 1)
+					: soonest;
+			const dates = deliverySchedule(
+				roastDayFrom(base, weekdays),
+				deliveries,
+				s.frequency,
+				weekdays
+			);
+			const seq = rows.reduce((max, r) => Math.max(max, r.sequence), 0);
+			await tx
+				.insert(subscriptionDelivery)
+				.values(
+					dates.map((roastDate, i) => ({ subscriptionId: s.id, sequence: seq + i + 1, roastDate }))
+				);
+			await tx
+				.update(subscription)
+				.set({
+					deliveriesPurchased: s.deliveriesPurchased + deliveries,
+					status: s.status === 'completed' ? 'active' : s.status,
+					nextRoastDate: s.nextRoastDate ?? dates[0] ?? null
+				})
 				.where(eq(subscription.id, s.id));
 		}
 	}

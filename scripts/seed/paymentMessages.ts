@@ -1,7 +1,7 @@
 /**
  * Message templates for paying by link and by transfer: the order's link when it is placed, its
- * tickets when they are paid for, a transfer receipt turned down, and the staff alert for a new
- * receipt. Editable afterwards in Admin › Message templates.
+ * tickets when they are paid for, a transfer receipt turned down, an event cancelled, a reply from
+ * the inbox, and the staff alerts for a new receipt and a new enquiry. Editable afterwards in Admin › Message templates.
  *
  * Safe to run again and on a live database: a template already there (by key, channel and
  * language) is left as staff last wrote it.
@@ -115,11 +115,56 @@ const CUSTOMER: Record<string, Wording> = {
 			'Nous n’avons pas pu rapprocher votre reçu',
 			'{{name}}, nous n’avons pas pu rapprocher votre reçu de virement pour la commande {{order_number}} : {{reason}}. Vérifiez-le et renvoyez-le : {{order_url}}'
 		]
+	},
+	'event.cancelled': {
+		en: [
+			'{{event}} is cancelled',
+			'{{name}}, we are sorry: {{event}} on {{date}} is cancelled ({{reason}}). Your tickets on order {{order_number}} no longer admit. Anything you paid for them will be refunded. Questions? Call +251 912 605 824.'
+		],
+		am: [
+			'{{event}} ተሰርዟል',
+			'{{name}}፣ ይቅርታ፦ በ{{date}} የነበረው {{event}} ተሰርዟል ({{reason}})። በትዕዛዝ {{order_number}} ላይ ያሉት ትኬቶችዎ ከእንግዲህ አያስገቡም። የከፈሉት ገንዘብ ካለ ይመለስልዎታል። ለጥያቄ፦ +251 912 605 824'
+		],
+		om: [
+			'{{event}} haqameera',
+			'{{name}}, dhiifama: {{event}} guyyaa {{date}} haqameera ({{reason}}). Tikeetiin kee ajaja {{order_number}} irra jiru siin hin galchu. Kaffaltiin kaffalte yoo jiraate siif deebi’a. Gaaffiif: +251 912 605 824'
+		],
+		ar: [
+			'تم إلغاء {{event}}',
+			'{{name}}، نأسف: تم إلغاء {{event}} بتاريخ {{date}} ({{reason}}). تذاكرك في الطلب {{order_number}} لم تعد صالحة للدخول. سيُعاد إليك أي مبلغ دفعته مقابلها. للاستفسار: +251 912 605 824'
+		],
+		it: [
+			'{{event}} è annullato',
+			'{{name}}, ci dispiace: {{event}} del {{date}} è annullato ({{reason}}). I biglietti dell’ordine {{order_number}} non sono più validi. Quanto hai pagato ti sarà rimborsato. Domande? Chiama il +251 912 605 824.'
+		],
+		fr: [
+			'{{event}} est annulé',
+			'{{name}}, nous sommes désolés : {{event}} du {{date}} est annulé ({{reason}}). Vos billets de la commande {{order_number}} ne sont plus valables. Tout montant payé vous sera remboursé. Des questions ? Appelez le +251 912 605 824.'
+		]
+	},
+	/** Staff answering a website enquiry from the inbox: their words, signed. */
+	'inbox.reply': {
+		en: ['Re: {{subject}}', '{{message}} — Kebena Coffee'],
+		am: ['መልስ፦ {{subject}}', '{{message}} — ቀበና ቡና'],
+		om: ['Deebii: {{subject}}', '{{message}} — Buna Kebena'],
+		ar: ['رد: {{subject}}', '{{message}} — قهوة كبينا'],
+		it: ['Re: {{subject}}', '{{message}} — Kebena Coffee'],
+		fr: ['Re : {{subject}}', '{{message}} — Kebena Coffee']
 	}
 };
 
 /** Staff alerts go by email only. */
 const STAFF: Record<string, Wording> = {
+	'staff.inbox_new': {
+		en: [
+			'New {{form}} from {{name}}',
+			'<p>{{name}} sent a {{form}} from the website: {{subject}}</p><p>Answer it in the inbox: <a href="{{url}}">{{url}}</a></p>'
+		],
+		am: [
+			'አዲስ {{form}} ከ{{name}}',
+			'<p>{{name}} ከድረ-ገጹ {{form}} ልከዋል፦ {{subject}}</p><p>በገቢ መልዕክቶች ውስጥ ይመልሱ፦ <a href="{{url}}">{{url}}</a></p>'
+		]
+	},
 	'staff.receipt': {
 		en: [
 			'Transfer receipt for {{order_number}}: {{amount}} ETB',

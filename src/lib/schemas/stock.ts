@@ -50,6 +50,19 @@ export const roastEditSchema = z.object({
 	isToOrder: bool
 });
 
+/** A misread roasted weight, put right with an adjustment (the green in stays as recorded). */
+export const roastCorrectSchema = z.object({
+	id: z.coerce.number(),
+	roastedKgOut: kg('Enter the roasted kilograms'),
+	reason: requiredText(255, 'Say what was wrong')
+});
+
+/** A batch recorded by mistake, undone while nothing of it has been used. */
+export const roastVoidSchema = z.object({
+	id: z.coerce.number(),
+	reason: requiredText(255, 'Say why it is voided')
+});
+
 export const packSourceSchema = z.object({
 	roastBatchId: requiredId('Choose a batch'),
 	roastedKg: kg()

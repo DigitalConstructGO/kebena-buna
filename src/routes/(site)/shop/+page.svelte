@@ -77,7 +77,26 @@
 	{#if uncategorised.length}
 		<section class="section">{@render grid(uncategorised)}</section>
 	{/if}
-	{#if !data.products.length}
+	{#if data.bundles.length && !current}
+		<section class="section" aria-labelledby="bundles">
+			<h2 class="section-title" id="bundles">{m.shop_bundles_title()}</h2>
+			<p class="muted cat-lede">{m.shop_bundles_lede()}</p>
+			<Shelf>
+				{#each data.bundles as b (b.slug)}
+					<ShelfCard
+						href={siteHref(`/shop/bundle/${b.slug}`, locale)}
+						title={tr(b.name, locale)}
+						notes={tr(b.summary, locale) || m.bundle_bags({ count: b.bags })}
+						price={m.shop_from({ price: money(b.from) })}
+						tag={b.saving > 0 ? m.bundle_save({ amount: money(b.saving) }) : undefined}
+						hint={m.site_look()}
+						image={b.image}
+					/>
+				{/each}
+			</Shelf>
+		</section>
+	{/if}
+	{#if !data.products.length && !data.bundles.length}
 		<p class="section notice">{m.shop_empty()}</p>
 	{/if}
 </div>

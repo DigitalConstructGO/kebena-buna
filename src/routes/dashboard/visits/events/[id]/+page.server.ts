@@ -25,6 +25,8 @@ import { taxRateOptions } from '#lib/server/options.ts';
 import { assignStaffAt } from '#lib/server/bookings.ts';
 import { ticketTypeCodeTaken } from '#lib/server/visits.ts';
 import { assignmentSchema, ticketTypeSchema } from '#lib/schemas/visits.ts';
+import { cancelSchema } from '#lib/schemas/orders.ts';
+import { cancelEvent } from '#lib/server/events.ts';
 
 async function loadEvent(raw: string) {
 	const [row] = await db
@@ -125,6 +127,12 @@ export const load = async ({ params, locals }) => {
 		staff: staffList,
 		taxRates,
 		canManage: hasPermission(locals, 'events.manage'),
+		canCancel:
+			hasPermission(locals, 'events.manage') &&
+			hasPermission(locals, 'refunds.manage') &&
+			e.isActive &&
+			e.endsAt > new Date(),
+		cancelForm: await superValidate(zod4(cancelSchema), { id: 'cancel' }),
 		typeForm: await superValidate({ eventId: e.id }, zod4(ticketTypeSchema), {
 			errors: false,
 			id: 'type'
@@ -229,6 +237,20 @@ export const actions = {
 			.delete(staffAssignment)
 			.where(and(eq(staffAssignment.id, id), eq(staffAssignment.eventId, e.id)));
 		return { message: { type: 'success', text: 'Removed from the event' } };
+	},
+	/** Called off: tickets cancelled, paid orders sent for refund, buyers told (`cancelEvent`). */
+	cancel: async (req) => {
+		requirePermission(req.locals, 'events.manage');
+		requirePermission(req.locals, 'refunds.manage');
+		const form = await superValidate(req.request, zod4(cancelSchema), { id: 'cancel' });
+		if (!form.valid)
+			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
+		const { event: e } = await loadEvent(req.params.id);
+		const done = await cancelEvent(req, e.id, form.data.reason);
+		return message(form, {
+			type: 'success',
+			text: `Cancelled: ${done.tickets} tickets voided, ${done.refunds} refunds to approve, ${done.orders} buyers told`
+		});
 	},
 	delete: async (req) => {
 		requirePermission(req.locals, 'events.manage');

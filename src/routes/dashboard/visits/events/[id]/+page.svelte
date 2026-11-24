@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { cancelSchema } from '#lib/schemas/orders.ts';
 	import Plus from '@lucide/svelte/icons/plus';
 	import type { ColumnDef } from '@tanstack/table-core';
 	import Pencil from '@lucide/svelte/icons/pencil';
@@ -149,6 +150,28 @@
 					? 'It stays here as a draft; tickets already issued stay valid.'
 					: 'It appears on the website and opens for registration.'}
 			/>
+			{#if data.canCancel}
+				<FormDialog
+					title="Cancel {tr(e.title)}?"
+					triggerLabel="Cancel event"
+					triggerVariant="destructive"
+					action="?/cancel"
+					data={data.cancelForm}
+					schema={cancelSchema}
+					description="It comes off the website, every ticket is cancelled, each paid order gets a refund request to approve, and every buyer is sent a message."
+				>
+					{#snippet fields({ form, errors })}
+						<InputComp
+							label="Why"
+							name="reason"
+							placeholder="Told to buyers: the speaker is ill, the venue is closed…"
+							{form}
+							{errors}
+							required
+						/>
+					{/snippet}
+				</FormDialog>
+			{/if}
 			<ConfirmAction
 				action="?/delete"
 				label="Delete"

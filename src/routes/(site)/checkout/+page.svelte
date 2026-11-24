@@ -36,7 +36,7 @@
 	const discount = $derived(
 		discountOff(
 			rule,
-			data.lines.map((l) => ({ itemType: 'product', gross: l.lineTotal }))
+			data.lines.map((l) => ({ itemType: 'product', gross: l.codeExempt ? 0 : l.lineTotal }))
 		)
 	);
 	const total = $derived(data.subtotal - discount + fee);

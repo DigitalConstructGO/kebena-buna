@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { RequestEvent } from './$types';
-import { and, asc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, isNull, lte, or, sql } from 'drizzle-orm';
 import { message, setError, superValidate } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { z } from 'zod/v4';
@@ -36,6 +36,7 @@ import {
 	variantOptions
 } from '#lib/server/options.ts';
 import { addMonths, addressOptions } from '#lib/server/memberships.ts';
+import { refreshSubscription } from '#lib/server/subscriptionOrders.ts';
 import { formatDate, humanize } from '#lib/format.ts';
 import type { SubscriptionStatus } from '#lib/constants.ts';
 import {
@@ -161,35 +162,6 @@ export const load = async ({ params, locals }) => {
 	};
 };
 
-/**
- * The first delivery still scheduled becomes the subscription's next roast date, and the prepaid
- * deliveries used are the ones ordered or delivered. A skipped one is not used: it stays prepaid,
- * as Skip and Pause promise, so it still counts as left (and is settled on cancel).
- */
-async function refreshNext(tx: Writer, id: number) {
-	const [next] = await tx
-		.select({ roastDate: subscriptionDelivery.roastDate })
-		.from(subscriptionDelivery)
-		.where(
-			and(eq(subscriptionDelivery.subscriptionId, id), eq(subscriptionDelivery.status, 'scheduled'))
-		)
-		.orderBy(asc(subscriptionDelivery.roastDate))
-		.limit(1);
-	const [used] = await tx
-		.select({ n: sql<number>`count(*)`.mapWith(Number) })
-		.from(subscriptionDelivery)
-		.where(
-			and(
-				eq(subscriptionDelivery.subscriptionId, id),
-				inArray(subscriptionDelivery.status, ['delivered', 'ordered'])
-			)
-		);
-	await tx
-		.update(subscription)
-		.set({ nextRoastDate: next?.roastDate ?? null, deliveriesUsed: used.n })
-		.where(eq(subscription.id, id));
-}
-
 /** The subscription locked for a change, or the reason it cannot take one in its status. */
 async function lockOpen(
 	tx: Writer,
@@ -231,7 +203,7 @@ async function setDelivery(event: RequestEvent, skip: boolean) {
 				)
 			);
 		if (!updated[0].affectedRows) return 'That delivery can no longer change.';
-		await refreshNext(tx, loaded.id);
+		await refreshSubscription(tx, loaded.id);
 		return null;
 	});
 	if (refusal) return { message: { type: 'error', text: refusal } };
@@ -296,7 +268,7 @@ export const actions = {
 						lte(subscriptionDelivery.roastDate, pausedUntil)
 					)
 				);
-			await refreshNext(tx, s.id);
+			await refreshSubscription(tx, s.id);
 			await recordAudit(tx, event, {
 				table: 'subscription',
 				recordId: s.id,

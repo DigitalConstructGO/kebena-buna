@@ -8,6 +8,7 @@
 	import { Button } from '@nahu/admin-kit/components/ui/button/index.js';
 	import { selectColumn } from '@nahu/admin-kit/components/Table/select-column';
 	import Package from '@lucide/svelte/icons/package';
+	import Plus from '@lucide/svelte/icons/plus';
 	import Truck from '@lucide/svelte/icons/truck';
 	import CircleCheck from '@lucide/svelte/icons/circle-check';
 	import Printer from '@lucide/svelte/icons/printer';
@@ -101,6 +102,11 @@
 	title="Orders"
 	description="Every sale — web, desk, Telegram and wholesale — from payment to delivery."
 >
+	{#snippet actions()}
+		{#if data.canManage}
+			<Button href={resolve('/dashboard/orders/new')}><Plus class="size-4" /> New order</Button>
+		{/if}
+	{/snippet}
 	<p class="text-sm text-muted-foreground">
 		Shown: {money(data.sums.total)} ordered · {money(data.sums.paid)} received net of refunds
 	</p>

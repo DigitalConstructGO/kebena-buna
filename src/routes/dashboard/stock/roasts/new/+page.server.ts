@@ -84,7 +84,7 @@ export const actions = {
 		if (!form.valid)
 			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 		const { date, time, ...values } = form.data;
-		let batch: { id: number; code: string };
+		let batch: { id: number; code: string; linked: number };
 		try {
 			batch = await db.transaction(async (tx) => {
 				const b = await recordRoast(tx, {
@@ -104,7 +104,12 @@ export const actions = {
 		}
 		redirect(
 			`/dashboard/stock/roasts/${batch.id}`,
-			{ type: 'success', message: `${batch.code} recorded` },
+			{
+				type: 'success',
+				message: batch.linked
+					? `${batch.code} recorded, roasted for ${batch.linked} order line${batch.linked === 1 ? '' : 's'}`
+					: `${batch.code} recorded`
+			},
 			event.cookies
 		);
 	}

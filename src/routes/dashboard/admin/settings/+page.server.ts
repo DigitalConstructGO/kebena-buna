@@ -85,19 +85,17 @@ export const actions = {
 				{ type: 'error', text: 'This setting no longer exists.' },
 				{ status: 404 }
 			);
+		// The code looks a setting up by its key: a renamed one would quietly stop being read.
 		if (key !== id) {
-			const [taken] = await db
-				.select({ key: setting.key })
-				.from(setting)
-				.where(eq(setting.key, key));
-			if (taken) {
-				setError(form, 'key', 'Another setting has this key');
-				return message(
-					form,
-					{ type: 'error', text: 'Another setting has this key: edit that one instead.' },
-					{ status: 400 }
-				);
-			}
+			setError(form, 'key', 'A key cannot be renamed');
+			return message(
+				form,
+				{
+					type: 'error',
+					text: 'The code reads settings by key, so a key cannot be renamed. Add a new setting instead.'
+				},
+				{ status: 400 }
+			);
 		}
 		const after = { key, value: JSON.parse(value), description: description ?? null };
 		await db.transaction(async (tx) => {

@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { and, asc, desc, eq, isNull, notInArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, notInArray } from 'drizzle-orm';
 import { message, setError, superValidate, type SuperValidated } from 'sveltekit-superforms';
 import { zod4 } from 'sveltekit-superforms/adapters';
 import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
@@ -34,6 +34,7 @@ import {
 	roastBatch,
 	roastLevel,
 	subscription,
+	subscriptionDelivery,
 	ticket,
 	ticketType
 } from '#lib/server/db/schema.ts';
@@ -55,6 +56,9 @@ import {
 } from '#lib/server/orders.ts';
 import { cancelTicket } from '#lib/server/visits.ts';
 import { releaseDiscount } from '#lib/server/discounts.ts';
+import { returnOrderStock, shelfShortfall } from '#lib/server/stock.ts';
+import { releaseTicketPlaces } from '#lib/server/tickets.ts';
+import { skipCancelledDelivery } from '#lib/server/subscriptionOrders.ts';
 import { changeWorkflow } from '#lib/server/bookings.ts';
 import {
 	cancelSchema,
@@ -291,6 +295,10 @@ export const load = async ({ params, locals }) => {
 				.where(eq(location.id, placeId))
 		: [];
 
+	// Paid bags the shelves could not cover when it was paid, while it is still to be packed.
+	const short =
+		o.paidAt && canCancel(o.status) ? await shelfShortfall(db, o.id) : new Map<number, number>();
+
 	const lines = lineRows.map((r) => ({
 		...r.line,
 		// A bag bought in a bundle says so; the bundle's saving is in its discount.
@@ -301,6 +309,7 @@ export const load = async ({ params, locals }) => {
 		grind: r.grind,
 		roastBatchCode: r.roastBatchCode,
 		sessionStartsAt: r.sessionStartsAt,
+		short: short.get(r.line.id) ?? 0,
 		sold: soldAs({
 			...r.line,
 			sku: r.variantSku ?? r.line.sku,
@@ -511,6 +520,10 @@ export const actions = {
 				});
 				// A discount code it used counts again.
 				await releaseDiscount(tx, o.id);
+				// Its bags go back on the shelf (it has not left the building)…
+				await returnOrderStock(tx, o.id, note, userId);
+				// …and an unpaid ticket order lets go of the places it held.
+				await releaseTicketPlaces(tx, o.id);
 				// What the order bought goes with it: its bookings stop holding their place…
 				const bookings = await tx
 					.select({ id: booking.id })
@@ -524,6 +537,46 @@ export const actions = {
 					);
 				for (const b of bookings)
 					await changeWorkflow(tx, { bookingId: b.id }, 'cancelled', note, userId);
+				// …its subscriptions stop, with every roast day still to come…
+				const subs = await tx
+					.select({ s: subscription })
+					.from(subscription)
+					.innerJoin(orderLine, eq(orderLine.subscriptionId, subscription.id))
+					.where(
+						and(
+							eq(orderLine.orderId, o.id),
+							// What it bought, not a delivery of one: that is skipped below instead.
+							eq(orderLine.itemType, 'subscription_bundle'),
+							inArray(subscription.status, ['pending_payment', 'active', 'paused'])
+						)
+					);
+				for (const { s: sub } of subs) {
+					const values = {
+						status: 'cancelled' as const,
+						cancelledAt: new Date(),
+						nextRoastDate: null,
+						updatedBy: userId
+					};
+					await tx.update(subscription).set(values).where(eq(subscription.id, sub.id));
+					await tx
+						.update(subscriptionDelivery)
+						.set({ status: 'cancelled' })
+						.where(
+							and(
+								eq(subscriptionDelivery.subscriptionId, sub.id),
+								inArray(subscriptionDelivery.status, ['scheduled', 'skipped'])
+							)
+						);
+					await recordAudit(tx, event, {
+						table: 'subscription',
+						recordId: sub.id,
+						action: 'update',
+						before: sub,
+						after: values
+					});
+				}
+				// A subscription's delivery order: that delivery stays prepaid, sent again at the end.
+				await skipCancelledDelivery(tx, o.id, userId);
 				// …and its memberships end.
 				const memberships = await tx
 					.select({ m: membership })

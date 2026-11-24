@@ -77,6 +77,10 @@
 			<div class="form">
 				<Trap />
 				<input type="hidden" name="idempotencyKey" value={$form.idempotencyKey} />
+				{#if data.renewing}
+					<input type="hidden" name="renews" value={$form.renews} />
+					<p class="notice">{m.member_renewing({ number: data.renewing })}</p>
+				{/if}
 
 				<fieldset>
 					<legend id="plan-legend">{m.member_step_plan()}</legend>
