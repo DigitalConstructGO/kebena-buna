@@ -292,6 +292,13 @@ html:has(.museum) {
 	--line: rgb(244 235 217 / 0.12);
 	--glass-shine: inset 0 1px 0 rgb(255 255 255 / 0.16), inset 0 0 0 1px rgb(255 255 255 / 0.05);
 }
+/* Over the hero's film the glass is plain: a blur of a picture that changes every frame has to be
+   redone every frame, and that cost more than the film. The fill is denser to make up for it. */
+[data-film][data-film] {
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
+	background-color: rgb(25 33 27 / 0.8) !important;
+}
 .kb-btn.secondary {
 	background: var(--glass);
 	color: var(--ink-strong);

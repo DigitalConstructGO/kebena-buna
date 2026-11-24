@@ -682,6 +682,8 @@
 			font-size: 0.78rem;
 			line-height: 1.25;
 			text-wrap: balance;
+			/* room for two lines in every card, so a name that wraps does not lift its weight above the others */
+			min-height: 2.5em;
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {

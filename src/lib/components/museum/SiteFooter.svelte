@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { localizeHref } from '#lib/paraglide/runtime.js';
 	import type { FooterContent } from '#lib/content/museum.js';
 	import { m } from '#lib/i18n.ts';
@@ -18,12 +17,6 @@
 			: link.href.startsWith('/')
 				? { label: link.label, href: localizeHref(link.href) }
 				: link;
-
-	/* the rings drift through the wordmark, unless the visitor asked for stillness */
-	let moving = $state(false);
-	onMount(() => {
-		moving = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-	});
 
 	const columns = $derived(
 		content.columns
@@ -74,42 +67,21 @@
 		<p>{content.contact}</p>
 	</div>
 
-	<!-- the wordmark is a window: the ring pattern shows through the letters and drifts slowly past -->
+	<!-- the wordmark is a window: the ring pattern shows through the letters and drifts slowly past.
+	     Three flat sheets, so the drift is only a slide: the gold, a sheet of the letters' colour
+	     with the rings cut out of it (the one that moves), and the wall with the letters cut out -->
 	<div class="mark" aria-hidden="true">
+		<div class="behind"><div class="rings"></div></div>
 		<svg viewBox="0 0 1000 176" preserveAspectRatio="xMidYMin meet">
 			<defs>
 				<mask id="foot-word">
+					<rect width="1000" height="176" fill="#fff" />
 					<text class="word" x="0" y="198" textLength="1000" lengthAdjust="spacingAndGlyphs">
 						{content.brand}
 					</text>
 				</mask>
-				<!-- the tiles meet at every edge, so the 520-unit square repeats without a seam -->
-				<pattern id="foot-tile" width="520" height="520" patternUnits="userSpaceOnUse">
-					<image href="/art/truchet.svg" width="520" height="520" />
-					{#if moving}
-						<animateTransform
-							attributeName="patternTransform"
-							type="translate"
-							from="0 0"
-							to="-520 0"
-							dur="70s"
-							repeatCount="indefinite"
-						/>
-					{/if}
-				</pattern>
-				<mask id="foot-rings" style="mask-type: alpha">
-					<rect width="1000" height="176" fill="url(#foot-tile)" />
-				</mask>
-				<linearGradient id="foot-shade" x1="0" y1="0" x2="1" y2="0">
-					<stop offset="0" stop-color="var(--gold)" />
-					<stop offset="0.5" stop-color="var(--gold-soft)" />
-					<stop offset="1" stop-color="var(--gold)" />
-				</linearGradient>
 			</defs>
-			<g mask="url(#foot-word)">
-				<rect class="body" width="1000" height="176" />
-				<rect class="lines" width="1000" height="176" mask="url(#foot-rings)" />
-			</g>
+			<rect class="wall" width="1000" height="176" mask="url(#foot-word)" />
 		</svg>
 	</div>
 	<p class="sr">{content.brand}</p>
@@ -228,11 +200,15 @@
 	.mark {
 		margin-block-start: clamp(20px, 3vw, 48px);
 	}
+	.mark {
+		position: relative;
+		overflow: hidden;
+	}
 	.mark svg {
+		position: relative;
 		display: block;
 		inline-size: 100%;
 		block-size: auto;
-		overflow: hidden;
 	}
 	.mark text {
 		font-family: var(--pk-display);
@@ -243,14 +219,44 @@
 		text-transform: uppercase;
 	}
 	.word {
-		fill: #fff;
+		fill: #000;
 	}
-	/* the letters: a shade lighter than the wall, ruled with gold rings, edged with a hairline */
-	.body {
-		fill: color-mix(in srgb, var(--bag) 86%, var(--cream));
+	/* the wall around the letters, the same as the footer's own */
+	.wall {
+		fill: var(--bag-deep);
 	}
-	.lines {
-		fill: url(#foot-shade);
+	/* behind the letters: gold, and over it a sheet a shade lighter than the wall with the rings
+	   cut out of it. The tile is 52% of the wordmark wide and meets itself at every edge, so the
+	   sheet is one tile wider than the wordmark and slides one tile, on the compositor: drawing the
+	   rings again on every frame was what made this corner of the page slow */
+	/* kept clear of the wall's soft edges, where the sheet would show as a line; the letters stand
+	   well inside the sides and the top, and the bottom is cut by the page's own edge */
+	.behind {
+		position: absolute;
+		inset: 6px 6px 0;
+		overflow: hidden;
+		background: linear-gradient(90deg, var(--gold), var(--gold-soft) 50%, var(--gold));
+	}
+	.rings {
+		position: absolute;
+		inset: 0 auto 0 0;
+		inline-size: 152%;
+		background: color-mix(in srgb, var(--bag) 86%, var(--cream));
+		-webkit-mask:
+			linear-gradient(#000, #000),
+			url('/art/truchet.svg') 0 0 / calc(100% * 52 / 152) auto;
+		-webkit-mask-composite: xor;
+		mask:
+			linear-gradient(#000, #000),
+			url('/art/truchet.svg') 0 0 / calc(100% * 52 / 152) auto;
+		mask-composite: exclude;
+		will-change: transform;
+		animation: foot-drift 70s linear infinite;
+	}
+	@keyframes foot-drift {
+		to {
+			transform: translateX(calc(-100% * 52 / 152));
+		}
 	}
 	.sr {
 		position: absolute;
@@ -276,6 +282,9 @@
 		.up svg,
 		.col a {
 			transition: none;
+		}
+		.rings {
+			animation: none;
 		}
 	}
 </style>

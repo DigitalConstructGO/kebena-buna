@@ -73,6 +73,9 @@
 	const hold = (v: HTMLVideoElement | undefined, want: number) => {
 		if (!v) return;
 		if (!v.paused) v.pause();
+		// never past the clip's last frame: a time the clip cannot reach is never arrived at, and
+		// the seek was then asked for again on every frame, which showed as a flicker
+		if (Number.isFinite(v.duration)) want = Math.max(0, Math.min(want, v.duration - 0.05));
 		wanted.set(v, want);
 		if (!v.seeking && Math.abs(v.currentTime - want) > 0.02) v.currentTime = want;
 	};
@@ -91,7 +94,9 @@
 	const stepped = new WeakSet<HTMLVideoElement>();
 	const track = (v: HTMLVideoElement, want: number, from: number, to: number) => {
 		const t = tl ? tl.time() : 0;
-		if (stepped.has(v) || rate <= 0 || t < from || t > to - 0.1) return hold(v, want);
+		// a clip that has reached its end is held there: play() on an ended clip starts it over
+		const done = Number.isFinite(v.duration) && want >= v.duration - 0.08;
+		if (stepped.has(v) || rate <= 0 || t < from || t > to - 0.1 || done) return hold(v, want);
 		const speed = Math.round(rate * 4) / 4;
 		if (v.playbackRate !== speed) v.playbackRate = speed;
 		if (!v.seeking && Math.abs(v.currentTime - want) > 0.25) v.currentTime = want;
@@ -177,11 +182,38 @@
 		};
 		gsap.ticker.add(meter);
 
-		const io = new IntersectionObserver(([e]) => {
-			onScreen = e.isIntersecting;
+		// in view, and not behind the museum picture that comes up over the last scene: while that
+		// covers the whole screen the films, the canvas and the grain have nobody watching them
+		// while the film is on screen the page's glass (menu, floor-plan sign) goes without its
+		// blur: frosting a moving picture again on every frame is what made the scroll drag
+		// (marked on those few surfaces themselves: a flag on the page root restyles the whole page)
+		let glass: HTMLElement[] | undefined;
+		const filming = (on: boolean) => {
+			glass ??= [
+				...document.querySelectorAll<HTMLElement>('header *, nav, nav *, button.sign')
+			].filter((el) => getComputedStyle(el).backdropFilter !== 'none');
+			for (const el of glass) el.toggleAttribute('data-film', on);
+		};
+		filming(true);
+		let inView = true;
+		let covered = false;
+		const see = () => {
+			const now = inView && !covered;
+			if (now === onScreen) return;
+			onScreen = now;
+			filming(now);
 			if (tl) syncMedia(true);
+		};
+		const io = new IntersectionObserver(([e]) => {
+			inView = e.isIntersecting;
+			see();
 		});
 		io.observe(root);
+		const onCover = (e: Event) => {
+			covered = !!(e as CustomEvent<boolean>).detail;
+			see();
+		};
+		window.addEventListener('kb:hero-covered', onCover);
 
 		// the clips stay out of the HTML's download queue (preload="none") so on a slow line the page's
 		// scripts and fonts arrive first; once hydrated, fetch them in story order
@@ -191,9 +223,6 @@
 		film.load();
 		const clips = [nursery, film, pour];
 		clips.forEach((v) => v.addEventListener('seeked', settle));
-		// the posters are cut for the wide shot; portrait screens draw the square ones from CSS instead
-		if (window.matchMedia('(max-aspect-ratio: 20 / 21)').matches)
-			clips.forEach((v) => v.removeAttribute('poster'));
 		// iOS only lets a clip be stepped once it has been started: start each one and stop it at once
 		const prime = (v: HTMLVideoElement) =>
 			void v
@@ -249,13 +278,22 @@
 			gsap.ticker.add(look);
 		}
 
+		// The story opens on the nursery: it starts as soon as that clip has a frame. Waiting for the
+		// long growth film to buffer through (it is several megabytes) kept the whole hero still for
+		// seconds; that film goes on loading behind, with its poster standing in until it is there.
 		const filmReady = new Promise<void>((res) => {
-			if (film.readyState >= 3) return res();
-			film.addEventListener('canplaythrough', () => res(), { once: true });
-			setTimeout(res, 4000);
+			if (nursery.readyState >= 2) return res();
+			nursery.addEventListener('loadeddata', () => res(), { once: true });
+			setTimeout(res, 1200);
 		});
+		// the headlines are cut into lines as set in their own face, so that is waited for, but not
+		// for ever: a font that never arrives must not leave the hero still
+		const fontsReady = Promise.race([
+			document.fonts.ready,
+			new Promise((res) => setTimeout(res, 3000))
+		]);
 
-		void Promise.all([document.fonts.ready, filmReady]).then(() => {
+		void Promise.all([fontsReady, filmReady]).then(() => {
 			if (dead) return;
 			ctx = gsap.context(() => {
 				const story = buildHeroTimeline(root, weather, clock, gl);
@@ -345,6 +383,8 @@
 			s.destroy();
 			score = undefined;
 			io.disconnect();
+			window.removeEventListener('kb:hero-covered', onCover);
+			filming(false);
 			clips.forEach((v) => v.removeEventListener('seeked', settle));
 			rain.destroy();
 			ctx?.revert();
@@ -369,7 +409,6 @@
 			muted
 			playsinline
 			preload="none"
-			poster="/hero/nursery-start.webp"
 			disablepictureinpicture
 			aria-hidden="true"
 		>
@@ -387,7 +426,6 @@
 			muted
 			playsinline
 			preload="none"
-			poster="/hero/film-start.webp"
 			disablepictureinpicture
 			aria-hidden="true"
 		>
@@ -407,7 +445,6 @@
 			muted
 			playsinline
 			preload="none"
-			poster="/hero/cup-start.webp"
 			disablepictureinpicture
 			aria-hidden="true"
 		>
@@ -542,11 +579,6 @@
 		inset: 0;
 		/* the scenes tip back and forward in depth when one pours into the next */
 		perspective: 1400px;
-		opacity: 0;
-		transition: opacity 0.9s ease;
-	}
-	.ready .stage {
-		opacity: 1;
 	}
 	.film,
 	.nursery,
@@ -557,7 +589,20 @@
 		height: 100%;
 		object-fit: cover;
 		object-position: 58% 50%;
+		/* the clip's first frame, in the page from the first paint: it stands in until the clip
+		   (or the canvas) has a frame of its own, so the hero is never an empty dark screen */
+		background: 58% 50% / cover no-repeat;
 		will-change: transform;
+	}
+	.nursery {
+		background-image: url('/hero/nursery-start.webp');
+	}
+	.film {
+		background-image: url('/hero/film-start.webp');
+	}
+	.pour {
+		background-image: url('/hero/cup-start.webp');
+		background-position: 50% 50%;
 	}
 	/* every scene after the first waits hidden; the timeline's draw() shows each one as it is poured in */
 	.film {
@@ -575,19 +620,22 @@
 		pointer-events: none;
 		display: none;
 	}
-	/* on the canvas: the films only hand it their frames, so they stay in the page unseen */
+	/* on the canvas: the films only hand it their frames, so they stay in the page unseen. Not
+	   before the story is ready, though: until the canvas has drawn, the first poster shows */
 	.gl .scenes {
 		display: block;
 	}
-	.hero.gl .film,
-	.hero.gl .nursery,
-	.hero.gl .pour {
+	.hero.gl.ready .film,
+	.hero.gl.ready .nursery,
+	.hero.gl.ready .pour {
 		visibility: visible;
 		opacity: 0;
 	}
 	.liquid {
 		position: absolute;
 		inset: 0;
+		/* its own layer: redrawn every frame of a pour, it must not take its neighbours with it */
+		will-change: transform;
 		width: 100%;
 		height: 100%;
 		visibility: hidden;
@@ -623,6 +671,15 @@
 		background: url('/hero/grain.png') 0 0 / 128px 128px;
 		will-change: transform;
 		animation: grain 0.9s steps(4) infinite;
+	}
+	/* out of view, or covered: nothing of it is painted or composited */
+	.hero.away .stage {
+		visibility: hidden;
+	}
+	/* on the canvas the grain is part of the picture, and the beat's glow only exists with sound */
+	.hero.gl .grain,
+	.hero:not(.sound) .pulse {
+		display: none;
 	}
 	.hero.away .grain {
 		animation-play-state: paused;
@@ -912,6 +969,7 @@
 	.nursery {
 		/* the cutaway bag sits mid-frame; keep it just right of the headline */
 		object-position: 40% 50%;
+		background-position: 40% 50%;
 	}
 	/* portrait: scene sits low, story on top. A media query (not a JS-measured class),
 	   so the first server-rendered paint is already right and nothing shifts on hydration. */

@@ -32,6 +32,21 @@
 <svelte:head>
 	<title>{m.museum_page_title()}</title>
 	<meta name="description" content={m.museum_page_description()} />
+	<!-- the hero's first picture: asked for at once, ahead of the stylesheet that names it -->
+	<link
+		rel="preload"
+		as="image"
+		href="/hero/nursery-start.webp"
+		media="(min-aspect-ratio: 20 / 21)"
+		fetchpriority="high"
+	/>
+	<link
+		rel="preload"
+		as="image"
+		href="/hero/nursery-start-sq.webp"
+		media="(max-aspect-ratio: 20 / 21)"
+		fetchpriority="high"
+	/>
 </svelte:head>
 
 <main id="top">
