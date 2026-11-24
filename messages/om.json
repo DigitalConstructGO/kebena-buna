@@ -576,6 +576,8 @@
 	"museum_hero_caption": "Jimmaa, iddoo dhalootaa bunaa",
 	"museum_hero_scroll": "Gadi harkisi",
 	"museum_hero_cta": "Nu daawwadhaa",
+	"museum_hero_skip": "Seenaa irra darbi",
+	"museum_hero_skip_short": "Darbi",
 	"museum_hero_chapters": "Boqonnaalee seenaa",
 	"museum_hero_chapter": "Boqonnaa {n}: {label}",
 	"museum_hero_chapter_seed": "Sanyii",

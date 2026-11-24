@@ -576,6 +576,8 @@
 	"museum_hero_caption": "Jimma, the birthplace of coffee",
 	"museum_hero_scroll": "Scroll",
 	"museum_hero_cta": "Visit us",
+	"museum_hero_skip": "Skip the story",
+	"museum_hero_skip_short": "Skip",
 	"museum_hero_chapters": "Story chapters",
 	"museum_hero_chapter": "Chapter {n}: {label}",
 	"museum_hero_chapter_seed": "Seed",

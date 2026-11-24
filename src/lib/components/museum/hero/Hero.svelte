@@ -217,10 +217,20 @@
 
 		// the clips stay out of the HTML's download queue (preload="none") so on a slow line the page's
 		// scripts and fonts arrive first; once hydrated, fetch them in story order
+		// (one at a time: asked for together, the long growth film took the line from the nursery
+		// clip the story opens on, and a phone waited for both)
 		nursery.preload = 'auto';
-		film.preload = 'auto';
 		nursery.load();
-		film.load();
+		let filmAsked = false;
+		const askFilm = () => {
+			if (filmAsked || dead) return;
+			filmAsked = true;
+			film.preload = 'auto';
+			film.load();
+			prime(film);
+		};
+		nursery.addEventListener('canplaythrough', askFilm, { once: true });
+		const filmLater = setTimeout(askFilm, 4000);
 		const clips = [nursery, film, pour];
 		clips.forEach((v) => v.addEventListener('seeked', settle));
 		// iOS only lets a clip be stepped once it has been started: start each one and stop it at once
@@ -230,7 +240,7 @@
 				.then(() => v.pause())
 				.catch(() => {});
 		prime(nursery);
-		prime(film);
+		if (nursery.readyState >= 4) askFilm();
 		const gl = createStageGL(scenesCanvas, clips, () => (onCanvas = false));
 		onCanvas = !!gl;
 
@@ -254,8 +264,12 @@
 			held ??= [e.gamma, e.beta];
 			held[0] += (e.gamma - held[0]) * 0.02;
 			held[1] += (e.beta - held[1]) * 0.02;
-			aim[0] = Math.max(-1, Math.min(1, (e.gamma - held[0]) / 15));
-			aim[1] = Math.max(-1, Math.min(1, (e.beta - held[1]) / 15));
+			// a hand is never still: the view only follows a tilt that is meant, or the canvas would
+			// be drawn again on every reading, 60 times a second, for a picture nobody sees move
+			const x = Math.max(-1, Math.min(1, (e.gamma - held[0]) / 15));
+			const y = Math.max(-1, Math.min(1, (e.beta - held[1]) / 15));
+			if (Math.abs(x - aim[0]) > 0.05) aim[0] = x;
+			if (Math.abs(y - aim[1]) > 0.05) aim[1] = y;
 		};
 		/** eases the view towards the aim; near things move against it, the headline most of all */
 		const look = () => {
@@ -264,7 +278,7 @@
 			let moved = false;
 			for (const k of [0, 1]) {
 				const d = -aim[k] - v[k];
-				if (Math.abs(d) < 0.0005) continue;
+				if (Math.abs(d) < 0.002) continue;
 				v[k] += d * 0.06;
 				moved = true;
 			}
@@ -350,8 +364,8 @@
 					if (window.scrollY > 8) story.tl.time(target);
 
 					// The story plays to where the scroll wants it, one scene after the other, forwards
-					// or back: at its own pace a scene away, hurrying (up to 4x) the further off it is,
-					// and easing back to its own pace as it arrives.
+					// or back: a little quicker than it was shot a scene away (nobody waits on a phone),
+					// hurrying (up to 4x) the further off it is, and easing back as it arrives.
 					drive = (_: number, ms: number) => {
 						const now = story.tl.time();
 						const gap = target - now;
@@ -362,7 +376,7 @@
 							}
 							return;
 						}
-						const speed = Math.min(4, Math.max(1, Math.abs(gap) / 3));
+						const speed = Math.min(4, Math.max(1.25, Math.abs(gap) / 2.4));
 						const step = Math.min(Math.abs(gap), (speed * Math.min(ms, 100)) / 1000);
 						rate = Math.sign(gap) * speed;
 						story.tl.time(now + Math.sign(gap) * step);
@@ -375,6 +389,8 @@
 
 		return () => {
 			dead = true;
+			clearTimeout(filmLater);
+			nursery.removeEventListener('canplaythrough', askFilm);
 			gsap.ticker.remove(meter);
 			gsap.ticker.remove(look);
 			window.removeEventListener('pointermove', onPointer);
@@ -510,6 +526,21 @@
 
 	<div class="controls">
 		<div class="buttons">
+			<!-- for a visitor who has not come for the film: straight to the halls, past the story -->
+			<a class="skip" href="#halls">
+				<span class="skip-long">{m.museum_hero_skip()}</span>
+				<span class="skip-short" aria-hidden="true">{m.museum_hero_skip_short()}</span>
+				<svg viewBox="0 0 12 20" width="9" height="15" aria-hidden="true">
+					<path
+						d="M6 1v17M1.5 13.5 6 18l4.5-4.5"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.8"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					/>
+				</svg>
+			</a>
 			<button
 				type="button"
 				class="icon sound-btn"
@@ -899,6 +930,27 @@
 	.icon:hover {
 		background: color-mix(in srgb, var(--ink) 24%, transparent);
 	}
+	.skip {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		height: 44px;
+		padding: 0 16px;
+		border-radius: 12px;
+		background: var(--ink);
+		color: var(--color-forest-900);
+		font-size: 13px;
+		font-weight: 600;
+		text-decoration: none;
+		white-space: nowrap;
+		transition: background-color 0.2s;
+	}
+	.skip-short {
+		display: none;
+	}
+	.skip:hover {
+		background: var(--color-lime-400);
+	}
 	.cue {
 		display: flex;
 		align-items: center;
@@ -953,6 +1005,7 @@
 		scale: 1 0.55;
 	}
 	button:focus-visible,
+	.skip:focus-visible,
 	.cta:focus-visible {
 		outline: 2px solid var(--color-lime-400);
 		outline-offset: 3px;
@@ -1046,9 +1099,24 @@
 			width: 100%;
 			justify-content: space-between;
 		}
+		/* the way past the story takes the left corner, and its arrow does the cue's work */
 		.cue {
-			order: -1;
-			font-size: 0;
+			display: none;
+		}
+		/* one word there: the floor plan sign has the middle of the row */
+		.skip {
+			gap: 8px;
+			padding: 0 12px;
+		}
+		.skip-short {
+			display: inline;
+		}
+		.skip-long {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
 		}
 	}
 
