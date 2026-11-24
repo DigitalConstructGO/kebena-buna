@@ -33,6 +33,7 @@
 					window.dispatchEvent(new CustomEvent('kb:door', { detail: now }));
 				};
 				tell(false);
+				let unhush: (() => void) | undefined;
 
 				if (closing) {
 					// shutting: the museum comes up over what is on screen above, stands clear for a
@@ -64,17 +65,25 @@
 						if (film) {
 							const fw = film.offsetWidth;
 							const fh = film.offsetHeight;
-							const [px, py] = getComputedStyle(film)
-								.objectPosition.split(' ')
-								.map((v) => parseFloat(v) / 100);
-							const c = cover(film.videoWidth || 1280, film.videoHeight || 704, fw, fh, px, py);
-							const iw = (film.videoWidth || 1280) * c.k;
-							const ih = (film.videoHeight || 704) * c.k;
+							const cs = getComputedStyle(film);
+							const [px, py] = cs.objectPosition.split(' ').map((v) => parseFloat(v) / 100);
+							// phones play a square cut, shown whole and low on the screen: the cup is larger in it
+							const whole = cs.objectFit === 'contain';
+							const vw = film.videoWidth || (whole ? 720 : 1280);
+							const vh = film.videoHeight || (whole ? 720 : 704);
+							const k = whole ? Math.min(fw / vw, fh / vh) : Math.max(fw / vw, fh / vh);
+							const iw = vw * k;
+							const ih = vh * k;
+							const c = { x: (fw - iw) * px, y: (fh - ih) * py };
+							const rim =
+								vw / vh < 1.2
+									? { cx: 0.519, top: 0.372, w: 0.635 }
+									: { cx: 0.5073, top: 0.375, w: 0.3535 };
 							const grow = 1.05;
 							cup = {
-								cx: fw / 2 + (c.x + 0.5073 * iw - fw / 2) * grow,
-								top: fh / 2 + (c.y + 0.375 * ih - fh / 2) * grow,
-								w: 0.3535 * iw * grow
+								cx: fw / 2 + (c.x + rim.cx * iw - fw / 2) * grow,
+								top: fh / 2 + (c.y + rim.top * ih - fh / 2) * grow,
+								w: rim.w * iw * grow
 							};
 						}
 						gsap.set(shot, {
@@ -96,13 +105,42 @@
 							onRefreshInit: measure
 						}
 					});
+					// the story's words, sound button and chapter marks belong to the film above: they
+					// leave before the building shows, so nothing is left written across the museum
+					// (looked up as it runs: the chapter marks are only drawn once the film is ready)
+					const said = { gone: 0 };
+					const hush = () => {
+						for (const el of document.querySelectorAll<HTMLElement>(
+							'.hero .copy, .hero .controls, .hero .rail'
+						)) {
+							el.style.opacity = said.gone ? String(1 - said.gone) : '';
+							el.style.visibility = said.gone >= 1 ? 'hidden' : '';
+						}
+					};
+					tl.to(said, { gone: 1, duration: 0.05, ease: 'power1.in', onUpdate: hush }, 0);
+					// once the picture fills the screen the film under it can rest
+					let over = false;
+					const resting = (now: boolean) => {
+						if (now === over) return;
+						over = now;
+						window.dispatchEvent(new CustomEvent('kb:hero-covered', { detail: now }));
+					};
+					tl.eventCallback('onUpdate', () => resting(tl.time() > 0.26));
+					unhush = () => {
+						said.gone = 0;
+						hush();
+						resting(false);
+					};
 					// 1. the building comes up where the cup is, inside a soft-edged opening
 					tl.fromTo(
 						'.th-view',
 						{ autoAlpha: 0 },
 						{ autoAlpha: 1, duration: 0.1, ease: 'sine.inOut' },
-						0
+						0.03
 					)
+						// the room goes dark behind the picture as the opening widens, so the film
+						// above never shows past its edges while it is still out of place
+						.fromTo('.th-view', { '--bk': 0 }, { '--bk': 1, duration: 0.12 }, 0.1)
 						.fromTo(
 							shot,
 							{ '--m': () => `${hall.w * 0.5}px` },
@@ -193,6 +231,7 @@
 
 				return () => {
 					delete root.dataset.live;
+					unhush?.();
 					tell(true);
 				};
 			});
@@ -367,6 +406,7 @@
 	.th[data-closing]:global([data-live]) .th-view {
 		display: block;
 		visibility: hidden;
+		background: color-mix(in srgb, var(--bag-deep) calc(var(--bk, 0) * 100%), transparent);
 	}
 	/* a soft-edged opening, centred on the building, that the timeline widens past the screen */
 	.th[data-closing]:global([data-live]) .th-view .th-shot {
@@ -654,6 +694,12 @@
 		border-top: 1px solid var(--ink);
 	}
 
+	/* phones: the floor plan sign floats bottom centre; the place line and the scroll cue sit above it */
+	@media (max-width: 720px) {
+		.th-hero {
+			padding-bottom: calc(max(14px, env(safe-area-inset-bottom)) + 62px);
+		}
+	}
 	@media (prefers-reduced-motion: reduce) {
 		.th-cue i::after {
 			animation: none;

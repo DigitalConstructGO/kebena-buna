@@ -167,9 +167,21 @@
 					// the scene trails the scroll a little, so a wheel's steps read as one glide
 					gsap.to(tl, { progress: p, duration: 0.9, ease: 'power2.out', overwrite: true });
 				};
+				// only while the scene is near the screen: measuring it on every scroll of the whole page
+				// made each of those frames lay the page out again
+				let near = true;
 				const onScroll = () => {
-					frame ||= requestAnimationFrame(follow);
+					if (near) frame ||= requestAnimationFrame(follow);
 				};
+				const watch = new IntersectionObserver(
+					([e]) => {
+						near = e.isIntersecting;
+						// one last look as it leaves, so it parks at the right end
+						frame ||= requestAnimationFrame(follow);
+					},
+					{ rootMargin: '50% 0px' }
+				);
+				watch.observe(root);
 				window.addEventListener('scroll', onScroll, { passive: true });
 				window.addEventListener('resize', onScroll);
 				toEnd = () => {
@@ -227,6 +239,7 @@
 				tl.progress(Math.min(1, Math.max(0, -span().r.top / span().run)));
 
 				return () => {
+					watch.disconnect();
 					window.removeEventListener('scroll', onScroll);
 					window.removeEventListener('resize', onScroll);
 					titleEl?.removeEventListener('pointerenter', onOver);

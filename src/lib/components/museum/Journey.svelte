@@ -187,6 +187,7 @@
 			};
 
 			/** One smooth curve from under the title, weaving beside each card, into the cup. */
+			let built = '';
 			const build = () => {
 				const R = sec.getBoundingClientRect();
 				const W = R.width;
@@ -241,8 +242,34 @@
 					const dy = yb - ya;
 					d += ` C${xa.toFixed(1)} ${(ya + dy * 0.55).toFixed(1)} ${xb.toFixed(1)} ${(yb - dy * 0.55).toFixed(1)} ${xb.toFixed(1)} ${yb.toFixed(1)}`;
 				}
+				// same posts, same stream: a rebuild that changes nothing (a picture loading somewhere
+				// else on the page) must not cost a frame
+				const sig = `${d}|${rw}|${fx.toFixed(1)}|${fh.toFixed(1)}|${c.width.toFixed(1)}|${W}|${H}`;
+				if (sig === built) return;
+				built = sig;
 				main.setAttribute('d', d);
-				len = main.getTotalLength() || 1;
+				// The curve is walked here, in plain arithmetic: asking the SVG for a point at each
+				// length (getPointAtLength, a thousand times over) froze the page for seconds.
+				const fine: number[] = [P[0][0], P[0][1]];
+				const run: number[] = [0];
+				for (let k = 1; k < P.length; k++) {
+					const [xa, ya] = P[k - 1];
+					const [xb, yb] = P[k];
+					const dy = yb - ya;
+					const y1 = ya + dy * 0.55;
+					const y2 = yb - dy * 0.55;
+					const steps = Math.max(8, Math.ceil((Math.abs(xb - xa) + Math.abs(dy)) / 2));
+					for (let j = 1; j <= steps; j++) {
+						const u = j / steps;
+						const v = 1 - u;
+						const x = v * v * v * xa + 3 * v * v * u * xa + 3 * v * u * u * xb + u * u * u * xb;
+						const y = v * v * v * ya + 3 * v * v * u * y1 + 3 * v * u * u * y2 + u * u * u * yb;
+						const m = fine.length;
+						run.push(run[run.length - 1] + Math.hypot(x - fine[m - 2], y - fine[m - 1]));
+						fine.push(x, y);
+					}
+				}
+				len = run[run.length - 1] || 1;
 
 				// sample the centreline about every 5px, with a width that wanders like real liquid
 				n = Math.max(3, Math.ceil(len / 5) + 1);
@@ -251,10 +278,12 @@
 				nx = new Float32Array(n);
 				ny = new Float32Array(n);
 				hw = new Float32Array(n);
-				for (let k = 0; k < n; k++) {
-					const q = main.getPointAtLength((len * k) / (n - 1));
-					cx[k] = q.x;
-					cy[k] = q.y;
+				for (let k = 0, i = 0; k < n; k++) {
+					const at = (len * k) / (n - 1);
+					while (i < run.length - 2 && run[i + 1] < at) i++;
+					const u = Math.min(1, Math.max(0, (at - run[i]) / (run[i + 1] - run[i] || 1)));
+					cx[k] = fine[i * 2] + (fine[i * 2 + 2] - fine[i * 2]) * u;
+					cy[k] = fine[i * 2 + 1] + (fine[i * 2 + 3] - fine[i * 2 + 1]) * u;
 				}
 				for (let k = 0; k < n; k++) {
 					const a = Math.max(0, k - 1);

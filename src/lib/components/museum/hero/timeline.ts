@@ -188,14 +188,26 @@ export function buildHeroTimeline(
 	const looks: Look[] = scenes.map(() => ({ tilt: 0, scale: 1 }));
 	const readLooks = () => {
 		scenes.forEach((el, k) => {
-			looks[k].tilt = gsap.getProperty(el, 'rotationX') as number;
-			looks[k].scale = gsap.getProperty(el, 'scaleX') as number;
+			// straight from GSAP's own record of the element: asking through getProperty can read
+			// the computed style, which forces a style pass on every frame
+			const c = (el as HTMLElement & { _gsap?: { rotationX?: string; scaleX?: number } })._gsap;
+			looks[k].tilt = c ? parseFloat(c.rotationX ?? '0') || 0 : 0;
+			looks[k].scale = c?.scaleX ?? 1;
 		});
 		return looks;
 	};
 	/** On the canvas, or (no WebGL, or its context lost) clipped in the page. */
 	let onCanvas = !!gl;
 
+	// (the frame the drawing fills, not the drawing: that is narrowed to the thread, see below)
+	const frame = svg.parentElement!;
+	const size = { w: frame.clientWidth, h: frame.clientHeight };
+	const sized = new ResizeObserver(() => {
+		size.w = frame.clientWidth;
+		size.h = frame.clientHeight;
+	});
+	sized.observe(frame);
+	let slimBox = '';
 	/**
 	 * Paint the scenes, the band of liquid on the surface and the falling thread. Runs every
 	 * frame; in the page it is idle unless a pour is under way. The canvas is asked every frame,
@@ -213,12 +225,13 @@ export function buildHeroTimeline(
 		if (!onCanvas && act < 0 && sig === lastSig && !wet) return;
 		lastSig = sig;
 		const t = performance.now() / 1000;
-		const W = svg.clientWidth;
-		const H = svg.clientHeight;
+		// sizes come from the observer below: reading clientWidth here forced a layout every frame
+		const W = size.w;
+		const H = size.h;
 		if (!W || !H) return;
 		if (box !== `${W} ${H}`) {
 			box = `${W} ${H}`;
-			svg.setAttribute('viewBox', `0 0 ${box}`);
+			slimBox = '';
 			const y = parseFloat(getComputedStyle(root).getPropertyValue('--y'));
 			const top = (H - W) * y;
 			rise =
@@ -276,6 +289,15 @@ export function buildHeroTimeline(
 
 		const ph = f.phase + t * 0.9;
 		const fx = (W * f.x) / 100;
+		// On the canvas only the thread is drawn here, so the drawing is a strip around it: as a
+		// full-screen layer it was painted whole on every frame, the slowest thing in a pour.
+		const vb = onCanvas ? `${Math.round(fx) - 48} 0 96 ${H}` : `0 0 ${W} ${H}`;
+		if (vb !== slimBox) {
+			slimBox = vb;
+			svg.setAttribute('viewBox', vb);
+			svg.style.left = onCanvas ? `${Math.round(fx) - 48}px` : '';
+			svg.style.width = onCanvas ? '96px' : '';
+		}
 		let landing = ((H * rise.bottom) / 100) * f.drop;
 
 		/* the band: liquid riding on the rising surface, thick where the frame is half full */

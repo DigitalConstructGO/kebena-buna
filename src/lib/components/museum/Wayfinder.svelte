@@ -8,12 +8,14 @@
 	 * names the room you are standing in; tapping it unfolds the floor plan as one route from the
 	 * entrance to the exit, with the other wings beside it.
 	 */
-	type Room = { id: string; name: string; note: string; interlude?: boolean };
+	/** `hall`: the number its own heading gives it ("Hall 02 · The farms"); rooms that are not a hall take none. */
+	type Room = { id: string; name: string; note: string; interlude?: boolean; hall?: number };
 	const ROOMS: Room[] = $derived([
 		{
 			id: 'entrance',
 			name: m.museum_wayfinder_room_entrance_name(),
-			note: m.museum_wayfinder_room_entrance_note()
+			note: m.museum_wayfinder_room_entrance_note(),
+			hall: 0
 		},
 		{
 			id: 'halls',
@@ -30,22 +32,26 @@
 		{
 			id: 'farms',
 			name: m.museum_wayfinder_room_farms_name(),
-			note: m.museum_wayfinder_room_farms_note()
+			note: m.museum_wayfinder_room_farms_note(),
+			hall: 2
 		},
 		{
 			id: 'collection',
 			name: m.museum_wayfinder_room_collection_name(),
-			note: m.museum_wayfinder_room_collection_note()
+			note: m.museum_wayfinder_room_collection_note(),
+			hall: 3
 		},
 		{
 			id: 'origins',
 			name: m.museum_wayfinder_room_origins_name(),
-			note: m.museum_wayfinder_room_origins_note()
+			note: m.museum_wayfinder_room_origins_note(),
+			hall: 3
 		},
 		{
 			id: 'people',
 			name: m.museum_wayfinder_room_people_name(),
-			note: m.museum_wayfinder_room_people_note()
+			note: m.museum_wayfinder_room_people_note(),
+			hall: 4
 		},
 		{
 			id: 'archive',
@@ -76,11 +82,8 @@
 	const home = $derived(localizeHref('/'));
 	const wingHref = (path: string) => localizeHref(path);
 	const pad = (n: number) => String(n).padStart(2, '0');
-	/** Room numbers, counting past the interlude so the halls stay consecutive; null for the interlude. */
-	const NUMS = $derived.by(() => {
-		let count = 0;
-		return ROOMS.map((r) => (r.interlude ? null : pad(count++)));
-	});
+	/** Hall numbers as the sections' own headings give them, so the sign and the page agree; null for a room that is not a hall. */
+	const NUMS = $derived(ROOMS.map((r) => (r.hall === undefined ? null : pad(r.hall))));
 
 	/** Index of the room in view on the home page; -1 while the opening story plays. */
 	let current = $state(-1);
@@ -96,7 +99,10 @@
 		wing
 			? { num: m.museum_wayfinder_wing(), name: wing.name }
 			: current >= 0
-				? { num: NUMS[current] ?? m.museum_wayfinder_interlude(), name: ROOMS[current].name }
+				? {
+						num: NUMS[current] ?? (ROOMS[current].interlude ? m.museum_wayfinder_interlude() : ''),
+						name: ROOMS[current].name
+					}
 				: { num: m.museum_wayfinder_start(), name: m.museum_wayfinder_explore() }
 	);
 
@@ -181,7 +187,7 @@
 		>
 			<span class="ring" aria-hidden="true"></span>
 			<span class="where">
-				<span class="num">{label.num}</span>
+				{#if label.num}<span class="num">{label.num}</span>{/if}
 				<span class="name">{label.name}</span>
 			</span>
 			<span class="hint">{m.museum_wayfinder_floor_plan()}</span>

@@ -306,6 +306,9 @@ void main() {
 	vec3 dr = uLens > 0.001 ? rain(p) : vec3(0.0);
 	vec4 col = story(p, dr);
 	col = vec4(clamp(col.rgb + dr.z * col.a, 0.0, col.a), col.a);
+	// film grain, drawn here: as a blended layer over the canvas it cost more than the film itself
+	float gr = hash(floor(gl_FragCoord.xy / 1.5) + floor(uTime * 4.4) * 31.7) - 0.5;
+	col.rgb = clamp(col.rgb + gr * 0.05 * col.a, 0.0, col.a);
 	gl_FragColor = col;
 }
 `;
@@ -426,10 +429,8 @@ export function createStageGL(
 	};
 	const slots: Slot[] = videos.map((v) => {
 		const tex = texture();
-		// portrait screens drop the poster attribute and draw the square poster from CSS
-		const url =
-			v.getAttribute('poster') ||
-			/url\(["']?([^"')]+)/.exec(getComputedStyle(v).backgroundImage)?.[1];
+		// the poster is the clip's CSS background: the wide cut, or the square one on portrait screens
+		const url = /url\(["']?([^"')]+)/.exec(getComputedStyle(v).backgroundImage)?.[1];
 		let poster: HTMLImageElement | undefined;
 		if (url) {
 			poster = new Image();
@@ -492,6 +493,9 @@ export function createStageGL(
 		const want = video ? 'video' : s.poster?.complete && s.poster.naturalWidth ? 'poster' : null;
 		if (!want) return false;
 		if (want === s.has && s.fresh <= 0 && (want === 'poster' || s.v.paused)) return false;
+		// mid-seek the clip has no settled frame to give, and for a moment reports that it has none
+		// at all: keep the frame already shown rather than flash back to the poster, its first frame
+		if (s.has === 'video' && s.v.readyState > 0 && (s.v.seeking || !video)) return false;
 		gl.bindTexture(gl.TEXTURE_2D, s.tex);
 		try {
 			if (want === 'video') {
@@ -515,7 +519,14 @@ export function createStageGL(
 	let W = 0;
 	let H = 0;
 	let persp = 1400;
+	// the box is watched, not read every frame: a clientWidth read forces a layout each time
+	/** share of full resolution the canvas is drawn at; lowered when the frames come slowly */
+	let stale = true;
+	const sized = new ResizeObserver(() => (stale = true));
+	sized.observe(canvas);
 	const measure = () => {
+		if (!stale) return false;
+		stale = false;
 		const w = canvas.clientWidth;
 		const h = canvas.clientHeight;
 		if (w === W && h === H) return false;
@@ -600,7 +611,9 @@ export function createStageGL(
 				view[0].toFixed(4),
 				view[1].toFixed(4),
 				// a playing film moves through its depth snapshots
-				slots[a]?.v.currentTime
+				slots[a]?.v.currentTime,
+				// the grain steps a few times a second
+				Math.floor(performance.now() / 227)
 			].join();
 			// the steam only rises over the cup, once the story has come to rest on it
 			const cup = !pour && /cup-scroll/.test(slots[a]?.v.currentSrc ?? '') ? steam : 0;
@@ -646,6 +659,7 @@ export function createStageGL(
 			gl.drawArrays(gl.TRIANGLES, 0, 3);
 		},
 		destroy() {
+			sized.disconnect();
 			canvas.removeEventListener('webglcontextlost', lost);
 			slots.forEach((s, k) => {
 				for (const ev of ['seeked', 'loadeddata', 'playing']) s.v.removeEventListener(ev, marks[k]);
