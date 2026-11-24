@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { setupGsap } from '#lib/gsap.js';
 	import { m } from '#lib/i18n.ts';
+	import { awayWhenHidden } from './away.js';
 	import { CITIES, COUNTRY, JIMMA_ZONE, REGIONS, SIZE, project } from './ethiopia.js';
 	import type { Kingdom } from '#lib/content/story.js';
 
@@ -227,6 +228,7 @@
 	<!-- the chapter list mirrors the map; keyboard and screen readers use that -->
 	<svg
 		bind:this={svg}
+		{@attach awayWhenHidden}
 		viewBox={box(FAR)}
 		role="presentation"
 		preserveAspectRatio="xMidYMid meet"
@@ -453,6 +455,9 @@
 		transform-box: fill-box;
 		transform-origin: center;
 		animation: pulse 2.4s ease-out infinite;
+	}
+	:global([data-away]) .pulse {
+		animation-play-state: paused;
 	}
 	@keyframes pulse {
 		from {

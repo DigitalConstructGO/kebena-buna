@@ -1,4 +1,10 @@
-@import '@nahu/admin-kit/styles/theme.css';
+/*
+ * The kit's theme without its Google Fonts stylesheet: that request named every face the dashboard's
+ * styles can pick, and blocked the public pages' first paint for faces they never use. The dashboard
+ * and the staff sign-in load it themselves (`kit-fonts.css`); the public pages self-host theirs
+ * (`museum.css`).
+ */
+@import '@nahu/admin-kit/styles/theme.base.css';
 
 /*
  * Kebena's working palette until the brand is final: coffee-leaf green for actions, roasted brown

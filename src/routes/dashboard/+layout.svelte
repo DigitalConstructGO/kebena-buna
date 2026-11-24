@@ -13,6 +13,7 @@
 	import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
 	import { access } from '#lib/access.ts';
 	import { ENTITIES, NAVIGATION } from '#lib/navigation.ts';
+	import '../kit-fonts.css';
 
 	let { data, children } = $props();
 

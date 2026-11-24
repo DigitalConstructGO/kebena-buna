@@ -5,6 +5,7 @@
 	import ImageViewer from '@nahu/admin-kit/components/ImageViewer.svelte';
 	import type { FarmsContent, Photo } from '#lib/content/museum.js';
 	import { m } from '#lib/i18n.ts';
+	import { awayWhenHidden } from './away.js';
 
 	let { content }: { content: FarmsContent } = $props();
 	let root: HTMLElement;
@@ -107,6 +108,8 @@
 					const helix = root.querySelector<HTMLElement>('.helix')!;
 					const cards = [...root.querySelectorAll<HTMLElement>('.slice')];
 					const proxy = { a: 0 };
+					/** each photo's opacity as last written: most frames move only a few of them enough to show */
+					const shown: string[] = [];
 					small = narrow;
 					near = true;
 
@@ -120,7 +123,8 @@
 							const face = Math.cos((d * TURN * Math.PI) / 180);
 							const far = Math.min(1, Math.max(0, (Math.abs(d) - 2.5) / 8));
 							const lit = 0.3 + 0.7 * Math.max(0, face) ** 1.2;
-							el.style.opacity = (lit * (1 - 0.6 * far)).toFixed(3);
+							const o = (lit * (1 - 0.6 * far)).toFixed(2);
+							if (o !== shown[i]) el.style.opacity = shown[i] = o;
 						});
 						const part = panels[Math.min(n - 1, Math.round(a))].part;
 						if (part !== active) active = part;
@@ -146,6 +150,7 @@
 					return () => {
 						pinned = undefined;
 						helix.style.transform = '';
+						shown.length = 0;
 						cards.forEach((el) => {
 							el.style.opacity = '';
 						});
@@ -192,7 +197,7 @@
 	<div class="stage">
 		{#if panels.length}
 			<!-- the turning ribbon: every photo of every part, wound round one cylinder -->
-			<div class="ring-view" aria-hidden="true">
+			<div class="ring-view" aria-hidden="true" {@attach awayWhenHidden}>
 				<div class="tilt">
 					<div class="helix">
 						{#each slices as sl (sl.key)}
@@ -430,6 +435,12 @@
 		-webkit-mask-image: var(--fade-y), var(--fade-x);
 		-webkit-mask-composite: source-in;
 		pointer-events: none;
+	}
+	/* off screen the band is not drawn at all: its photos are a hundred 3D layers the browser would
+	   otherwise keep, and re-sort, all the way down the page. Its size comes from the grid (and on
+	   phones from its own size container), never from the band, so nothing below it moves. */
+	.ring-view:global([data-away]) {
+		content-visibility: hidden;
 	}
 	/* seen a touch from above and leaning, so the turns above and below show their curve */
 	.tilt {

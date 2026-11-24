@@ -5,6 +5,7 @@
 	import { COUNTRY, REGIONS, SIZE, project } from './ethiopia.js';
 	import type { AtlasContent } from '#lib/content/museum.js';
 	import { m } from '#lib/i18n.ts';
+	import { awayWhenHidden } from './away.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 
 	let { content }: { content: AtlasContent } = $props();
@@ -213,6 +214,7 @@
 				<div class="plate">
 					<svg
 						bind:this={svg}
+						{@attach awayWhenHidden}
 						viewBox={FULL}
 						role="img"
 						aria-label={m.home_atlas_map_label({ count: content.origins.length })}
@@ -480,6 +482,10 @@
 		animation: pulse 1.8s ease-out infinite;
 		transform-box: fill-box;
 		transform-origin: center;
+	}
+	/* an SVG circle's scale is drawn again on the main thread every frame: none while away */
+	:global([data-away]) .halo {
+		animation-play-state: paused;
 	}
 	@keyframes pulse {
 		from {

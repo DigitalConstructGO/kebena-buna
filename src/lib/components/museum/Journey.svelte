@@ -6,6 +6,7 @@
 	import ImageViewer from '@nahu/admin-kit/components/ImageViewer.svelte';
 	import type { JourneyContent, JourneyStep } from '#lib/content/museum.js';
 	import { m } from '#lib/i18n.ts';
+	import { awayWhenHidden } from './away.js';
 
 	let { content }: { content: JourneyContent } = $props();
 
@@ -443,7 +444,13 @@
 </script>
 
 {#if steps.length}
-	<section class="pour" id="journey" bind:this={root} aria-labelledby="journey-title">
+	<section
+		class="pour"
+		id="journey"
+		bind:this={root}
+		aria-labelledby="journey-title"
+		{@attach awayWhenHidden}
+	>
 		<svg class="pour-svg" aria-hidden="true">
 			<defs>
 				<clipPath id="journey-fall-clip" clipPathUnits="userSpaceOnUse">
@@ -632,6 +639,11 @@
 		mask: url('/art/flow-dots.svg') 50% 0 / 629.6px 800px repeat;
 		animation: pour-fall 48s linear infinite;
 		will-change: transform;
+	}
+	/* off screen the wall stops, and gives up its layer: it is the height of the whole section */
+	.pour:global([data-away])::before {
+		animation-play-state: paused;
+		will-change: auto;
 	}
 	@keyframes pour-fall {
 		to {

@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { setupGsap } from '#lib/gsap.js';
 	import { m } from '#lib/i18n.ts';
+	import { awayWhenHidden } from './away.js';
 	import type { Snippet } from 'svelte';
 
 	/**
@@ -300,7 +301,7 @@
 					<p class="pk-label th-tag">{m.museum_tagline()}</p>
 					<div class="th-foot">
 						<p class="th-place">{m.museum_doorway_place()}</p>
-						<p class="th-cue" aria-hidden="true">
+						<p class="th-cue" aria-hidden="true" {@attach awayWhenHidden}>
 							<span>{m.museum_doorway_scroll()}</span>
 							<i></i>
 						</p>
@@ -657,6 +658,9 @@
 		background: var(--gold);
 		transform: translateY(-100%);
 		animation: th-drip 2.2s var(--pk-ease) infinite;
+	}
+	.th-cue:global([data-away]) i::after {
+		animation-play-state: paused;
 	}
 	@keyframes th-drip {
 		0% {

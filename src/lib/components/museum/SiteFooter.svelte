@@ -2,6 +2,7 @@
 	import { localizeHref } from '#lib/paraglide/runtime.js';
 	import type { FooterContent } from '#lib/content/museum.js';
 	import { m } from '#lib/i18n.ts';
+	import { awayWhenHidden } from './away.js';
 
 	let { content }: { content: FooterContent } = $props();
 
@@ -70,7 +71,7 @@
 	<!-- the wordmark is a window: the ring pattern shows through the letters and drifts slowly past.
 	     Three flat sheets, so the drift is only a slide: the gold, a sheet of the letters' colour
 	     with the rings cut out of it (the one that moves), and the wall with the letters cut out -->
-	<div class="mark" aria-hidden="true">
+	<div class="mark" aria-hidden="true" {@attach awayWhenHidden}>
 		<div class="behind"><div class="rings"></div></div>
 		<svg viewBox="0 0 1000 176" preserveAspectRatio="xMidYMin meet">
 			<defs>
@@ -252,6 +253,10 @@
 		mask-composite: exclude;
 		will-change: transform;
 		animation: foot-drift 70s linear infinite;
+	}
+	.mark:global([data-away]) .rings {
+		animation-play-state: paused;
+		will-change: auto;
 	}
 	@keyframes foot-drift {
 		to {

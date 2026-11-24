@@ -3,7 +3,10 @@
  * dashboard: the admin-kit theme on `:root` uses some of the same names (`--card`, `--line`). The
  * `(museum)` and `(site)` layouts put every public page inside a `.museum` wrapper.
  */
-@import '@fontsource-variable/inter';
+/* Inter with its optical sizes, as Google served it before: the body face of anything that does not
+   name its own (below), self-hosted so no page waits on a stylesheet from another server */
+@import '@fontsource-variable/inter/opsz.css';
+@import '@fontsource-variable/inter/opsz-italic.css';
 @import '@fontsource-variable/bricolage-grotesque/wdth.css';
 @import '@fontsource-variable/instrument-sans';
 @import '@fontsource-variable/noto-serif-ethiopic';
@@ -14,6 +17,12 @@
 
 /* The design's palette and type, as plain variables: nothing here touches Tailwind's theme. */
 .museum {
+	/* the kit's body face (its paragraphs and headings name it too) is 'Inter' from Google, which
+	   only the dashboard loads: here it is the self-hosted copy */
+	--kit-font-sans:
+		'Inter Variable', 'Noto Sans Ethiopic', 'Noto Naskh Arabic', ui-sans-serif, system-ui,
+		sans-serif;
+	font-family: var(--kit-font-sans);
 	--font-sans:
 		'Instrument Sans Variable', 'Noto Sans Ethiopic', 'Noto Naskh Arabic', ui-sans-serif, system-ui,
 		sans-serif;

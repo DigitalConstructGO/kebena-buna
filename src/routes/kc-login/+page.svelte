@@ -8,6 +8,7 @@
 	import LoadingBtn from '@nahu/admin-kit/formComponents/LoadingBtn.svelte';
 	import { createForm } from '@nahu/admin-kit/forms/createForm';
 	import { loginSchema } from '#lib/schemas/auth.ts';
+	import '../kit-fonts.css';
 
 	let { data } = $props();
 	// svelte-ignore state_referenced_locally
