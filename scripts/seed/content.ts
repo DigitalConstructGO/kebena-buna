@@ -78,7 +78,7 @@ const PAGES = [
 		en: html(
 			'<h2>Ethiopia, the birthplace of coffee</h2>',
 			'Thirty years of growing and trading coffee in the Jimma zone, now open to visitors: walk through the story of coffee in our indoor halls, join a ceremony in the square, and take home beans roasted a few steps away.',
-			'<ul><li>Timed entry, Tuesday to Sunday</li><li>Traditional coffee ceremony every afternoon</li><li>Fresh roasted coffee in the museum shop</li></ul>'
+			'<ul><li>Timed entry, Monday to Friday</li><li>Traditional coffee ceremony every afternoon</li><li>Fresh roasted coffee in the museum shop</li></ul>'
 		),
 		am: html(
 			'<h2>ኢትዮጵያ — የቡና መገኛ</h2>',
@@ -123,13 +123,13 @@ const PAGES = [
 		menu: true,
 		en: html(
 			'<h2>Opening hours</h2>',
-			'Tuesday to Sunday, 09:00 to 18:00 (last entry 17:00). Closed on Mondays, Genna and Timket.',
+			'Monday to Friday, 08:30 to 17:00. Closed on Saturdays and Sundays, and on Genna and Timket.',
 			'<h2>Tickets</h2>',
 			'Entry is by one-hour time slot. Ethiopian residents pay the resident price on showing a valid Ethiopian ID; foreign visitors pay the visitor price. Children under six enter free.',
 			'<h2>Getting here</h2>',
 			'We are in Kebena, Addis Ababa. Site A holds the indoor halls and the shop; Site B is the outdoor square and the ceremony area.'
 		),
-		am: html('<h2>የመክፈቻ ሰዓት</h2>', 'ከማክሰኞ እስከ እሑድ፣ ከ3:00 እስከ 12:00። ሰኞ ዝግ ነው።')
+		am: html('<h2>የመክፈቻ ሰዓት</h2>', 'ከሰኞ እስከ ዓርብ፣ ከ08:30 እስከ 17:00። ቅዳሜና እሑድ ዝግ ነው።')
 	},
 	{
 		slug: 'coffee-ceremony',
@@ -333,9 +333,9 @@ const KNOWLEDGE: [string, string, string, string?, string?][] = [
 	[
 		'hours',
 		'When is the museum open?',
-		'Tuesday to Sunday, 09:00–18:00, last entry at 17:00. Closed on Mondays and on Genna and Timket.',
+		'Monday to Friday, 08:30 to 17:00. Closed on Saturdays and Sundays, and on Genna and Timket.',
 		'ሙዚየሙ መቼ ክፍት ነው?',
-		'ከማክሰኞ እስከ እሑድ ከ3:00 እስከ 12:00 ክፍት ነው።'
+		'ከሰኞ እስከ ዓርብ፣ ከ08:30 እስከ 17:00 ክፍት ነው። ቅዳሜና እሑድ እንዲሁም በገና እና በጥምቀት ዝግ ነው።'
 	],
 	[
 		'hours',
@@ -469,7 +469,7 @@ const CHAT_OPENERS: [string, string, string][] = [
 	[
 		'en',
 		'Hi, are you open on Monday?',
-		'We are closed on Mondays. We are open Tuesday to Sunday, 09:00–18:00, last entry 17:00.'
+		'Yes. We are open Monday to Friday, 08:30–17:00, and closed on Saturdays and Sundays.'
 	],
 	['am', 'ሰላም፣ የመግቢያ ዋጋ ስንት ነው?', 'ለኢትዮጵያ ነዋሪዎችና ለውጭ ጎብኚዎች የተለያየ ዋጋ አለ፤ ዝርዝሩን በጉብኝት ገጹ ላይ ያገኛሉ።'],
 	[
