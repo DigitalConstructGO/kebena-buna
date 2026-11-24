@@ -8,7 +8,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '#lib/server/db/index.ts';
 import { user } from '#lib/server/db/schema.ts';
 
-/** What signing in to a switched-off account says; `/login` shows it as it is. */
+/** What signing in to a switched-off account says; `/kc-login` shows it as it is. */
 export const SWITCHED_OFF = 'This account is switched off. Ask the Owner.';
 
 export const auth = betterAuth({
@@ -35,14 +35,19 @@ export const auth = betterAuth({
 	databaseHooks: {
 		session: {
 			create: {
-				/** A switched-off or deleted account cannot sign in, whatever its password. */
+				/**
+				 * A switched-off or deleted account cannot sign in, whatever its password. Nor can a
+				 * customer: sign-in is for the dashboard only, and `/kc-login` answers them as it
+				 * answers a wrong password, so it does not reveal who is a customer.
+				 */
 				before: async (session) => {
 					const [row] = await db
-						.select({ isActive: user.isActive })
+						.select({ isActive: user.isActive, kind: user.kind })
 						.from(user)
 						.where(and(eq(user.id, session.userId), isNull(user.deletedAt)))
 						.limit(1);
-					if (!row?.isActive) throw new APIError('UNAUTHORIZED', { message: SWITCHED_OFF });
+					if (row?.kind !== 'staff') throw new APIError('UNAUTHORIZED');
+					if (!row.isActive) throw new APIError('UNAUTHORIZED', { message: SWITCHED_OFF });
 					return { data: session };
 				}
 			}

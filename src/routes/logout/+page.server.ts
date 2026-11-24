@@ -7,6 +7,6 @@ export const load = () => redirect(302, '/');
 export const actions = {
 	default: async (event) => {
 		await auth.api.signOut({ headers: event.request.headers });
-		redirect(303, '/login');
+		redirect(303, '/kc-login');
 	}
 };

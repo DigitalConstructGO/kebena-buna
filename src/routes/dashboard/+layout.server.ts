@@ -6,7 +6,7 @@ import { roles, user } from '#lib/server/db/schema.ts';
 
 export const load = async ({ locals, setHeaders }) => {
 	// The kit's hook already refuses signed-out requests under /dashboard; this narrows the type.
-	if (!locals.user) redirect(302, '/login');
+	if (!locals.user) redirect(302, '/kc-login');
 	// Never kept by the browser: Back after signing out must not show the last screen's figures.
 	setHeaders({ 'cache-control': 'private, no-store' });
 

@@ -186,7 +186,7 @@ fi
 ORIGIN="$(ssh "$HOST" "grep -E '^ORIGIN=' '$APP/.env' | cut -d= -f2- | tr -d '\"'" 2>/dev/null || true)"
 if [ -n "$ORIGIN" ]; then
 	say "Checking the public surface over $ORIGIN"
-	for path in / /shop /visit /history /login /health /health/ready; do
+	for path in / /shop /visit /history /kc-login /health /health/ready; do
 		code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$ORIGIN$path" || echo 000)"
 		printf '   %-10s %s\n' "$path" "$code"
 		[ "$code" = 200 ] || exit 1

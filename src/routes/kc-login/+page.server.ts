@@ -32,6 +32,9 @@ export const load = async ({ locals }) => {
 export const actions = {
 	default: async (event) => {
 		const form = await superValidate(event.request, zod4(loginSchema));
+		const password = form.data.password;
+		// Never sent back to the browser: a refused form would otherwise echo it in the page data.
+		form.data.password = '';
 		if (!form.valid)
 			return message(form, { type: 'error', text: 'Check the form' }, { status: 400 });
 
@@ -51,7 +54,7 @@ export const actions = {
 
 		try {
 			await auth.api.signInEmail({
-				body: { email, password: form.data.password },
+				body: { email, password },
 				headers: event.request.headers
 			});
 		} catch (err) {

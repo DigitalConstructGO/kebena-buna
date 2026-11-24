@@ -6,9 +6,11 @@
  * `web` and its customer is found (or made) by phone, the customer's main identity (9.1).
  */
 import { randomBytes } from 'node:crypto';
+import { unlink } from 'node:fs/promises';
 import { and, eq, isNull } from 'drizzle-orm';
 import { redirect, type RequestEvent } from '@sveltejs/kit';
 import { takeToken } from '@nahu/admin-kit/server/rateLimit';
+import { resolveStoredFile } from '@nahu/admin-kit/server/files';
 import type { Writer } from '@nahu/admin-kit/server/db';
 import { CHAPA_SECRET_KEY } from '$app/env/private';
 import { initializeTransaction, verifyTransaction } from '@nahu/admin-kit/server/chapa';
@@ -50,6 +52,16 @@ export function floodRefused(event: RequestEvent, bucket: string, perMinute = 3)
 }
 export const isTrapped = (data: { website?: string | null }) => Boolean(data.website?.trim());
 
+/**
+ * Deletes an upload a public form saved before its write was refused, so repeating a refused
+ * post (a second receipt, a duplicate TIN) cannot fill the disk.
+ */
+export async function discardUpload(name: unknown) {
+	if (typeof name !== 'string' || !name) return;
+	const file = resolveStoredFile(name);
+	if (file) await unlink(file).catch(() => {});
+}
+
 /** Who posted: kept on submissions and orders for abuse checks. */
 function origin(event: RequestEvent) {
 	return {
@@ -62,7 +74,9 @@ type Contact = { name: string; phone: string; email?: string | null };
 
 /**
  * The customer behind a phone number, made on first contact (`source: web`). An existing record
- * keeps its name; a missing email is filled in. The page's language becomes theirs only when new.
+ * keeps its name and email: anyone can type someone else's phone, so a form must not be able to
+ * give their record an address that order links are then sent to. The page's language becomes
+ * theirs only when new.
  */
 export async function customerFor(tx: Writer, c: Contact) {
 	const [found] = await tx
@@ -72,7 +86,6 @@ export async function customerFor(tx: Writer, c: Contact) {
 		.limit(1);
 	if (found) {
 		const patch: Partial<typeof customer.$inferInsert> = { lastActivityAt: new Date() };
-		if (!found.email && c.email) patch.email = c.email;
 		if (!found.name) patch.name = c.name;
 		await tx.update(customer).set(patch).where(eq(customer.id, found.id));
 		return found.id;
@@ -338,7 +351,7 @@ export async function startPayment(event: RequestEvent, orderId: number) {
 	const [o] = await db.select().from(order).where(eq(order.id, orderId)).limit(1);
 	if (!o) throw new Error('Order not found.');
 	const amount = r2(Number(o.total) - Number(o.amountPaid));
-	const txRef = `KC-TX-${Date.now().toString(36).toUpperCase()}-${randomBytes(3).toString('hex').toUpperCase()}`;
+	const txRef = `KC-TX-${Date.now().toString(36).toUpperCase()}-${randomBytes(8).toString('hex').toUpperCase()}`;
 	const [res] = await db
 		.insert(payment)
 		.values({ orderId: o.id, provider: 'chapa', status: 'initiated', amount, txRef });
@@ -420,6 +433,12 @@ export async function settleByTxRef(event: RequestEvent, txRef: string) {
 		.limit(1);
 	if (p.status === 'succeeded') return { order: o, outcome: 'paid' as const };
 	const v = await verifyTransaction(txRef);
+	// Chapa's answer must be about this payment, in birr, for at least what was asked.
+	const matches = v.txRef === txRef && v.currency === 'ETB' && v.amount >= Number(p.amount) - 0.01;
+	if (v.paid && !matches) {
+		console.error(`[pay] ${txRef}: Chapa says paid but the details differ; left for staff`, v.raw);
+		return { order: o, outcome: 'pending' as const };
+	}
 	if (v.paid) {
 		await db.transaction((tx) =>
 			settleGatewayPayment(tx, event, p.id, {

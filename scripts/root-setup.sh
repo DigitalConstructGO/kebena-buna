@@ -242,9 +242,9 @@ read -r code body < <(curl -sk --max-time 20 --resolve "${DOMAIN}:443:127.0.0.1"
       -w '\n%{http_code}' "https://${DOMAIN}/health" | tac | tr '\n' ' ' || echo "000 -")
 printf '    https://%s/health  %s  %s\n' "${DOMAIN}" "${code}" "${body}"
 [[ "${code}" == "200" && "${body}" == *'"status":"ok"'* ]] || ok=0
-redir="$(curl -s --max-time 20 --resolve "${DOMAIN}:80:127.0.0.1" -o /dev/null -w '%{http_code} %{redirect_url}' "http://${DOMAIN}/login" || echo "000 -")"
-printf '    http://%s/login    %s\n' "${DOMAIN}" "${redir}"
-[[ "${redir}" == 301\ https://${DOMAIN}/login* ]] || ok=0
+redir="$(curl -s --max-time 20 --resolve "${DOMAIN}:80:127.0.0.1" -o /dev/null -w '%{http_code} %{redirect_url}' "http://${DOMAIN}/kc-login" || echo "000 -")"
+printf '    http://%s/kc-login    %s\n' "${DOMAIN}" "${redir}"
+[[ "${redir}" == 301\ https://${DOMAIN}/kc-login* ]] || ok=0
 
 if [[ ${ok} -ne 1 ]]; then
   echo
@@ -259,7 +259,7 @@ if [[ ${ok} -ne 1 ]]; then
 fi
 
 printf '\n\033[1;32mDone.\033[0m  https://%s/\n\n' "${DOMAIN}"
-echo "Sign in at https://${DOMAIN}/login with a seeded staff login (owner@kebena.coffee, see scripts/seed/base.ts)."
+echo "Sign in at https://${DOMAIN}/kc-login with a seeded staff login (owner@kebena.coffee, see scripts/seed/base.ts)."
 echo "Useful:"
 echo "  systemctl status ${SERVICE}      # app status"
 echo "  journalctl -u ${SERVICE} -f      # app logs"

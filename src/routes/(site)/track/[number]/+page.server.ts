@@ -17,7 +17,14 @@ import { fromPriceOf } from '#lib/server/catalog.ts';
 import { onSale, productImageUrl } from '#lib/server/cart.ts';
 import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
 import { postedForm, saveUploadedFile, UploadRefused } from '@nahu/admin-kit/server/files';
-import { floodRefused, paymentsOn, startPayment, toCheckout } from '#lib/server/site.ts';
+import { takeToken } from '@nahu/admin-kit/server/rateLimit';
+import {
+	discardUpload,
+	floodRefused,
+	paymentsOn,
+	startPayment,
+	toCheckout
+} from '#lib/server/site.ts';
 import { latestTransfer, submitTransfer, transferAccounts } from '#lib/server/transfers.ts';
 import { transferSchema } from '#lib/schemas/checkout.ts';
 import { ticketQr } from '#lib/server/ticketQr.ts';
@@ -184,15 +191,20 @@ export const actions: Actions = {
 		// Checked again under the lock in `submitTransfer`; this one spares storing a file for nothing.
 		if (o.status !== 'pending_payment')
 			return message(form, m.track_transfer_err_closed(), { status: 409 });
+		// Up to 10 MB each: a few per order, so one order cannot be used to fill the disk.
+		if (!takeToken(`site:receipt:${o.id}`, { capacity: 3, perMinute: 0.2 }))
+			return message(form, m.site_err_flood(), { status: 429 });
 		const d = form.data;
+		let receiptFile: string | undefined;
 		try {
-			const receiptFile = await saveUploadedFile(d.receipt);
+			receiptFile = await saveUploadedFile(d.receipt);
 			await submitTransfer(o.id, {
 				bankAccountId: d.bankAccountId,
 				reference: d.reference ?? null,
 				receiptFile
 			});
 		} catch (err) {
+			await discardUpload(receiptFile);
 			if (err instanceof UploadRefused)
 				return setError(form, 'receipt', m.track_transfer_err_file());
 			if (err instanceof WriteRefused) {

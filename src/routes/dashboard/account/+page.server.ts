@@ -6,6 +6,8 @@ import { roles, user } from '#lib/server/db/schema.ts';
 import { auth } from '#lib/server/auth.ts';
 import { accountSchema, changePasswordSchema } from '#lib/schemas/admin.ts';
 import { invalid } from '#lib/server/admin.ts';
+import { takeToken } from '@nahu/admin-kit/server/rateLimit';
+import { recordAudit } from '@nahu/admin-kit/server/audit';
 
 /** The signed-in person's own account: their name, and their password. */
 export const load = async ({ locals }) => {
@@ -35,9 +37,18 @@ export const actions = {
 		await db.update(user).set({ name: form.data.name }).where(eq(user.id, locals.user!.id));
 		return message(form, { type: 'success', text: 'Name saved' });
 	},
-	password: async ({ request }) => {
+	password: async (event) => {
+		const { request, locals } = event;
 		const form = await superValidate(request, zod4(changePasswordSchema), { id: 'password' });
 		if (!form.valid) return invalid(form);
+		// It checks the current password, so a stolen session could use it to guess one.
+		if (!takeToken(`password:${locals.user!.id}`, { capacity: 5, perMinute: 1 })) {
+			return message(
+				form,
+				{ type: 'error', text: 'Too many attempts. Wait a minute.' },
+				{ status: 429 }
+			);
+		}
 		try {
 			await auth.api.changePassword({
 				body: {
@@ -51,6 +62,12 @@ export const actions = {
 			setError(form, 'currentPassword', 'That is not your current password.');
 			return message(form, { type: 'error', text: 'Not changed' }, { status: 400 });
 		}
+		await recordAudit(db, event, {
+			table: 'user',
+			recordId: locals.user!.id,
+			action: 'update',
+			detail: { password: 'changed' }
+		});
 		form.data = { currentPassword: '', newPassword: '', confirm: '' };
 		return message(form, {
 			type: 'success',

@@ -29,7 +29,7 @@ export default defineConfig({
 			strategy: ['url', 'cookie', 'baseLocale'],
 			routeStrategies: [
 				{ match: '/dashboard/:path(.*)?', strategy: ['cookie', 'baseLocale'] },
-				{ match: '/login', strategy: ['cookie', 'baseLocale'] },
+				{ match: '/kc-login', strategy: ['cookie', 'baseLocale'] },
 				{ match: '/logout', strategy: ['cookie', 'baseLocale'] },
 				{ match: '/api/:path(.*)?', exclude: true },
 				{ match: '/health/:path(.*)?', exclude: true },

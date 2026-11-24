@@ -127,7 +127,7 @@ test('staff confirm a transfer receipt and the order is paid', async ({ page, br
 
 	// Staff, in their own session.
 	const staff = await (await browser.newContext()).newPage();
-	await open(staff, '/login');
+	await open(staff, '/kc-login');
 	await staff.getByLabel('Email').fill(email!);
 	await staff.getByLabel('Password').fill(password!);
 	await staff.getByRole('button', { name: 'Sign in' }).click();

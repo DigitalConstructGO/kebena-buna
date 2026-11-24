@@ -45,7 +45,7 @@
 	});
 
 	/** Staff pages are not for search engines: no language alternates or sharing cards there. */
-	const isPublic = $derived(!/^\/(dashboard|login|logout)(\/|$)/.test(page.url.pathname));
+	const isPublic = $derived(!/^\/(dashboard|kc-login|logout)(\/|$)/.test(page.url.pathname));
 	// every language version of this page, so search engines show each reader their own
 	const base = $derived(deLocalizeHref(page.url.pathname));
 	const alternates = $derived(

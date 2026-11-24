@@ -75,8 +75,14 @@ export const buyerFields = {
 	name: siteText(150),
 	phone: sitePhone,
 	email: siteOptionalEmail,
-	/** Set once per form render, so a double submit makes one order. */
-	idempotencyKey: z.string().max(64).optional()
+	/**
+	 * Set once per form render, so a double submit makes one order. A UUID only: a resubmit with the
+	 * same key lands on that order's private page, so the key must be unguessable.
+	 */
+	idempotencyKey: z
+		.uuid()
+		.optional()
+		.or(z.literal('').transform(() => undefined))
 };
 
 /**

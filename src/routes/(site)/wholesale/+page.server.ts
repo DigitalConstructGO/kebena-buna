@@ -13,7 +13,13 @@ import {
 	wholesaleTier
 } from '#lib/server/db/schema.ts';
 import { readSetting } from '#lib/server/stockReads.ts';
-import { customerFor, floodRefused, isTrapped, submitForm } from '#lib/server/site.ts';
+import {
+	customerFor,
+	discardUpload,
+	floodRefused,
+	isTrapped,
+	submitForm
+} from '#lib/server/site.ts';
 import { inboxAction } from '#lib/server/siteForms.ts';
 import { greenQuoteSchema, wholesaleSchema } from '#lib/schemas/siteForms.ts';
 import { m } from '#lib/i18n.ts';
@@ -103,6 +109,7 @@ export const actions: Actions = {
 				return id;
 			});
 		} catch (err) {
+			await discardUpload(values.tradeLicenceFile);
 			if (err instanceof UploadRefused) return setError(form, 'tradeLicenceFile', err.message);
 			if (isDuplicateKey(err)) return setError(form, 'tin', m.wholesale_err_tin());
 			throw err;

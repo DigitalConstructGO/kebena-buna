@@ -5,6 +5,7 @@ import { zod4 } from 'sveltekit-superforms/adapters';
 import { z } from 'zod/v4';
 import { db } from '#lib/server/db/index.ts';
 import { order } from '#lib/server/db/schema.ts';
+import { takeToken } from '@nahu/admin-kit/server/rateLimit';
 import { floodRefused, trackHref } from '#lib/server/site.ts';
 import { sitePhone, siteText } from '#lib/schemas/site.ts';
 import { m } from '#lib/i18n.ts';
@@ -20,15 +21,15 @@ export const actions: Actions = {
 		const form = await superValidate(event.request, zod4(findSchema));
 		if (!form.valid) return fail(400, { form });
 		if (floodRefused(event, 'track', 5)) return message(form, m.site_err_flood(), { status: 429 });
+		// Order numbers run in sequence, so the phone is the only secret here: a handful of tries per
+		// order, whatever address they come from.
+		const number = form.data.number.toUpperCase();
+		if (!takeToken(`site:track:${number}`, { capacity: 5, perMinute: 0.2 }))
+			return message(form, m.site_err_flood(), { status: 429 });
 		const [o] = await db
 			.select({ number: order.number, payToken: order.payToken })
 			.from(order)
-			.where(
-				and(
-					eq(order.number, form.data.number.toUpperCase()),
-					eq(order.contactPhone, form.data.phone)
-				)
-			)
+			.where(and(eq(order.number, number), eq(order.contactPhone, form.data.phone)))
 			.limit(1);
 		if (!o?.payToken) return message(form, m.track_find_none(), { status: 404 });
 		redirect(303, trackHref(o));

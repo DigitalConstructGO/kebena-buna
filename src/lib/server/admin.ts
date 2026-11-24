@@ -273,6 +273,10 @@ export async function resetPassword(
 	password: string
 ) {
 	await assertMayManageUser(event, target);
+	// Your own password is changed under Account, which asks for the current one: a borrowed
+	// session must not be able to set a new password and keep the account.
+	if (target.id === event.locals.user?.id)
+		throw new WriteRefused(null, 'Change your own password under Account.');
 	const id = target.id;
 	const hash = await hashPassword(password);
 	await db.transaction(async (tx) => {
