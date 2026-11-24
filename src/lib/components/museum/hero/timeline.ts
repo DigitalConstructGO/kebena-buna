@@ -1,6 +1,7 @@
 import { gsap } from 'gsap';
 import { SplitText } from 'gsap/SplitText';
 import { m } from '#lib/i18n.ts';
+import { TONES, type Look, type StageGL, type Tone } from './stage-gl';
 
 /**
  * The growth film (12 s, one locked-off shot) and where it sits on the story
@@ -60,9 +61,15 @@ export type Clock = { t: number; nursery: number };
 
 /**
  * One paused timeline for the whole hero. `clock.t` is the film's playhead in
- * seconds; the component keeps the <video> element in step with it.
+ * seconds; the component keeps the <video> element in step with it. With `gl` the scenes are
+ * drawn on its canvas; without it (or once it is lost) the <video>s are clipped in the page.
  */
-export function buildHeroTimeline(root: HTMLElement, weather: Weather, clock: Clock) {
+export function buildHeroTimeline(
+	root: HTMLElement,
+	weather: Weather,
+	clock: Clock,
+	gl?: StageGL | null
+) {
 	const q = gsap.utils.selector(root);
 	// blur filters repaint every frame; keep them for desktops, skip them on phones and slow devices
 	const rich = window.matchMedia('(min-width: 900px) and (pointer: fine)').matches;
@@ -74,6 +81,10 @@ export function buildHeroTimeline(root: HTMLElement, weather: Weather, clock: Cl
 	});
 
 	const tall = window.matchMedia('(max-aspect-ratio: 20 / 21)').matches;
+	/** Rain on the lens, drawn by the canvas (0..1). */
+	const lens = { v: 0 };
+	/** Steam off the cup at the end, drawn by the canvas (0..1). */
+	const steam = { v: 0 };
 	gsap.set(q('.line, .caption, .cta'), { autoAlpha: 0 });
 
 	/* ---------- storm, then the growth film ---------- */
@@ -94,7 +105,10 @@ export function buildHeroTimeline(root: HTMLElement, weather: Weather, clock: Cl
 			NURSERY.start
 		)
 		.to(weather, { rain: 1, duration: 0.6, ease: 'none' }, 0.1)
-		.to(weather, { rain: 0, duration: 1.6, ease: 'sine.in' }, 2.6);
+		.to(weather, { rain: 0, duration: 1.6, ease: 'sine.in' }, 2.6)
+		// the storm beads on the lens a little after it starts, and dries a little after it stops
+		.to(lens, { v: 1, duration: 1.4, ease: 'sine.out' }, 0.3)
+		.to(lens, { v: 0, duration: 1.6, ease: 'sine.in' }, 3.3);
 
 	/* ---------- the pour: how one scene becomes the next ----------
 	   A thread of liquid falls the height of the frame and the next scene rises out of it like a
@@ -110,11 +124,6 @@ export function buildHeroTimeline(root: HTMLElement, weather: Weather, clock: Cl
 		{ cls: 'core', w: 0.5, o: -0.2, inset: 0.38 },
 		{ cls: 'glint', w: 0.15, o: 0.5, inset: 0.05 }
 	] as const;
-	const TONES = {
-		coffee: { edge: '#a86a2e', body: '#6d3f17', core: '#3a200b', glint: '#f0cd9c', alpha: 0.97 },
-		water: { edge: '#f1f8f8', body: '#b3d3d7', core: '#7fa8b0', glint: '#ffffff', alpha: 0.7 }
-	};
-	type Tone = keyof typeof TONES;
 	const bandP = LAYERS.map((L) => svg.querySelector<SVGPathElement>(`.lq-band .${L.cls}`)!);
 	const fallP = LAYERS.map((L) => svg.querySelector<SVGPathElement>(`.lq-fall .${L.cls}`)!);
 	const head = svg.querySelector<SVGGElement>('.lq-head')!;
@@ -175,13 +184,33 @@ export function buildHeroTimeline(root: HTMLElement, weather: Weather, clock: Cl
 	let toneNow: Tone | undefined;
 	let box = '';
 
-	/** Paint the scenes' liquid edges, the band of liquid on the surface and the falling thread. Runs every frame; idle unless a pour is under way. */
+	/** The scenes' tilt and scale as the timeline has tweened them, read for the canvas. */
+	const looks: Look[] = scenes.map(() => ({ tilt: 0, scale: 1 }));
+	const readLooks = () => {
+		scenes.forEach((el, k) => {
+			looks[k].tilt = gsap.getProperty(el, 'rotationX') as number;
+			looks[k].scale = gsap.getProperty(el, 'scaleX') as number;
+		});
+		return looks;
+	};
+	/** On the canvas, or (no WebGL, or its context lost) clipped in the page. */
+	let onCanvas = !!gl;
+
+	/**
+	 * Paint the scenes, the band of liquid on the surface and the falling thread. Runs every
+	 * frame; in the page it is idle unless a pour is under way. The canvas is asked every frame,
+	 * since a film's new frame is a change too, and skips the work itself when nothing changed.
+	 */
 	const draw = () => {
+		if (onCanvas && !gl?.ok) {
+			onCanvas = false;
+			lastSig = '';
+		}
 		const act = fills.findIndex(
 			(f) => (f.drop > 0 && f.thin > 0.001 && f.level < 1) || (f.level > 0 && f.level < 1)
 		);
 		const sig = fills.map((f) => f.level.toFixed(4)).join();
-		if (act < 0 && sig === lastSig && !wet) return;
+		if (!onCanvas && act < 0 && sig === lastSig && !wet) return;
 		lastSig = sig;
 		const t = performance.now() / 1000;
 		const W = svg.clientWidth;
@@ -198,15 +227,36 @@ export function buildHeroTimeline(root: HTMLElement, weather: Weather, clock: Cl
 					: { top: 0, bottom: 100 };
 		}
 
-		scenes.forEach((el, k) => {
-			const into = k ? fills[k - 1] : undefined;
-			const next = fills[k];
-			const on = (!into || into.level > 0) && (!next || next.level < 1);
-			cut(el, on, into && into.level < 1 ? clipOf(into, into.phase + t * 0.9) : 'none');
-		});
+		if (onCanvas) {
+			// the fills run in order: every full one has brought its scene in, the next may be pouring
+			const a = fills.filter((f) => f.level >= 1).length;
+			const f = fills[a] as Fill | undefined;
+			gl!.render(
+				a,
+				f && f.level > 0
+					? {
+							level: f.level,
+							lead: leadOf(f.level),
+							phase: f.phase + t * 0.9,
+							amp: f.amp,
+							x: f.x,
+							tone: f.tone,
+							rise
+						}
+					: null,
+				readLooks(),
+				{ lens: lens.v, steam: steam.v }
+			);
+		} else
+			scenes.forEach((el, k) => {
+				const into = k ? fills[k - 1] : undefined;
+				const next = fills[k];
+				const on = (!into || into.level > 0) && (!next || next.level < 1);
+				cut(el, on, into && into.level < 1 ? clipOf(into, into.phase + t * 0.9) : 'none');
+			});
 
 		if (act < 0) {
-			svg.style.visibility = 'hidden';
+			if (wet) svg.style.visibility = 'hidden';
 			wet = false;
 			return;
 		}
@@ -229,7 +279,16 @@ export function buildHeroTimeline(root: HTMLElement, weather: Weather, clock: Cl
 		let landing = ((H * rise.bottom) / 100) * f.drop;
 
 		/* the band: liquid riding on the rising surface, thick where the frame is half full */
-		if (f.level > 0) {
+		if (f.level > 0 && onCanvas) {
+			// the canvas draws it; the thread lands on its top
+			const b = (surfaceY(f.x, f.level, ph, f.amp, f.x) / 100) * H;
+			const a = Math.min(
+				b - 1,
+				(surfaceY(f.x, leadOf(f.level), ph + 1.4, f.amp * 1.25, f.x) / 100) * H
+			);
+			landing = Math.min(landing, a + (b - a) * 0.2);
+			if (bandP[0].getAttribute('d')) bandP.forEach((el) => el.setAttribute('d', ''));
+		} else if (f.level > 0) {
 			const lead = leadOf(f.level);
 			const top: number[] = [];
 			const th: number[] = [];
@@ -341,7 +400,9 @@ export function buildHeroTimeline(root: HTMLElement, weather: Weather, clock: Cl
 	// the cherries become coffee: it pours, and the jebena on the coals rises out of it
 	pourInto(PROCESS, 1, tall ? 50 : 60, 'coffee');
 	// the story ends in the cup: the last frame of the pour holds, drifting in a little
-	tl.to(q('.pour'), { scale: 1.05, duration: 3.2, ease: 'power1.out' }, MUSEUM + 0.3);
+	tl.to(q('.pour'), { scale: 1.05, duration: 3.2, ease: 'power1.out' }, MUSEUM + 0.3)
+		// and keeps steaming while it is looked at
+		.to(steam, { v: 1, duration: 2.4, ease: 'sine.inOut' }, MUSEUM - 0.6);
 
 	/* ---------- headlines, each in step with its stage ---------- */
 	const split = (sel: string, type: string, aria: 'auto' | 'none' = 'auto') =>

@@ -15,12 +15,20 @@
 		type Clock
 	} from './timeline';
 	import { CLEAR, createScore, SCORE_SRC } from './score';
+	import { createStageGL } from './stage-gl';
 
 	/** The music under the story. Any track works; the dashboard will supply it. */
 	let { scoreSrc = SCORE_SRC }: { scoreSrc?: string } = $props();
 
 	let root: HTMLElement;
+	/** The beat and the meter levels are set on these, not on root: a property set on root restyles every letter of the story. */
+	let stage: HTMLElement;
+	let meterEl: HTMLElement;
 	let canvas: HTMLCanvasElement;
+	/** The scenes, drawn by WebGL; the <video>s under it only hand it their frames. */
+	let scenesCanvas: HTMLCanvasElement;
+	let onCanvas = $state(false);
+	let copyEl: HTMLElement;
 	let film: HTMLVideoElement;
 	let nursery: HTMLVideoElement;
 	/** The jebena and the cup: fetched a few seconds before its turn, not at page load. */
@@ -30,6 +38,23 @@
 	let time = $state(0);
 	let sound = $state(false);
 	const current = $derived(CHAPTERS.findLastIndex((c) => time >= c.at - 0.05));
+
+	/**
+	 * The chapter rail: one mark for each of the story's resting places (the cherries have none,
+	 * the coffee is already falling), named for the chapter it rests in. Set once the story is built.
+	 */
+	let marks = $state<{ label: string; at: number; rest: number }[]>([]);
+	/** Scrolls to a mark's resting place; the story cuts there. Unset when the story doesn't follow the scroll. */
+	let jump = $state<(rest: number) => void>();
+	const railNow = $derived(marks.findLastIndex((k) => time >= k.at - 0.05));
+	/** How far along the rail the story is, 0..1, moving between marks as it plays. */
+	const railFill = $derived.by(() => {
+		const k = marks.findLastIndex((mk) => time >= mk.rest);
+		if (k < 0 || marks.length < 2) return 0;
+		const next = marks[k + 1];
+		const part = next ? Math.min(1, (time - marks[k].rest) / (next.rest - marks[k].rest)) : 0;
+		return (k + part) / (marks.length - 1);
+	});
 
 	let tl: gsap.core.Timeline | undefined;
 	let onScreen = $state(true);
@@ -133,22 +158,22 @@
 		let avg = 0;
 		let pulse = 0;
 		const meter = () => {
-			liquid?.();
+			if (onScreen) liquid?.();
 			if (!sound && pulse < 0.002) {
 				if (pulse !== 0) {
 					pulse = 0;
-					root.style.setProperty('--beat', '0');
+					stage.style.setProperty('--beat', '0');
 				}
 				return;
 			}
 			s.bands(bands);
-			for (let k = 0; k < 4; k++) root.style.setProperty(`--b${k}`, bands[k].toFixed(3));
+			for (let k = 0; k < 4; k++) meterEl.style.setProperty(`--b${k}`, bands[k].toFixed(3));
 			// a kick is the low band jumping above its own recent level; the average rises fast so a fade-in never reads as a hit
 			avg += (bands[0] - avg) * (bands[0] > avg ? 0.18 : 0.04);
 			const t = tl ? tl.time() : 0;
 			const kick = t > CLEAR ? Math.min(0.45, Math.max(0, (bands[0] - avg) * 4)) : 0;
 			pulse = Math.max(kick, pulse * 0.9);
-			root.style.setProperty('--beat', still ? '0' : pulse.toFixed(3));
+			stage.style.setProperty('--beat', still ? '0' : pulse.toFixed(3));
 		};
 		gsap.ticker.add(meter);
 
@@ -177,6 +202,52 @@
 				.catch(() => {});
 		prime(nursery);
 		prime(film);
+		const gl = createStageGL(scenesCanvas, clips, () => (onCanvas = false));
+		onCanvas = !!gl;
+
+		// Where the viewer looks from: the mouse on a desktop, the phone's tilt where the browser
+		// shares it without asking. iOS asks first, with a prompt; there the scenes stay straight on.
+		const aim: [number, number] = [0, 0];
+		const onPointer = (e: PointerEvent) => {
+			if (e.pointerType !== 'mouse') return;
+			if (gl) {
+				const r = scenesCanvas.getBoundingClientRect();
+				gl.pointer[0] = e.clientX - r.left;
+				gl.pointer[1] = e.clientY - r.top;
+			}
+			aim[0] = (e.clientX / innerWidth) * 2 - 1;
+			aim[1] = (e.clientY / innerHeight) * 2 - 1;
+		};
+		/** how the phone is held: tilt is read from there, and it slowly follows */
+		let held: [number, number] | undefined;
+		const onTilt = (e: DeviceOrientationEvent) => {
+			if (e.gamma === null || e.beta === null) return;
+			held ??= [e.gamma, e.beta];
+			held[0] += (e.gamma - held[0]) * 0.02;
+			held[1] += (e.beta - held[1]) * 0.02;
+			aim[0] = Math.max(-1, Math.min(1, (e.gamma - held[0]) / 15));
+			aim[1] = Math.max(-1, Math.min(1, (e.beta - held[1]) / 15));
+		};
+		/** eases the view towards the aim; near things move against it, the headline most of all */
+		const look = () => {
+			if (!gl || !onScreen) return;
+			const v = gl.view;
+			let moved = false;
+			for (const k of [0, 1]) {
+				const d = -aim[k] - v[k];
+				if (Math.abs(d) < 0.0005) continue;
+				v[k] += d * 0.06;
+				moved = true;
+			}
+			if (!moved) return;
+			const reach = Math.max(innerWidth, innerHeight) * 0.008 * 1.3;
+			copyEl.style.transform = `translate3d(${(v[0] * reach).toFixed(2)}px, ${(v[1] * reach * 0.6).toFixed(2)}px, 0)`;
+		};
+		if (gl && !still) {
+			window.addEventListener('pointermove', onPointer, { passive: true });
+			window.addEventListener('deviceorientation', onTilt);
+			gsap.ticker.add(look);
+		}
 
 		const filmReady = new Promise<void>((res) => {
 			if (film.readyState >= 3) return res();
@@ -187,7 +258,7 @@
 		void Promise.all([document.fonts.ready, filmReady]).then(() => {
 			if (dead) return;
 			ctx = gsap.context(() => {
-				const story = buildHeroTimeline(root, weather, clock);
+				const story = buildHeroTimeline(root, weather, clock, gl);
 				tl = story.tl;
 				liquid = story.draw;
 				if (import.meta.env.DEV) Object.assign(window, { __heroTl: tl, __heroScore: s });
@@ -230,10 +301,19 @@
 						onRefresh: (self) => aim(self.progress, 1)
 					});
 					aim(st.progress, 1);
+					marks = rests.map((r) => {
+						const c = CHAPTERS.findLast((ch) => r >= ch.at - 0.05) ?? CHAPTERS[0];
+						return { label: c.label(), at: c.at, rest: r };
+					});
+					jump = (r) => {
+						const p = (r - INTRO) / (end - INTRO);
+						window.scrollTo({ top: st.start + p * (st.end - st.start), behavior: 'instant' });
+					};
 					if (window.scrollY > 8) story.tl.time(target);
 
-					// a scene plays at its own pace; when the scroll has run several scenes ahead the
-					// story hurries to catch up, easing back to its own pace as it arrives
+					// The story plays to where the scroll wants it, one scene after the other, forwards
+					// or back: at its own pace a scene away, hurrying (up to 4x) the further off it is,
+					// and easing back to its own pace as it arrives.
 					drive = (_: number, ms: number) => {
 						const now = story.tl.time();
 						const gap = target - now;
@@ -244,7 +324,7 @@
 							}
 							return;
 						}
-						const speed = Math.min(5, Math.max(1, Math.abs(gap) / 3));
+						const speed = Math.min(4, Math.max(1, Math.abs(gap) / 3));
 						const step = Math.min(Math.abs(gap), (speed * Math.min(ms, 100)) / 1000);
 						rate = Math.sign(gap) * speed;
 						story.tl.time(now + Math.sign(gap) * step);
@@ -258,6 +338,9 @@
 		return () => {
 			dead = true;
 			gsap.ticker.remove(meter);
+			gsap.ticker.remove(look);
+			window.removeEventListener('pointermove', onPointer);
+			window.removeEventListener('deviceorientation', onTilt);
 			if (drive) gsap.ticker.remove(drive);
 			s.destroy();
 			score = undefined;
@@ -265,6 +348,7 @@
 			clips.forEach((v) => v.removeEventListener('seeked', settle));
 			rain.destroy();
 			ctx?.revert();
+			gl?.destroy();
 			tl = undefined;
 		};
 	});
@@ -274,11 +358,11 @@
 
 <!-- away: the full-screen film grain repaints every step, so it rests while the hero is out of view -->
 <section
-	class={['hero', { ready, sound, away: !onScreen }]}
+	class={['hero', { ready, sound, away: !onScreen, gl: onCanvas }]}
 	bind:this={root}
 	aria-labelledby="hero-title"
 >
-	<div class="stage">
+	<div class="stage" bind:this={stage}>
 		<video
 			class="nursery"
 			bind:this={nursery}
@@ -331,6 +415,7 @@
 			<source src="/hero/cup-scroll-sm.mp4" type="video/mp4" media="(max-width: 899px)" />
 			<source src="/hero/cup-scroll.mp4" type="video/mp4" />
 		</video>
+		<canvas class="scenes" bind:this={scenesCanvas} aria-hidden="true"></canvas>
 		<!-- the liquid of the pour transitions, drawn each frame by the timeline's draw() -->
 		<svg class="liquid" aria-hidden="true">
 			<g class="lq-band">
@@ -359,7 +444,7 @@
 		<div class="pulse" aria-hidden="true"></div>
 	</div>
 
-	<div class="copy">
+	<div class="copy" bind:this={copyEl}>
 		<div class="lines">
 			<h1 id="hero-title" class="line line-1" data-letter="borrow">{m.museum_hero_title()}</h1>
 			<p class="line line-2" data-letter="borrow" aria-hidden="true">
@@ -395,7 +480,7 @@
 				aria-pressed={sound}
 				aria-label={sound ? m.museum_hero_sound_turn_off() : m.museum_hero_sound_turn_on()}
 			>
-				<span class="meter" aria-hidden="true">
+				<span class="meter" bind:this={meterEl} aria-hidden="true">
 					{#each [0, 1, 2, 3] as k (k)}
 						<span style:--k={`var(--b${k}, 0)`}></span>
 					{/each}
@@ -417,6 +502,23 @@
 			</span>
 		</div>
 	</div>
+	{#if jump}
+		<nav class="rail" aria-label={m.museum_hero_chapters()} style:--fill={railFill}>
+			<span class="rail-line" aria-hidden="true"></span>
+			{#each marks as mk, i (mk.rest)}
+				<button
+					type="button"
+					class={['mark', { past: i <= railNow, now: i === railNow }]}
+					style:--i={i / (marks.length - 1)}
+					aria-label={m.museum_hero_chapter({ n: i + 1, label: mk.label })}
+					aria-current={i === railNow ? 'step' : undefined}
+					onclick={() => jump?.(mk.rest)}
+				>
+					<span class="tip" aria-hidden="true">{mk.label}</span>
+				</button>
+			{/each}
+		</nav>
+	{/if}
 	<span class="sr-only" aria-live="polite">
 		{ready ? m.museum_hero_chapter({ n: current + 1, label: CHAPTERS[current].label() }) : ''}
 	</span>
@@ -464,6 +566,24 @@
 	.pour {
 		visibility: hidden;
 		object-position: 50% 50%;
+	}
+	.scenes {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+		display: none;
+	}
+	/* on the canvas: the films only hand it their frames, so they stay in the page unseen */
+	.gl .scenes {
+		display: block;
+	}
+	.hero.gl .film,
+	.hero.gl .nursery,
+	.hero.gl .pour {
+		visibility: visible;
+		opacity: 0;
 	}
 	.liquid {
 		position: absolute;
@@ -583,9 +703,116 @@
 		background: var(--color-forest-700);
 	}
 
+	/* the chapter rail, down the right-hand edge: a thread that fills as the story is told */
+	.rail {
+		--h: min(46vh, 380px);
+		position: absolute;
+		z-index: 7;
+		right: 14px;
+		top: 50%;
+		width: 44px;
+		height: var(--h);
+		translate: 0 -50%;
+		opacity: 0;
+		transition: opacity 0.9s ease 0.4s;
+	}
+	.ready .rail {
+		opacity: 1;
+	}
+	.rail-line,
+	.rail::after {
+		content: '';
+		position: absolute;
+		right: 21px;
+		top: 0;
+		width: 2px;
+		height: 100%;
+		border-radius: 1px;
+		background: color-mix(in srgb, var(--ink) 30%, transparent);
+		box-shadow: 0 0 6px rgb(6 16 11 / 0.35);
+		pointer-events: none;
+	}
+	.rail::after {
+		background: var(--ink);
+		transform-origin: top;
+		scale: 1 var(--fill, 0);
+	}
+	.mark {
+		position: absolute;
+		right: 0;
+		top: calc(var(--i) * var(--h));
+		translate: 0 -50%;
+		width: 44px;
+		height: 44px;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--ink);
+		cursor: pointer;
+	}
+	/* the dot */
+	.mark::before {
+		content: '';
+		position: absolute;
+		z-index: 1;
+		right: 18px;
+		top: 50%;
+		width: 8px;
+		height: 8px;
+		translate: 0 -50%;
+		border-radius: 50%;
+		background: var(--color-forest-950);
+		box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 55%, transparent);
+		transition:
+			scale 0.3s ease,
+			background-color 0.3s ease,
+			box-shadow 0.3s ease;
+	}
+	.mark.past::before {
+		background: var(--ink);
+		box-shadow: inset 0 0 0 1.5px var(--ink);
+	}
+	.mark.now::before {
+		background: var(--color-lime-400);
+		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-lime-400) 28%, transparent);
+		scale: 1.25;
+	}
+	.mark:hover::before {
+		scale: 1.4;
+	}
+	.tip {
+		position: absolute;
+		right: 40px;
+		top: 50%;
+		translate: 6px -50%;
+		padding: 4px 10px;
+		border-radius: 999px;
+		background: rgb(6 16 11 / 0.55);
+		white-space: nowrap;
+		font-size: 12px;
+		font-weight: 500;
+		letter-spacing: 0.02em;
+		color: var(--ink);
+		opacity: 0;
+		pointer-events: none;
+		transition:
+			opacity 0.25s ease,
+			translate 0.25s ease;
+	}
+	.mark.now .tip,
+	.mark:hover .tip,
+	.mark:focus-visible .tip {
+		opacity: 1;
+		translate: 0 -50%;
+	}
+	.mark:focus-visible {
+		outline: 2px solid var(--color-lime-400);
+		outline-offset: -6px;
+		border-radius: 50%;
+	}
 	.controls {
 		position: absolute;
-		z-index: 6;
+		z-index: 7;
 		left: 50%;
 		bottom: 24px;
 		translate: -50% 0;
@@ -745,8 +972,15 @@
 		}
 	}
 	/* phones: the floor plan sign sits bottom centre, so the scroll cue and the sound button take
-	   the corners of the same row */
+	   the corners of the same row; the rail is shorter and leaves the names to the headline */
 	@media (max-width: 720px) {
+		.rail {
+			--h: min(34vh, 300px);
+			right: 4px;
+		}
+		.tip {
+			display: none;
+		}
 		.controls {
 			bottom: calc(max(14px, env(safe-area-inset-bottom)) + 4px);
 		}

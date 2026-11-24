@@ -35,3 +35,6 @@ project.inlang/cache/
 *.docx
 /Client_Questionnaire.pdf
 /Developer_Brief_CX-01_Confidential.pdf
+
+# Staff help guide and other docs: hold sign-in passwords, build with `node docs/help/build.mjs`
+/docs/
