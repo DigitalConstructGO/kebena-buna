@@ -573,6 +573,8 @@
 	"museum_hero_caption": "جيما، مهد القهوة",
 	"museum_hero_scroll": "مرّر",
 	"museum_hero_cta": "زورونا",
+	"museum_hero_skip": "تخطَّ القصة",
+	"museum_hero_skip_short": "تخطَّ",
 	"museum_hero_chapters": "فصول القصة",
 	"museum_hero_chapter": "الفصل {n}: {label}",
 	"museum_hero_chapter_seed": "البذرة",

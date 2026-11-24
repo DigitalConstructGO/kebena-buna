@@ -573,6 +573,8 @@
 	"museum_hero_caption": "Jimma, la culla del caffè",
 	"museum_hero_scroll": "Scorri",
 	"museum_hero_cta": "Vieni a trovarci",
+	"museum_hero_skip": "Salta la storia",
+	"museum_hero_skip_short": "Salta",
 	"museum_hero_chapters": "Capitoli della storia",
 	"museum_hero_chapter": "Capitolo {n}: {label}",
 	"museum_hero_chapter_seed": "Seme",

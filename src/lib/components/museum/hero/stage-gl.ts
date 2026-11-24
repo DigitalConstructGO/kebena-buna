@@ -410,6 +410,11 @@ export function createStageGL(
 		h: number;
 		/** frames to re-upload after a seek: the decoded frame can land a moment after `seeked` */
 		fresh: number;
+		/** a new frame has been decoded since the last one was taken, and when the clip last said so */
+		frame: boolean;
+		frameAt: number;
+		/** counts the pictures put in the texture, so the canvas knows when there is a new one to draw */
+		stamp: number;
 		/** object-fit / object-position, read from the CSS so the layout keeps one source */
 		cover: boolean;
 		pos: [number, number];
@@ -444,12 +449,33 @@ export function createStageGL(
 			w: 0,
 			h: 0,
 			fresh: 2,
+			frame: false,
+			frameAt: 0,
+			stamp: 0,
 			cover: true,
 			pos: [0.5, 0.5],
 			depth: texture(),
 			depthAsked: false,
 			depthReady: false
 		};
+	});
+	// A clip says when it has a new frame (24 a second); the screen asks 60 or 120 times. Taking
+	// the picture only when there is a new one saves most of the uploads, the slowest step on a phone.
+	type Framed = HTMLVideoElement & {
+		requestVideoFrameCallback?: (cb: () => void) => number;
+		cancelVideoFrameCallback?: (id: number) => void;
+	};
+	const watching = slots.map((s) => {
+		const v = s.v as Framed;
+		if (!v.requestVideoFrameCallback) return undefined;
+		let id = 0;
+		const on = () => {
+			s.frame = true;
+			s.frameAt = performance.now();
+			id = v.requestVideoFrameCallback(on);
+		};
+		id = v.requestVideoFrameCallback(on);
+		return () => v.cancelVideoFrameCallback?.(id);
 	});
 	const marks = slots.map((s) => {
 		const mark = () => (s.fresh = 3);
@@ -492,7 +518,12 @@ export function createStageGL(
 		const video = s.v.readyState >= 2 && s.v.videoWidth > 0;
 		const want = video ? 'video' : s.poster?.complete && s.poster.naturalWidth ? 'poster' : null;
 		if (!want) return false;
-		if (want === s.has && s.fresh <= 0 && (want === 'poster' || s.v.paused)) return false;
+		if (want === s.has && s.fresh <= 0) {
+			if (want === 'poster' || s.v.paused) return false;
+			// playing: wait for the clip's next frame. A browser that stops saying (it has no
+			// callback, or keeps it from a clip it thinks unseen) is asked every time, as before
+			if (!s.frame && performance.now() - s.frameAt < 120) return false;
+		}
 		// mid-seek the clip has no settled frame to give, and for a moment reports that it has none
 		// at all: keep the frame already shown rather than flash back to the poster, its first frame
 		if (s.has === 'video' && s.v.readyState > 0 && (s.v.seeking || !video)) return false;
@@ -512,6 +543,8 @@ export function createStageGL(
 		}
 		s.has = want;
 		s.fresh--;
+		s.frame = false;
+		s.stamp++;
 		return true;
 	};
 
@@ -521,6 +554,7 @@ export function createStageGL(
 	let persp = 1400;
 	// the box is watched, not read every frame: a clientWidth read forces a layout each time
 	/** share of full resolution the canvas is drawn at; lowered when the frames come slowly */
+	let quality = 1;
 	let stale = true;
 	const sized = new ResizeObserver(() => (stale = true));
 	sized.observe(canvas);
@@ -529,11 +563,13 @@ export function createStageGL(
 		stale = false;
 		const w = canvas.clientWidth;
 		const h = canvas.clientHeight;
-		if (w === W && h === H) return false;
+		if (w === W && h === H && quality === drawnQuality) return false;
 		W = w;
 		H = h;
-		// the films are 720p or less: a denser canvas only costs fill
-		const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+		drawnQuality = quality;
+		// the films are 720p or less: a denser canvas only costs fill. Never under one canvas
+		// pixel to a css pixel, though: below that the picture goes soft
+		const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 1.5) * quality);
 		canvas.width = Math.max(1, Math.round(W * dpr));
 		canvas.height = Math.max(1, Math.round(H * dpr));
 		gl.viewport(0, 0, canvas.width, canvas.height);
@@ -545,6 +581,27 @@ export function createStageGL(
 			s.pos = [pct(px), pct(py)];
 		}
 		return true;
+	};
+
+	let drawnQuality = 1;
+	/**
+	 * A device that cannot keep up while the canvas draws every frame (a pour, the rain) gets a
+	 * smaller canvas: a fifth fewer pixels each way, at most twice. `ms` is the time since the
+	 * last frame; a stall (a tab switch, a long task) is not the canvas's doing and is left out.
+	 */
+	let slow = 0;
+	let judged = 0;
+	const pace = (ms: number) => {
+		if (quality <= 0.65 || ms <= 0 || ms > 100) return;
+		slow += ms;
+		if (++judged < 40) return;
+		// under about 48 frames a second on average
+		if (slow / judged > 21) {
+			quality *= 0.8;
+			stale = true;
+		}
+		slow = 0;
+		judged = 0;
 	};
 
 	const setScene = (i: 0 | 1, s: Slot, look: Look) => {
@@ -578,6 +635,7 @@ export function createStageGL(
 	const view: [number, number] = [0, 0];
 	const pointer: [number, number] = [-1e5, -1e5];
 	let drawnAt = 0;
+	let askedAt = 0;
 	let ok = true;
 	const lost = (e: Event) => {
 		e.preventDefault();
@@ -599,25 +657,29 @@ export function createStageGL(
 			const b = pour ? a + 1 : -1;
 			let changed = resized;
 			for (const k of [a, b]) if (slots[k] && upload(slots[k])) changed = true;
+			// a scene's slow drift moves in steps too small to see between two frames of its film: it
+			// is drawn again when the film has a new frame or the drift has gone a thousandth
 			const sig = [
 				a,
 				b,
-				looks[a]?.tilt,
-				looks[a]?.scale,
-				looks[b]?.tilt,
-				looks[b]?.scale,
+				looks[a]?.tilt.toFixed(2),
+				looks[a]?.scale.toFixed(3),
+				looks[b]?.tilt.toFixed(2),
+				looks[b]?.scale.toFixed(3),
 				lens,
 				steam.toFixed(3),
-				view[0].toFixed(4),
-				view[1].toFixed(4),
-				// a playing film moves through its depth snapshots
-				slots[a]?.v.currentTime,
+				view[0].toFixed(3),
+				view[1].toFixed(3),
 				// the grain steps a few times a second
 				Math.floor(performance.now() / 227)
 			].join();
 			// the steam only rises over the cup, once the story has come to rest on it
 			const cup = !pour && /cup-scroll/.test(slots[a]?.v.currentSrc ?? '') ? steam : 0;
 			const now = performance.now();
+			const since = now - askedAt;
+			askedAt = now;
+			// judged only while every frame is drawn, so the time between them is the canvas's own
+			if (pour || lens > 0.001) pace(since);
 			if (!changed && sig === lastSig) {
 				// a pour, or rain on the lens, is never still: it moves with the clock; steam is slow
 				// enough that every other frame will do
@@ -660,6 +722,7 @@ export function createStageGL(
 		},
 		destroy() {
 			sized.disconnect();
+			watching.forEach((stop) => stop?.());
 			canvas.removeEventListener('webglcontextlost', lost);
 			slots.forEach((s, k) => {
 				for (const ev of ['seeked', 'loadeddata', 'playing']) s.v.removeEventListener(ev, marks[k]);

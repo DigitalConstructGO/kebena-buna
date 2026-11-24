@@ -573,6 +573,8 @@
 	"museum_hero_caption": "Jimma, berceau du café",
 	"museum_hero_scroll": "Défiler",
 	"museum_hero_cta": "Venez nous voir",
+	"museum_hero_skip": "Passer l’histoire",
+	"museum_hero_skip_short": "Passer",
 	"museum_hero_chapters": "Chapitres de l’histoire",
 	"museum_hero_chapter": "Chapitre {n} : {label}",
 	"museum_hero_chapter_seed": "Graine",
