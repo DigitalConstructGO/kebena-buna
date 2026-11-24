@@ -17,7 +17,8 @@ import {
 	recordConsent,
 	startPayment,
 	trackHref,
-	toCheckout
+	toCheckout,
+	UnpaidRefused
 } from '#lib/server/site.ts';
 import { transfersOn } from '#lib/server/transfers.ts';
 import { completeFreeOrder } from '#lib/server/freeOrders.ts';
@@ -228,6 +229,7 @@ export const actions: Actions = {
 			});
 		} catch (err) {
 			if (err instanceof DiscountRefused) return setError(form, 'discountCode', err.message);
+			if (err instanceof UnpaidRefused) return setError(form, 'phone', err.message);
 			// Two submits racing past the idempotency check: the second hits the unique key.
 			const raced = await orderByIdempotencyKey(d.idempotencyKey);
 			if (raced) redirect(303, trackHref(raced));

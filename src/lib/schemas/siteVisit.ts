@@ -17,12 +17,18 @@ import {
 	siteText
 } from '#lib/schemas/site.ts';
 
+/**
+ * The most of one ticket type a web order may hold: every unpaid order holds its places, so a
+ * bigger party books through /groups.
+ */
+export const MAX_PER_TYPE = 20;
+
 /** How many of each ticket type: one row per type on sale, most left at 0. */
 const ticketItems = z
 	.array(
 		z.object({
 			ticketTypeId: z.number().int().positive(),
-			quantity: z.number().int().min(0).max(100)
+			quantity: z.number().int().min(0).max(MAX_PER_TYPE)
 		})
 	)
 	.default([]);

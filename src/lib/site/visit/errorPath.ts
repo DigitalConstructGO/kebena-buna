@@ -4,4 +4,4 @@
  */
 export const errorPath = (field: string) =>
 	(field === 'items' ? 'items._errors' : field) as
-		'items._errors' | 'slotId' | 'audienceId' | 'declared' | 'discountCode';
+		'items._errors' | 'slotId' | 'audienceId' | 'declared' | 'discountCode' | 'phone';

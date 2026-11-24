@@ -13,6 +13,7 @@
 	import PayWith from '#lib/site/PayWith.svelte';
 	import DiscountCode from '#lib/site/DiscountCode.svelte';
 	import { discountOff, type DiscountRule } from '#lib/discounts.ts';
+	import { MAX_PER_TYPE } from '#lib/schemas/siteVisit.ts';
 	import ImageSelect from '@nahu/admin-kit/formComponents/ImageSelect.svelte';
 	import { Checkbox } from '@nahu/admin-kit/components/ui/checkbox/index.js';
 
@@ -105,7 +106,7 @@
 		const { ticketTypeId, quantity } = $form.items[index];
 		const t = typeOf(ticketTypeId);
 		if (!t) return;
-		const max = Math.min(t.maxQuantity ?? 50, 50);
+		const max = Math.min(t.maxQuantity ?? MAX_PER_TYPE, MAX_PER_TYPE);
 		$form.items[index].quantity =
 			by === 1
 				? quantity === 0
@@ -171,7 +172,7 @@
 								<button
 									type="button"
 									aria-label={m.visit_qty_more({ name: tr(t.name, locale) })}
-									disabled={item.quantity >= Math.min(t.maxQuantity ?? 50, 50)}
+									disabled={item.quantity >= Math.min(t.maxQuantity ?? MAX_PER_TYPE, MAX_PER_TYPE)}
 									onclick={() => step(i, 1)}
 								>
 									+

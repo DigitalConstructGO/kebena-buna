@@ -212,6 +212,13 @@ export async function seedBase() {
 			updatedBy: manager
 		},
 		{
+			key: 'orders.untouched_hold_minutes',
+			value: 60,
+			description:
+				'Unpaid web orders holding ticket places or a limited discount code, with no payment started, cancelled after (minutes)',
+			updatedBy: manager
+		},
+		{
 			key: 'refund.window_days',
 			value: 7,
 			description: 'Customer refund window (days)',

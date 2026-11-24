@@ -17,7 +17,8 @@ import {
 	recordConsent,
 	startPayment,
 	trackHref,
-	toCheckout
+	toCheckout,
+	UnpaidRefused
 } from '#lib/server/site.ts';
 import { transfersOn } from '#lib/server/transfers.ts';
 import { completeFreeOrder } from '#lib/server/freeOrders.ts';
@@ -164,6 +165,7 @@ export const actions: Actions = {
 			});
 		} catch (err) {
 			if (err instanceof DiscountRefused) return setError(form, 'discountCode', err.message);
+			if (err instanceof UnpaidRefused) return setError(form, 'phone', err.message);
 			// The same form sent twice at once: the second lands on the first one's order.
 			if (isDuplicateKey(err)) {
 				const again = await orderByIdempotencyKey(d.idempotencyKey);

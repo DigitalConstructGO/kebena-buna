@@ -4,13 +4,15 @@
  * through the order; a zero-total order is completed at once (`completeFreeOrder`), so free
  * tickets come with their QR codes straight away.
  */
-import { and, asc, eq, gt, isNull, or } from 'drizzle-orm';
+import { and, asc, eq, gt, isNull, ne, or, sum } from 'drizzle-orm';
 import { redirect, type RequestEvent } from '@sveltejs/kit';
 import { WriteRefused } from '@nahu/admin-kit/server/childCrud';
 import { db } from '#lib/server/db/index.ts';
 import {
 	audience,
 	event,
+	order,
+	orderLine,
 	ticketPrice,
 	ticketType,
 	visitDay,
@@ -25,12 +27,19 @@ import {
 	recordConsent,
 	startPayment,
 	trackHref,
-	toCheckout
+	toCheckout,
+	UnpaidRefused
 } from '#lib/server/site.ts';
 import { holdTicketPlaces } from '#lib/server/tickets.ts';
 import { completeFreeOrder } from '#lib/server/freeOrders.ts';
 import { DiscountRefused } from '#lib/server/discounts.ts';
 import { m } from '#lib/i18n.ts';
+
+/**
+ * Free tickets one phone may hold for one event or one arrival slot. Paid tickets are held back
+ * by the payment; free ones would otherwise let a script take every place.
+ */
+export const FREE_TICKETS_PER_PHONE = 10;
 
 /** A refusal to show under one form field. */
 export class OrderRefused extends Error {
@@ -236,11 +245,29 @@ export async function placeTicketOrder(evt: RequestEvent, input: TicketOrderInpu
 			});
 			if (input.marketingConsent)
 				await recordConsent(tx, evt, customerId, input, 'ticket_checkout');
+			if (placed.total < 0.005) {
+				const [held] = await tx
+					.select({ n: sum(orderLine.quantity) })
+					.from(orderLine)
+					.innerJoin(order, eq(orderLine.orderId, order.id))
+					.where(
+						and(
+							eq(order.contactPhone, input.phone),
+							ne(order.status, 'cancelled'),
+							isNull(order.deletedAt),
+							eventId ? eq(orderLine.eventId, eventId) : eq(orderLine.visitSlotId, slotId!)
+						)
+					);
+				// Counted with this order in, then undone with it if over.
+				if (Number(held?.n ?? 0) > FREE_TICKETS_PER_PHONE)
+					throw new OrderRefused('items', m.visit_err_free_limit({ max: FREE_TICKETS_PER_PHONE }));
+			}
 			const free = placed.total < 0.005 && (await completeFreeOrder(tx, placed.id));
 			return { ...placed, free, existing: false };
 		});
 	} catch (err) {
 		if (err instanceof DiscountRefused) throw new OrderRefused('discountCode', err.message);
+		if (err instanceof UnpaidRefused) throw new OrderRefused('phone', err.message);
 		if (err instanceof WriteRefused) {
 			throw new OrderRefused(
 				eventId ? 'items' : 'slotId',

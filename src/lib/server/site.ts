@@ -7,7 +7,7 @@
  */
 import { randomBytes } from 'node:crypto';
 import { unlink } from 'node:fs/promises';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, count, eq, isNull } from 'drizzle-orm';
 import { redirect, type RequestEvent } from '@sveltejs/kit';
 import { takeToken } from '@nahu/admin-kit/server/rateLimit';
 import { resolveStoredFile } from '@nahu/admin-kit/server/files';
@@ -35,6 +35,7 @@ import type { AddressSnapshot } from '#lib/server/db/orders.schema.ts';
 import { nextNumber } from '#lib/server/records.ts';
 import type { FormType } from '#lib/constants.ts';
 import { getLocale } from '#lib/paraglide/runtime.js';
+import { m } from '#lib/i18n.ts';
 import { siteHref } from '#lib/site/locale.ts';
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -202,6 +203,21 @@ export type WebOrder = {
 	discountCode?: string | null;
 };
 
+/** How many web orders one phone may leave waiting for payment at once. */
+export const MAX_UNPAID_PER_PHONE = 2;
+
+/**
+ * Refused because this phone already has `MAX_UNPAID_PER_PHONE` orders waiting for payment, each
+ * holding ticket places or a discount code. Shown under the form's phone field.
+ */
+export class UnpaidRefused extends Error {
+	readonly field = 'phone';
+	constructor() {
+		super(m.site_err_unpaid({ max: MAX_UNPAID_PER_PHONE }));
+		this.name = 'UnpaidRefused';
+	}
+}
+
 /** The tax on a tax-inclusive amount. */
 const taxIn = (gross: number, rate: number) => r2((gross * rate) / (100 + rate));
 
@@ -216,6 +232,20 @@ const taxIn = (gross: number, rate: number) => r2((gross * rate) / (100 + rate))
  */
 export async function createWebOrder(tx: Writer, event: RequestEvent, o: WebOrder) {
 	if (!o.lines.length) throw new Error('An order needs at least one line.');
+	// Each unpaid order holds what it sells (places, a code's uses) until it is paid or expires, so
+	// one phone may only keep a couple waiting: pay one, or let it lapse, before placing another.
+	const [waiting] = await tx
+		.select({ n: count() })
+		.from(order)
+		.where(
+			and(
+				eq(order.channel, 'web'),
+				eq(order.status, 'pending_payment'),
+				eq(order.contactPhone, o.contact.phone),
+				isNull(order.deletedAt)
+			)
+		);
+	if ((waiting?.n ?? 0) >= MAX_UNPAID_PER_PHONE) throw new UnpaidRefused();
 	const rates = await tx
 		.select({ id: taxRate.id, rate: taxRate.rate, isDefault: taxRate.isDefault })
 		.from(taxRate)

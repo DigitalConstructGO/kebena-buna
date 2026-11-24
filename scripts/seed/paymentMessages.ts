@@ -37,6 +37,33 @@ const CUSTOMER: Record<string, Wording> = {
 			'Merci, {{name}} ! La commande {{order_number}} de {{total}} ETB est enregistrée. Pour payer, envoyer un reçu de virement ou la suivre : {{order_url}}'
 		]
 	},
+	/** Asked for again on /track: only ever sent to the phone and email the order was placed with. */
+	'order.link': {
+		en: [
+			'Your Kebena order {{order_number}}',
+			'Here is the link to your Kebena order {{order_number}}: {{order_url}} If you did not ask for it, you can ignore this message.'
+		],
+		am: [
+			'የቀበና ትዕዛዝዎ {{order_number}}',
+			'የቀበና ትዕዛዝዎ {{order_number}} ሊንክ፦ {{order_url}} ይህን ካልጠየቁ መልዕክቱን ችላ ማለት ይችላሉ።'
+		],
+		om: [
+			'Ajaja Kebena kee {{order_number}}',
+			'Liinkii ajaja Kebena kee {{order_number}}: {{order_url}} Yoo kana hin gaafatin, ergaa kana dhiisuu dandeessa.'
+		],
+		ar: [
+			'طلبك من كبينا {{order_number}}',
+			'رابط طلبك من كبينا {{order_number}}: {{order_url}} إذا لم تطلبه، يمكنك تجاهل هذه الرسالة.'
+		],
+		it: [
+			'Il tuo ordine Kebena {{order_number}}',
+			'Ecco il link al tuo ordine Kebena {{order_number}}: {{order_url}} Se non l’hai richiesto, puoi ignorare questo messaggio.'
+		],
+		fr: [
+			'Votre commande Kebena {{order_number}}',
+			'Voici le lien de votre commande Kebena {{order_number}} : {{order_url}} Si vous ne l’avez pas demandé, ignorez ce message.'
+		]
+	},
 	'order.tickets': {
 		en: [
 			'Your Kebena tickets',

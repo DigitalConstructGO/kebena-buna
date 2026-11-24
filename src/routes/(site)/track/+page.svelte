@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { superForm } from 'sveltekit-superforms';
+	import { page } from '$app/state';
 	import { m } from '#lib/i18n.ts';
 	import Field from '#lib/site/Field.svelte';
 
@@ -38,7 +39,13 @@
 				autocomplete="tel"
 			/>
 		</div>
-		{#if $message}<p class="notice bad" role="alert">{$message}</p>{/if}
+		{#if $message}
+			{#if page.status < 400}
+				<p class="notice ok" role="status">{$message}</p>
+			{:else}
+				<p class="notice bad" role="alert">{$message}</p>
+			{/if}
+		{/if}
 		<button class="btn" disabled={$delayed}>{m.track_find_button()}</button>
 	</form>
 </div>

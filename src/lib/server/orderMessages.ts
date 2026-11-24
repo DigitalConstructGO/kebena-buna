@@ -134,3 +134,27 @@ export async function queueOrderMessage(tx: Writer, o: Order, to: OrderStatus): 
 		{ refType: 'order', refId: o.id, dedupe: `order:${o.id}:${to}` }
 	);
 }
+
+/**
+ * Sends an order's link (`order.link`) to the phone and email it was placed with, for a buyer who
+ * asked for it on `/track`. Only those two ever get it, so knowing an order's number and phone is
+ * not enough to open it. At most one per order every ten minutes, so the form cannot be used to
+ * flood someone's phone.
+ */
+export async function queueOrderLink(tx: Writer, o: Order): Promise<number> {
+	const url = orderUrl(o);
+	if (!url) return 0;
+	const window = Math.floor(Date.now() / (10 * 60_000));
+	return queueMessage(
+		tx,
+		'order.link',
+		{
+			phone: o.contactPhone,
+			email: o.contactEmail,
+			locale: o.locale,
+			customerId: o.customerId
+		},
+		{ name: o.contactName ?? '', order_number: o.number, order_url: url },
+		{ refType: 'order', refId: o.id, dedupe: `order:${o.id}:link:${window}` }
+	);
+}

@@ -100,6 +100,11 @@
 							})}
 						</p>
 					{:else}
+						{#if data.holdEndsAt}
+							<p class="notice" role="status">
+								{m.track_hold_notice({ time: formatDateTime(data.holdEndsAt) })}
+							</p>
+						{/if}
 						{#if data.transfer?.status === 'failed'}
 							<p class="notice bad" role="alert">
 								{m.track_transfer_rejected({ reason: data.transfer.failureReason ?? '' })}

@@ -28,6 +28,7 @@ import {
 import { latestTransfer, submitTransfer, transferAccounts } from '#lib/server/transfers.ts';
 import { transferSchema } from '#lib/schemas/checkout.ts';
 import { ticketQr } from '#lib/server/ticketQr.ts';
+import { untouchedHoldEndsAt } from '#lib/server/jobs/expireUnpaidOrders.ts';
 import { m } from '#lib/i18n.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -147,6 +148,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
 				qr: t.status === 'valid' || t.status === 'used' ? (await ticketQr(t)).svg : null
 			}))
 		),
+		// Places or a limited code are held only so long before a payment starts (see the job).
+		holdEndsAt: payable && !transfer ? await untouchedHoldEndsAt(o) : null,
 		canPay: paymentsOn() && payable && !waiting,
 		accounts: waiting ? [] : accounts,
 		transfer: transfer && payable ? { ...transfer, amount: Number(transfer.amount) } : null,
