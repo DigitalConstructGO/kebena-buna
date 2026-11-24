@@ -2,6 +2,7 @@
 	import SiteNav from '#lib/components/museum/SiteNav.svelte';
 	import SiteFooter from '#lib/components/museum/SiteFooter.svelte';
 	import PageArt from '#lib/site/PageArt.svelte';
+	import ChatWidget from '#lib/components/chat/ChatWidget.svelte';
 	import { footerContent } from '#lib/content/museum.ts';
 	import { setKitLabels } from '@nahu/admin-kit/labels';
 	import { publicKitLabels } from '#lib/site/kitLabels.ts';
@@ -27,4 +28,5 @@
 		{@render children()}
 	</main>
 	<SiteFooter content={footerContent(pages)} />
+	{#if data.chatOn}<ChatWidget />{/if}
 </div>

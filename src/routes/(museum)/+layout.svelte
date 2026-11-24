@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
+	import { page } from '$app/state';
 	import { setKitLabels } from '@nahu/admin-kit/labels';
+	import ChatWidget from '#lib/components/chat/ChatWidget.svelte';
 	import { lettering } from '#lib/lettering.js';
 	import { publicKitLabels } from '#lib/site/kitLabels.ts';
 	import '#lib/site/museum.css';
@@ -25,4 +27,5 @@
 <!-- The design's look is scoped to `.museum` (`museum.css`), clear of the dashboard's theme. -->
 <div class="museum" bind:this={root}>
 	{@render children()}
+	{#if page.data.chatOn}<ChatWidget />{/if}
 </div>

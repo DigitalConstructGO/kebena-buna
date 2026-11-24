@@ -50,6 +50,20 @@ export const variables = defineEnvVars({
 		description:
 			"Where uploads are written and served from (the kit's `files.ts`). Unset: `.tempFiles` in the working directory. Declared here, or `$env/dynamic/private` never hands it to the kit."
 	},
+	GEMINI_API_KEY: {
+		schema: optional,
+		description:
+			'Google Gemini API key for the site assistant (`/api/chat`). Get one at https://aistudio.google.com/apikey. Unset: the chat button is hidden and `/api/chat` answers 503.'
+	},
+	GEMINI_MODEL: {
+		description:
+			'The Gemini models the site assistant uses, comma-separated: the first, then the next whenever one is out of quota or overloaded.',
+		schema: (value) =>
+			(value || 'gemini-3.8-flash,gemini-3.7-flash,gemini-3.5-flash,gemini-flash-latest')
+				.split(',')
+				.map((m) => m.trim())
+				.filter(Boolean)
+	},
 	JOBS_ENABLED: {
 		schema: (value) => value !== 'false',
 		description:
