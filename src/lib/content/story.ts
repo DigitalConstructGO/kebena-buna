@@ -5,6 +5,7 @@
  * The content is built when the page asks for it, in the request's language.
  */
 import { m } from '#lib/i18n.ts';
+import { picture } from './picture.ts';
 import type { Locale } from '#lib/paraglide/runtime.js';
 
 export type StoryImage = {
@@ -190,7 +191,19 @@ function historyContent(): HistoryContent {
 				title: text(`${p}_title`),
 				body: paragraphs(`${p}_body`),
 				tradition: c.tradition,
-				image: { src: c.src, alt: text(`${p}_alt`), illustration: c.illustration }
+				image: {
+					// swappable from the dashboard: history_ch_<id>_photo holds the picture's address
+					src: picture(
+						(inputs, options) =>
+							(messages[`${p}_photo`] as Parameters<typeof picture>[0] | undefined)?.(
+								inputs,
+								options
+							) ?? '',
+						c.src
+					),
+					alt: text(`${p}_alt`),
+					illustration: c.illustration
+				}
 			};
 		})
 	};

@@ -230,10 +230,28 @@
 				// once the headline is all there, the pointer letters it again, as on every other heading
 				const titleEl = root.querySelector('.am-title');
 				const again = hold(gsap, () => head);
+				let touched = false;
 				const onOver = () => {
-					if (tl.progress() >= 0.95) again.empty();
+					if (tl.progress() < 0.95) return;
+					touched = true;
+					again.empty();
 				};
-				const onLeave = () => again.fill();
+				const onLeave = () => {
+					if (tl.progress() >= 0.95) again.fill();
+				};
+				/*
+				 * Scrolled back with the pointer's hand still on the headline: the scene takes its letters
+				 * back, or they would be painted in over the captions when the pointer moves off. Letters
+				 * the scene has not reached yet are blanked; the rest are set by running it through again.
+				 */
+				tl.eventCallback('onUpdate', () => {
+					if (!touched || tl.progress() >= 0.95) return;
+					touched = false;
+					again.reset();
+					const p = tl.progress();
+					gsap.set(head, { '--line': 0, '--fill': 0 });
+					tl.progress(0, true).progress(p, true);
+				});
 				titleEl?.addEventListener('pointerenter', onOver);
 				titleEl?.addEventListener('pointerleave', onLeave);
 				tl.progress(Math.min(1, Math.max(0, -span().r.top / span().run)));

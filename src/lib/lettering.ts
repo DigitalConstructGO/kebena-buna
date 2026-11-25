@@ -63,6 +63,11 @@ export function hold(gsap: Gsap, bits: () => Element[]) {
 		},
 		kill() {
 			tl?.kill();
+		},
+		/** Let go without painting anything: whoever owns the letters sets them from here. */
+		reset() {
+			tl?.kill();
+			out = false;
 		}
 	};
 }
@@ -235,8 +240,10 @@ export function lettering(root: HTMLElement) {
 		const el = e.target as Element | null;
 		settle(el);
 		if (!el || el === root || !(el instanceof HTMLElement)) return;
-		// letters and marked type have their own way in; form fields are left alone
-		if (el.closest('.kb-ch, [data-letter], [data-no-letter], input, textarea, select')) return;
+		// letters and marked type have their own way in (the map scene letters its own words as it
+		// scrolls); form fields are left alone
+		if (el.closest('.kb-ch, .am-ch, [data-letter], [data-no-letter], input, textarea, select'))
+			return;
 		if (states.has(el) || [...states.keys()].some((h) => h.contains(el))) return;
 		if (!holdsWords(el)) return;
 		el.classList.add('kb-run');

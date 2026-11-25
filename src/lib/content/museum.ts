@@ -8,6 +8,7 @@
  * numbers stay here in code.
  */
 import { m } from '#lib/i18n.ts';
+import { picture } from './picture.ts';
 
 export type Fact = {
 	/** Counted up on scroll. */
@@ -147,6 +148,8 @@ export type VisitContent = {
 	beats: [string, string];
 	/** What waits at the museum, popping up around its pin (up to six). */
 	tags: string[];
+	/** The building, behind the closing headline. */
+	photo: string;
 };
 
 export type FooterContent = {
@@ -186,12 +189,12 @@ function entrance(): EntranceContent {
 		title: m.home_entrance_title(),
 		body: paras(m.home_entrance_body()),
 		photo: {
-			src: '/halls/drying-beds.webp',
+			src: picture(m.home_entrance_photo, '/halls/drying-beds.webp'),
 			alt: m.home_entrance_photo_alt(),
 			width: 844,
 			height: 649
 		},
-		backdrop: '/hero/museum-soft.jpg',
+		backdrop: picture(m.home_entrance_backdrop, '/hero/museum-soft.jpg'),
 		facts: [
 			{
 				value: 30,
@@ -229,7 +232,7 @@ function halls(): HallsContent {
 				text: m.home_halls_origin_text(),
 				tagline: m.home_halls_origin_tagline(),
 				href: '#entrance',
-				photo: '/halls/drying-beds.webp'
+				photo: picture(m.home_halls_origin_photo, '/halls/drying-beds.webp')
 			},
 			{
 				id: 'farms',
@@ -237,7 +240,7 @@ function halls(): HallsContent {
 				text: m.home_halls_farms_text(),
 				tagline: m.home_halls_farms_tagline(),
 				href: '#farms',
-				photo: '/halls/hall-02.webp'
+				photo: picture(m.home_halls_farms_photo, '/halls/hall-02.webp')
 			},
 			{
 				id: 'collection',
@@ -245,7 +248,7 @@ function halls(): HallsContent {
 				text: m.home_halls_collection_text(),
 				tagline: m.home_halls_collection_tagline(),
 				href: '#collection',
-				photo: '/halls/hall-04.webp'
+				photo: picture(m.home_halls_collection_photo, '/halls/hall-04.webp')
 			},
 			{
 				id: 'people',
@@ -253,7 +256,7 @@ function halls(): HallsContent {
 				text: m.home_halls_people_text(),
 				tagline: m.home_halls_people_tagline(),
 				href: '#people',
-				photo: '/halls/hall-05.webp'
+				photo: picture(m.home_halls_people_photo, '/halls/hall-05.webp')
 			}
 		]
 	};
@@ -271,21 +274,30 @@ function journey(): JourneyContent {
 				title: m.home_journey_harvest_title(),
 				accent: m.home_journey_harvest_accent(),
 				text: m.home_journey_harvest_text(),
-				photo: { src: '/journey/harvest.webp', alt: m.home_journey_harvest_alt() }
+				photo: {
+					src: picture(m.home_journey_harvest_photo, '/journey/harvest.webp'),
+					alt: m.home_journey_harvest_alt()
+				}
 			},
 			{
 				id: 'drying',
 				title: m.home_journey_drying_title(),
 				accent: m.home_journey_drying_accent(),
 				text: m.home_journey_drying_text(),
-				photo: { src: '/journey/drying.webp', alt: m.home_journey_drying_alt() }
+				photo: {
+					src: picture(m.home_journey_drying_photo, '/journey/drying.webp'),
+					alt: m.home_journey_drying_alt()
+				}
 			},
 			{
 				id: 'sorting',
 				title: m.home_journey_sorting_title(),
 				accent: m.home_journey_sorting_accent(),
 				text: m.home_journey_sorting_text(),
-				photo: { src: '/journey/sorting.webp', alt: m.home_journey_sorting_alt() }
+				photo: {
+					src: picture(m.home_journey_sorting_photo, '/journey/sorting.webp'),
+					alt: m.home_journey_sorting_alt()
+				}
 			},
 			{
 				id: 'roasting',
@@ -294,14 +306,20 @@ function journey(): JourneyContent {
 				title: m.home_journey_roasting_title(),
 				accent: m.home_journey_roasting_accent(),
 				text: m.home_journey_roasting_text(),
-				photo: { src: '/journey/roasting.webp', alt: m.home_journey_roasting_alt() }
+				photo: {
+					src: picture(m.home_journey_roasting_photo, '/journey/roasting.webp'),
+					alt: m.home_journey_roasting_alt()
+				}
 			},
 			{
 				id: 'grinding',
 				title: m.home_journey_grinding_title(),
 				accent: m.home_journey_grinding_accent(),
 				text: m.home_journey_grinding_text(),
-				photo: { src: '/journey/grinding.webp', alt: m.home_journey_grinding_alt() }
+				photo: {
+					src: picture(m.home_journey_grinding_photo, '/journey/grinding.webp'),
+					alt: m.home_journey_grinding_alt()
+				}
 			},
 			{
 				id: 'jebena',
@@ -309,14 +327,20 @@ function journey(): JourneyContent {
 				title: m.home_journey_jebena_title(),
 				accent: m.home_journey_jebena_accent(),
 				text: m.home_journey_jebena_text(),
-				photo: { src: '/journey/jebena.webp', alt: m.home_journey_jebena_alt() }
+				photo: {
+					src: picture(m.home_journey_jebena_photo, '/journey/jebena.webp'),
+					alt: m.home_journey_jebena_alt()
+				}
 			},
 			{
 				id: 'cup',
 				title: m.home_journey_cup_title(),
 				accent: m.home_journey_cup_accent(),
 				text: m.home_journey_cup_text(),
-				photo: { src: '/journey/cup.webp', alt: m.home_journey_cup_alt() }
+				photo: {
+					src: picture(m.home_journey_cup_photo, '/journey/cup.webp'),
+					alt: m.home_journey_cup_alt()
+				}
 			}
 		],
 		end: m.home_journey_end(),
@@ -336,13 +360,25 @@ function farms(): FarmsContent {
 				id: 'gera',
 				kind: m.home_farms_kind_estate(),
 				gallery: [
-					{ src: '/farms/helix/02-forest.webp', alt: m.home_farms_gera_gallery_1_alt() },
-					{ src: '/farms/helix/03-washed-gera.webp', alt: m.home_farms_gera_gallery_2_alt() },
-					{ src: '/farms/helix/04-harvest.webp', alt: m.home_farms_gera_gallery_3_alt() }
+					{
+						src: picture(m.home_farms_gera_gallery_1_photo, '/farms/helix/02-forest.webp'),
+						alt: m.home_farms_gera_gallery_1_alt()
+					},
+					{
+						src: picture(m.home_farms_gera_gallery_2_photo, '/farms/helix/03-washed-gera.webp'),
+						alt: m.home_farms_gera_gallery_2_alt()
+					},
+					{
+						src: picture(m.home_farms_gera_gallery_3_photo, '/farms/helix/04-harvest.webp'),
+						alt: m.home_farms_gera_gallery_3_alt()
+					}
 				],
 				title: m.home_farms_gera_title(),
 				text: m.home_farms_gera_text(),
-				photo: { src: '/farms/helix/01-gera.webp', alt: m.home_farms_gera_alt() },
+				photo: {
+					src: picture(m.home_farms_gera_photo, '/farms/helix/01-gera.webp'),
+					alt: m.home_farms_gera_alt()
+				},
 				meta: [
 					{ label: m.home_farms_label_region(), value: m.home_farms_gera_region() },
 					{ label: m.home_farms_label_farming(), value: organic },
@@ -354,15 +390,27 @@ function farms(): FarmsContent {
 				kind: m.home_farms_kind_estate(),
 				gallery: [
 					{
-						src: '/farms/helix/06-unwashed-djimmah.webp',
+						src: picture(
+							m.home_farms_djimmah_gallery_1_photo,
+							'/farms/helix/06-unwashed-djimmah.webp'
+						),
 						alt: m.home_farms_djimmah_gallery_1_alt()
 					},
-					{ src: '/farms/helix/07-hall-04.webp', alt: m.home_farms_djimmah_gallery_2_alt() },
-					{ src: '/farms/helix/08-hall-02.webp', alt: m.home_farms_djimmah_gallery_3_alt() }
+					{
+						src: picture(m.home_farms_djimmah_gallery_2_photo, '/farms/helix/07-hall-04.webp'),
+						alt: m.home_farms_djimmah_gallery_2_alt()
+					},
+					{
+						src: picture(m.home_farms_djimmah_gallery_3_photo, '/farms/helix/08-hall-02.webp'),
+						alt: m.home_farms_djimmah_gallery_3_alt()
+					}
 				],
 				title: m.home_farms_djimmah_title(),
 				text: m.home_farms_djimmah_text(),
-				photo: { src: '/farms/helix/05-djimmah.webp', alt: m.home_farms_djimmah_alt() },
+				photo: {
+					src: picture(m.home_farms_djimmah_photo, '/farms/helix/05-djimmah.webp'),
+					alt: m.home_farms_djimmah_alt()
+				},
 				meta: [
 					{ label: m.home_farms_label_region(), value: m.home_farms_djimmah_region() },
 					{ label: m.home_farms_label_farming(), value: organic },
@@ -374,11 +422,23 @@ function farms(): FarmsContent {
 				kind: m.home_farms_kind_stations(),
 				title: m.home_farms_stations_title({ count: 8 }),
 				text: m.home_farms_stations_text(),
-				photo: { src: '/farms/helix/09-drying-beds.webp', alt: m.home_farms_stations_alt() },
+				photo: {
+					src: picture(m.home_farms_stations_photo, '/farms/helix/09-drying-beds.webp'),
+					alt: m.home_farms_stations_alt()
+				},
 				gallery: [
-					{ src: '/farms/helix/10-drying-beds.webp', alt: m.home_farms_stations_gallery_1_alt() },
-					{ src: '/farms/helix/11-drying.webp', alt: m.home_farms_stations_gallery_2_alt() },
-					{ src: '/farms/helix/12-hall-05.webp', alt: m.home_farms_stations_gallery_3_alt() }
+					{
+						src: picture(m.home_farms_stations_gallery_1_photo, '/farms/helix/10-drying-beds.webp'),
+						alt: m.home_farms_stations_gallery_1_alt()
+					},
+					{
+						src: picture(m.home_farms_stations_gallery_2_photo, '/farms/helix/11-drying.webp'),
+						alt: m.home_farms_stations_gallery_2_alt()
+					},
+					{
+						src: picture(m.home_farms_stations_gallery_3_photo, '/farms/helix/12-hall-05.webp'),
+						alt: m.home_farms_stations_gallery_3_alt()
+					}
 				],
 				meta: [
 					{ label: m.home_farms_label_districts(), value: m.home_farms_stations_districts() },
@@ -394,14 +454,26 @@ function farms(): FarmsContent {
 				kind: m.home_farms_kind_mills(),
 				title: m.home_farms_mills_title({ count: 4 }),
 				text: m.home_farms_mills_text(),
-				photo: { src: '/farms/helix/13-sorting.webp', alt: m.home_farms_mills_alt() },
+				photo: {
+					src: picture(m.home_farms_mills_photo, '/farms/helix/13-sorting.webp'),
+					alt: m.home_farms_mills_alt()
+				},
 				gallery: [
 					{
-						src: '/farms/helix/14-unwashed-nekemte.webp',
+						src: picture(
+							m.home_farms_mills_gallery_1_photo,
+							'/farms/helix/14-unwashed-nekemte.webp'
+						),
 						alt: m.home_farms_mills_gallery_1_alt()
 					},
-					{ src: '/farms/helix/15-hall-03.webp', alt: m.home_farms_mills_gallery_2_alt() },
-					{ src: '/farms/helix/16-washed-limmu.webp', alt: m.home_farms_mills_gallery_3_alt() }
+					{
+						src: picture(m.home_farms_mills_gallery_2_photo, '/farms/helix/15-hall-03.webp'),
+						alt: m.home_farms_mills_gallery_2_alt()
+					},
+					{
+						src: picture(m.home_farms_mills_gallery_3_photo, '/farms/helix/16-washed-limmu.webp'),
+						alt: m.home_farms_mills_gallery_3_alt()
+					}
 				],
 				meta: [
 					{ label: m.home_farms_label_work(), value: m.home_farms_mills_work() },
@@ -425,21 +497,30 @@ function process(): ProcessContent {
 				moisture: 65,
 				title: m.home_process_picking_title(),
 				text: m.home_process_picking_text(),
-				photo: { src: '/farms/gera.webp', alt: m.home_process_picking_alt() }
+				photo: {
+					src: picture(m.home_process_picking_photo, '/farms/gera.webp'),
+					alt: m.home_process_picking_alt()
+				}
 			},
 			{
 				id: 'washed',
 				moisture: 52,
 				title: m.home_process_washed_title(),
 				text: m.home_process_washed_text(),
-				photo: { src: '/collection/washed-limmu.webp', alt: m.home_process_washed_alt() }
+				photo: {
+					src: picture(m.home_process_washed_photo, '/collection/washed-limmu.webp'),
+					alt: m.home_process_washed_alt()
+				}
 			},
 			{
 				id: 'sun-dried',
 				moisture: 11.5,
 				title: m.home_process_sun_dried_title(),
 				text: m.home_process_sun_dried_text(),
-				photo: { src: '/journey/drying.webp', alt: m.home_process_sun_dried_alt() }
+				photo: {
+					src: picture(m.home_process_sun_dried_photo, '/journey/drying.webp'),
+					alt: m.home_process_sun_dried_alt()
+				}
 			},
 			{
 				id: 'dry-milling',
@@ -447,14 +528,20 @@ function process(): ProcessContent {
 				moment: m.home_process_dry_milling_moment(),
 				title: m.home_process_dry_milling_title(),
 				text: m.home_process_dry_milling_text(),
-				photo: { src: '/journey/sorting.webp', alt: m.home_process_dry_milling_alt() }
+				photo: {
+					src: picture(m.home_process_dry_milling_photo, '/journey/sorting.webp'),
+					alt: m.home_process_dry_milling_alt()
+				}
 			},
 			{
 				id: 'export',
 				moisture: 11,
 				title: m.home_process_export_title(),
 				text: m.home_process_export_text(),
-				photo: { src: '/collection/unwashed-nekemte.webp', alt: m.home_process_export_alt() }
+				photo: {
+					src: picture(m.home_process_export_photo, '/collection/unwashed-nekemte.webp'),
+					alt: m.home_process_export_alt()
+				}
 			}
 		]
 	};
@@ -486,7 +573,10 @@ function collection(): CollectionContent {
 				id: 'unwashed-djimmah',
 				title: m.home_collection_unwashed_djimmah_title(),
 				photo: {
-					src: '/collection/unwashed-djimmah.webp',
+					src: picture(
+						m.home_collection_unwashed_djimmah_photo,
+						'/collection/unwashed-djimmah.webp'
+					),
 					alt: m.home_collection_unwashed_djimmah_alt()
 				},
 				specs: specs(m.home_collection_unwashed_djimmah_origin(), false, [1, 5])
@@ -494,20 +584,29 @@ function collection(): CollectionContent {
 			{
 				id: 'washed-limmu',
 				title: m.home_collection_washed_limmu_title(),
-				photo: { src: '/collection/washed-limmu.webp', alt: m.home_collection_washed_limmu_alt() },
+				photo: {
+					src: picture(m.home_collection_washed_limmu_photo, '/collection/washed-limmu.webp'),
+					alt: m.home_collection_washed_limmu_alt()
+				},
 				specs: specs(m.home_place_limu(), true, [1, 2])
 			},
 			{
 				id: 'washed-gera',
 				title: m.home_collection_washed_gera_title(),
-				photo: { src: '/collection/washed-gera.webp', alt: m.home_collection_washed_gera_alt() },
+				photo: {
+					src: picture(m.home_collection_washed_gera_photo, '/collection/washed-gera.webp'),
+					alt: m.home_collection_washed_gera_alt()
+				},
 				specs: specs(m.home_place_gera(), true, [1, 2])
 			},
 			{
 				id: 'unwashed-nekemte',
 				title: m.home_collection_unwashed_nekemte_title(),
 				photo: {
-					src: '/collection/unwashed-nekemte.webp',
+					src: picture(
+						m.home_collection_unwashed_nekemte_photo,
+						'/collection/unwashed-nekemte.webp'
+					),
 					alt: m.home_collection_unwashed_nekemte_alt()
 				},
 				specs: specs(m.home_place_nekemte(), false, [1, 5])
@@ -608,7 +707,10 @@ function people(): PeopleContent {
 			{ value: 4000, suffix: '+', label: m.home_people_stat_seasonal() }
 		],
 		body: m.home_people_body(),
-		photo: { src: '/people/drying-beds.webp', alt: m.home_people_photo_alt() }
+		photo: {
+			src: picture(m.home_people_photo, '/people/drying-beds.webp'),
+			alt: m.home_people_photo_alt()
+		}
 	};
 }
 
@@ -643,6 +745,7 @@ function visit(): VisitContent {
 	return {
 		eyebrow: m.home_visit_eyebrow(),
 		title: m.home_visit_title(),
+		photo: picture(m.home_visit_photo, '/tour/building.webp'),
 		rows: [
 			{ label: m.contact_address(), value: m.contact_address_value() },
 			{ label: m.contact_hours(), value: m.contact_hours_value() },

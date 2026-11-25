@@ -13,6 +13,7 @@
 	beats={content.beats}
 	tags={content.tags}
 	place={content.place}
+	photo={content.photo}
 	rows={content.rows}
 	actions={[
 		{ ...content.directions, external: true },

@@ -1,4 +1,5 @@
 import { m } from '#lib/i18n.ts';
+import { picture } from './picture.ts';
 
 /** The Kebena Coffee bag. The notes are read off the printed 250 g bag; the larger sizes are placeholders. */
 export type BagSize = {
@@ -18,7 +19,7 @@ export function bagContent() {
 		title: m.museum_bag_title(),
 		text: m.museum_bag_text(),
 		photo: {
-			src: '/hero/bag-front.jpg',
+			src: picture(m.museum_bag_photo, '/hero/bag-front.jpg'),
 			alt: m.museum_bag_photo_alt(),
 			width: 452,
 			height: 632
