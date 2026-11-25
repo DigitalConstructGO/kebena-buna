@@ -54,7 +54,13 @@
 	let near = $state(false);
 	/** Below 900px the ring sits above a details panel and turns the lighter 440px photos. */
 	let small = $state(false);
-	const ringSrc = (src: string) => (small ? src.replace(/\.webp$/, '-440.webp') : src);
+	/**
+	 * A photo's smaller copy. Only the photos the design shipped with have them: one swapped in from
+	 * the dashboard is used as it is.
+	 */
+	const sized = (src: string, w: 280 | 440) =>
+		src.startsWith('/farms/') ? src.replace(/\.webp$/, `-${w}.webp`) : src;
+	const ringSrc = (src: string) => (small ? sized(src, 440) : src);
 	let tabs = $state<HTMLElement>();
 	const starts = $derived(content.farms.map((_, part) => panels.findIndex((p) => p.part === part)));
 
@@ -77,7 +83,7 @@
 
 	onMount(() =>
 		whenIdle(() => {
-			const { gsap } = setupGsap();
+			const { gsap, ScrollTrigger } = setupGsap();
 			const n = panels.length;
 			if (n < 2) return;
 			const mm = gsap.matchMedia();
@@ -104,7 +110,7 @@
 						});
 						return;
 					}
-					const stage = root.querySelector<HTMLElement>('.stage')!;
+					const run = root.querySelector<HTMLElement>('.run')!;
 					const helix = root.querySelector<HTMLElement>('.helix')!;
 					const cards = [...root.querySelectorAll<HTMLElement>('.slice')];
 					const proxy = { a: 0 };
@@ -112,6 +118,14 @@
 					const shown: string[] = [];
 					small = narrow;
 					near = true;
+					/*
+					 * The hall holds still on a runway of its own (sticky), not pinned by the script: a pin
+					 * lifts the hall out of the page and drops it back as it ends, and that swap showed as a
+					 * blank flash on the way down to the collection.
+					 */
+					// a thumb travels less than a wheel: phones turn a photo every quarter screen
+					run.style.setProperty('--turns', String((narrow ? 0.24 : 0.32) * n));
+					root.dataset.ring = '';
 
 					const apply = () => {
 						const a = proxy.a;
@@ -135,20 +149,21 @@
 						ease: 'none',
 						onUpdate: apply,
 						scrollTrigger: {
-							trigger: stage,
+							trigger: run,
 							start: 'top top',
-							// a thumb travels less than a wheel: phones turn a photo every quarter screen
-							end: () => `+=${window.innerHeight * (narrow ? 0.24 : 0.32) * n}`,
-							pin: true,
-							scrub: 0.8,
-							anticipatePin: 1
+							end: 'bottom bottom',
+							scrub: 0.8
 						}
 					});
 					pinned = tween.scrollTrigger;
 					apply();
+					// the hall just grew by its runway: everything measured below it has moved
+					ScrollTrigger.refresh();
 
 					return () => {
 						pinned = undefined;
+						delete root.dataset.ring;
+						run.style.removeProperty('--turns');
 						helix.style.transform = '';
 						shown.length = 0;
 						cards.forEach((el) => {
@@ -175,7 +190,7 @@
 
 	/** The phone strip shows each photo at most 260px wide; the full 520px file is for the desktop ring. */
 	const stripSet = (src: string) =>
-		`${src.replace(/\.webp$/, '-280.webp')} 280w, ${src.replace(/\.webp$/, '-440.webp')} 440w`;
+		src.startsWith('/farms/') ? `${sized(src, 280)} 280w, ${sized(src, 440)} 440w` : undefined;
 
 	/** A photo pressed, on the band or a strip, opens its set large, starting on that one. */
 	let shown = $state<{ title: string; photos: Photo[] }>({ title: '', photos: [] });
@@ -194,116 +209,118 @@
 		<h2 class="kb-title" id="farms-title">{content.title}</h2>
 		<p class="intro">{content.intro}</p>
 	</header>
-	<div class="stage">
-		{#if panels.length}
-			<!-- the turning ribbon: every photo of every part, wound round one cylinder -->
-			<div class="ring-view" aria-hidden="true" {@attach awayWhenHidden}>
-				<div class="tilt">
-					<div class="helix">
-						{#each slices as sl (sl.key)}
-							<!-- pointer-only: the band is decorative, and the list below carries every photo -->
-							<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-							<div
-								class={['slice', { edge: sl.k === 0 }]}
-								style:--j={sl.j}
-								style:--k={sl.k}
-								style:background-image={near ? `url(${ringSrc(sl.src)})` : undefined}
-								onclick={() =>
-									show(
-										content.title,
-										panels.map((p) => ({
-											src: p.photo.src,
-											alt: `${content.farms[p.part].title}: ${p.photo.alt}`
-										})),
-										sl.at
-									)}
-							></div>
-						{/each}
+	<div class="run">
+		<div class="stage">
+			{#if panels.length}
+				<!-- the turning ribbon: every photo of every part, wound round one cylinder -->
+				<div class="ring-view" aria-hidden="true" {@attach awayWhenHidden}>
+					<div class="tilt">
+						<div class="helix">
+							{#each slices as sl (sl.key)}
+								<!-- pointer-only: the band is decorative, and the list below carries every photo -->
+								<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+								<div
+									class={['slice', { edge: sl.k === 0 }]}
+									style:--j={sl.j}
+									style:--k={sl.k}
+									style:background-image={near ? `url(${ringSrc(sl.src)})` : undefined}
+									onclick={() =>
+										show(
+											content.title,
+											panels.map((p) => ({
+												src: p.photo.src,
+												alt: `${content.farms[p.part].title}: ${p.photo.alt}`
+											})),
+											sl.at
+										)}
+								></div>
+							{/each}
+						</div>
 					</div>
 				</div>
-			</div>
 
-			<!-- left: the details of the part in front, its number large beneath -->
-			{#if current}
-				<div class="facts">
-					{#key active}
-						<dl class="meta">
-							{#each current.meta as item (item.label)}
-								<div>
-									<dt>{item.label}</dt>
-									<dd>{item.value}</dd>
-								</div>
-							{/each}
-						</dl>
-					{/key}
-				</div>
-				<p class="count" aria-hidden="true">
-					<span class="small">{current.kind ?? m.home_farms_kind_estate()}</span>
-					<span class="big">{pad(active + 1)}</span><span class="of">
-						/{pad(content.farms.length)}
-					</span>
-				</p>
-			{/if}
+				<!-- left: the details of the part in front, its number large beneath -->
+				{#if current}
+					<div class="facts">
+						{#key active}
+							<dl class="meta">
+								{#each current.meta as item (item.label)}
+									<div>
+										<dt>{item.label}</dt>
+										<dd>{item.value}</dd>
+									</div>
+								{/each}
+							</dl>
+						{/key}
+					</div>
+					<p class="count" aria-hidden="true">
+						<span class="small">{current.kind ?? m.home_farms_kind_estate()}</span>
+						<span class="big">{pad(active + 1)}</span><span class="of">
+							/{pad(content.farms.length)}
+						</span>
+					</p>
+				{/if}
 
-			<!-- right: every part, the one in front named large -->
-			<ol class="list">
-				{#each content.farms as farm, i (farm.id)}
-					<li class={{ on: i === active }}>
-						<button
-							type="button"
-							aria-current={i === active ? 'true' : undefined}
-							onclick={() => go(i)}
-						>
-							<span class="kind">{farm.kind ?? m.home_farms_kind_estate()}</span>
-							<span class="name">{farm.title}</span>
-							<span class="rule" aria-hidden="true"></span>
-							<span class="text">{farm.text}</span>
-						</button>
-					</li>
-				{/each}
-			</ol>
-
-			<!-- tablets and phones: the part in front, under the ring -->
-			{#if current}
-				<div class="now">
-					<div class="tabs" bind:this={tabs}>
-						{#each content.farms as farm, i (farm.id)}
+				<!-- right: every part, the one in front named large -->
+				<ol class="list">
+					{#each content.farms as farm, i (farm.id)}
+						<li class={{ on: i === active }}>
 							<button
 								type="button"
-								class={{ on: i === active }}
 								aria-current={i === active ? 'true' : undefined}
 								onclick={() => go(i)}
 							>
-								{farm.title}
+								<span class="kind">{farm.kind ?? m.home_farms_kind_estate()}</span>
+								<span class="name">{farm.title}</span>
+								<span class="rule" aria-hidden="true"></span>
+								<span class="text">{farm.text}</span>
 							</button>
-						{/each}
+						</li>
+					{/each}
+				</ol>
+
+				<!-- tablets and phones: the part in front, under the ring -->
+				{#if current}
+					<div class="now">
+						<div class="tabs" bind:this={tabs}>
+							{#each content.farms as farm, i (farm.id)}
+								<button
+									type="button"
+									class={{ on: i === active }}
+									aria-current={i === active ? 'true' : undefined}
+									onclick={() => go(i)}
+								>
+									{farm.title}
+								</button>
+							{/each}
+						</div>
+						<!-- every part is laid in the same cell, so the panel keeps the height of the longest and the ring never resizes -->
+						<div class="bodies">
+							{#each content.farms as farm, i (farm.id)}
+								<div class={['now-body', { on: i === active }]} aria-hidden={i !== active}>
+									<p class="now-kind">
+										{pad(i + 1)} / {pad(content.farms.length)} · {farm.kind ??
+											m.home_farms_kind_estate()}
+									</p>
+									<p class="now-name">{farm.title}</p>
+									<p class="now-text">{farm.text}</p>
+									{#if farm.meta.length}
+										<dl class="now-meta">
+											{#each farm.meta as item (item.label)}
+												<div>
+													<dt>{item.label}</dt>
+													<dd>{tie(item.value)}</dd>
+												</div>
+											{/each}
+										</dl>
+									{/if}
+								</div>
+							{/each}
+						</div>
 					</div>
-					<!-- every part is laid in the same cell, so the panel keeps the height of the longest and the ring never resizes -->
-					<div class="bodies">
-						{#each content.farms as farm, i (farm.id)}
-							<div class={['now-body', { on: i === active }]} aria-hidden={i !== active}>
-								<p class="now-kind">
-									{pad(i + 1)} / {pad(content.farms.length)} · {farm.kind ??
-										m.home_farms_kind_estate()}
-								</p>
-								<p class="now-name">{farm.title}</p>
-								<p class="now-text">{farm.text}</p>
-								{#if farm.meta.length}
-									<dl class="now-meta">
-										{#each farm.meta as item (item.label)}
-											<div>
-												<dt>{item.label}</dt>
-												<dd>{tie(item.value)}</dd>
-											</div>
-										{/each}
-									</dl>
-								{/if}
-							</div>
-						{/each}
-					</div>
-				</div>
+				{/if}
 			{/if}
-		{/if}
+		</div>
 	</div>
 
 	<!-- phones, short screens and reduced motion: each part with a strip of its photos -->
@@ -321,7 +338,7 @@
 								onclick={() => show(farm.title, photos, k)}
 							>
 								<img
-									src={photo.src.replace(/\.webp$/, '-440.webp')}
+									src={sized(photo.src, 440)}
 									srcset={stripSet(photo.src)}
 									sizes="min(62vw, 260px)"
 									alt={photo.alt}
@@ -397,6 +414,14 @@
 			radial-gradient(ellipse 42% 62% at 50% 52%, transparent 20%, #000 60%, transparent 100%);
 		-webkit-mask-composite: source-in;
 		mask-composite: intersect;
+	}
+	/* while the ring turns: a runway as long as the turning takes, and the hall holds still on it */
+	.farms:global([data-ring]) .run {
+		height: calc(100svh * (1 + var(--turns, 0)));
+	}
+	.farms:global([data-ring]) .stage {
+		position: sticky;
+		top: 0;
 	}
 	.stage {
 		isolation: isolate;
