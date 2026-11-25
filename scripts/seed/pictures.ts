@@ -22,7 +22,8 @@ const PICTURES: Record<string, Picture[]> = {
 	'kebena-house-blend': [
 		{ src: 'hero/bag-front.jpg', alt: ['A bag of Kebena House Blend', 'የቀበና ቤት ቅይጥ ከረጢት'] },
 		{ src: 'journey/roasting.webp', alt: ['The beans in the roaster'] },
-		{ src: 'journey/cup.webp', alt: ['A cup poured at the museum'] }
+		{ src: 'journey/grinding.webp', alt: ['Roasted beans pounded in a wooden mortar'] },
+		{ src: 'journey/cup.webp', alt: ['A cup poured from the jebena'] }
 	],
 	'washed-limu-gr1': [
 		{ src: 'collection/washed-limmu.webp', alt: ['Washed Limu beans', 'የታጠበ ሊሙ ቡና'] },
@@ -58,7 +59,7 @@ const PICTURES: Record<string, Picture[]> = {
 	],
 	'kebena-jebena-cup-set': [
 		{ src: 'journey/jebena.webp', alt: ['Sini cups beside a jebena', 'ከጀበና አጠገብ ያሉ ሲኒዎች'] },
-		{ src: 'journey/cup.webp', alt: ['Coffee poured into a sini'] }
+		{ src: 'journey/cup.webp', alt: ['Coffee poured from a jebena into a sini'] }
 	]
 };
 
