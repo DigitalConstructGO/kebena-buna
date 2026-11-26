@@ -7,6 +7,7 @@
 	import FormNotice from '#lib/site/FormNotice.svelte';
 	import ImageSelect from '@nahu/admin-kit/formComponents/ImageSelect.svelte';
 	import ArrivalMap from '#lib/components/museum/ArrivalMap.svelte';
+	import { picture } from '#lib/content/picture.ts';
 	import { localizeHref } from '#lib/paraglide/runtime.js';
 
 	let { data } = $props();
@@ -233,6 +234,7 @@
 
 <!-- the way here, told as you scroll; every word is one the site already translates -->
 <ArrivalMap
+	photo={picture(m.home_visit_photo, '/tour/building.webp')}
 	eyebrow={m.site_nav_visit()}
 	title={m.contact_visit_us()}
 	beats={[m.contact_address_value(), m.contact_hours_value()]}

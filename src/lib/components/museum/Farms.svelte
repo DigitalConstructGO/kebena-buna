@@ -110,6 +110,7 @@
 						return;
 					}
 					const run = root.querySelector<HTMLElement>('.run')!;
+					const stage = root.querySelector<HTMLElement>('.stage')!;
 					const helix = root.querySelector<HTMLElement>('.helix')!;
 					const cards = [...root.querySelectorAll<HTMLElement>('.slice')];
 					const proxy = { a: 0 };
@@ -147,7 +148,9 @@
 						scrollTrigger: {
 							trigger: run,
 							start: 'top top',
-							end: 'bottom bottom',
+							// as long as the hall holds still: on a short window the hall is taller than the
+							// screen, and `bottom bottom` would keep turning after it had let go
+							end: () => `+=${run.offsetHeight - stage.offsetHeight}`,
 							scrub: 0.8
 						}
 					});
@@ -218,7 +221,9 @@
 									class={['slice', { edge: sl.k === 0 }]}
 									style:--j={sl.j}
 									style:--k={sl.k}
-									style:background-image={near ? `url(${ringSrc(sl.src)})` : undefined}
+									style:background-image={near
+										? `url(${JSON.stringify(ringSrc(sl.src))})`
+										: undefined}
 									onclick={() =>
 										show(
 											content.title,
@@ -412,7 +417,8 @@
 	}
 	/* while the ring turns: a runway as long as the turning takes, and the hall holds still on it */
 	.farms:global([data-ring]) .run {
-		height: calc(100svh * (1 + var(--turns, 0)));
+		/* the hall's own height (never under 680px) and a screen for every turn */
+		height: calc(max(100svh, 680px) + 100svh * var(--turns, 0));
 	}
 	.farms:global([data-ring]) .stage {
 		position: sticky;
